@@ -1,0 +1,33 @@
+<nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
+  <div class="container-fluid">
+    <div class="navbar-wrapper">
+      <div class="navbar-minimize">
+        <button type="button" class="btn btn-just-icon btn-white btn-fab btn-round" (click)="minimizarMenu()"
+                aria-label="Minimizar menu">
+          <i class="material-icons text_align-center visible-on-sidebar-regular">more_vert</i>
+          <i class="material-icons design_bullet-list-67 visible-on-sidebar-mini">view_list</i>
+        </button>
+      </div>
+      <span class="navbar-brand">{{ titulo() }}</span>
+    </div>
+
+    <button type="button" class="navbar-toggler btn-no-ripple" [class.toggled]="menuCelularAberto()"
+            (click)="alternarMenuCelular()" aria-label="Abrir menu">
+      <span class="sr-only">Abrir menu</span>
+      <span class="navbar-toggler-icon icon-bar"></span>
+      <span class="navbar-toggler-icon icon-bar"></span>
+      <span class="navbar-toggler-icon icon-bar"></span>
+    </button>
+
+    <div class="collapse navbar-collapse justify-content-end">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/pages/login" title="Entrar">
+            <i class="material-icons">person</i>
+            <p><span class="d-lg-none d-md-block">Entrar</span></p>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

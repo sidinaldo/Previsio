@@ -1,0 +1,97 @@
+<div [class.main-content]="!embutido()">
+  <div [class.container-fluid]="!embutido()">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header card-header-warning card-header-icon">
+            <div class="card-icon">
+              <i class="material-icons">report_problem</i>
+            </div>
+            <h4 class="card-title">
+              Notas que chegaram no e-mail e não estão no Bling
+              <small class="description">· {{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</small>
+            </h4>
+          </div>
+          <div class="card-body">
+            @if (!embutido()) {
+              <div class="toolbar">
+                <button type="button" class="btn btn-warning btn-sm" (click)="buscarEmailsAgora()">
+                  <i class="material-icons">mail</i> Buscar e-mails agora
+                </button>
+                <button type="button" class="btn btn-default btn-sm" (click)="carregar()" [disabled]="carregando()">
+                  <i class="material-icons">refresh</i> Atualizar
+                </button>
+              </div>
+            }
+
+            @if (mensagem()) {
+              <div class="alert alert-info"><span>{{ mensagem() }}</span></div>
+            }
+            @if (erro()) {
+              <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+            }
+
+            @if (!carregando() && notas().length === 0) {
+              <p class="card-category">Tudo certo: todas as notas recebidas já estão no Bling.</p>
+            }
+
+            @if (notas().length > 0) {
+              <div class="table-responsive">
+                <table class="table">
+                  <thead class="text-warning">
+                    <tr>
+                      <th>Fornecedor</th>
+                      <th>NF</th>
+                      @if (!empresaId()) {
+                        <th>Empresa</th>
+                      }
+                      <th>Recebida</th>
+                      <th>1º vencimento</th>
+                      <th class="text-right">Valor</th>
+                      <th>Situação</th>
+                      <th class="text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (nota of notas(); track nota.id) {
+                      <tr>
+                        <td><strong>{{ nota.fornecedor }}</strong></td>
+                        <td>{{ nota.numero }}</td>
+                        @if (!empresaId()) {
+                          <td>{{ nota.empresaNome || '—' }}</td>
+                        }
+                        <td>{{ nota.recebidaEm | date:'dd/MM HH:mm' }}</td>
+                        <td>
+                          @if (nota.primeiroVencimento) {
+                            {{ nota.primeiroVencimento | date:'dd/MM' }}
+                          } @else {
+                            —
+                          }
+                        </td>
+                        <td class="text-right"><strong>{{ nota.valorTotal | currency:'BRL' }}</strong></td>
+                        <td>
+                          <span class="text-warning">{{ descricao(nota.status) }}</span>
+                          @if (nota.mensagemErro) {
+                            <div class="card-category">{{ nota.mensagemErro | slice:0:160 }}</div>
+                          }
+                        </td>
+                        <td class="td-actions text-right">
+                          @if (podeReprocessar(nota)) {
+                            <button type="button" class="btn btn-info btn-link" title="Tentar lançar novamente"
+                                    aria-label="Tentar lançar novamente" (click)="reprocessar(nota)">
+                              <i class="material-icons">replay</i>
+                            </button>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

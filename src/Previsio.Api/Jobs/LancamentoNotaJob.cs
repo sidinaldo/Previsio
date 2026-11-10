@@ -1,0 +1,200 @@
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Excecoes;
+using Previsio.Api.Servicos;
+using Previsio.Bling;
+using Previsio.Bling.Modelos;
+using Previsio.Core.Entidades;
+using Previsio.Data;
+
+namespace Previsio.Api.Jobs;
+
+/// <summary>
+/// Transforma as notas registradas em contas a pagar no Bling:
+/// garante o fornecedor (contato) e cria uma conta por parcela.
+/// </summary>
+public class LancamentoNotaJob
+{
+    private const int MaximoTentativas = 5;
+    private const int LoteMaximo = 100;
+
+    private readonly PrevisioDbContext _db;
+    private readonly BlingClient _bling;
+    private readonly TokenBlingService _tokens;
+    private readonly ILogger<LancamentoNotaJob> _logger;
+
+    public LancamentoNotaJob(
+        PrevisioDbContext db,
+        BlingClient bling,
+        TokenBlingService tokens,
+        ILogger<LancamentoNotaJob> logger)
+    {
+        _db = db;
+        _bling = bling;
+        _tokens = tokens;
+        _logger = logger;
+    }
+
+    [DisableConcurrentExecution(timeoutInSeconds: 600)]
+    [AutomaticRetry(Attempts = 0)]
+    public async Task LancarPendentesAsync(CancellationToken cancelamento)
+    {
+        List<int> ids = await _db.NotasFiscais
+            .Where(n => n.Status == StatusNota.Recebida
+                || n.Status == StatusNota.BlingDesconectado
+                || (n.Status == StatusNota.Erro && n.Tentativas < MaximoTentativas))
+            .OrderBy(n => n.RecebidaEm)
+            .Select(n => n.Id)
+            .Take(LoteMaximo)
+            .ToListAsync(cancelamento);
+
+        foreach (int id in ids)
+        {
+            await LancarAsync(id, cancelamento);
+        }
+    }
+
+    public async Task LancarAsync(int notaId, CancellationToken cancelamento)
+    {
+        NotaFiscal? nota = await _db.NotasFiscais
+            .Include(n => n.Parcelas)
+            .Include(n => n.Empresa)
+            .FirstOrDefaultAsync(n => n.Id == notaId, cancelamento);
+
+        if (nota == null || nota.Empresa == null)
+        {
+            return;
+        }
+        if (nota.Status == StatusNota.Lancada)
+        {
+            return;
+        }
+
+        Empresa empresa = nota.Empresa;
+        string conta = TokenBlingService.IdentificadorConta(empresa);
+
+        try
+        {
+            string token = await _tokens.ObterAccessTokenAsync(empresa, cancelamento);
+            long contatoId = await GarantirFornecedorAsync(conta, token, nota, cancelamento);
+
+            int totalParcelas = nota.Parcelas.Count;
+            foreach (ParcelaNota parcela in nota.Parcelas.OrderBy(p => p.Vencimento))
+            {
+                // Em caso de retentativa, não recria parcelas que já foram lançadas
+                if (parcela.BlingContaPagarId.HasValue)
+                {
+                    continue;
+                }
+
+                NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId);
+                parcela.BlingContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
+
+                // Salva parcela a parcela: se cair no meio, a próxima tentativa continua de onde parou
+                await _db.SaveChangesAsync(cancelamento);
+            }
+
+            nota.Status = StatusNota.Lancada;
+            nota.MensagemErro = null;
+            nota.LancadaEm = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancelamento);
+
+            _logger.LogInformation("NF {Numero} ({Chave}) lançada no Bling da empresa {Empresa}",
+                nota.Numero, nota.ChaveAcesso, empresa.Nome);
+        }
+        catch (EmpresaDesconectadaException erro)
+        {
+            nota.Status = StatusNota.BlingDesconectado;
+            nota.MensagemErro = erro.Message;
+            await _db.SaveChangesAsync(cancelamento);
+        }
+        catch (BlingException erro)
+        {
+            nota.Status = StatusNota.Erro;
+            nota.Tentativas = nota.Tentativas + 1;
+            nota.MensagemErro = MontarMensagemErro(erro);
+            await _db.SaveChangesAsync(cancelamento);
+
+            _logger.LogWarning(erro, "Falha ao lançar a NF {Chave}. Resposta do Bling: {Corpo}",
+                nota.ChaveAcesso, erro.CorpoResposta);
+        }
+    }
+
+    private async Task<long> GarantirFornecedorAsync(
+        string conta, string token, NotaFiscal nota, CancellationToken cancelamento)
+    {
+        ContatoBling? existente = await _bling.BuscarContatoPorDocumentoAsync(
+            conta, token, nota.CnpjFornecedor, cancelamento);
+
+        if (existente != null)
+        {
+            return existente.Id;
+        }
+
+        var novo = new NovoContatoBling();
+        novo.Nome = nota.NomeFornecedor;
+        novo.NumeroDocumento = nota.CnpjFornecedor;
+        if (nota.CnpjFornecedor.Length == 11)
+        {
+            novo.Tipo = "F";
+        }
+        else
+        {
+            novo.Tipo = "J";
+        }
+
+        return await _bling.CriarContatoAsync(conta, token, novo, cancelamento);
+    }
+
+    private static NovaContaPagarBling MontarContaPagar(
+        NotaFiscal nota, ParcelaNota parcela, int totalParcelas, long contatoId)
+    {
+        var conta = new NovaContaPagarBling();
+        conta.Contato = new Referencia { Id = contatoId };
+        conta.Valor = parcela.Valor;
+        conta.Vencimento = BlingClient.FormatarData(parcela.Vencimento);
+        conta.DataEmissao = BlingClient.FormatarData(nota.DataEmissao);
+        conta.Competencia = BlingClient.FormatarData(nota.DataEmissao);
+
+        // Ex.: "12345/2" = nota 12345, segunda parcela
+        if (totalParcelas > 1)
+        {
+            conta.NumeroDocumento = nota.Numero + "/" + LimparNumeroParcela(parcela.NumeroParcela);
+        }
+        else
+        {
+            conta.NumeroDocumento = nota.Numero;
+        }
+
+        // O Bling não tem campo para a chave da NF-e; ela vai no histórico para rastreio
+        conta.Historico = "NF-e " + nota.Numero + " - " + nota.NomeFornecedor
+            + " | Chave " + nota.ChaveAcesso
+            + " | Lançado pelo Previsio";
+
+        return conta;
+    }
+
+    private static string LimparNumeroParcela(string numero)
+    {
+        string limpo = numero.TrimStart('0');
+        if (limpo == "")
+        {
+            return numero;
+        }
+        return limpo;
+    }
+
+    private static string MontarMensagemErro(BlingException erro)
+    {
+        string mensagem = erro.Message;
+        if (!string.IsNullOrEmpty(erro.CorpoResposta))
+        {
+            mensagem = mensagem + " | " + erro.CorpoResposta;
+        }
+        if (mensagem.Length > 2000)
+        {
+            mensagem = mensagem.Substring(0, 2000);
+        }
+        return mensagem;
+    }
+}

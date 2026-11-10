@@ -1,0 +1,109 @@
+<div class="main-content">
+  <div class="container-fluid">
+
+    <a routerLink="/pages/painel" class="btn btn-default btn-link btn-sm pl-0">
+      <i class="material-icons">arrow_back</i> Todas as empresas
+    </a>
+
+    @if (empresa(); as e) {
+      <h3 class="mt-1 mb-3">{{ e.nome }}</h3>
+
+      <div class="row">
+        <div class="col-lg-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-info card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">account_balance_wallet</i>
+              </div>
+              <p class="card-category">A pagar em {{ dias }} dias</p>
+              <h3 class="card-title"><small>R$</small> {{ e.valor | number:'1.0-0' }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats"><i class="material-icons">receipt</i> {{ e.quantidadeContas }} contas</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-warning card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">report_problem</i>
+              </div>
+              <p class="card-category">Fora do Bling</p>
+              <h3 class="card-title"><small>R$</small> {{ e.valorNotasPendentes | number:'1.0-0' }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats"><i class="material-icons text-warning">warning</i> {{ e.notasPendentes }} notas para resolver</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-success card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">sync</i>
+              </div>
+              <p class="card-category">Última sincronização</p>
+              <h3 class="card-title">
+                @if (e.ultimaSincronizacaoEm) {
+                  {{ e.ultimaSincronizacaoEm | date:'HH:mm' }}
+                } @else {
+                  —
+                }
+              </h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats">
+                <i class="material-icons">access_time</i>
+                @if (e.ultimaSincronizacaoEm) {
+                  {{ e.ultimaSincronizacaoEm | date:'dd/MM/yyyy' }}
+                } @else {
+                  Ainda não sincronizou
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="row">
+      <div class="col-lg-8">
+        <app-notas-pendentes [empresaId]="empresaId" [embutido]="true" />
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header card-header-rose card-header-icon">
+            <div class="card-icon">
+              <i class="material-icons">date_range</i>
+            </div>
+            <h4 class="card-title">Próximos vencimentos</h4>
+          </div>
+          <div class="card-body">
+            @if (vencimentos().length === 0) {
+              <p class="card-category">Nenhuma conta em aberto no período.</p>
+            } @else {
+              <div class="table-responsive">
+                <table class="table">
+                  <tbody>
+                    @for (dia of vencimentos(); track dia.data) {
+                      <tr>
+                        <td>
+                          <strong>{{ dia.data | date:'EEE, dd/MM' }}</strong>
+                          <div class="card-category">{{ dia.quantidade }} contas</div>
+                        </td>
+                        <td class="text-right"><strong>{{ dia.valor | currency:'BRL' }}</strong></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

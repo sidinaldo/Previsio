@@ -1,0 +1,210 @@
+<div class="main-content">
+  <div class="container-fluid">
+
+    <div class="row align-items-end">
+      <div class="col-md-8">
+        <h3 class="mt-0 mb-0">Painel de pagamentos</h3>
+        @if (resumo(); as r) {
+          <p class="card-category">
+            Próximos {{ dias() }} dias · {{ r.inicio | date:'dd/MM' }} a {{ r.fim | date:'dd/MM' }}
+          </p>
+        }
+      </div>
+      <div class="col-md-4 text-right">
+        <div class="form-group d-inline-block mr-2 text-left" style="width: 170px">
+          <select class="form-control" aria-label="Período" [ngModel]="dias()" (ngModelChange)="alterarPeriodo($event)">
+            <option [ngValue]="7">Próximos 7 dias</option>
+            <option [ngValue]="15">Próximos 15 dias</option>
+            <option [ngValue]="30">Próximos 30 dias</option>
+            <option [ngValue]="60">Próximos 60 dias</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-info btn-sm" (click)="carregar()" [disabled]="carregando()">
+          <i class="material-icons">refresh</i> Atualizar
+        </button>
+      </div>
+    </div>
+
+    @if (erro()) {
+      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+    }
+
+    @if (resumo(); as r) {
+
+      <!-- Indicadores -->
+      <div class="row">
+        <div class="col-lg-3 col-md-6 col-sm-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-info card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">account_balance_wallet</i>
+              </div>
+              <p class="card-category">A pagar em {{ dias() }} dias</p>
+              <h3 class="card-title"><small>R$</small> {{ r.totalPeriodo | number:'1.0-0' }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats">
+                <i class="material-icons">receipt</i> {{ r.quantidadeContas }} contas previstas
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-rose card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">event</i>
+              </div>
+              <p class="card-category">Vence em 7 dias</p>
+              <h3 class="card-title"><small>R$</small> {{ r.totalSemanaAtual | number:'1.0-0' }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats">
+                <i class="material-icons">date_range</i> Inclui hoje
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-warning card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">report_problem</i>
+              </div>
+              <p class="card-category">Notas fora do Bling</p>
+              <h3 class="card-title"><small>R$</small> {{ r.valorNotasPendentes | number:'1.0-0' }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats">
+                <i class="material-icons text-warning">warning</i>
+                <a routerLink="/pages/notas-pendentes">{{ r.notasPendentes }} notas para resolver</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 col-sm-6">
+          <div class="card card-stats">
+            <div class="card-header card-header-success card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">store</i>
+              </div>
+              <p class="card-category">Empresas</p>
+              <h3 class="card-title">{{ r.empresas.length }}</h3>
+            </div>
+            <div class="card-footer">
+              <div class="stats">
+                <i class="material-icons">sync</i>
+                <a routerLink="/pages/empresas">Gerenciar conexões</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saídas por semana (gráfico Chartist, mesmo padrão do dashboard do template) -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card card-chart">
+            <div class="card-header card-header-info">
+              <div class="ct-chart" id="previsioSemanasChart"></div>
+            </div>
+            <div class="card-body">
+              <h4 class="card-title">Saídas previstas por semana</h4>
+              <p class="card-category">Contas em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana</p>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <tbody>
+                    <tr>
+                      @for (semana of r.semanas; track semana.inicio) {
+                        <td class="text-center">
+                          <div class="card-category">{{ semana.inicio | date:'dd/MM' }} – {{ semana.fim | date:'dd/MM' }}</div>
+                          <strong>{{ semana.valor | currency:'BRL':'symbol':'1.0-0' }}</strong>
+                        </td>
+                      }
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            @if (maiorSemana(); as semana) {
+              <div class="card-footer">
+                <div class="stats">
+                  <i class="material-icons">trending_up</i>
+                  Semana mais pesada: {{ semana.inicio | date:'dd/MM' }} a {{ semana.fim | date:'dd/MM' }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Por empresa -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header card-header-rose card-header-icon">
+              <div class="card-icon">
+                <i class="material-icons">assignment</i>
+              </div>
+              <h4 class="card-title">Por empresa</h4>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead class="text-primary">
+                    <tr>
+                      <th>Empresa</th>
+                      <th class="text-right">Contas</th>
+                      <th class="text-right">A pagar</th>
+                      <th class="text-right">Fora do Bling</th>
+                      <th>Próximo vencimento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (empresa of r.empresas; track empresa.empresaId) {
+                      <tr>
+                        <td>
+                          <a [routerLink]="['/pages/empresas', empresa.empresaId]"><strong>{{ empresa.nome }}</strong></a>
+                          <div class="card-category">{{ formatarCnpj(empresa.cnpj) }}</div>
+                        </td>
+                        <td class="text-right">{{ empresa.quantidadeContas }}</td>
+                        <td class="text-right"><strong>{{ empresa.valor | currency:'BRL' }}</strong></td>
+                        <td class="text-right" [class.text-warning]="empresa.notasPendentes > 0">
+                          @if (empresa.notasPendentes > 0) {
+                            {{ empresa.notasPendentes }} · {{ empresa.valorNotasPendentes | currency:'BRL' }}
+                          } @else {
+                            —
+                          }
+                        </td>
+                        <td>
+                          @if (empresa.proximoVencimento) {
+                            {{ empresa.proximoVencimento | date:'dd/MM' }} · {{ empresa.valorProximoVencimento | currency:'BRL' }}
+                          } @else {
+                            —
+                          }
+                        </td>
+                      </tr>
+                    }
+                    <tr>
+                      <td><strong>Total</strong></td>
+                      <td class="text-right"><strong>{{ r.quantidadeContas }}</strong></td>
+                      <td class="text-right"><strong>{{ r.totalPeriodo | currency:'BRL' }}</strong></td>
+                      <td class="text-right text-warning">
+                        <strong>{{ r.notasPendentes }} · {{ r.valorNotasPendentes | currency:'BRL' }}</strong>
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    }
+  </div>
+</div>

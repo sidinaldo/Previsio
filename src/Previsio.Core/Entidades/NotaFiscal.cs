@@ -1,0 +1,33 @@
+namespace Previsio.Core.Entidades;
+
+/// <summary>
+/// Nota fiscal lida do e-mail. A chave de acesso garante que a mesma nota
+/// nunca seja lançada duas vezes, mesmo que chegue em mais de um e-mail.
+/// </summary>
+public class NotaFiscal
+{
+    public int Id { get; set; }
+    public int ClienteId { get; set; }
+    public int? EmpresaId { get; set; }
+    public Empresa? Empresa { get; set; }
+
+    public string ChaveAcesso { get; set; } = "";
+    public string Numero { get; set; } = "";
+    public string Serie { get; set; } = "";
+    public DateTime DataEmissao { get; set; }
+    public decimal ValorTotal { get; set; }
+
+    public string CnpjDestinatario { get; set; } = "";
+    public string CnpjFornecedor { get; set; } = "";
+    public string NomeFornecedor { get; set; } = "";
+
+    public StatusNota Status { get; set; } = StatusNota.Recebida;
+    public string? MensagemErro { get; set; }
+    public int Tentativas { get; set; }
+
+    public string OrigemEmail { get; set; } = "";
+    public DateTime RecebidaEm { get; set; } = DateTime.UtcNow;
+    public DateTime? LancadaEm { get; set; }
+
+    public List<ParcelaNota> Parcelas { get; set; } = new List<ParcelaNota>();
+}

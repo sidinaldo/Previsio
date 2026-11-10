@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe24251112345678000199550010000482131000482130" versao="4.00">
+      <ide>
+        <cUF>24</cUF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>48213</nNF>
+        <dhEmi>2026-11-06T10:15:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <xNome>ROTA SUL PECAS LTDA</xNome>
+      </emit>
+      <dest>
+        <CNPJ>98765432000110</CNPJ>
+        <xNome>AUTOPECAS EXEMPLO LTDA</xNome>
+      </dest>
+      <total>
+        <ICMSTot>
+          <vProd>6480.00</vProd>
+          <vNF>6480.00</vNF>
+        </ICMSTot>
+      </total>
+      <cobr>
+        <fat>
+          <nFat>48213</nFat>
+          <vOrig>6480.00</vOrig>
+          <vLiq>6480.00</vLiq>
+        </fat>
+        <dup>
+          <nDup>001</nDup>
+          <dVenc>2026-11-12</dVenc>
+          <vDup>3240.00</vDup>
+        </dup>
+        <dup>
+          <nDup>002</nDup>
+          <dVenc>2026-12-12</dVenc>
+          <vDup>3240.00</vDup>
+        </dup>
+      </cobr>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <chNFe>24251112345678000199550010000482131000482130</chNFe>
+      <cStat>100</cStat>
+    </infProt>
+  </protNFe>
+</nfeProc>

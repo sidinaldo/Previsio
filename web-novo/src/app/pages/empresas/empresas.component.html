@@ -1,0 +1,106 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header card-header-rose card-header-icon">
+            <div class="card-icon">
+              <i class="material-icons">store</i>
+            </div>
+            <h4 class="card-title">
+              Empresas e conexões com o Bling
+              <small class="description">· cada CNPJ se conecta à sua própria conta Bling</small>
+            </h4>
+          </div>
+          <div class="card-body">
+            @if (mensagem()) {
+              <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+            }
+            @if (erro()) {
+              <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+            }
+
+            <div class="table-responsive">
+              <table class="table">
+                <thead class="text-primary">
+                  <tr>
+                    <th>Empresa</th>
+                    <th>CNPJ</th>
+                    <th>Bling</th>
+                    <th>Última sincronização</th>
+                    <th class="text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (empresa of empresas(); track empresa.id) {
+                    <tr>
+                      <td><a [routerLink]="['/pages/empresas', empresa.id]"><strong>{{ empresa.nome }}</strong></a></td>
+                      <td>{{ empresa.cnpj }}</td>
+                      <td>
+                        @if (empresa.blingConectado) {
+                          <span class="text-success"><i class="material-icons">check_circle</i> Conectado</span>
+                        } @else {
+                          <span class="text-warning"><i class="material-icons">link_off</i> Desconectado</span>
+                        }
+                      </td>
+                      <td>
+                        @if (empresa.ultimaSincronizacaoEm) {
+                          {{ empresa.ultimaSincronizacaoEm | date:'dd/MM HH:mm' }}
+                        } @else {
+                          —
+                        }
+                      </td>
+                      <td class="td-actions text-right">
+                        <button type="button" class="btn btn-sm"
+                                [class.btn-success]="!empresa.blingConectado"
+                                [class.btn-default]="empresa.blingConectado"
+                                (click)="conectarBling(empresa)">
+                          {{ empresa.blingConectado ? 'Reconectar' : 'Conectar Bling' }}
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="5" class="card-category">Nenhuma empresa cadastrada ainda.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button type="button" class="btn btn-info btn-sm" (click)="sincronizarAgora()">
+              <i class="material-icons">sync</i> Sincronizar contas agora
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header card-header-info card-header-icon">
+            <div class="card-icon">
+              <i class="material-icons">add_circle</i>
+            </div>
+            <h4 class="card-title">Nova empresa</h4>
+          </div>
+          <form (ngSubmit)="adicionar()">
+            <div class="card-body">
+              <div class="form-group">
+                <label for="previsio-nome" class="bmd-label-floating">Nome</label>
+                <input id="previsio-nome" type="text" class="form-control" name="nome" [(ngModel)]="novoNome">
+              </div>
+              <div class="form-group">
+                <label for="previsio-cnpj" class="bmd-label-floating">CNPJ</label>
+                <input id="previsio-cnpj" type="text" class="form-control" name="cnpj" [(ngModel)]="novoCnpj">
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-fill btn-info">Cadastrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

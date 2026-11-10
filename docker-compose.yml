@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: previsio-postgres
+    environment:
+      POSTGRES_DB: previsio
+      POSTGRES_USER: previsio
+      POSTGRES_PASSWORD: previsio
+    ports:
+      - "5432:5432"
+    volumes:
+      - previsio-dados:/var/lib/postgresql/data
+
+volumes:
+  previsio-dados:

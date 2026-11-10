@@ -1,0 +1,40 @@
+<div class="logo">
+  <a class="simple-text logo-mini" routerLink="/pages/painel">PV</a>
+  <a class="simple-text logo-normal" routerLink="/pages/painel">Previsio</a>
+</div>
+
+<div class="sidebar-wrapper">
+  <ul class="nav">
+    @for (item of itens; track item.path) {
+      <li class="nav-item" routerLinkActive="active">
+        @if (item.type === 'link') {
+          <a class="nav-link" [routerLink]="[item.path]">
+            <i class="material-icons">{{ item.icontype }}</i>
+            <p>{{ item.title }}</p>
+          </a>
+        }
+
+        @if (item.type === 'sub') {
+          <a class="nav-link" href="#" data-toggle="collapse" [class.collapsed]="!estaAberto(item)"
+             [attr.aria-expanded]="estaAberto(item)" (click)="alternar(item, $event)">
+            <i class="material-icons">{{ item.icontype }}</i>
+            <p>{{ item.title }}<b class="caret"></b></p>
+          </a>
+
+          <div class="collapse" [class.show]="estaAberto(item)">
+            <ul class="nav">
+              @for (filho of item.children; track filho.path) {
+                <li class="nav-item" routerLinkActive="active">
+                  <a class="nav-link" [routerLink]="[item.path, filho.path]">
+                    <span class="sidebar-mini">{{ filho.ab }}</span>
+                    <span class="sidebar-normal">{{ filho.title }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</div>
