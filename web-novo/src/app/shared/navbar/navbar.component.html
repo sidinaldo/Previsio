@@ -20,12 +20,26 @@
     </button>
 
     <div class="collapse navbar-collapse justify-content-end">
+      @if (ehAdmin() && clientes().length > 0) {
+        <div class="navbar-form">
+          <div class="input-group no-border">
+            <select class="form-control" aria-label="Cliente exibido" title="Cliente exibido"
+                    [ngModel]="clienteId()" (ngModelChange)="trocarCliente($event)">
+              @for (cliente of clientes(); track cliente.id) {
+                <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      }
       <ul class="navbar-nav">
+        @if (usuario(); as u) {
+          <li class="nav-item">
+            <span class="nav-link" [title]="u.email">{{ u.nome }}</span>
+          </li>
+        }
         <li class="nav-item">
-          <a class="nav-link" routerLink="/pages/login" title="Entrar">
-            <i class="material-icons">person</i>
-            <p><span class="d-lg-none d-md-block">Entrar</span></p>
-          </a>
+          <a class="nav-link" href="#" (click)="sair($event)">Sair</a>
         </li>
       </ul>
     </div>

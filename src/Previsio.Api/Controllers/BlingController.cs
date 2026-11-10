@@ -51,8 +51,8 @@ public class BlingController : ControllerBase
     [HttpGet("api/empresas/{empresaId:int}/bling/conectar")]
     public async Task<IActionResult> Conectar(int empresaId, CancellationToken cancelamento)
     {
-        bool existe = await _db.Empresas.AnyAsync(e => e.Id == empresaId, cancelamento);
-        if (!existe)
+        Empresa? empresa = await _db.Empresas.FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        if (empresa == null)
         {
             return NotFound("Empresa não encontrada.");
         }
@@ -64,10 +64,44 @@ public class BlingController : ControllerBase
             return NotFound("Empresa não encontrada.");
         }
 
+        CredenciaisBling credenciais = _tokens.Credenciais(empresa);
+        if (!credenciais.Completas)
+        {
+            return BadRequest("Cadastre o Client ID e o Client Secret do aplicativo do Bling desta empresa antes de conectar.");
+        }
+
         // O state carrega a empresa de forma assinada e vale por 30 minutos
         string estado = _protetorEstado.Protect(empresaId.ToString(), TimeSpan.FromMinutes(30));
-        string url = _bling.MontarUrlAutorizacao(estado);
+        string url = _bling.MontarUrlAutorizacao(credenciais, estado);
         return Ok(new { url = url });
+    }
+
+    /// <summary>
+    /// Desconecta a empresa do Bling: apaga os tokens guardados.
+    /// As notas dela passam a ficar como "Bling desconectado" até uma nova conexão.
+    /// </summary>
+    [HttpDelete("api/empresas/{empresaId:int}/bling")]
+    public async Task<IActionResult> Desconectar(int empresaId, CancellationToken cancelamento)
+    {
+        Empresa? empresa = await _db.Empresas.FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        if (empresa == null)
+        {
+            return NotFound("Empresa não encontrada.");
+        }
+
+        // Empresa de outro cliente responde igual a inexistente, para não revelar ids
+        bool permitido = await ControleAcesso.PodeAcessarEmpresaAsync(_db, User, empresaId, cancelamento);
+        if (!permitido)
+        {
+            return NotFound("Empresa não encontrada.");
+        }
+
+        empresa.BlingAccessTokenProtegido = null;
+        empresa.BlingRefreshTokenProtegido = null;
+        empresa.BlingTokenExpiraEm = null;
+        await _db.SaveChangesAsync(cancelamento);
+
+        return NoContent();
     }
 
     /// <summary>
@@ -105,7 +139,7 @@ public class BlingController : ControllerBase
 
         try
         {
-            TokenBling token = await _bling.TrocarCodigoPorTokenAsync(code, cancelamento);
+            TokenBling token = await _bling.TrocarCodigoPorTokenAsync(_tokens.Credenciais(empresa), code, cancelamento);
             _tokens.SalvarToken(empresa, token);
             await _db.SaveChangesAsync(cancelamento);
         }

@@ -3,8 +3,13 @@ import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { mensagemDaApi } from '../../core/mensagem-erro';
+import { PREVISIO_CONFIG } from '../../core/previsio.config';
 import { PrevisioService } from '../../core/previsio.service';
-import { Empresa } from '../../core/previsio.models';
+import { AlteracaoEmpresa, Empresa, NovaEmpresa } from '../../core/previsio.models';
+import { SessaoService } from '../../core/sessao.service';
+
+type AcaoConfirmada = 'desativar' | 'desconectar';
 
 @Component({
   selector: 'app-empresas',
@@ -15,11 +20,28 @@ export class EmpresasComponent {
   private readonly previsio = inject(PrevisioService);
   private readonly rota = inject(ActivatedRoute);
 
+  // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
+  readonly ehAdmin = inject(SessaoService).ehAdmin;
   readonly empresas = signal<Empresa[]>([]);
   readonly novoNome = signal('');
   readonly novoCnpj = signal('');
+  readonly novoClientId = signal('');
+  readonly novoClientSecret = signal('');
+
+  // Endereço que deve ser cadastrado como "Link de redirecionamento" no aplicativo do Bling
+  readonly linkRedirecionamento = PREVISIO_CONFIG.apiUrl + '/bling/callback';
   readonly mensagem = signal('');
   readonly erro = signal('');
+
+  // Edição do nome e do aplicativo do Bling na própria linha
+  readonly editandoId = signal<number | null>(null);
+  readonly nomeEditado = signal('');
+  readonly clientIdEditado = signal('');
+  readonly clientSecretEditado = signal('');
+
+  // Desativar e desconectar pedem confirmação na própria linha
+  readonly confirmacao = signal<{ empresaId: number; acao: AcaoConfirmada } | null>(null);
+  readonly processandoId = signal<number | null>(null);
 
   constructor() {
     // Retorno do OAuth do Bling: /pages/empresas?bling=conectado
@@ -30,6 +52,11 @@ export class EmpresasComponent {
       this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" novamente.');
     } else if (retornoBling === 'erro') {
       this.erro.set('Não foi possível conectar ao Bling. Tente novamente.');
+    }
+
+    // Vindo da tela Clientes, logo depois de cadastrar a rede
+    if (this.rota.snapshot.queryParamMap.get('cliente') === 'novo') {
+      this.mensagem.set('Cliente cadastrado. Agora cadastre as empresas (CNPJs) dele ao lado e conecte o Bling de cada uma.');
     }
 
     this.carregar();
@@ -50,21 +77,30 @@ export class EmpresasComponent {
       return;
     }
 
-    this.erro.set('');
-    this.previsio.criarEmpresa(nome, cnpj).subscribe({
+    const clientId = this.novoClientId().trim();
+    const clientSecret = this.novoClientSecret().trim();
+    if ((clientId === '') !== (clientSecret === '')) {
+      this.erro.set('Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.');
+      return;
+    }
+
+    const dados: NovaEmpresa = { nome: nome, cnpj: cnpj };
+    if (clientId !== '') {
+      dados.blingClientId = clientId;
+      dados.blingClientSecret = clientSecret;
+    }
+
+    this.limparAvisos();
+    this.previsio.criarEmpresa(dados).subscribe({
       next: () => {
         this.novoNome.set('');
         this.novoCnpj.set('');
+        this.novoClientId.set('');
+        this.novoClientSecret.set('');
         this.mensagem.set('Empresa cadastrada. Agora conecte a conta Bling dela.');
         this.carregar();
       },
-      error: resposta => {
-        if (typeof resposta.error === 'string') {
-          this.erro.set(resposta.error);
-        } else {
-          this.erro.set('Não foi possível cadastrar a empresa.');
-        }
-      }
+      error: resposta => this.erro.set(mensagemDaApi(resposta, 'Não foi possível cadastrar a empresa.'))
     });
   }
 
@@ -74,7 +110,7 @@ export class EmpresasComponent {
         // O cliente faz login no Bling da empresa e autoriza o Previsio
         window.location.href = resposta.url;
       },
-      error: () => this.erro.set('Não foi possível gerar o link de conexão.')
+      error: resposta => this.erro.set(mensagemDaApi(resposta, 'Não foi possível gerar o link de conexão.'))
     });
   }
 
@@ -83,5 +119,148 @@ export class EmpresasComponent {
       next: () => this.mensagem.set('Sincronização iniciada.'),
       error: () => this.erro.set('Não foi possível iniciar a sincronização.')
     });
+  }
+
+  // ---------- edição do nome e do aplicativo do Bling ----------
+
+  editar(empresa: Empresa): void {
+    this.confirmacao.set(null);
+    this.editandoId.set(empresa.id);
+    this.nomeEditado.set(empresa.nome);
+    this.clientIdEditado.set(empresa.blingClientId ?? '');
+    this.clientSecretEditado.set('');
+  }
+
+  /** Trocar o aplicativo de uma empresa conectada derruba a conexão (os tokens são do aplicativo anterior). */
+  vaiDesconectar(empresa: Empresa): boolean {
+    return empresa.blingConectado && this.clientIdEditado().trim() !== (empresa.blingClientId ?? '');
+  }
+
+  cancelarEdicao(): void {
+    this.editandoId.set(null);
+  }
+
+  salvarEdicao(empresa: Empresa): void {
+    const nome = this.nomeEditado().trim();
+    if (nome === '') {
+      this.erro.set('Informe o nome da empresa.');
+      return;
+    }
+
+    const clientId = this.clientIdEditado().trim();
+    const clientSecret = this.clientSecretEditado().trim();
+    const trocouAplicativo = clientId !== (empresa.blingClientId ?? '');
+    if (clientId !== '' && clientSecret === '' && (trocouAplicativo || !empresa.blingClientSecretCadastrado)) {
+      this.erro.set('Informe o Client Secret do aplicativo do Bling.');
+      return;
+    }
+
+    const dados: AlteracaoEmpresa = { nome: nome, blingClientId: clientId };
+    if (clientSecret !== '') {
+      dados.blingClientSecret = clientSecret;
+    }
+
+    this.limparAvisos();
+    this.processandoId.set(empresa.id);
+    this.previsio.alterarEmpresa(empresa.id, dados).subscribe({
+      next: alterada => {
+        this.substituir(alterada);
+        this.editandoId.set(null);
+        this.processandoId.set(null);
+        if (empresa.blingConectado && !alterada.blingConectado) {
+          this.mensagem.set('Empresa alterada. O aplicativo do Bling mudou: clique em "Conectar Bling" para autorizar de novo.');
+        } else {
+          this.mensagem.set('Empresa alterada.');
+        }
+      },
+      error: resposta => {
+        this.processandoId.set(null);
+        this.erro.set(mensagemDaApi(resposta, 'Não foi possível alterar a empresa.'));
+      }
+    });
+  }
+
+  // ---------- ativar, desativar e desconectar ----------
+
+  pedirConfirmacao(empresa: Empresa, acao: AcaoConfirmada): void {
+    this.editandoId.set(null);
+    this.confirmacao.set({ empresaId: empresa.id, acao: acao });
+  }
+
+  aguardandoConfirmacao(empresa: Empresa): boolean {
+    const confirmacao = this.confirmacao();
+    return confirmacao !== null && confirmacao.empresaId === empresa.id;
+  }
+
+  cancelarConfirmacao(): void {
+    this.confirmacao.set(null);
+  }
+
+  confirmar(empresa: Empresa): void {
+    const confirmacao = this.confirmacao();
+    if (confirmacao === null || confirmacao.empresaId !== empresa.id) {
+      return;
+    }
+    this.confirmacao.set(null);
+
+    if (confirmacao.acao === 'desativar') {
+      this.mudarSituacao(empresa, false);
+    } else {
+      this.desconectar(empresa);
+    }
+  }
+
+  ativar(empresa: Empresa): void {
+    this.mudarSituacao(empresa, true);
+  }
+
+  private mudarSituacao(empresa: Empresa, ativo: boolean): void {
+    this.limparAvisos();
+    this.processandoId.set(empresa.id);
+    this.previsio.alterarEmpresa(empresa.id, { ativo: ativo }).subscribe({
+      next: alterada => {
+        this.substituir(alterada);
+        this.processandoId.set(null);
+        if (ativo) {
+          this.mensagem.set('Empresa ativada.');
+        } else {
+          this.mensagem.set('Empresa desativada. Ela não aparece mais no painel.');
+        }
+      },
+      error: resposta => {
+        this.processandoId.set(null);
+        this.erro.set(mensagemDaApi(resposta, 'Não foi possível alterar a empresa.'));
+      }
+    });
+  }
+
+  private desconectar(empresa: Empresa): void {
+    this.limparAvisos();
+    this.processandoId.set(empresa.id);
+    this.previsio.desconectarBling(empresa.id).subscribe({
+      next: () => {
+        this.processandoId.set(null);
+        this.mensagem.set('Empresa desconectada do Bling.');
+        this.carregar();
+      },
+      error: resposta => {
+        this.processandoId.set(null);
+        this.erro.set(mensagemDaApi(resposta, 'Não foi possível desconectar a empresa do Bling.'));
+      }
+    });
+  }
+
+  private substituir(alterada: Empresa): void {
+    this.empresas.set(this.empresas().map(empresa => {
+      if (empresa.id === alterada.id) {
+        return alterada;
+      }
+      return empresa;
+    }));
+  }
+
+  private limparAvisos(): void {
+    this.erro.set('');
+    this.mensagem.set('');
   }
 }

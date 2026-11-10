@@ -1,0 +1,160 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <a routerLink="/pages/clientes" class="btn btn-default btn-sm">
+      <i class="material-icons">arrow_back</i> Voltar para Clientes
+    </a>
+
+    @if (mensagem()) {
+      <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+    }
+    @if (erro()) {
+      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+    }
+
+    @if (carregando()) {
+      <p class="card-category">Carregando...</p>
+    }
+
+    @if (cliente(); as atual) {
+      <div class="card">
+        <div class="card-header card-header-info card-header-icon">
+          <div class="card-icon">
+            <i class="material-icons">edit</i>
+          </div>
+          <h4 class="card-title">
+            {{ atual.nome }}
+            @if (atual.ativo) {
+              <small class="description">· <span class="text-success">Ativo</span></small>
+            } @else {
+              <small class="description">· <span class="text-muted">Inativo</span></small>
+            }
+          </h4>
+        </div>
+        <form (ngSubmit)="salvar()">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-nome" class="bmd-label-floating">Nome da rede</label>
+                  <input id="detalhe-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+                </div>
+              </div>
+            </div>
+
+            <h6 class="card-category mt-4 mb-3">Caixa de e-mail dedicada (onde chegam as notas)</h6>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-host" class="bmd-label-floating">Servidor IMAP</label>
+                  <input id="detalhe-host" type="text" class="form-control" name="imapHost" [(ngModel)]="imapHost">
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-porta" class="bmd-label-floating">Porta</label>
+                  <input id="detalhe-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
+                         [(ngModel)]="imapPorta">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-usuario" class="bmd-label-floating">E-mail da caixa</label>
+                  <input id="detalhe-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
+                         [(ngModel)]="imapUsuario">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-senha" class="bmd-label-floating">Nova senha de app (em branco mantém)</label>
+                  <input id="detalhe-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
+                         [(ngModel)]="imapSenha">
+                </div>
+              </div>
+            </div>
+            <div class="form-check mt-2">
+              <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+                Conexão com SSL
+                <span class="form-check-sign"><span class="check"></span></span>
+              </label>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button type="submit" class="btn btn-fill btn-info" [disabled]="salvando()">Salvar</button>
+            @if (atual.ativo) {
+              <button type="button" class="btn btn-default" [disabled]="salvando()" (click)="alternarAtivo()">
+                Desativar
+              </button>
+            } @else {
+              <button type="button" class="btn btn-success" [disabled]="salvando()" (click)="alternarAtivo()">
+                Ativar
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-header card-header-info card-header-icon">
+          <div class="card-icon">
+            <i class="material-icons">store</i>
+          </div>
+          <h4 class="card-title">Empresas deste cliente</h4>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table">
+              <thead class="text-info">
+                <tr>
+                  <th>Empresa</th>
+                  <th>CNPJ</th>
+                  <th>Bling</th>
+                  <th>Última sincronização</th>
+                  <th>Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (empresa of empresas(); track empresa.id) {
+                  <tr>
+                    <td><strong>{{ empresa.nome }}</strong></td>
+                    <td>{{ empresa.cnpj }}</td>
+                    <td>
+                      @if (empresa.blingConectado) {
+                        <span class="text-success">Conectado</span>
+                      } @else {
+                        <span class="text-warning">Desconectado</span>
+                      }
+                    </td>
+                    <td>
+                      @if (empresa.ultimaSincronizacaoEm) {
+                        {{ empresa.ultimaSincronizacaoEm | date:'dd/MM HH:mm' }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td>
+                      @if (empresa.ativo) {
+                        <span class="text-success">Ativa</span>
+                      } @else {
+                        <span class="text-muted">Inativa</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="5" class="card-category">Nenhuma empresa cadastrada para este cliente.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="button" class="btn btn-info btn-sm" (click)="verEmpresas()">
+            <i class="material-icons">store</i> Gerenciar empresas
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

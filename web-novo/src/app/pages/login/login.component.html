@@ -6,11 +6,17 @@
         <div class="col-lg-4 col-md-6 col-sm-6 ml-auto mr-auto">
           <form class="form" (ngSubmit)="entrar()">
             <div class="card card-login" [class.card-hidden]="!cartaoVisivel()">
-              <div class="card-header card-header-rose text-center">
+              <div class="card-header card-header-info text-center">
                 <h4 class="card-title">Entrar no Previsio</h4>
               </div>
               <div class="card-body">
                 <p class="card-description text-center">Use o e-mail e a senha da sua empresa</p>
+                @if (aviso()) {
+                  <div class="alert alert-info"><span>{{ aviso() }}</span></div>
+                }
+                @if (erro()) {
+                  <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+                }
                 <span class="bmd-form-group">
                   <div class="input-group">
                     <div class="input-group-prepend">
@@ -35,7 +41,13 @@
                 </span>
               </div>
               <div class="card-footer justify-content-center">
-                <button type="submit" class="btn btn-rose btn-link btn-lg">Entrar</button>
+                <button type="submit" class="btn btn-info btn-link btn-lg" [disabled]="enviando()">
+                  @if (enviando()) {
+                    Entrando...
+                  } @else {
+                    Entrar
+                  }
+                </button>
               </div>
             </div>
           </form>

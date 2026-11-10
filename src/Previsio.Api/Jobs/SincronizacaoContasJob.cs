@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
@@ -48,10 +49,34 @@ public class SincronizacaoContasJob
             {
                 await SincronizarEmpresaAsync(empresa, cancelamento);
             }
+            catch (EmpresaDesconectadaException erro)
+            {
+                _logger.LogError(erro, "Empresa {EmpresaId} desconectada do Bling durante a sincronização", empresa.Id);
+
+                // Renovação do token recusada pelo Bling: registra para aparecer na tela de falhas
+                BlingException? causa = erro.InnerException as BlingException;
+                if (causa != null)
+                {
+                    await RegistrarFalhaAsync(FabricaFalha.DaEmpresa(EtapaFalha.RenovacaoToken, causa, empresa), cancelamento);
+                }
+            }
             catch (Exception erro)
             {
                 _logger.LogError(erro, "Erro ao sincronizar contas a pagar da empresa {EmpresaId}", empresa.Id);
             }
+        }
+    }
+
+    private async Task RegistrarFalhaAsync(FalhaProcessamento falha, CancellationToken cancelamento)
+    {
+        try
+        {
+            _db.Falhas.Add(falha);
+            await _db.SaveChangesAsync(cancelamento);
+        }
+        catch (Exception erro)
+        {
+            _logger.LogError(erro, "Não foi possível registrar a falha da empresa {EmpresaId}", falha.EmpresaId);
         }
     }
 

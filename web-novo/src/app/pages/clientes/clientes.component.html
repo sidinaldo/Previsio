@@ -1,0 +1,139 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">person_add</i>
+        </div>
+        <h4 class="card-title">Novo cliente</h4>
+      </div>
+      <form (ngSubmit)="adicionar()">
+        <div class="card-body">
+          @if (erro()) {
+            <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+          }
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group bmd-form-group">
+                <label for="cliente-nome" class="bmd-label-floating">Nome da rede</label>
+                <input id="cliente-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group bmd-form-group">
+                <label for="cliente-host" class="bmd-label-floating">Servidor IMAP</label>
+                <input id="cliente-host" type="text" class="form-control" name="imapHost" value="imap.gmail.com"
+                       [(ngModel)]="imapHost">
+              </div>
+            </div>
+          </div>
+
+          <h6 class="card-category mt-4 mb-3">Caixa de e-mail dedicada (onde chegam as notas)</h6>
+          <div class="row">            
+            <div class="col-md-2">
+              <div class="form-group bmd-form-group">
+                <label for="cliente-porta" class="bmd-label-floating">Porta</label>
+                <input id="cliente-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
+                       value="993" [(ngModel)]="imapPorta">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group bmd-form-group">
+                <label for="cliente-usuario" class="bmd-label-floating">E-mail da caixa</label>
+                <input id="cliente-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
+                       [(ngModel)]="imapUsuario">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group bmd-form-group">
+                <label for="cliente-senha" class="bmd-label-floating">Senha de app</label>
+                <input id="cliente-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
+                       [(ngModel)]="imapSenha">
+              </div>
+            </div>
+          </div>
+          <div class="form-check mt-2">
+            <label class="form-check-label">
+              <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+              Conexão com SSL
+              <span class="form-check-sign"><span class="check"></span></span>
+            </label>
+          </div>
+          <p class="card-category mt-3 mb-0">
+            No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app.
+          </p>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-fill btn-info" [disabled]="enviando()">
+            @if (enviando()) {
+              Cadastrando...
+            } @else {
+              Cadastrar e ir para as empresas
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">people</i>
+        </div>
+        <h4 class="card-title">
+          Clientes
+          <small class="description">· cada cliente é uma rede, com a própria caixa de e-mail e as suas empresas</small>
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead class="text-info">
+              <tr>
+                <th>Cliente</th>
+                <th>Caixa de e-mail</th>
+                <th>Situação</th>
+                <th class="text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (cliente of lista(); track cliente.id) {
+                <tr>
+                  <td><a [routerLink]="['/pages/clientes', cliente.id]"><strong>{{ cliente.nome }}</strong></a></td>
+                  <td>
+                    @if (cliente.imapUsuario) {
+                      {{ cliente.imapUsuario }} <small class="text-muted">({{ cliente.imapHost }})</small>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>
+                    @if (cliente.ativo) {
+                      <span class="text-success">Ativo</span>
+                    } @else {
+                      <span class="text-muted">Inativo</span>
+                    }
+                  </td>
+                  <td class="td-actions text-right">
+                    <a class="btn btn-sm ml-1 mb-1 btn-default" [routerLink]="['/pages/clientes', cliente.id]">Editar</a>
+                    <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="verEmpresas(cliente)">
+                      @if (cliente.id === clienteExibido()) {
+                        Empresas
+                      } @else {
+                        Exibir e ver empresas
+                      }
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="card-category">Nenhum cliente cadastrado ainda. Cadastre o primeiro acima.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

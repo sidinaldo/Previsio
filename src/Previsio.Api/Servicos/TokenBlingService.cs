@@ -52,12 +52,19 @@ public class TokenBlingService
         TokenBling novoToken;
         try
         {
-            novoToken = await _bling.RenovarTokenAsync(refreshToken, cancelamento);
+            novoToken = await _bling.RenovarTokenAsync(Credenciais(empresa), refreshToken, cancelamento);
         }
         catch (BlingException erro)
         {
             _logger.LogError(erro, "Não foi possível renovar o token da empresa {EmpresaId}. Corpo: {Corpo}",
                 empresa.Id, erro.CorpoResposta);
+
+            // Sem resposta do Bling (rede, tempo esgotado) não é recusa do token:
+            // mantém a conexão e deixa quem chamou registrar a falha e tentar de novo depois
+            if (erro.FalhaDeConexao)
+            {
+                throw;
+            }
 
             // Refresh token revogado ou expirado: o cliente precisa reconectar
             empresa.BlingAccessTokenProtegido = null;
@@ -65,13 +72,34 @@ public class TokenBlingService
             empresa.BlingTokenExpiraEm = null;
             await _db.SaveChangesAsync(cancelamento);
 
-            throw new EmpresaDesconectadaException("A conexão da empresa " + empresa.Nome + " com o Bling expirou. Reconecte.");
+            throw new EmpresaDesconectadaException(
+                "A conexão da empresa " + empresa.Nome + " com o Bling expirou. Reconecte.", erro);
         }
 
         SalvarToken(empresa, novoToken);
         await _db.SaveChangesAsync(cancelamento);
 
         return novoToken.AccessToken;
+    }
+
+    /// <summary>
+    /// Aplicativo do Bling usado pela empresa: o privado dela, quando cadastrado,
+    /// ou o aplicativo global do Previsio.
+    /// </summary>
+    public CredenciaisBling Credenciais(Empresa empresa)
+    {
+        if (string.IsNullOrWhiteSpace(empresa.BlingClientId))
+        {
+            return _bling.CredenciaisPadrao;
+        }
+
+        var credenciais = new CredenciaisBling();
+        credenciais.ClientId = empresa.BlingClientId;
+        if (!string.IsNullOrEmpty(empresa.BlingClientSecretProtegido))
+        {
+            credenciais.ClientSecret = _protetor.Revelar(empresa.BlingClientSecretProtegido);
+        }
+        return credenciais;
     }
 
     public void SalvarToken(Empresa empresa, TokenBling token)

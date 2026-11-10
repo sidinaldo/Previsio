@@ -1,0 +1,154 @@
+<div class="main-content">
+  <div class="container-fluid">
+    @if (mensagem()) {
+      <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+    }
+    @if (erro()) {
+      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+    }
+
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">person_add</i>
+        </div>
+        <h4 class="card-title">Novo usuário</h4>
+      </div>
+      <form (ngSubmit)="adicionar()">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group bmd-form-group">
+                <label for="usuario-nome" class="bmd-label-floating">Nome</label>
+                <input id="usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group bmd-form-group">
+                <label for="usuario-email" class="bmd-label-floating">E-mail</label>
+                <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group bmd-form-group">
+                <label for="usuario-senha" class="bmd-label-floating">Senha provisória (mínimo 8 caracteres)</label>
+                <input id="usuario-senha" type="password" class="form-control" name="senha" autocomplete="new-password"
+                       [(ngModel)]="senha">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group bmd-form-group">
+                <label for="usuario-perfil" class="bmd-label-floating">Perfil</label>
+                <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)">
+                  <option [value]="perfilCliente">Cliente</option>
+                  <option [value]="perfilAdmin">Admin</option>
+                </select>
+              </div>
+            </div>
+            @if (perfil() === perfilCliente) {
+              <div class="col-md-4">
+                <div class="form-group bmd-form-group">
+                  <label for="usuario-cliente" class="bmd-label-floating">Cliente</label>
+                  <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId">
+                    <option [ngValue]="null"></option>
+                    @for (cliente of clientes(); track cliente.id) {
+                      <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-fill btn-info" [disabled]="enviando()">
+            @if (enviando()) {
+              Cadastrando...
+            } @else {
+              Cadastrar
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">supervisor_account</i>
+        </div>
+        <h4 class="card-title">
+          Usuários
+          <small class="description">· quem entra no painel e de qual cliente</small>
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead class="text-info">
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Cliente</th>
+                <th>Situação</th>
+                <th>Último acesso</th>
+                <th class="text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (usuario of usuarios(); track usuario.id) {
+                <tr [class.text-muted]="!usuario.ativo">
+                  <td><strong>{{ usuario.nome }}</strong></td>
+                  <td>{{ usuario.email }}</td>
+                  <td>{{ usuario.perfil }}</td>
+                  <td>{{ nomeDoCliente(usuario) }}</td>
+                  <td>
+                    @if (usuario.ativo) {
+                      <span class="text-success">Ativo</span>
+                    } @else {
+                      <span class="text-muted">Inativo</span>
+                    }
+                  </td>
+                  <td>
+                    @if (usuario.ultimoAcessoEm) {
+                      {{ usuario.ultimoAcessoEm | date:'dd/MM/yyyy HH:mm' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="td-actions text-right">
+                    @if (redefinindoId() === usuario.id) {
+                      <input type="password" class="form-control d-inline-block w-auto" placeholder="Nova senha"
+                             aria-label="Nova senha" autocomplete="new-password"
+                             [(ngModel)]="novaSenha" (keyup.enter)="salvarSenha(usuario)" (keyup.escape)="cancelarRedefinicao()">
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-info" [disabled]="processandoId() === usuario.id"
+                              (click)="salvarSenha(usuario)">Salvar</button>
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="cancelarRedefinicao()">Cancelar</button>
+                    } @else {
+                      @if (usuario.ativo) {
+                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === usuario.id"
+                                (click)="alternarAtivo(usuario)">Desativar</button>
+                      } @else {
+                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-success" [disabled]="processandoId() === usuario.id"
+                                (click)="alternarAtivo(usuario)">Ativar</button>
+                      }
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === usuario.id"
+                              (click)="abrirRedefinicao(usuario)">Redefinir senha</button>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="card-category">Nenhum usuário cadastrado.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

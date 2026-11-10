@@ -1,12 +1,14 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_STATUS, Nota } from '../../core/previsio.models';
+import { SessaoService } from '../../core/sessao.service';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -15,6 +17,9 @@ export class NotasPendentesComponent {
   // Quando usado dentro da tela da empresa, filtra por ela
   readonly empresaId = input<number | undefined>(undefined);
   readonly embutido = input(false);
+
+  // Rodar a leitura de e-mails na hora é só do admin (o job passa por todos os clientes)
+  readonly ehAdmin = inject(SessaoService).ehAdmin;
 
   readonly notas = signal<Nota[]>([]);
   readonly carregando = signal(false);
@@ -47,6 +52,11 @@ export class NotasPendentesComponent {
       return texto;
     }
     return status;
+  }
+
+  // Notas com erro ou desconectadas têm tentativas registradas na tela de falhas
+  temFalhas(nota: Nota): boolean {
+    return nota.status === 'Erro' || nota.status === 'BlingDesconectado';
   }
 
   podeReprocessar(nota: Nota): boolean {

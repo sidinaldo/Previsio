@@ -50,11 +50,22 @@ public class LancamentoNotaJob
 
         foreach (int id in ids)
         {
-            await LancarAsync(id, cancelamento);
+            bool blingRespondeu = await LancarAsync(id, cancelamento);
+            if (!blingRespondeu)
+            {
+                // Sem conexão com o Bling: as próximas notas falhariam do mesmo jeito.
+                // Para aqui e tenta tudo de novo na próxima execução.
+                _logger.LogWarning("Lançamento interrompido: sem conexão com o Bling.");
+                break;
+            }
         }
     }
 
-    public async Task LancarAsync(int notaId, CancellationToken cancelamento)
+    /// <summary>
+    /// Lança a nota no Bling. Retorna false só quando o Bling não respondeu
+    /// (rede ou tempo esgotado), para quem chama poder parar o lote.
+    /// </summary>
+    public async Task<bool> LancarAsync(int notaId, CancellationToken cancelamento)
     {
         NotaFiscal? nota = await _db.NotasFiscais
             .Include(n => n.Parcelas)
@@ -63,21 +74,40 @@ public class LancamentoNotaJob
 
         if (nota == null || nota.Empresa == null)
         {
-            return;
+            return true;
         }
         if (nota.Status == StatusNota.Lancada)
         {
-            return;
+            return true;
         }
 
         Empresa empresa = nota.Empresa;
         string conta = TokenBlingService.IdentificadorConta(empresa);
 
+        // Etapa e parcela em andamento, para o registro de falha dizer onde parou
+        EtapaFalha etapa = EtapaFalha.RenovacaoToken;
+        ParcelaNota? parcelaAtual = null;
+
         try
         {
             string token = await _tokens.ObterAccessTokenAsync(empresa, cancelamento);
-            long contatoId = await GarantirFornecedorAsync(conta, token, nota, cancelamento);
 
+            etapa = EtapaFalha.BuscaFornecedor;
+            long contatoId;
+            ContatoBling? existente = await _bling.BuscarContatoPorDocumentoAsync(
+                conta, token, nota.CnpjFornecedor, cancelamento);
+
+            if (existente != null)
+            {
+                contatoId = existente.Id;
+            }
+            else
+            {
+                etapa = EtapaFalha.CadastroFornecedor;
+                contatoId = await _bling.CriarContatoAsync(conta, token, MontarFornecedor(nota), cancelamento);
+            }
+
+            etapa = EtapaFalha.LancamentoContaPagar;
             int totalParcelas = nota.Parcelas.Count;
             foreach (ParcelaNota parcela in nota.Parcelas.OrderBy(p => p.Vencimento))
             {
@@ -87,6 +117,7 @@ public class LancamentoNotaJob
                     continue;
                 }
 
+                parcelaAtual = parcela;
                 NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId);
                 parcela.BlingContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
 
@@ -101,36 +132,51 @@ public class LancamentoNotaJob
 
             _logger.LogInformation("NF {Numero} ({Chave}) lançada no Bling da empresa {Empresa}",
                 nota.Numero, nota.ChaveAcesso, empresa.Nome);
+            return true;
         }
         catch (EmpresaDesconectadaException erro)
         {
             nota.Status = StatusNota.BlingDesconectado;
             nota.MensagemErro = erro.Message;
+
+            // Só registra falha quando a renovação do token foi recusada pelo Bling.
+            // Empresa que simplesmente não está conectada não é falha: a nota fica aguardando.
+            BlingException? causa = erro.InnerException as BlingException;
+            if (causa != null)
+            {
+                _db.Falhas.Add(FabricaFalha.DoBling(EtapaFalha.RenovacaoToken, causa, nota, null));
+            }
+
             await _db.SaveChangesAsync(cancelamento);
+            return true;
         }
         catch (BlingException erro)
         {
             nota.Status = StatusNota.Erro;
-            nota.Tentativas = nota.Tentativas + 1;
             nota.MensagemErro = MontarMensagemErro(erro);
+
+            // Queda de conexão não é culpa da nota: não gasta uma das tentativas
+            if (!erro.FalhaDeConexao)
+            {
+                nota.Tentativas = nota.Tentativas + 1;
+            }
+
+            _db.Falhas.Add(FabricaFalha.DoBling(etapa, erro, nota, parcelaAtual));
             await _db.SaveChangesAsync(cancelamento);
 
-            _logger.LogWarning(erro, "Falha ao lançar a NF {Chave}. Resposta do Bling: {Corpo}",
-                nota.ChaveAcesso, erro.CorpoResposta);
+            _logger.LogWarning(erro, "Falha ao lançar a NF {Chave} na etapa {Etapa} ({Metodo} {Endereco}). Resposta do Bling: {Corpo}",
+                nota.ChaveAcesso, etapa, erro.Metodo, erro.Endereco, erro.CorpoResposta);
+
+            if (erro.FalhaDeConexao)
+            {
+                return false;
+            }
+            return true;
         }
     }
 
-    private async Task<long> GarantirFornecedorAsync(
-        string conta, string token, NotaFiscal nota, CancellationToken cancelamento)
+    private static NovoContatoBling MontarFornecedor(NotaFiscal nota)
     {
-        ContatoBling? existente = await _bling.BuscarContatoPorDocumentoAsync(
-            conta, token, nota.CnpjFornecedor, cancelamento);
-
-        if (existente != null)
-        {
-            return existente.Id;
-        }
-
         var novo = new NovoContatoBling();
         novo.Nome = nota.NomeFornecedor;
         novo.NumeroDocumento = nota.CnpjFornecedor;
@@ -142,8 +188,7 @@ public class LancamentoNotaJob
         {
             novo.Tipo = "J";
         }
-
-        return await _bling.CriarContatoAsync(conta, token, novo, cancelamento);
+        return novo;
     }
 
     private static NovaContaPagarBling MontarContaPagar(

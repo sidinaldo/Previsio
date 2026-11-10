@@ -22,6 +22,10 @@ public class LeituraEmailJob
 {
     private const int MaximoMensagensPorExecucao = 200;
 
+    // A leitura roda a cada 10 minutos: a mesma falha de conexão só é registrada
+    // de novo depois desse intervalo, para não encher a tela com o mesmo erro
+    private static readonly TimeSpan IntervaloFalhaRepetida = TimeSpan.FromHours(1);
+
     private readonly PrevisioDbContext _db;
     private readonly ProtetorSegredos _protetor;
     private readonly RegistroNotaService _registro;
@@ -56,75 +60,240 @@ public class LeituraEmailJob
             {
                 await LerCaixaDoClienteAsync(cliente, cancelamento);
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception erro)
             {
                 // Um cliente com problema não pode travar os demais
-                _logger.LogError(erro, "Erro ao ler a caixa de e-mail do cliente {ClienteId}", cliente.Id);
+                _logger.LogError(erro, "Erro ao ler a caixa de e-mail do cliente {ClienteId} ({Endereco})",
+                    cliente.Id, FabricaFalha.EnderecoImap(cliente));
             }
         }
     }
 
     private async Task LerCaixaDoClienteAsync(Cliente cliente, CancellationToken cancelamento)
     {
-        string senha = _protetor.Revelar(cliente.ImapSenhaProtegida);
-
-        using var imap = new ImapClient();
-        SecureSocketOptions seguranca = SecureSocketOptions.StartTlsWhenAvailable;
-        if (cliente.ImapSsl)
+        // Uma falha em outro cliente limpa o ChangeTracker; volta a acompanhar este
+        // para o último UID lido ser gravado
+        if (_db.Entry(cliente).State == EntityState.Detached)
         {
-            seguranca = SecureSocketOptions.SslOnConnect;
+            _db.Clientes.Attach(cliente);
         }
 
-        await imap.ConnectAsync(cliente.ImapHost, cliente.ImapPorta, seguranca, cancelamento);
-        await imap.AuthenticateAsync(cliente.ImapUsuario, senha, cancelamento);
+        using var imap = new ImapClient();
+        IMailFolder caixa;
+        IList<UniqueId> encontrados;
 
-        IMailFolder caixa = imap.Inbox;
-        await caixa.OpenAsync(FolderAccess.ReadWrite, cancelamento);
+        // Passo atual, para a falha dizer exatamente onde parou
+        string passo = "abrir a senha do e-mail gravada no Previsio";
+        try
+        {
+            string senha = _protetor.Revelar(cliente.ImapSenhaProtegida);
 
-        IList<UniqueId> naoLidas = await caixa.SearchAsync(SearchQuery.NotSeen, cancelamento);
+            SecureSocketOptions seguranca = SecureSocketOptions.StartTlsWhenAvailable;
+            if (cliente.ImapSsl)
+            {
+                seguranca = SecureSocketOptions.SslOnConnect;
+            }
+
+            passo = "conectar ao servidor de e-mail";
+            await imap.ConnectAsync(cliente.ImapHost, cliente.ImapPorta, seguranca, cancelamento);
+
+            passo = "entrar na caixa de e-mail (usuário ou senha)";
+            await imap.AuthenticateAsync(cliente.ImapUsuario, senha, cancelamento);
+
+            // Somente leitura: o Previsio não marca e-mail como lido nem altera a caixa
+            passo = "abrir a caixa de entrada";
+            caixa = imap.Inbox;
+            await caixa.OpenAsync(FolderAccess.ReadOnly, cancelamento);
+
+            passo = "procurar e-mails novos";
+            long validadeAtual = caixa.UidValidity;
+            if (ControleUidEmail.PrecisaRecomecar(cliente.ImapUidValidity, cliente.ImapUltimoUid, validadeAtual))
+            {
+                // Primeira leitura ou o servidor renumerou a caixa: lê os últimos dias.
+                // Notas já registradas são reconhecidas pela chave de acesso e não duplicam.
+                cliente.ImapUidValidity = validadeAtual;
+                cliente.ImapUltimoUid = null;
+                await _db.SaveChangesAsync(cancelamento);
+
+                DateTime desde = DateTime.UtcNow.Date.AddDays(-ControleUidEmail.DiasPrimeiraLeitura);
+                encontrados = await caixa.SearchAsync(SearchQuery.DeliveredAfter(desde), cancelamento);
+
+                if (encontrados.Count == 0 && caixa.UidNext.HasValue)
+                {
+                    // Nada nos últimos dias: começa a acompanhar a partir do próximo e-mail
+                    cliente.ImapUltimoUid = caixa.UidNext.Value.Id - 1;
+                    await _db.SaveChangesAsync(cancelamento);
+                }
+            }
+            else
+            {
+                var novos = new UniqueIdRange(new UniqueId((uint)(cliente.ImapUltimoUid!.Value + 1)), UniqueId.MaxValue);
+                encontrados = await caixa.SearchAsync(SearchQuery.Uids(novos), cancelamento);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception erro)
+        {
+            await RegistrarFalhaDeConexaoAsync(cliente, "Falha ao " + passo + ": " + erro.Message, cancelamento);
+            throw;
+        }
+
+        // Do mais antigo para o mais novo, para o último UID gravado sempre avançar
+        List<UniqueId> paraLer = ControleUidEmail.ProximosParaLer(
+            encontrados, cliente.ImapUltimoUid, MaximoMensagensPorExecucao);
+
         int registradas = 0;
         int duplicadas = 0;
         int processadas = 0;
 
-        foreach (UniqueId uid in naoLidas)
+        foreach (UniqueId uid in paraLer)
         {
-            if (processadas >= MaximoMensagensPorExecucao)
+            string? origem = null;
+            try
             {
-                break;
+                MimeMessage mensagem = await caixa.GetMessageAsync(uid, cancelamento);
+                origem = DescreverOrigem(mensagem);
+
+                foreach (AnexoXml anexo in ExtrairXmls(mensagem))
+                {
+                    NotaFiscalXml? nota = _leitor.Ler(anexo.Conteudo);
+                    if (nota == null)
+                    {
+                        _db.Falhas.Add(FabricaFalha.DoXml(cliente, anexo.Nome, origem));
+                        await _db.SaveChangesAsync(cancelamento);
+                        continue;
+                    }
+
+                    ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, cancelamento);
+                    if (resultado == ResultadoRegistro.Registrada)
+                    {
+                        registradas++;
+                    }
+                    else
+                    {
+                        duplicadas++;
+                    }
+                }
+
+                // Só avança depois de registrar, para não perder nota se der erro no meio
+                cliente.ImapUltimoUid = uid.Id;
+                await _db.SaveChangesAsync(cancelamento);
+                processadas++;
             }
-            processadas++;
-
-            MimeMessage mensagem = await caixa.GetMessageAsync(uid, cancelamento);
-            string origem = DescreverOrigem(mensagem);
-
-            foreach (string xml in ExtrairXmls(mensagem))
+            catch (OperationCanceledException)
             {
-                NotaFiscalXml? nota = _leitor.Ler(xml);
-                if (nota == null)
+                throw;
+            }
+            catch (Exception erro)
+            {
+                _logger.LogError(erro, "Erro ao ler o e-mail {Uid} do cliente {ClienteId}", uid, cliente.Id);
+                bool continuar = await TratarFalhaDoEmailAsync(cliente, uid, origem, erro, imap.IsConnected, cancelamento);
+                if (!continuar)
                 {
-                    continue;
-                }
-
-                ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, cancelamento);
-                if (resultado == ResultadoRegistro.Registrada)
-                {
-                    registradas++;
-                }
-                else
-                {
-                    duplicadas++;
+                    break;
                 }
             }
+        }
 
-            // Marca como lida só depois de registrar, para não perder nota se der erro no meio
-            await caixa.AddFlagsAsync(uid, MessageFlags.Seen, true, cancelamento);
+        if (!imap.IsConnected)
+        {
+            _logger.LogWarning("Conexão com a caixa de e-mail do cliente {ClienteId} caiu durante a leitura", cliente.Id);
+            return;
         }
 
         await imap.DisconnectAsync(true, cancelamento);
 
         _logger.LogInformation(
-            "Cliente {ClienteId}: {Mensagens} e-mails lidos, {Registradas} notas novas, {Duplicadas} já existentes",
+            "Cliente {ClienteId}: {Processadas} e-mails lidos, {Registradas} notas novas, {Duplicadas} já existentes",
             cliente.Id, processadas, registradas, duplicadas);
+    }
+
+    /// <summary>
+    /// Registra a falha de um e-mail e decide se a leitura continua.
+    /// Sem conexão ou com menos de 3 tentativas: para aqui e o mesmo e-mail é tentado na próxima execução.
+    /// Na 3ª falha do mesmo e-mail: pula ele, para não travar os seguintes.
+    /// </summary>
+    private async Task<bool> TratarFalhaDoEmailAsync(
+        Cliente cliente, UniqueId uid, string? origem, Exception erro, bool conectado, CancellationToken cancelamento)
+    {
+        // Descarta o que ficou pela metade (nota, parcelas) antes de gravar a falha
+        _db.ChangeTracker.Clear();
+        _db.Clientes.Attach(cliente);
+
+        string mensagem = "Falha ao ler o e-mail (UID " + uid.Id + "): " + erro.Message;
+
+        if (!conectado)
+        {
+            // Queda de conexão não é culpa do e-mail: não conta como tentativa dele
+            _db.Falhas.Add(FabricaFalha.DoEmail(cliente, mensagem, origem));
+            await _db.SaveChangesAsync(cancelamento);
+            return false;
+        }
+
+        long uidEmail = uid.Id;
+        int falhasAnteriores = await _db.Falhas.CountAsync(f =>
+            f.ClienteId == cliente.Id
+            && f.Etapa == EtapaFalha.LeituraEmail
+            && f.UidEmail == uidEmail, cancelamento);
+
+        bool desistir = falhasAnteriores + 1 >= ControleUidEmail.MaximoTentativasPorEmail;
+        if (desistir)
+        {
+            mensagem = mensagem + " O e-mail foi ignorado depois de "
+                + ControleUidEmail.MaximoTentativasPorEmail + " tentativas; confira-o na caixa de e-mail.";
+        }
+
+        FalhaProcessamento falha = FabricaFalha.DoEmail(cliente, mensagem, origem);
+        falha.UidEmail = uidEmail;
+        _db.Falhas.Add(falha);
+
+        if (desistir)
+        {
+            cliente.ImapUltimoUid = uidEmail;
+        }
+
+        await _db.SaveChangesAsync(cancelamento);
+        return desistir;
+    }
+
+    /// <summary>
+    /// Grava a falha de conexão com a caixa de e-mail, exceto se a mesma mensagem
+    /// já foi registrada para esse cliente há menos de uma hora.
+    /// </summary>
+    private async Task RegistrarFalhaDeConexaoAsync(Cliente cliente, string mensagem, CancellationToken cancelamento)
+    {
+        try
+        {
+            FalhaProcessamento falha = FabricaFalha.DoEmail(cliente, mensagem, null);
+            DateTime limite = DateTime.UtcNow.Subtract(IntervaloFalhaRepetida);
+
+            bool jaRegistrada = await _db.Falhas.AnyAsync(f =>
+                f.ClienteId == cliente.Id
+                && f.Etapa == EtapaFalha.LeituraEmail
+                && f.Mensagem == falha.Mensagem
+                && f.OcorridaEm >= limite, cancelamento);
+
+            if (jaRegistrada)
+            {
+                return;
+            }
+
+            _db.ChangeTracker.Clear();
+            _db.Falhas.Add(falha);
+            await _db.SaveChangesAsync(cancelamento);
+        }
+        catch (Exception erro)
+        {
+            // Falha ao gravar o log não pode esconder o erro original
+            _logger.LogError(erro, "Não foi possível registrar a falha de e-mail do cliente {ClienteId}", cliente.Id);
+        }
     }
 
     private static string DescreverOrigem(MimeMessage mensagem)
@@ -134,9 +303,9 @@ public class LeituraEmailJob
         return remetente + " | " + assunto;
     }
 
-    private static List<string> ExtrairXmls(MimeMessage mensagem)
+    private static List<AnexoXml> ExtrairXmls(MimeMessage mensagem)
     {
-        var xmls = new List<string>();
+        var xmls = new List<AnexoXml>();
 
         foreach (MimeEntity anexo in mensagem.Attachments)
         {
@@ -154,20 +323,20 @@ public class LeituraEmailJob
 
             if (nomeArquivo.EndsWith(".xml"))
             {
-                xmls.Add(LerTexto(bytes));
+                xmls.Add(NovoAnexo(parte.FileName ?? "", bytes));
             }
             else if (nomeArquivo.EndsWith(".zip"))
             {
-                xmls.AddRange(ExtrairXmlsDoZip(bytes));
+                xmls.AddRange(ExtrairXmlsDoZip(parte.FileName ?? "", bytes));
             }
         }
 
         return xmls;
     }
 
-    private static List<string> ExtrairXmlsDoZip(byte[] bytes)
+    private static List<AnexoXml> ExtrairXmlsDoZip(string nomeZip, byte[] bytes)
     {
-        var xmls = new List<string>();
+        var xmls = new List<AnexoXml>();
         try
         {
             using var memoria = new MemoryStream(bytes);
@@ -187,7 +356,7 @@ public class LeituraEmailJob
                 using Stream fluxo = entrada.Open();
                 using var destino = new MemoryStream();
                 fluxo.CopyTo(destino);
-                xmls.Add(LerTexto(destino.ToArray()));
+                xmls.Add(NovoAnexo(nomeZip + "/" + entrada.FullName, destino.ToArray()));
             }
         }
         catch (InvalidDataException)
@@ -195,6 +364,14 @@ public class LeituraEmailJob
             // Zip corrompido: ignora
         }
         return xmls;
+    }
+
+    private static AnexoXml NovoAnexo(string nome, byte[] bytes)
+    {
+        var anexo = new AnexoXml();
+        anexo.Nome = nome;
+        anexo.Conteudo = LerTexto(bytes);
+        return anexo;
     }
 
     private static string LerTexto(byte[] bytes)

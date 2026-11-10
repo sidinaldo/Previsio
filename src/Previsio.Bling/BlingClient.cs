@@ -44,51 +44,73 @@ public class BlingClient
     // OAuth
     // ---------------------------------------------------------------
 
-    public string MontarUrlAutorizacao(string state)
+    /// <summary>
+    /// Aplicativo global do Previsio, configurado no appsettings (seção "Bling").
+    /// </summary>
+    public CredenciaisBling CredenciaisPadrao
+    {
+        get
+        {
+            var credenciais = new CredenciaisBling();
+            credenciais.ClientId = _opcoes.ClientId;
+            credenciais.ClientSecret = _opcoes.ClientSecret;
+            return credenciais;
+        }
+    }
+
+    public string MontarUrlAutorizacao(CredenciaisBling credenciais, string state)
     {
         return _opcoes.AuthorizeUrl
             + "?response_type=code"
-            + "&client_id=" + Uri.EscapeDataString(_opcoes.ClientId)
+            + "&client_id=" + Uri.EscapeDataString(credenciais.ClientId)
             + "&state=" + Uri.EscapeDataString(state);
     }
 
-    public Task<TokenBling> TrocarCodigoPorTokenAsync(string codigo, CancellationToken cancelamento)
+    public Task<TokenBling> TrocarCodigoPorTokenAsync(
+        CredenciaisBling credenciais, string codigo, CancellationToken cancelamento)
     {
         var campos = new Dictionary<string, string>();
         campos["grant_type"] = "authorization_code";
         campos["code"] = codigo;
-        return SolicitarTokenAsync(campos, cancelamento);
+        return SolicitarTokenAsync(credenciais, campos, cancelamento);
     }
 
-    public Task<TokenBling> RenovarTokenAsync(string refreshToken, CancellationToken cancelamento)
+    public Task<TokenBling> RenovarTokenAsync(
+        CredenciaisBling credenciais, string refreshToken, CancellationToken cancelamento)
     {
         var campos = new Dictionary<string, string>();
         campos["grant_type"] = "refresh_token";
         campos["refresh_token"] = refreshToken;
-        return SolicitarTokenAsync(campos, cancelamento);
+        return SolicitarTokenAsync(credenciais, campos, cancelamento);
     }
 
-    private async Task<TokenBling> SolicitarTokenAsync(Dictionary<string, string> campos, CancellationToken cancelamento)
+    private async Task<TokenBling> SolicitarTokenAsync(
+        CredenciaisBling aplicativo, Dictionary<string, string> campos, CancellationToken cancelamento)
     {
         string credenciais = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(_opcoes.ClientId + ":" + _opcoes.ClientSecret));
+            Encoding.UTF8.GetBytes(aplicativo.ClientId + ":" + aplicativo.ClientSecret));
 
-        using var requisicao = new HttpRequestMessage(HttpMethod.Post, _opcoes.TokenUrl);
+        string metodo = HttpMethod.Post.Method;
+        string endereco = _opcoes.TokenUrl;
+
+        using var requisicao = new HttpRequestMessage(HttpMethod.Post, endereco);
         requisicao.Headers.Authorization = new AuthenticationHeaderValue("Basic", credenciais);
         requisicao.Content = new FormUrlEncodedContent(campos);
 
-        using HttpResponseMessage resposta = await _http.SendAsync(requisicao, cancelamento);
+        using HttpResponseMessage resposta = await EnviarComTratamentoAsync(requisicao, metodo, endereco, cancelamento);
         string corpo = await resposta.Content.ReadAsStringAsync(cancelamento);
 
         if (!resposta.IsSuccessStatusCode)
         {
-            throw new BlingException("Falha ao obter token do Bling.", resposta.StatusCode, corpo);
+            throw new BlingException(
+                "Erro " + (int)resposta.StatusCode + " ao obter token do Bling.",
+                resposta.StatusCode, corpo, metodo, endereco, null);
         }
 
         TokenBling? token = JsonSerializer.Deserialize<TokenBling>(corpo, OpcoesJson);
         if (token == null || string.IsNullOrEmpty(token.AccessToken))
         {
-            throw new BlingException("Resposta de token inválida.", resposta.StatusCode, corpo);
+            throw new BlingException("Resposta de token inválida.", resposta.StatusCode, corpo, metodo, endereco, null);
         }
         return token;
     }
@@ -119,7 +141,9 @@ public class BlingClient
 
         if (resposta == null || resposta.Data == null || resposta.Data.Id == 0)
         {
-            throw new BlingException("Bling não retornou o id do contato criado.", HttpStatusCode.OK, null);
+            throw new BlingException(
+                "Bling não retornou o id do contato criado.",
+                HttpStatusCode.OK, null, HttpMethod.Post.Method, EnderecoCompleto("contatos"), null);
         }
         return resposta.Data.Id;
     }
@@ -138,7 +162,9 @@ public class BlingClient
         long id = LerIdDaResposta(corpo);
         if (id == 0)
         {
-            throw new BlingException("Bling não retornou o id da conta a pagar criada.", HttpStatusCode.OK, corpo);
+            throw new BlingException(
+                "Bling não retornou o id da conta a pagar criada.",
+                HttpStatusCode.OK, corpo, HttpMethod.Post.Method, EnderecoCompleto("contas/pagar"), null);
         }
         return id;
     }
@@ -206,6 +232,7 @@ public class BlingClient
         string conta, string accessToken, HttpMethod metodo, string url, object? conteudo, CancellationToken cancelamento)
     {
         const int maximoTentativas = 3;
+        string endereco = EnderecoCompleto(url);
 
         for (int tentativa = 1; tentativa <= maximoTentativas; tentativa++)
         {
@@ -221,7 +248,7 @@ public class BlingClient
                 requisicao.Content = new StringContent(json, Encoding.UTF8, "application/json");
             }
 
-            using HttpResponseMessage resposta = await _http.SendAsync(requisicao, cancelamento);
+            using HttpResponseMessage resposta = await EnviarComTratamentoAsync(requisicao, metodo.Method, endereco, cancelamento);
             string corpo = await resposta.Content.ReadAsStringAsync(cancelamento);
 
             if (resposta.IsSuccessStatusCode)
@@ -239,10 +266,54 @@ public class BlingClient
             throw new BlingException(
                 "Erro " + (int)resposta.StatusCode + " ao chamar " + metodo + " " + url,
                 resposta.StatusCode,
-                corpo);
+                corpo,
+                metodo.Method,
+                endereco,
+                null);
         }
 
-        throw new BlingException("Limite de tentativas excedido em " + url, HttpStatusCode.TooManyRequests, null);
+        throw new BlingException(
+            "Limite de tentativas excedido em " + url,
+            HttpStatusCode.TooManyRequests, null, metodo.Method, endereco, null);
+    }
+
+    /// <summary>
+    /// Envia a requisição e transforma falhas de rede (sem resposta do Bling)
+    /// em BlingException com o endereço chamado.
+    /// </summary>
+    private async Task<HttpResponseMessage> EnviarComTratamentoAsync(
+        HttpRequestMessage requisicao, string metodo, string endereco, CancellationToken cancelamento)
+    {
+        try
+        {
+            return await _http.SendAsync(requisicao, cancelamento);
+        }
+        catch (HttpRequestException erro)
+        {
+            throw new BlingException(
+                "Sem conexão com o Bling: " + erro.Message,
+                BlingException.SemResposta, null, metodo, endereco, erro);
+        }
+        catch (TaskCanceledException erro)
+        {
+            // Cancelamento pedido por quem chamou (ex.: aplicação parando) segue como cancelamento
+            if (cancelamento.IsCancellationRequested)
+            {
+                throw;
+            }
+            throw new BlingException(
+                "O Bling não respondeu dentro do tempo limite.",
+                BlingException.SemResposta, null, metodo, endereco, erro);
+        }
+    }
+
+    private string EnderecoCompleto(string urlRelativa)
+    {
+        if (_http.BaseAddress == null)
+        {
+            return urlRelativa;
+        }
+        return new Uri(_http.BaseAddress, urlRelativa).ToString();
     }
 
     private static long LerIdDaResposta(string corpo)

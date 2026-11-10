@@ -18,7 +18,8 @@ E-mail dedicado (IMAP) ──→ Leitura do XML ──→ Conta a pagar no Bling
 | `src/Previsio.Data` | EF Core + PostgreSQL |
 | `src/Previsio.Api` | API REST + jobs Hangfire (leitura de e-mail, lançamento, sincronização) |
 | `tests/Previsio.Core.Tests` | Testes do leitor de NF-e e do painel |
-| `web` | Painel Angular 15 (template Material Dashboard Pro); telas do Previsio em `web/src/app/previsio` |
+| `tests/Previsio.Api.Tests` | Testes da API (alteração de cliente, login de cliente inativo), com EF Core em memória |
+| `web-novo` | Painel Angular 21 (visual do Material Dashboard Pro), com login JWT |
 
 ## Jobs (Hangfire)
 
@@ -51,6 +52,9 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
 ```bash
 docker compose up -d
 ```
+
+Se a porta 5432 já for de um PostgreSQL instalado na máquina, use ele: crie o usuário e o banco `previsio`
+e informe a conexão em `ConnectionStrings:Previsio` no `appsettings.Development.json`.
 
 ## 3. Aplicativo no Bling
 
@@ -86,20 +90,20 @@ Crie `src/Previsio.Api/appsettings.Development.json` (fica fora do Git):
 > `AdminInicial` cria o primeiro administrador quando o banco ainda não tem nenhum.
 > Depois do primeiro login, troque a senha em `POST /api/auth/trocar-senha` e **apague** `AdminInicial:Senha` do arquivo.
 
-> `Front:Url` termina com `/#` porque o Material Dashboard Pro usa rotas com hash. Se o seu template não usa, tire o `/#`.
+> `Front:Url` termina com `/#` porque o painel usa rotas com hash: é para lá que a API devolve quem volta do OAuth do Bling.
+> Para o CORS a API usa só a origem (`http://localhost:4200`).
 
 > A pasta `chaves-dataprotection` guarda as chaves que criptografam tokens e senhas.
 > **Não apague** — se ela sumir, será preciso reconectar o Bling e recadastrar a senha do IMAP.
 
-## 5. Migration inicial e execução
+## 5. Execução
 
 ```bash
-dotnet ef migrations add Inicial --project src/Previsio.Data --startup-project src/Previsio.Api
 dotnet test
 dotnet run --project src/Previsio.Api
 ```
 
-A API aplica as migrations ao subir e abre o Swagger em `http://localhost:5080/swagger`.
+A API aplica as migrations ao subir (a `Inicial` já está em `src/Previsio.Data/Migrations`) e abre o Swagger em `http://localhost:5080/swagger`.
 
 ## Autenticação
 
@@ -126,7 +130,9 @@ Pedido de outro cliente responde `403` (rotas com `{clienteId}`) ou `404` (rotas
 **Caixa de e-mail:** crie um endereço dedicado (ex.: `notas@softioconsultoria.com.br`) com IMAP habilitado.
 No Gmail do cliente, um filtro `filename:xml OR filename:zip` encaminha as notas para esse endereço.
 
-Entre com o administrador (`POST /api/auth/login`) e cadastre o cliente:
+Entre no painel com o administrador e cadastre o cliente (a rede) na tela **Clientes**, com os dados da caixa IMAP.
+Enquanto não houver nenhum cliente, o painel mostra só o botão **Cadastrar cliente**.
+Pela API:
 
 ```http
 POST /api/clientes
@@ -143,7 +149,7 @@ Content-Type: application/json
 }
 ```
 
-Crie o usuário do cliente (use o `id` retornado acima):
+Crie o usuário do cliente na tela **Usuários** do painel, ou pela API (use o `id` do cliente):
 
 ```http
 POST /api/usuarios
@@ -161,41 +167,43 @@ Content-Type: application/json
 
 Passe a senha provisória ao cliente e peça para ele trocá-la em `POST /api/auth/trocar-senha`.
 
+Os dados do cliente (inclusive a caixa IMAP) podem ser corrigidos depois em **Clientes → Editar**:
+senha em branco mantém a atual.
+
 Depois, cadastre os 5 CNPJs pela tela **Empresas** do painel e clique em **Conectar Bling** em cada um
 (o cliente faz login na conta Bling daquela empresa e autoriza).
 
-## 7. Painel Angular (Material Dashboard Pro)
+## 7. Painel Angular
 
-A pasta `web` é o template Material Dashboard Pro Angular v2.9.0 (Angular 15) com o módulo do Previsio já integrado:
+A pasta `web-novo` é o painel em Angular 21 com o visual do Material Dashboard Pro
+(detalhes em `web-novo/README.md`). Precisa de Node 22.13 ou superior.
 
-| Arquivo | O que foi feito |
-|---|---|
-| `web/src/app/previsio/` | Telas: painel, notas pendentes, empresas e detalhe da empresa |
-| `web/src/app/app.routing.ts` | Rota lazy `previsio` dentro do `AdminLayoutComponent` |
-| `web/src/app/sidebar/sidebar.component.ts` | Item "Previsio" no menu lateral |
-
-> **Atenção:** o painel ainda não tem tela de login. Ele envia o header `X-Api-Key`, que a API não aceita mais,
-> então todas as chamadas voltam `401` até o painel passar a fazer login e enviar o token JWT.
-
-1. Ajuste `web/src/app/previsio/previsio.config.ts` (URL da API, chave e id do cliente).
+1. Confira a URL da API em `web-novo/src/app/core/previsio.config.ts` (padrão `http://localhost:5080/api`).
 2. Rode o painel:
 
 ```bash
-cd web
+cd web-novo
 npm install
 npm start
 ```
 
-3. Acesse `http://localhost:4200/#/previsio/painel`.
+3. Acesse `http://localhost:4200/#/pages/painel` e entre com o e-mail e a senha de um usuário.
+   O admin escolhe na barra do topo qual cliente quer ver; o usuário de um cliente vê só o dele.
+
+> A API só aceita chamadas do endereço configurado em `Front:Url` (padrão `http://localhost:4200/#`).
+> Se o painel rodar em outra porta ou domínio, ajuste `Front:Url`, senão o navegador barra as chamadas (CORS).
 
 ## Endpoints
 
 | Método | Rota | Uso |
 |---|---|---|
 | GET/POST | `/api/clientes` | Listar / cadastrar cliente (com IMAP) |
+| GET/PUT | `/api/clientes/{id}` | Ver (admin ou o próprio cliente) / alterar, ativar e desativar (só admin; `imapSenha` vazia mantém a atual) |
 | GET/POST | `/api/clientes/{id}/empresas` | Listar / cadastrar CNPJs |
+| PUT | `/api/empresas/{id}` | Alterar o nome, ativar ou desativar (o CNPJ não muda) |
 | GET | `/api/empresas/{id}/bling/conectar` | URL de autorização do Bling |
-| GET | `/api/bling/callback` | Retorno do OAuth (sem chave de API) |
+| DELETE | `/api/empresas/{id}/bling` | Desconectar do Bling (apaga os tokens) |
+| GET | `/api/bling/callback` | Retorno do OAuth (sem login) |
 | GET | `/api/clientes/{id}/painel?dias=30` | Painel consolidado |
 | GET | `/api/empresas/{id}/vencimentos?dias=30` | Vencimentos por dia de uma empresa |
 | GET | `/api/clientes/{id}/notas/pendentes` | Notas fora do Bling |
@@ -221,7 +229,7 @@ npm start
 
 | Item | Por quê |
 |---|---|
-| Tela de login no painel Angular | A API já exige JWT; o painel ainda manda a chave de API antiga e recebe `401` |
+| Troca da própria senha no painel | Hoje só pela API (`/api/auth/trocar-senha`) |
 | Resumo semanal por WhatsApp | Diferencial: "R$ X vencem esta semana, 3 notas fora do Bling" |
 | Leitura de PDF com IA | Notas que chegam sem XML |
 | Busca de notas na SEFAZ | Pegar a nota que o fornecedor não enviou por e-mail |

@@ -1,24 +1,34 @@
-import { Component, DestroyRef, DOCUMENT, inject, signal } from '@angular/core';
+import { Component, DestroyRef, DOCUMENT, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { tituloDaRota } from '../sidebar/menu';
+import { Cliente } from '../../core/previsio.models';
+import { SessaoService } from '../../core/sessao.service';
 
 /**
  * Barra do topo do layout admin.
  * Reproduz o comportamento do template sem jQuery:
  * - botão para minimizar o menu lateral (classe "sidebar-mini" no body)
  * - botão do celular que abre o menu (classe "nav-open" + camada escura)
+ * Para o admin, mostra também a escolha do cliente exibido.
  */
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink],
+  imports: [FormsModule],
   templateUrl: './navbar.component.html'
 })
 export class NavbarComponent {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
+  private readonly sessao = inject(SessaoService);
+
+  readonly clientes = input<Cliente[]>([]);
+  readonly ehAdmin = this.sessao.ehAdmin;
+  readonly usuario = this.sessao.usuario;
+  readonly clienteId = this.sessao.clienteId;
 
   readonly titulo = signal(tituloDaRota(this.router.url));
   readonly menuCelularAberto = signal(false);
@@ -32,6 +42,15 @@ export class NavbarComponent {
         this.titulo.set(tituloDaRota(this.router.url));
         this.fecharMenuCelular();
       });
+  }
+
+  trocarCliente(clienteId: number): void {
+    this.sessao.escolherCliente(Number(clienteId));
+  }
+
+  sair(evento: Event): void {
+    evento.preventDefault();
+    this.sessao.sair();
   }
 
   minimizarMenu(): void {

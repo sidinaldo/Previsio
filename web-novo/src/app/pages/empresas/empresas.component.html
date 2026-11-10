@@ -1,106 +1,185 @@
 <div class="main-content">
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-header card-header-rose card-header-icon">
-            <div class="card-icon">
-              <i class="material-icons">store</i>
-            </div>
-            <h4 class="card-title">
-              Empresas e conexões com o Bling
-              <small class="description">· cada CNPJ se conecta à sua própria conta Bling</small>
-            </h4>
-          </div>
-          <div class="card-body">
-            @if (mensagem()) {
-              <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
-            }
-            @if (erro()) {
-              <div class="alert alert-danger"><span>{{ erro() }}</span></div>
-            }
+    @if (mensagem()) {
+      <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+    }
+    @if (erro()) {
+      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+    }
 
-            <div class="table-responsive">
-              <table class="table">
-                <thead class="text-primary">
-                  <tr>
-                    <th>Empresa</th>
-                    <th>CNPJ</th>
-                    <th>Bling</th>
-                    <th>Última sincronização</th>
-                    <th class="text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (empresa of empresas(); track empresa.id) {
-                    <tr>
-                      <td><a [routerLink]="['/pages/empresas', empresa.id]"><strong>{{ empresa.nome }}</strong></a></td>
-                      <td>{{ empresa.cnpj }}</td>
-                      <td>
-                        @if (empresa.blingConectado) {
-                          <span class="text-success"><i class="material-icons">check_circle</i> Conectado</span>
-                        } @else {
-                          <span class="text-warning"><i class="material-icons">link_off</i> Desconectado</span>
-                        }
-                      </td>
-                      <td>
-                        @if (empresa.ultimaSincronizacaoEm) {
-                          {{ empresa.ultimaSincronizacaoEm | date:'dd/MM HH:mm' }}
-                        } @else {
-                          —
-                        }
-                      </td>
-                      <td class="td-actions text-right">
-                        <button type="button" class="btn btn-sm"
-                                [class.btn-success]="!empresa.blingConectado"
-                                [class.btn-default]="empresa.blingConectado"
-                                (click)="conectarBling(empresa)">
-                          {{ empresa.blingConectado ? 'Reconectar' : 'Conectar Bling' }}
-                        </button>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="5" class="card-category">Nenhuma empresa cadastrada ainda.</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="card-footer">
-            <button type="button" class="btn btn-info btn-sm" (click)="sincronizarAgora()">
-              <i class="material-icons">sync</i> Sincronizar contas agora
-            </button>
-          </div>
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">add_circle</i>
         </div>
+        <h4 class="card-title">Nova empresa</h4>
       </div>
-
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header card-header-info card-header-icon">
-            <div class="card-icon">
-              <i class="material-icons">add_circle</i>
-            </div>
-            <h4 class="card-title">Nova empresa</h4>
-          </div>
-          <form (ngSubmit)="adicionar()">
-            <div class="card-body">
+      <form (ngSubmit)="adicionar()">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
               <div class="form-group">
                 <label for="previsio-nome" class="bmd-label-floating">Nome</label>
                 <input id="previsio-nome" type="text" class="form-control" name="nome" [(ngModel)]="novoNome">
               </div>
+            </div>
+            <div class="col-md-4">
               <div class="form-group">
                 <label for="previsio-cnpj" class="bmd-label-floating">CNPJ</label>
                 <input id="previsio-cnpj" type="text" class="form-control" name="cnpj" [(ngModel)]="novoCnpj">
               </div>
             </div>
-            <div class="card-footer">
-              <button type="submit" class="btn btn-fill btn-info">Cadastrar</button>
+          </div>
+          <div class="row">
+            <div class="col-md-5">
+              <div class="form-group">
+                <label for="previsio-client-id" class="bmd-label-floating">Client ID do aplicativo Bling (opcional)</label>
+                <input id="previsio-client-id" type="text" class="form-control" name="clientId" autocomplete="off"
+                       [(ngModel)]="novoClientId">
+              </div>
             </div>
-          </form>
+            <div class="col-md-5">
+              <div class="form-group">
+                <label for="previsio-client-secret" class="bmd-label-floating">Client Secret (opcional)</label>
+                <input id="previsio-client-secret" type="password" class="form-control" name="clientSecret" autocomplete="new-password"
+                       [(ngModel)]="novoClientSecret">
+              </div>
+            </div>
+          </div>
+          <p class="card-category mb-0">
+            Use quando a conta Bling desta empresa tiver um <strong>aplicativo privado</strong> próprio.
+            No cadastro do aplicativo, informe o link de redirecionamento <code>{{ linkRedirecionamento }}</code>.
+            Deixe vazio para usar o aplicativo padrão do Previsio.
+          </p>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-fill btn-info">Cadastrar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header card-header-info card-header-icon">
+        <div class="card-icon">
+          <i class="material-icons">store</i>
+        </div>
+        <h4 class="card-title">
+          Empresas e conexões com o Bling
+          <small class="description">· cada CNPJ se conecta à sua própria conta Bling</small>
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead class="text-info">
+              <tr>
+                <th>Empresa</th>
+                <th>CNPJ</th>
+                <th>Bling</th>
+                <th>Última sincronização</th>
+                <th class="text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (empresa of empresas(); track empresa.id) {
+                <tr [class.text-muted]="!empresa.ativo">
+                  <td>
+                    @if (editandoId() === empresa.id) {
+                      <label [for]="'nome-' + empresa.id" class="col-form-label pb-0">Nome</label>
+                      <input [id]="'nome-' + empresa.id" type="text" class="form-control"
+                             [(ngModel)]="nomeEditado" (keyup.enter)="salvarEdicao(empresa)" (keyup.escape)="cancelarEdicao()">
+
+                      <label [for]="'client-id-' + empresa.id" class="col-form-label pb-0">Client ID do aplicativo Bling</label>
+                      <input [id]="'client-id-' + empresa.id" type="text" class="form-control" autocomplete="off"
+                             placeholder="Vazio: aplicativo padrão do Previsio"
+                             [(ngModel)]="clientIdEditado" (keyup.escape)="cancelarEdicao()">
+
+                      <label [for]="'client-secret-' + empresa.id" class="col-form-label pb-0">Client Secret</label>
+                      <input [id]="'client-secret-' + empresa.id" type="password" class="form-control" autocomplete="new-password"
+                             [placeholder]="empresa.blingClientSecretCadastrado ? 'Cadastrado. Deixe vazio para manter' : ''"
+                             [(ngModel)]="clientSecretEditado" (keyup.escape)="cancelarEdicao()">
+
+                      @if (vaiDesconectar(empresa)) {
+                        <small class="text-warning d-block mt-1">
+                          Trocar o aplicativo desconecta a empresa do Bling. Depois de salvar, clique em "Conectar Bling".
+                        </small>
+                      }
+                    } @else {
+                      <a [routerLink]="['/pages/empresas', empresa.id]"><strong>{{ empresa.nome }}</strong></a>
+                      @if (!empresa.ativo) {
+                        <br><small class="text-muted">Inativa</small>
+                      }
+                    }
+                  </td>
+                  <td>{{ empresa.cnpj }}</td>
+                  <td>
+                    @if (empresa.blingConectado) {
+                      <span class="text-success"><i class="material-icons">check_circle</i> Conectado</span>
+                    } @else {
+                      <span class="text-warning"><i class="material-icons">link_off</i> Desconectado</span>
+                    }
+                    <br>
+                    @if (empresa.blingClientId) {
+                      <small class="card-category" [title]="'Client ID ' + empresa.blingClientId">Aplicativo próprio</small>
+                    } @else {
+                      <small class="card-category">Aplicativo padrão</small>
+                    }
+                  </td>
+                  <td>
+                    @if (empresa.ultimaSincronizacaoEm) {
+                      {{ empresa.ultimaSincronizacaoEm | date:'dd/MM HH:mm' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="td-actions text-right">
+                    @if (aguardandoConfirmacao(empresa)) {
+                      <span class="mr-2">Confirmar?</span>
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-info" (click)="confirmar(empresa)">Sim</button>
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="cancelarConfirmacao()">Não</button>
+                    } @else if (editandoId() === empresa.id) {
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-info" [disabled]="processandoId() === empresa.id"
+                              (click)="salvarEdicao(empresa)">Salvar</button>
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="cancelarEdicao()">Cancelar</button>
+                    } @else {
+                      <button type="button" class="btn btn-sm ml-1 mb-1"
+                              [class.btn-success]="!empresa.blingConectado"
+                              [class.btn-default]="empresa.blingConectado"
+                              (click)="conectarBling(empresa)">
+                        {{ empresa.blingConectado ? 'Reconectar' : 'Conectar Bling' }}
+                      </button>
+                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === empresa.id"
+                              (click)="editar(empresa)">Editar</button>
+                      @if (empresa.ativo) {
+                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === empresa.id"
+                                (click)="pedirConfirmacao(empresa, 'desativar')">Desativar</button>
+                      } @else {
+                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-success" [disabled]="processandoId() === empresa.id"
+                                (click)="ativar(empresa)">Ativar</button>
+                      }
+                      @if (empresa.blingConectado) {
+                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === empresa.id"
+                                (click)="pedirConfirmacao(empresa, 'desconectar')">Desconectar</button>
+                      }
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="card-category">Nenhuma empresa cadastrada ainda.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
+      @if (ehAdmin()) {
+        <div class="card-footer">
+          <button type="button" class="btn btn-info btn-sm" (click)="sincronizarAgora()">
+            <i class="material-icons">sync</i> Sincronizar contas agora
+          </button>
+        </div>
+      }
     </div>
   </div>
 </div>

@@ -34,10 +34,99 @@ public class ClientesController : ControllerBase
                 Id = c.Id,
                 Nome = c.Nome,
                 ImapHost = c.ImapHost,
+                ImapPorta = c.ImapPorta,
+                ImapSsl = c.ImapSsl,
                 ImapUsuario = c.ImapUsuario,
                 Ativo = c.Ativo
             })
             .ToListAsync(cancelamento);
+    }
+
+    /// <summary>
+    /// Admin vê qualquer cliente; o usuário de cliente, só o próprio.
+    /// </summary>
+    [HttpGet("{clienteId:int}")]
+    public async Task<ActionResult<ClienteDto>> Obter(int clienteId, CancellationToken cancelamento)
+    {
+        // Cliente de outro usuário responde igual a inexistente, para não revelar ids
+        if (!User.PodeAcessarCliente(clienteId))
+        {
+            return NotFound("Cliente não encontrado.");
+        }
+
+        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        if (cliente == null)
+        {
+            return NotFound("Cliente não encontrado.");
+        }
+
+        return ParaDto(cliente);
+    }
+
+    /// <summary>
+    /// Altera os campos preenchidos. A senha do IMAP só troca se vier preenchida.
+    /// Desativar o cliente derruba na hora as sessões dos usuários dele.
+    /// </summary>
+    [HttpPut("{clienteId:int}")]
+    [Authorize(Roles = Perfis.Admin)]
+    public async Task<ActionResult<ClienteDto>> Alterar(
+        int clienteId, AlteracaoClienteDto dados, CancellationToken cancelamento)
+    {
+        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        if (cliente == null)
+        {
+            return NotFound("Cliente não encontrado.");
+        }
+
+        if (dados.Nome != null)
+        {
+            if (string.IsNullOrWhiteSpace(dados.Nome))
+            {
+                return BadRequest("Informe o nome do cliente.");
+            }
+            cliente.Nome = dados.Nome.Trim();
+        }
+
+        // Guardados para saber se a caixa de e-mail mudou
+        string hostAnterior = cliente.ImapHost;
+        string usuarioAnterior = cliente.ImapUsuario;
+
+        if (dados.ImapHost != null)
+        {
+            cliente.ImapHost = dados.ImapHost.Trim();
+        }
+        if (dados.ImapPorta.HasValue)
+        {
+            cliente.ImapPorta = dados.ImapPorta.Value;
+        }
+        if (dados.ImapSsl.HasValue)
+        {
+            cliente.ImapSsl = dados.ImapSsl.Value;
+        }
+        if (dados.ImapUsuario != null)
+        {
+            cliente.ImapUsuario = dados.ImapUsuario.Trim();
+        }
+        if (!string.IsNullOrEmpty(dados.ImapSenha))
+        {
+            cliente.ImapSenhaProtegida = _protetor.Proteger(dados.ImapSenha);
+        }
+        if (dados.Ativo.HasValue)
+        {
+            cliente.Ativo = dados.Ativo.Value;
+        }
+
+        // Outra caixa de e-mail: os UIDs da caixa anterior não valem nela
+        bool trocouCaixa = !string.Equals(hostAnterior, cliente.ImapHost, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(usuarioAnterior, cliente.ImapUsuario, StringComparison.OrdinalIgnoreCase);
+        if (trocouCaixa)
+        {
+            cliente.ImapUidValidity = null;
+            cliente.ImapUltimoUid = null;
+        }
+
+        await _db.SaveChangesAsync(cancelamento);
+        return ParaDto(cliente);
     }
 
     [HttpPost]
@@ -63,13 +152,7 @@ public class ClientesController : ControllerBase
         _db.Clientes.Add(cliente);
         await _db.SaveChangesAsync(cancelamento);
 
-        var resultado = new ClienteDto();
-        resultado.Id = cliente.Id;
-        resultado.Nome = cliente.Nome;
-        resultado.ImapHost = cliente.ImapHost;
-        resultado.ImapUsuario = cliente.ImapUsuario;
-        resultado.Ativo = cliente.Ativo;
-        return resultado;
+        return ParaDto(cliente);
     }
 
     [HttpGet("{clienteId:int}/empresas")]
@@ -125,10 +208,35 @@ public class ClientesController : ControllerBase
         empresa.Nome = dados.Nome.Trim();
         empresa.Cnpj = cnpj;
 
+        string clientId = (dados.BlingClientId ?? "").Trim();
+        string clientSecret = (dados.BlingClientSecret ?? "").Trim();
+        if (clientId != "" || clientSecret != "")
+        {
+            if (clientId == "" || clientSecret == "")
+            {
+                return BadRequest("Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.");
+            }
+            empresa.BlingClientId = clientId;
+            empresa.BlingClientSecretProtegido = _protetor.Proteger(clientSecret);
+        }
+
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync(cancelamento);
 
         return ParaDto(empresa);
+    }
+
+    public static ClienteDto ParaDto(Cliente cliente)
+    {
+        var dto = new ClienteDto();
+        dto.Id = cliente.Id;
+        dto.Nome = cliente.Nome;
+        dto.ImapHost = cliente.ImapHost;
+        dto.ImapPorta = cliente.ImapPorta;
+        dto.ImapSsl = cliente.ImapSsl;
+        dto.ImapUsuario = cliente.ImapUsuario;
+        dto.Ativo = cliente.Ativo;
+        return dto;
     }
 
     public static EmpresaDto ParaDto(Empresa empresa)
@@ -138,7 +246,10 @@ public class ClientesController : ControllerBase
         dto.Nome = empresa.Nome;
         dto.Cnpj = empresa.Cnpj;
         dto.BlingConectado = empresa.BlingConectado;
+        dto.BlingClientId = empresa.BlingClientId;
+        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(empresa.BlingClientSecretProtegido);
         dto.UltimaSincronizacaoEm = empresa.UltimaSincronizacaoEm;
+        dto.Ativo = empresa.Ativo;
         return dto;
     }
 }

@@ -1,7 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
-import { ItemMenu, MENU } from './menu';
+import { ItemMenu, ItemSubmenu, MENU, itensVisiveis } from './menu';
+import { SessaoService } from '../../core/sessao.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -10,8 +11,25 @@ import { ItemMenu, MENU } from './menu';
 })
 export class SidebarComponent {
   private readonly router = inject(Router);
+  private readonly sessao = inject(SessaoService);
 
   readonly itens = MENU;
+  readonly usuario = this.sessao.usuario;
+  readonly menuUsuarioAberto = signal(false);
+
+  filhosVisiveis(item: ItemMenu): ItemSubmenu[] {
+    return itensVisiveis(item.children, this.sessao.ehAdmin());
+  }
+
+  alternarMenuUsuario(evento: Event): void {
+    evento.preventDefault();
+    this.menuUsuarioAberto.set(!this.menuUsuarioAberto());
+  }
+
+  sair(evento: Event): void {
+    evento.preventDefault();
+    this.sessao.sair();
+  }
 
   // Submenus abertos. Começa com o submenu da tela atual aberto.
   readonly abertos = signal<string[]>(this.submenusDaRotaAtual());

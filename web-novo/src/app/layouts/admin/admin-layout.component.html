@@ -1,11 +1,39 @@
 <div class="wrapper">
-  <div class="sidebar" data-color="white" data-background-color="red" data-image="assets/img/sidebar-1.jpg">
+  <div class="sidebar" data-color="azure" data-background-color="black" data-image="assets/img/sidebar-1.jpg">
     <app-sidebar />
     <div class="sidebar-background" style="background-image: url(assets/img/sidebar-1.jpg)"></div>
   </div>
   <div class="main-panel">
-    <app-navbar />
-    <router-outlet />
+    <app-navbar [clientes]="clientes()" />
+    @if (podeMostrarTelas()) {
+      @for (chave of chaveCliente(); track chave) {
+        <router-outlet />
+      }
+    } @else if (erroClientes()) {
+      <div class="main-content">
+        <div class="container-fluid">
+          <div class="alert alert-warning"><span>{{ erroClientes() }}</span></div>
+        </div>
+      </div>
+    } @else if (semClientes()) {
+      <div class="main-content">
+        <div class="container-fluid">
+          <div class="alert alert-warning">
+            <span>Nenhum cliente cadastrado ainda. Cadastre a rede (cliente) primeiro; depois aparecem as telas
+              para cadastrar as empresas dela.</span>
+          </div>
+          <a class="btn btn-info" routerLink="/pages/clientes">
+            <i class="material-icons">person_add</i> Cadastrar cliente
+          </a>
+        </div>
+      </div>
+    } @else if (precisaEscolherCliente()) {
+      <div class="main-content">
+        <div class="container-fluid">
+          <div class="alert alert-info"><span>Escolha um cliente na barra do topo.</span></div>
+        </div>
+      </div>
+    }
     <app-footer />
   </div>
 </div>

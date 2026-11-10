@@ -142,10 +142,17 @@ builder.Services.AddHangfireServer(opcoes =>
 
 // Painel Angular
 string urlFront = builder.Configuration["Front:Url"] ?? "http://localhost:4200";
+Uri? enderecoFront;
+if (!Uri.TryCreate(urlFront, UriKind.Absolute, out enderecoFront))
+{
+    throw new InvalidOperationException("Front:Url precisa ser uma URL completa, como http://localhost:4200/#.");
+}
+// O navegador envia só a origem (esquema, host e porta): o "/#" das rotas do painel fica de fora
+string origemFront = enderecoFront.GetLeftPart(UriPartial.Authority);
 builder.Services.AddCors(opcoes =>
 {
     opcoes.AddPolicy("front", politica => politica
-        .WithOrigins(urlFront)
+        .WithOrigins(origemFront)
         .AllowAnyHeader()
         .AllowAnyMethod());
 });

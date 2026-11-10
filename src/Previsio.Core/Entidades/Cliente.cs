@@ -15,6 +15,11 @@ public class Cliente
     public string ImapUsuario { get; set; } = "";
     public string ImapSenhaProtegida { get; set; } = "";
 
+    // Controle de leitura independente de "lido/não lido": UIDVALIDITY da caixa de entrada
+    // e UID do último e-mail já processado (nulos até a primeira leitura)
+    public long? ImapUidValidity { get; set; }
+    public long? ImapUltimoUid { get; set; }
+
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 

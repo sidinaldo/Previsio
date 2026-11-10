@@ -15,6 +15,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<ParcelaNota> ParcelasNota => Set<ParcelaNota>();
     public DbSet<ContaPagarSincronizada> ContasPagar => Set<ContaPagarSincronizada>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,6 +32,7 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("empresas");
             entidade.Property(e => e.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(e => e.Cnpj).HasMaxLength(14).IsRequired();
+            entidade.Property(e => e.BlingClientId).HasMaxLength(200);
             entidade.HasIndex(e => new { e.ClienteId, e.Cnpj }).IsUnique();
             entidade.Ignore(e => e.BlingConectado);
 
@@ -102,6 +104,45 @@ public class PrevisioDbContext : DbContext
             entidade.HasOne(u => u.Cliente)
                 .WithMany()
                 .HasForeignKey(u => u.ClienteId);
+        });
+
+        modelBuilder.Entity<FalhaProcessamento>(entidade =>
+        {
+            entidade.ToTable("falhas_processamento");
+            entidade.Property(f => f.Etapa).HasConversion<int>();
+            entidade.Property(f => f.Mensagem).HasMaxLength(2000).IsRequired();
+            entidade.Property(f => f.Metodo).HasMaxLength(10).IsRequired();
+            entidade.Property(f => f.Endereco).HasMaxLength(500).IsRequired();
+            entidade.Property(f => f.Resposta).HasMaxLength(4000);
+            entidade.Property(f => f.NumeroNota).HasMaxLength(20);
+            entidade.Property(f => f.ChaveAcesso).HasMaxLength(44);
+            entidade.Property(f => f.Fornecedor).HasMaxLength(200);
+            entidade.Property(f => f.CnpjFornecedor).HasMaxLength(14);
+            entidade.Property(f => f.ValorNota).HasPrecision(14, 2);
+            entidade.Property(f => f.NumeroParcela).HasMaxLength(20);
+            entidade.Property(f => f.ValorParcela).HasPrecision(14, 2);
+            entidade.Property(f => f.VencimentoParcela).HasColumnType("date");
+            entidade.Property(f => f.Origem).HasMaxLength(300);
+
+            // A tela lista as falhas do cliente da mais recente para a mais antiga
+            entidade.HasIndex(f => new { f.ClienteId, f.OcorridaEm });
+            entidade.HasIndex(f => f.NotaFiscalId);
+            entidade.HasIndex(f => new { f.ClienteId, f.UidEmail });
+
+            entidade.HasOne<Cliente>()
+                .WithMany()
+                .HasForeignKey(f => f.ClienteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entidade.HasOne(f => f.Empresa)
+                .WithMany()
+                .HasForeignKey(f => f.EmpresaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entidade.HasOne<NotaFiscal>()
+                .WithMany()
+                .HasForeignKey(f => f.NotaFiscalId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -4,6 +4,30 @@
 </div>
 
 <div class="sidebar-wrapper">
+  @if (usuario(); as u) {
+    <div class="user">
+      <div class="photo">
+        <img src="assets/img/default-avatar.png" alt="">
+      </div>
+      <div class="user-info">
+        <a class="username" href="#" data-toggle="collapse" [title]="u.email" [class.collapsed]="!menuUsuarioAberto()"
+           [attr.aria-expanded]="menuUsuarioAberto()" (click)="alternarMenuUsuario($event)">
+          <span>{{ u.nome }}<b class="caret"></b></span>
+        </a>
+        <div class="collapse" [class.show]="menuUsuarioAberto()">
+          <ul class="nav">
+            <li class="nav-item">
+              <a class="nav-link" href="#" (click)="sair($event)">
+                <span class="sidebar-mini">SA</span>
+                <span class="sidebar-normal">Sair</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  }
+
   <ul class="nav">
     @for (item of itens; track item.path) {
       <li class="nav-item" routerLinkActive="active">
@@ -23,7 +47,7 @@
 
           <div class="collapse" [class.show]="estaAberto(item)">
             <ul class="nav">
-              @for (filho of item.children; track filho.path) {
+              @for (filho of filhosVisiveis(item); track filho.path) {
                 <li class="nav-item" routerLinkActive="active">
                   <a class="nav-link" [routerLink]="[item.path, filho.path]">
                     <span class="sidebar-mini">{{ filho.ab }}</span>
