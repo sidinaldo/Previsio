@@ -1,47 +1,25 @@
-<nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute">
-  <div class="container-fluid">
-    <div class="navbar-wrapper">
-      <div class="navbar-minimize">
-        <button type="button" class="btn btn-just-icon btn-white btn-fab btn-round" (click)="minimizarMenu()"
-                aria-label="Minimizar menu">
-          <i class="material-icons text_align-center visible-on-sidebar-regular">more_vert</i>
-          <i class="material-icons design_bullet-list-67 visible-on-sidebar-mini">view_list</i>
-        </button>
+<header class="pv-topo">
+  <button type="button" class="pv-topo__menu" (click)="alternarMenu()"
+          aria-label="Mostrar ou recolher o menu" title="Mostrar ou recolher o menu">
+    <i class="material-icons" aria-hidden="true">menu</i>
+  </button>
+
+  <div class="pv-topo__direita">
+    @if (ehAdmin() && clientes().length > 0) {
+      <div class="pv-topo__cliente">
+        <label class="pv-rotulo" for="topo-cliente">Cliente</label>
+        <!-- bmd-form-group: impede o Bootstrap Material Design de embrulhar o select -->
+        <span class="pv-campo-grupo bmd-form-group">
+          <select id="topo-cliente" class="pv-campo" [ngModel]="clienteId()" (ngModelChange)="trocarCliente($event)">
+            @for (cliente of clientes(); track cliente.id) {
+              <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
+            }
+          </select>
+        </span>
       </div>
-      <span class="navbar-brand">{{ titulo() }}</span>
-    </div>
-
-    <button type="button" class="navbar-toggler btn-no-ripple" [class.toggled]="menuCelularAberto()"
-            (click)="alternarMenuCelular()" aria-label="Abrir menu">
-      <span class="sr-only">Abrir menu</span>
-      <span class="navbar-toggler-icon icon-bar"></span>
-      <span class="navbar-toggler-icon icon-bar"></span>
-      <span class="navbar-toggler-icon icon-bar"></span>
-    </button>
-
-    <div class="collapse navbar-collapse justify-content-end">
-      @if (ehAdmin() && clientes().length > 0) {
-        <div class="navbar-form">
-          <div class="input-group no-border">
-            <select class="form-control" aria-label="Cliente exibido" title="Cliente exibido"
-                    [ngModel]="clienteId()" (ngModelChange)="trocarCliente($event)">
-              @for (cliente of clientes(); track cliente.id) {
-                <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
-              }
-            </select>
-          </div>
-        </div>
-      }
-      <ul class="navbar-nav">
-        @if (usuario(); as u) {
-          <li class="nav-item">
-            <span class="nav-link" [title]="u.email">{{ u.nome }}</span>
-          </li>
-        }
-        <li class="nav-item">
-          <a class="nav-link" href="#" (click)="sair($event)">Sair</a>
-        </li>
-      </ul>
-    </div>
+    }
+    @if (usuario(); as u) {
+      <span class="pv-topo__usuario" [title]="u.email">{{ u.nome }}</span>
+    }
   </div>
-</nav>
+</header>

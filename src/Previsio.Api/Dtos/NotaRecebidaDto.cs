@@ -1,0 +1,24 @@
+namespace Previsio.Api.Dtos;
+
+/// <summary>
+/// Nota lida do e-mail, lançada ou não no Bling, com as parcelas (tela "Notas recebidas").
+/// </summary>
+public class NotaRecebidaDto
+{
+    public int Id { get; set; }
+    public int? EmpresaId { get; set; }
+    public string? EmpresaNome { get; set; }
+    public string Numero { get; set; } = "";
+    public string Serie { get; set; } = "";
+    public string ChaveAcesso { get; set; } = "";
+    public string Fornecedor { get; set; } = "";
+    public string CnpjFornecedor { get; set; } = "";
+    public DateTime DataEmissao { get; set; }
+    public decimal ValorTotal { get; set; }
+    public DateTime? PrimeiroVencimento { get; set; }
+    public string Status { get; set; } = "";
+    public string? MensagemErro { get; set; }
+    public DateTime RecebidaEm { get; set; }
+    public DateTime? LancadaEm { get; set; }
+    public List<ParcelaNotaDto> Parcelas { get; set; } = new List<ParcelaNotaDto>();
+}

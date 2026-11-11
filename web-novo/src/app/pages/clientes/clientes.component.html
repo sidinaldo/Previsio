@@ -1,22 +1,39 @@
 <div class="main-content">
   <div class="container-fluid">
-    <div class="card">
-      <div class="card-header card-header-info card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">person_add</i>
-        </div>
-        <h4 class="card-title">Novo cliente</h4>
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Clientes</h1>
+        <p class="pv-pagina__subtitulo">Cada cliente é uma rede, com a própria caixa de e-mail e as suas empresas</p>
       </div>
-      <form (ngSubmit)="adicionar()">
+    </div>
+
+    @if (mensagem()) {
+      <div class="alert alert-success" role="status"><span>{{ mensagem() }}</span></div>
+    }
+
+    <!-- O mesmo formulário cadastra um cliente novo ou altera o escolhido em "Editar" -->
+    <div #cartaoFormulario class="card" [class.pv-card--editando]="editando() !== null">
+      <div class="pv-card__cabecalho">
+        <div>
+          @if (editando(); as c) {
+            <h2 class="pv-card__titulo">Editar cliente</h2>
+            <p class="pv-card__descricao">Alterando {{ c.nome }}</p>
+          } @else {
+            <h2 class="pv-card__titulo">Novo cliente</h2>
+          }
+        </div>
+      </div>
+      <form (ngSubmit)="salvar()">
         <div class="card-body">
           @if (erro()) {
-            <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+            <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
           }
           <div class="row">
             <div class="col-md-6">
               <div class="form-group bmd-form-group">
                 <label for="cliente-nome" class="bmd-label-floating">Nome da rede</label>
-                <input id="cliente-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+                <input #campoNome id="cliente-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
               </div>
             </div>
             <div class="col-md-4">
@@ -28,8 +45,8 @@
             </div>
           </div>
 
-          <h6 class="card-category mt-4 mb-3">Caixa de e-mail dedicada (onde chegam as notas)</h6>
-          <div class="row">            
+          <h3 class="pv-formulario__secao">Caixa de e-mail dedicada (onde chegam as notas)</h3>
+          <div class="row">
             <div class="col-md-2">
               <div class="form-group bmd-form-group">
                 <label for="cliente-porta" class="bmd-label-floating">Porta</label>
@@ -46,49 +63,63 @@
             </div>
             <div class="col-md-3">
               <div class="form-group bmd-form-group">
-                <label for="cliente-senha" class="bmd-label-floating">Senha de app</label>
+                <label for="cliente-senha" class="bmd-label-floating">
+                  @if (editando()) {
+                    Nova senha de app (em branco mantém)
+                  } @else {
+                    Senha de app
+                  }
+                </label>
                 <input id="cliente-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
                        [(ngModel)]="imapSenha">
               </div>
             </div>
           </div>
-          <div class="form-check mt-2">
+          <div class="form-check">
             <label class="form-check-label">
               <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
               Conexão com SSL
               <span class="form-check-sign"><span class="check"></span></span>
             </label>
           </div>
-          <p class="card-category mt-3 mb-0">
+          <p class="pv-formulario__ajuda mt-3">
             No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app.
           </p>
         </div>
-        <div class="card-footer">
-          <button type="submit" class="btn btn-fill btn-info" [disabled]="enviando()">
-            @if (enviando()) {
-              Cadastrando...
-            } @else {
-              Cadastrar e ir para as empresas
-            }
-          </button>
+        <div class="pv-formulario__acoes">
+          @if (editando()) {
+            <button type="submit" class="btn btn-info" [disabled]="enviando()">Salvar alterações</button>
+            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
+          } @else {
+            <button type="submit" class="btn btn-info" [disabled]="enviando()">
+              @if (enviando()) {
+                Cadastrando...
+              } @else {
+                Cadastrar e ir para as empresas
+              }
+            </button>
+          }
         </div>
       </form>
     </div>
 
     <div class="card">
-      <div class="card-header card-header-info card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">people</i>
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Clientes</h2>
+          <p class="pv-card__descricao">{{ lista().length }} clientes cadastrados</p>
         </div>
-        <h4 class="card-title">
-          Clientes
-          <small class="description">· cada cliente é uma rede, com a própria caixa de e-mail e as suas empresas</small>
-        </h4>
       </div>
-      <div class="card-body">
+      @if (lista().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">groups</i></span>
+          <p class="pv-vazio__titulo">Nenhum cliente cadastrado ainda.</p>
+          <p class="pv-vazio__texto">Cadastre o primeiro no formulário acima.</p>
+        </div>
+      } @else {
         <div class="table-responsive">
           <table class="table">
-            <thead class="text-info">
+            <thead>
               <tr>
                 <th>Cliente</th>
                 <th>Caixa de e-mail</th>
@@ -98,42 +129,53 @@
             </thead>
             <tbody>
               @for (cliente of lista(); track cliente.id) {
-                <tr>
-                  <td><a [routerLink]="['/pages/clientes', cliente.id]"><strong>{{ cliente.nome }}</strong></a></td>
+                <tr [class.pv-linha--editando]="estaEditando(cliente)">
+                  <td>
+                    <a [routerLink]="['/pages/clientes', cliente.id]"><strong>{{ cliente.nome }}</strong></a>
+                    @if (estaEditando(cliente)) {
+                      <span class="badge badge-info ml-1">Em edição</span>
+                    }
+                  </td>
                   <td>
                     @if (cliente.imapUsuario) {
-                      {{ cliente.imapUsuario }} <small class="text-muted">({{ cliente.imapHost }})</small>
+                      {{ cliente.imapUsuario }}
+                      <span class="pv-tabela__auxiliar">{{ cliente.imapHost }}</span>
                     } @else {
                       —
                     }
                   </td>
                   <td>
                     @if (cliente.ativo) {
-                      <span class="text-success">Ativo</span>
+                      <span class="badge badge-success">Ativo</span>
                     } @else {
-                      <span class="text-muted">Inativo</span>
+                      <span class="badge badge-default">Inativo</span>
                     }
                   </td>
-                  <td class="td-actions text-right">
-                    <a class="btn btn-sm ml-1 mb-1 btn-default" [routerLink]="['/pages/clientes', cliente.id]">Editar</a>
-                    <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="verEmpresas(cliente)">
-                      @if (cliente.id === clienteExibido()) {
-                        Empresas
-                      } @else {
-                        Exibir e ver empresas
-                      }
-                    </button>
+                  <td class="text-right">
+                    <div class="pv-acoes-linha">
+                      <button type="button" class="btn btn-sm btn-secundario" (click)="verEmpresas(cliente)">
+                        @if (cliente.id === clienteExibido()) {
+                          Empresas
+                        } @else {
+                          Exibir e ver empresas
+                        }
+                      </button>
+                      <app-menu-acoes [rotulo]="'Mais ações para ' + cliente.nome">
+                        <button type="button" class="pv-acoes__item" (click)="editar(cliente)">
+                          <i class="material-icons" aria-hidden="true">edit</i> Editar
+                        </button>
+                        <a class="pv-acoes__item" [routerLink]="['/pages/clientes', cliente.id]">
+                          <i class="material-icons" aria-hidden="true">open_in_new</i> Ver detalhes
+                        </a>
+                      </app-menu-acoes>
+                    </div>
                   </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="4" class="card-category">Nenhum cliente cadastrado ainda. Cadastre o primeiro acima.</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>

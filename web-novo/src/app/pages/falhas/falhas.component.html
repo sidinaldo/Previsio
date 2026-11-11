@@ -1,20 +1,26 @@
 <div class="main-content">
   <div class="container-fluid">
 
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Falhas</h1>
+        <p class="pv-pagina__subtitulo">Tentativas que falharam ao ler as notas do e-mail ou ao lançá-las no Bling</p>
+      </div>
+    </div>
+
     <!-- Filtros -->
     <div class="card">
-      <div class="card-header card-header-info card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">filter_list</i>
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Filtrar falhas</h2>
         </div>
-        <h4 class="card-title">Filtrar falhas</h4>
       </div>
       <form (ngSubmit)="filtrar()">
         <div class="card-body">
           <div class="row">
-            <div class="col-md-3">
-              <label for="falhas-empresa" class="col-form-label pb-0">Empresa</label>
-              <div class="form-group mt-0 pt-0">
+            <div class="col-md-3 col-sm-6">
+              <label for="falhas-empresa" class="col-form-label pt-0">Empresa</label>
+              <div class="form-group">
                 <select id="falhas-empresa" class="form-control" name="empresa"
                         [ngModel]="empresaId()" (ngModelChange)="empresaId.set($event)">
                   <option [ngValue]="null">Todas</option>
@@ -24,9 +30,9 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
-              <label for="falhas-etapa" class="col-form-label pb-0">Etapa</label>
-              <div class="form-group mt-0 pt-0">
+            <div class="col-md-3 col-sm-6">
+              <label for="falhas-etapa" class="col-form-label pt-0">Etapa</label>
+              <div class="form-group">
                 <select id="falhas-etapa" class="form-control" name="etapa"
                         [ngModel]="etapa()" (ngModelChange)="etapa.set($event)">
                   <option value="">Todas</option>
@@ -36,196 +42,194 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
-              <label for="falhas-de" class="col-form-label pb-0">De</label>
-              <div class="form-group mt-0 pt-0">
+            <div class="col-md-3 col-sm-6">
+              <label for="falhas-de" class="col-form-label pt-0">De</label>
+              <div class="form-group">
                 <input id="falhas-de" type="date" class="form-control" name="de"
                        [ngModel]="de()" (ngModelChange)="de.set($event)">
               </div>
             </div>
-            <div class="col-md-3">
-              <label for="falhas-ate" class="col-form-label pb-0">Até</label>
-              <div class="form-group mt-0 pt-0">
+            <div class="col-md-3 col-sm-6">
+              <label for="falhas-ate" class="col-form-label pt-0">Até</label>
+              <div class="form-group">
                 <input id="falhas-ate" type="date" class="form-control" name="ate"
                        [ngModel]="ate()" (ngModelChange)="ate.set($event)">
               </div>
             </div>
           </div>
         </div>
-        <div class="card-footer">
-          <div>
-            <button type="submit" class="btn btn-info" [disabled]="carregando()">
-              <i class="material-icons">search</i> Filtrar
-            </button>
-            <button type="button" class="btn btn-default" (click)="limpar()" [disabled]="carregando()">
-              Limpar
-            </button>
-          </div>
+        <div class="pv-formulario__acoes">
+          <button type="submit" class="btn btn-info" [disabled]="carregando()">
+            <i class="material-icons" aria-hidden="true">search</i> Filtrar
+          </button>
+          <button type="button" class="btn btn-secundario" (click)="limpar()" [disabled]="carregando()">
+            Limpar
+          </button>
         </div>
       </form>
     </div>
 
     @if (notaFiltrada(); as numero) {
-      <div class="alert alert-info">
+      <div class="alert alert-info" role="status">
         <span>Mostrando as tentativas da NF {{ numero }}. Use "Limpar" para ver todas as falhas.</span>
       </div>
     }
     @if (erro()) {
-      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
     }
 
     <!-- Lista -->
     <div class="card">
-      <div class="card-header card-header-danger card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">error_outline</i>
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Falhas na leitura e no lançamento das notas</h2>
+          <p class="pv-card__descricao">{{ total() }} registros</p>
         </div>
-        <h4 class="card-title">
-          Falhas na leitura e no lançamento das notas
-          <small class="description">· {{ total() }} registros</small>
-        </h4>
       </div>
-      <div class="card-body">
-        @if (!carregando() && falhas().length === 0) {
-          <p class="card-category">Nenhuma falha encontrada com esses filtros.</p>
-        }
 
-        @if (falhas().length > 0) {
-          <div class="table-responsive">
-            <table class="table">
-              <thead class="text-danger">
+      @if (!carregando() && falhas().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">task_alt</i></span>
+          <p class="pv-vazio__titulo">Nenhuma falha encontrada com esses filtros.</p>
+        </div>
+      }
+
+      @if (falhas().length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Quando</th>
+                <th>Etapa</th>
+                <th>Nota</th>
+                <th>Empresa</th>
+                <th class="text-right">Valor</th>
+                <th>Por que falhou</th>
+                <th>Endereço</th>
+                <th class="text-right">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (falha of falhas(); track falha.id) {
                 <tr>
-                  <th>Quando</th>
-                  <th>Etapa</th>
-                  <th>Nota</th>
-                  <th>Empresa</th>
-                  <th class="text-right">Valor</th>
-                  <th>Por que falhou</th>
-                  <th>Endereço</th>
-                  <th class="text-right">Detalhes</th>
+                  <td class="pv-numero">{{ falha.ocorridaEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ descricaoEtapa(falha.etapa) }}</td>
+                  <td>
+                    @if (falha.numeroNota) {
+                      <strong>NF {{ falha.numeroNota }}</strong>
+                      <span class="pv-tabela__auxiliar">{{ falha.fornecedor }}</span>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td>{{ falha.empresaNome || '—' }}</td>
+                  <td class="text-right">
+                    @if (falha.valorNota !== null) {
+                      <strong>{{ falha.valorNota | currency:'BRL' }}</strong>
+                    } @else {
+                      —
+                    }
+                    @if (falha.valorParcela !== null) {
+                      <span class="pv-tabela__auxiliar">
+                        parcela {{ falha.numeroParcela }}: {{ falha.valorParcela | currency:'BRL' }}
+                      </span>
+                    }
+                  </td>
+                  <td>{{ falha.mensagem | slice:0:140 }}@if (falha.mensagem.length > 140) {…}</td>
+                  <td>
+                    <span class="badge badge-default">{{ falha.metodo }}</span>
+                    @if (falha.statusHttp !== null) {
+                      <span class="badge badge-danger ml-1">{{ falha.statusHttp }}</span>
+                    }
+                    <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ falha.endereco | slice:0:70 }}@if (falha.endereco.length > 70) {…}</span>
+                  </td>
+                  <td class="text-right">
+                    <button type="button" class="pv-botao-icone"
+                            [attr.aria-expanded]="abertaId() === falha.id"
+                            [attr.aria-label]="abertaId() === falha.id ? 'Fechar detalhes' : 'Ver detalhes'"
+                            [title]="abertaId() === falha.id ? 'Fechar detalhes' : 'Ver detalhes'"
+                            (click)="alternarDetalhes(falha)">
+                      <i class="material-icons" aria-hidden="true">{{ abertaId() === falha.id ? 'expand_less' : 'expand_more' }}</i>
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @for (falha of falhas(); track falha.id) {
-                  <tr>
-                    <td>{{ falha.ocorridaEm | date:'dd/MM/yyyy HH:mm' }}</td>
-                    <td>{{ descricaoEtapa(falha.etapa) }}</td>
-                    <td>
-                      @if (falha.numeroNota) {
-                        <strong>NF {{ falha.numeroNota }}</strong>
-                        <div class="card-category">{{ falha.fornecedor }}</div>
-                      } @else {
-                        —
-                      }
-                    </td>
-                    <td>{{ falha.empresaNome || '—' }}</td>
-                    <td class="text-right">
-                      @if (falha.valorNota !== null) {
-                        <strong>{{ falha.valorNota | currency:'BRL' }}</strong>
-                      } @else {
-                        —
-                      }
-                      @if (falha.valorParcela !== null) {
-                        <div class="card-category">
-                          parcela {{ falha.numeroParcela }}: {{ falha.valorParcela | currency:'BRL' }}
+
+                @if (abertaId() === falha.id) {
+                  <tr class="pv-tabela__detalhe">
+                    <td colspan="8">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <h3 class="pv-detalhe__titulo">Por que falhou</h3>
+                          <p class="pv-detalhe__texto">{{ falha.mensagem }}</p>
+
+                          <h3 class="pv-detalhe__titulo">Endereço chamado</h3>
+                          <p class="pv-detalhe__texto">
+                            <span class="badge badge-default">{{ falha.metodo }}</span>
+                            {{ falha.endereco }}
+                            @if (falha.statusHttp !== null) {
+                              <br>Status HTTP: <strong>{{ falha.statusHttp }}</strong>
+                            } @else if (falha.metodo !== 'IMAP') {
+                              <br>Sem resposta do Bling (rede ou tempo esgotado)
+                            }
+                          </p>
+
+                          @if (falha.resposta) {
+                            <h3 class="pv-detalhe__titulo">Resposta do Bling</h3>
+                            <pre class="pv-codigo">{{ falha.resposta }}</pre>
+                          }
                         </div>
-                      }
-                    </td>
-                    <td>{{ falha.mensagem | slice:0:140 }}@if (falha.mensagem.length > 140) {…}</td>
-                    <td>
-                      <span class="badge badge-default">{{ falha.metodo }}</span>
-                      @if (falha.statusHttp !== null) {
-                        <span class="badge badge-danger">{{ falha.statusHttp }}</span>
-                      }
-                      <div class="card-category">{{ falha.endereco | slice:0:70 }}@if (falha.endereco.length > 70) {…}</div>
-                    </td>
-                    <td class="td-actions text-right">
-                      <button type="button" class="btn btn-info btn-link"
-                              [attr.aria-expanded]="abertaId() === falha.id"
-                              [attr.aria-label]="abertaId() === falha.id ? 'Fechar detalhes' : 'Ver detalhes'"
-                              (click)="alternarDetalhes(falha)">
-                        <i class="material-icons">{{ abertaId() === falha.id ? 'expand_less' : 'expand_more' }}</i>
-                      </button>
-                    </td>
-                  </tr>
-
-                  @if (abertaId() === falha.id) {
-                    <tr>
-                      <td colspan="8">
-                        <div class="row">
-                          <div class="col-md-6">
-                            <h6>Por que falhou</h6>
-                            <p>{{ falha.mensagem }}</p>
-
-                            <h6>Endereço chamado</h6>
-                            <p>
-                              <span class="badge badge-default">{{ falha.metodo }}</span>
-                              {{ falha.endereco }}
-                              @if (falha.statusHttp !== null) {
-                                <br>Status HTTP: <strong>{{ falha.statusHttp }}</strong>
-                              } @else if (falha.metodo !== 'IMAP') {
-                                <br>Sem resposta do Bling (rede ou tempo esgotado)
+                        <div class="col-md-6">
+                          @if (falha.numeroNota) {
+                            <h3 class="pv-detalhe__titulo">Nota</h3>
+                            <p class="pv-detalhe__texto">
+                              NF <strong>{{ falha.numeroNota }}</strong> · {{ falha.fornecedor }}
+                              @if (falha.cnpjFornecedor) {
+                                (CNPJ {{ falha.cnpjFornecedor }})
+                              }
+                              <br>Valor da nota: <strong>{{ falha.valorNota | currency:'BRL' }}</strong>
+                              @if (falha.valorParcela !== null) {
+                                <br>Parcela {{ falha.numeroParcela }}: {{ falha.valorParcela | currency:'BRL' }}
+                                @if (falha.vencimentoParcela) {
+                                  , vence em {{ falha.vencimentoParcela | date:'dd/MM/yyyy' }}
+                                }
+                              }
+                              @if (falha.chaveAcesso) {
+                                <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">Chave {{ falha.chaveAcesso }}</span>
                               }
                             </p>
+                          }
 
-                            @if (falha.resposta) {
-                              <h6>Resposta do Bling</h6>
-                              <pre class="mb-0" style="white-space: pre-wrap; word-break: break-all;">{{ falha.resposta }}</pre>
-                            }
-                          </div>
-                          <div class="col-md-6">
-                            @if (falha.numeroNota) {
-                              <h6>Nota</h6>
-                              <p>
-                                NF <strong>{{ falha.numeroNota }}</strong> · {{ falha.fornecedor }}
-                                @if (falha.cnpjFornecedor) {
-                                  (CNPJ {{ falha.cnpjFornecedor }})
-                                }
-                                <br>Valor da nota: <strong>{{ falha.valorNota | currency:'BRL' }}</strong>
-                                @if (falha.valorParcela !== null) {
-                                  <br>Parcela {{ falha.numeroParcela }}: {{ falha.valorParcela | currency:'BRL' }}
-                                  @if (falha.vencimentoParcela) {
-                                    , vence em {{ falha.vencimentoParcela | date:'dd/MM/yyyy' }}
-                                  }
-                                }
-                                @if (falha.chaveAcesso) {
-                                  <br><span class="card-category">Chave {{ falha.chaveAcesso }}</span>
-                                }
-                              </p>
-                            }
+                          <h3 class="pv-detalhe__titulo">Empresa</h3>
+                          <p class="pv-detalhe__texto">{{ falha.empresaNome || 'Não identificada' }}</p>
 
-                            <h6>Empresa</h6>
-                            <p>{{ falha.empresaNome || 'Não identificada' }}</p>
-
-                            @if (falha.origem) {
-                              <h6>Origem</h6>
-                              <p class="card-category">{{ falha.origem }}</p>
-                            }
-                          </div>
+                          @if (falha.origem) {
+                            <h3 class="pv-detalhe__titulo">Origem</h3>
+                            <p class="pv-detalhe__texto">{{ falha.origem }}</p>
+                          }
                         </div>
-                      </td>
-                    </tr>
-                  }
+                      </div>
+                    </td>
+                  </tr>
                 }
-              </tbody>
-            </table>
-          </div>
+              }
+            </tbody>
+          </table>
+        </div>
 
-          @if (totalPaginas() > 1) {
-            <div class="d-flex justify-content-between align-items-center">
-              <button type="button" class="btn btn-default btn-sm" (click)="irParaPagina(pagina() - 1)"
-                      [disabled]="pagina() <= 1 || carregando()">
-                <i class="material-icons">chevron_left</i> Anterior
-              </button>
-              <span class="card-category">Página {{ pagina() }} de {{ totalPaginas() }}</span>
-              <button type="button" class="btn btn-default btn-sm" (click)="irParaPagina(pagina() + 1)"
-                      [disabled]="pagina() >= totalPaginas() || carregando()">
-                Próxima <i class="material-icons">chevron_right</i>
-              </button>
-            </div>
-          }
+        @if (totalPaginas() > 1) {
+          <div class="pv-paginacao">
+            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
+                    [disabled]="pagina() <= 1 || carregando()">
+              <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
+            </button>
+            <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
+            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
+                    [disabled]="pagina() >= totalPaginas() || carregando()">
+              Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
+            </button>
+          </div>
         }
-      </div>
+      }
     </div>
 
   </div>

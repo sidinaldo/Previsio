@@ -126,6 +126,13 @@ namespace Previsio.Data.Migrations
                     b.Property<string>("BlingAccessTokenProtegido")
                         .HasColumnType("text");
 
+                    b.Property<string>("BlingClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BlingClientSecretProtegido")
+                        .HasColumnType("text");
+
                     b.Property<string>("BlingRefreshTokenProtegido")
                         .HasColumnType("text");
 

@@ -4,15 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
-import { tituloDaRota } from '../sidebar/menu';
 import { Cliente } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
 
 /**
  * Barra do topo do layout admin.
- * Reproduz o comportamento do template sem jQuery:
- * - botão para minimizar o menu lateral (classe "sidebar-mini" no body)
- * - botão do celular que abre o menu (classe "nav-open" + camada escura)
+ * Reproduz o comportamento do template sem jQuery, num botão só (à esquerda):
+ * - no computador, recolhe o menu lateral (classe "sidebar-mini" no body)
+ * - no celular, abre o menu por cima da tela (classe "nav-open" + camada escura)
  * Para o admin, mostra também a escolha do cliente exibido.
  */
 @Component({
@@ -30,7 +29,6 @@ export class NavbarComponent {
   readonly usuario = this.sessao.usuario;
   readonly clienteId = this.sessao.clienteId;
 
-  readonly titulo = signal(tituloDaRota(this.router.url));
   readonly menuCelularAberto = signal(false);
 
   private camada: HTMLElement | null = null;
@@ -38,19 +36,20 @@ export class NavbarComponent {
   constructor() {
     this.router.events
       .pipe(filter(evento => evento instanceof NavigationEnd), takeUntilDestroyed(inject(DestroyRef)))
-      .subscribe(() => {
-        this.titulo.set(tituloDaRota(this.router.url));
-        this.fecharMenuCelular();
-      });
+      .subscribe(() => this.fecharMenuCelular());
   }
 
   trocarCliente(clienteId: number): void {
     this.sessao.escolherCliente(Number(clienteId));
   }
 
-  sair(evento: Event): void {
-    evento.preventDefault();
-    this.sessao.sair();
+  alternarMenu(): void {
+    // Mesmo ponto de corte do template para o menu virar gaveta (991px)
+    if (window.matchMedia('(max-width: 991px)').matches) {
+      this.alternarMenuCelular();
+    } else {
+      this.minimizarMenu();
+    }
   }
 
   minimizarMenu(): void {

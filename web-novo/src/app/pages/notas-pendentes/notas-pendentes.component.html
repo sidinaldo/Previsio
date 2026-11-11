@@ -1,106 +1,118 @@
 <div [class.main-content]="!embutido()">
   <div [class.container-fluid]="!embutido()">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          <div class="card-header card-header-warning card-header-icon">
-            <div class="card-icon">
-              <i class="material-icons">report_problem</i>
-            </div>
-            <h4 class="card-title">
-              Notas que chegaram no e-mail e não estão no Bling
-              <small class="description">· {{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</small>
-            </h4>
-          </div>
-          <div class="card-body">
-            @if (!embutido()) {
-              <div class="toolbar">
-                @if (ehAdmin()) {
-                  <button type="button" class="btn btn-warning btn-sm" (click)="buscarEmailsAgora()">
-                    <i class="material-icons">mail</i> Buscar e-mails agora
-                  </button>
-                }
-                <button type="button" class="btn btn-default btn-sm" (click)="carregar()" [disabled]="carregando()">
-                  <i class="material-icons">refresh</i> Atualizar
-                </button>
-              </div>
-            }
 
-            @if (mensagem()) {
-              <div class="alert alert-info"><span>{{ mensagem() }}</span></div>
-            }
-            @if (erro()) {
-              <div class="alert alert-danger"><span>{{ erro() }}</span></div>
-            }
-
-            @if (!carregando() && notas().length === 0) {
-              <p class="card-category">Tudo certo: todas as notas recebidas já estão no Bling.</p>
-            }
-
-            @if (notas().length > 0) {
-              <div class="table-responsive">
-                <table class="table">
-                  <thead class="text-warning">
-                    <tr>
-                      <th>Fornecedor</th>
-                      <th>NF</th>
-                      @if (!empresaId()) {
-                        <th>Empresa</th>
-                      }
-                      <th>Recebida</th>
-                      <th>1º vencimento</th>
-                      <th class="text-right">Valor</th>
-                      <th>Situação</th>
-                      <th class="text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (nota of notas(); track nota.id) {
-                      <tr>
-                        <td><strong>{{ nota.fornecedor }}</strong></td>
-                        <td>{{ nota.numero }}</td>
-                        @if (!empresaId()) {
-                          <td>{{ nota.empresaNome || '—' }}</td>
-                        }
-                        <td>{{ nota.recebidaEm | date:'dd/MM HH:mm' }}</td>
-                        <td>
-                          @if (nota.primeiroVencimento) {
-                            {{ nota.primeiroVencimento | date:'dd/MM' }}
-                          } @else {
-                            —
-                          }
-                        </td>
-                        <td class="text-right"><strong>{{ nota.valorTotal | currency:'BRL' }}</strong></td>
-                        <td>
-                          <span class="text-warning">{{ descricao(nota.status) }}</span>
-                          @if (nota.mensagemErro) {
-                            <div class="card-category">{{ nota.mensagemErro | slice:0:160 }}</div>
-                          }
-                        </td>
-                        <td class="td-actions text-right">
-                          @if (temFalhas(nota)) {
-                            <a class="btn btn-danger btn-link" [routerLink]="['/pages/falhas']"
-                               [queryParams]="{ notaId: nota.id }"
-                               title="Ver as tentativas que falharam" aria-label="Ver as tentativas que falharam">
-                              <i class="material-icons">history</i>
-                            </a>
-                          }
-                          @if (podeReprocessar(nota)) {
-                            <button type="button" class="btn btn-info btn-link" title="Tentar lançar novamente"
-                                    aria-label="Tentar lançar novamente" (click)="reprocessar(nota)">
-                              <i class="material-icons">replay</i>
-                            </button>
-                          }
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </div>
+    @if (!embutido()) {
+      <div class="pv-pagina__cabecalho">
+        <div>
+          <h1 class="pv-pagina__titulo">Notas pendentes</h1>
+          <p class="pv-pagina__subtitulo">Notas que chegaram no e-mail e ainda não estão no Bling</p>
+        </div>
+        <div class="pv-pagina__acoes">
+          @if (ehAdmin()) {
+            <button type="button" class="btn btn-secundario" (click)="buscarEmailsAgora()" [disabled]="buscandoEmails()">
+              @if (buscandoEmails()) {
+                <span class="pv-spinner" aria-hidden="true"></span> Buscando e-mails...
+              } @else {
+                <i class="material-icons" aria-hidden="true">mail</i> Buscar e-mails agora
+              }
+            </button>
+          }
+          <button type="button" class="btn btn-secundario" (click)="carregar()" [disabled]="carregando()">
+            <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
+          </button>
         </div>
       </div>
+    }
+
+    <div class="card">
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no Bling</h2>
+          <p class="pv-card__descricao pv-numero">{{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</p>
+        </div>
+      </div>
+
+      @if (mensagem() || erro()) {
+        <div class="card-body pb-0">
+          @if (mensagem()) {
+            <div class="alert alert-info" role="status"><span>{{ mensagem() }}</span></div>
+          }
+          @if (erro()) {
+            <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+          }
+        </div>
+      }
+
+      @if (!carregando() && notas().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">task_alt</i></span>
+          <p class="pv-vazio__titulo">Tudo certo: todas as notas recebidas já estão no Bling.</p>
+        </div>
+      }
+
+      @if (notas().length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Fornecedor</th>
+                <th>NF</th>
+                @if (!empresaId()) {
+                  <th>Empresa</th>
+                }
+                <th>Recebida</th>
+                <th>1º vencimento</th>
+                <th class="text-right">Valor</th>
+                <th>Situação</th>
+                <th class="text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (nota of notas(); track nota.id) {
+                <tr>
+                  <td><strong>{{ nota.fornecedor }}</strong></td>
+                  <td class="pv-numero">{{ nota.numero }}</td>
+                  @if (!empresaId()) {
+                    <td>{{ nota.empresaNome || '—' }}</td>
+                  }
+                  <td class="pv-numero">{{ nota.recebidaEm | date:'dd/MM HH:mm' }}</td>
+                  <td class="pv-numero">
+                    @if (nota.primeiroVencimento) {
+                      {{ nota.primeiroVencimento | date:'dd/MM' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="text-right"><strong>{{ nota.valorTotal | currency:'BRL' }}</strong></td>
+                  <td>
+                    <span class="badge" [class]="classeStatus(nota.status)">{{ descricao(nota.status) }}</span>
+                    @if (nota.mensagemErro) {
+                      <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ nota.mensagemErro | slice:0:160 }}</span>
+                    }
+                  </td>
+                  <td class="text-right">
+                    <div class="pv-acoes-linha">
+                      @if (podeReprocessar(nota)) {
+                        <button type="button" class="pv-botao-icone" title="Tentar lançar novamente"
+                                aria-label="Tentar lançar novamente" (click)="reprocessar(nota)">
+                          <i class="material-icons" aria-hidden="true">replay</i>
+                        </button>
+                      }
+                      @if (temFalhas(nota)) {
+                        <app-menu-acoes [rotulo]="'Mais ações para a NF ' + nota.numero">
+                          <a class="pv-acoes__item" [routerLink]="['/pages/falhas']" [queryParams]="{ notaId: nota.id }">
+                            <i class="material-icons" aria-hidden="true">history</i> Ver as tentativas que falharam
+                          </a>
+                        </app-menu-acoes>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   </div>
 </div>

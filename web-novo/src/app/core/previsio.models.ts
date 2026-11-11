@@ -150,7 +150,65 @@ export interface RespostaLogin {
   usuario: Usuario;
 }
 
+/** Parcela da nota; blingContaPagarId vem preenchido depois que a conta a pagar foi criada no Bling. */
+export interface ParcelaNota {
+  numeroParcela: string;
+  vencimento: string;
+  valor: number;
+  blingContaPagarId: number | null;
+}
+
+/** Nota lida do e-mail, lançada ou não no Bling (GET /api/clientes/{id}/notas). */
+export interface NotaRecebida {
+  id: number;
+  empresaId: number | null;
+  empresaNome: string | null;
+  numero: string;
+  serie: string;
+  chaveAcesso: string;
+  fornecedor: string;
+  cnpjFornecedor: string;
+  dataEmissao: string;
+  valorTotal: number;
+  primeiroVencimento: string | null;
+  status: string;
+  mensagemErro: string | null;
+  recebidaEm: string;
+  lancadaEm: string | null;
+  parcelas: ParcelaNota[];
+}
+
+export interface PaginaNotas {
+  itens: NotaRecebida[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+}
+
+/** Filtros da tela de notas recebidas. Datas (dia em que a nota chegou) no formato yyyy-MM-dd. */
+export interface FiltroNotas {
+  empresaId?: number | null;
+  // Nome da situação (ex.: "Lancada") ou SITUACAO_PENDENTES
+  situacao?: string;
+  de?: string;
+  ate?: string;
+  pagina?: number;
+}
+
+/** Jobs em segundo plano que o admin pode rodar na hora. */
+export type NomeJob = 'leitura-email' | 'lancamento' | 'sincronizacao';
+
+/** GET /api/jobs/{nome}/situacao: true enquanto o job está na fila ou rodando. */
+export interface SituacaoJob {
+  nome: string;
+  emExecucao: boolean;
+}
+
+/** Filtro que junta todas as situações que ainda não viraram conta a pagar. */
+export const SITUACAO_PENDENTES = 'Pendentes';
+
 export const DESCRICAO_STATUS: { [status: string]: string } = {
+  Lancada: 'Lançada no Bling',
   Recebida: 'Aguardando lançamento',
   SemParcelas: 'Sem vencimentos no XML',
   EmpresaNaoEncontrada: 'CNPJ não cadastrado',

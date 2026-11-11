@@ -1,34 +1,42 @@
 <div class="main-content">
   <div class="container-fluid">
-    <a routerLink="/pages/clientes" class="btn btn-default btn-sm">
-      <i class="material-icons">arrow_back</i> Voltar para Clientes
+    <a routerLink="/pages/clientes" class="pv-voltar">
+      <i class="material-icons" aria-hidden="true">arrow_back</i> Voltar para Clientes
     </a>
 
+    @if (cliente(); as atual) {
+      <div class="pv-pagina__cabecalho">
+        <div>
+          <h1 class="pv-pagina__titulo">
+            {{ atual.nome }}
+            @if (atual.ativo) {
+              <span class="badge badge-success align-middle ml-1">Ativo</span>
+            } @else {
+              <span class="badge badge-default align-middle ml-1">Inativo</span>
+            }
+          </h1>
+          <p class="pv-pagina__subtitulo">Dados da rede e da caixa de e-mail onde chegam as notas</p>
+        </div>
+      </div>
+    }
+
     @if (mensagem()) {
-      <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+      <div class="alert alert-success" role="status"><span>{{ mensagem() }}</span></div>
     }
     @if (erro()) {
-      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
     }
 
     @if (carregando()) {
-      <p class="card-category">Carregando...</p>
+      <p class="pv-pagina__subtitulo">Carregando...</p>
     }
 
     @if (cliente(); as atual) {
       <div class="card">
-        <div class="card-header card-header-info card-header-icon">
-          <div class="card-icon">
-            <i class="material-icons">edit</i>
+        <div class="pv-card__cabecalho">
+          <div>
+            <h2 class="pv-card__titulo">Editar cliente</h2>
           </div>
-          <h4 class="card-title">
-            {{ atual.nome }}
-            @if (atual.ativo) {
-              <small class="description">· <span class="text-success">Ativo</span></small>
-            } @else {
-              <small class="description">· <span class="text-muted">Inativo</span></small>
-            }
-          </h4>
         </div>
         <form (ngSubmit)="salvar()">
           <div class="card-body">
@@ -41,7 +49,7 @@
               </div>
             </div>
 
-            <h6 class="card-category mt-4 mb-3">Caixa de e-mail dedicada (onde chegam as notas)</h6>
+            <h3 class="pv-formulario__secao">Caixa de e-mail dedicada (onde chegam as notas)</h3>
             <div class="row">
               <div class="col-md-4">
                 <div class="form-group bmd-form-group">
@@ -71,7 +79,7 @@
                 </div>
               </div>
             </div>
-            <div class="form-check mt-2">
+            <div class="form-check">
               <label class="form-check-label">
                 <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
                 Conexão com SSL
@@ -79,14 +87,14 @@
               </label>
             </div>
           </div>
-          <div class="card-footer">
-            <button type="submit" class="btn btn-fill btn-info" [disabled]="salvando()">Salvar</button>
+          <div class="pv-formulario__acoes">
+            <button type="submit" class="btn btn-info" [disabled]="salvando()">Salvar</button>
             @if (atual.ativo) {
-              <button type="button" class="btn btn-default" [disabled]="salvando()" (click)="alternarAtivo()">
+              <button type="button" class="btn btn-secundario" [disabled]="salvando()" (click)="alternarAtivo()">
                 Desativar
               </button>
             } @else {
-              <button type="button" class="btn btn-success" [disabled]="salvando()" (click)="alternarAtivo()">
+              <button type="button" class="btn btn-secundario" [disabled]="salvando()" (click)="alternarAtivo()">
                 Ativar
               </button>
             }
@@ -95,16 +103,26 @@
       </div>
 
       <div class="card">
-        <div class="card-header card-header-info card-header-icon">
-          <div class="card-icon">
-            <i class="material-icons">store</i>
+        <div class="pv-card__cabecalho">
+          <div>
+            <h2 class="pv-card__titulo">Empresas deste cliente</h2>
+            <p class="pv-card__descricao">{{ empresas().length }} empresas</p>
           </div>
-          <h4 class="card-title">Empresas deste cliente</h4>
+          <div class="pv-card__acoes">
+            <button type="button" class="btn btn-secundario btn-sm" (click)="verEmpresas()">
+              <i class="material-icons" aria-hidden="true">store</i> Gerenciar empresas
+            </button>
+          </div>
         </div>
-        <div class="card-body">
+        @if (empresas().length === 0) {
+          <div class="pv-vazio pv-vazio--compacto">
+            <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">store</i></span>
+            <p class="pv-vazio__titulo">Nenhuma empresa cadastrada para este cliente.</p>
+          </div>
+        } @else {
           <div class="table-responsive">
             <table class="table">
-              <thead class="text-info">
+              <thead>
                 <tr>
                   <th>Empresa</th>
                   <th>CNPJ</th>
@@ -115,17 +133,17 @@
               </thead>
               <tbody>
                 @for (empresa of empresas(); track empresa.id) {
-                  <tr>
+                  <tr [class.pv-linha--inativa]="!empresa.ativo">
                     <td><strong>{{ empresa.nome }}</strong></td>
-                    <td>{{ empresa.cnpj }}</td>
+                    <td class="pv-numero">{{ empresa.cnpj }}</td>
                     <td>
                       @if (empresa.blingConectado) {
-                        <span class="text-success">Conectado</span>
+                        <span class="badge badge-success">Conectado</span>
                       } @else {
-                        <span class="text-warning">Desconectado</span>
+                        <span class="badge badge-warning">Desconectado</span>
                       }
                     </td>
-                    <td>
+                    <td class="pv-numero">
                       @if (empresa.ultimaSincronizacaoEm) {
                         {{ empresa.ultimaSincronizacaoEm | date:'dd/MM HH:mm' }}
                       } @else {
@@ -134,26 +152,17 @@
                     </td>
                     <td>
                       @if (empresa.ativo) {
-                        <span class="text-success">Ativa</span>
+                        <span class="badge badge-success">Ativa</span>
                       } @else {
-                        <span class="text-muted">Inativa</span>
+                        <span class="badge badge-default">Inativa</span>
                       }
                     </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="5" class="card-category">Nenhuma empresa cadastrada para este cliente.</td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
-        </div>
-        <div class="card-footer">
-          <button type="button" class="btn btn-info btn-sm" (click)="verEmpresas()">
-            <i class="material-icons">store</i> Gerenciar empresas
-          </button>
-        </div>
+        }
       </div>
     }
   </div>

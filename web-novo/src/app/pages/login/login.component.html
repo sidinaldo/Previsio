@@ -1,66 +1,74 @@
-<div class="wrapper wrapper-full-page">
-  <div class="page-header login-page header-filter" filter-color="black"
-       style="background-image: url('assets/img/login.jpg'); background-size: cover; background-position: top center;">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-4 col-md-6 col-sm-6 ml-auto mr-auto">
-          <form class="form" (ngSubmit)="entrar()">
-            <div class="card card-login" [class.card-hidden]="!cartaoVisivel()">
-              <div class="card-header card-header-info text-center">
-                <h4 class="card-title">Entrar no Previsio</h4>
-              </div>
-              <div class="card-body">
-                <p class="card-description text-center">Use o e-mail e a senha da sua empresa</p>
-                @if (aviso()) {
-                  <div class="alert alert-info"><span>{{ aviso() }}</span></div>
-                }
-                @if (erro()) {
-                  <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
-                }
-                <span class="bmd-form-group">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text">
-                        <i class="material-icons">email</i>
-                      </span>
-                    </div>
-                    <input type="email" class="form-control" placeholder="E-mail..." name="email"
-                           autocomplete="username" [(ngModel)]="email">
-                  </div>
-                </span>
-                <span class="bmd-form-group">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text">
-                        <i class="material-icons">lock_outline</i>
-                      </span>
-                    </div>
-                    <input type="password" class="form-control" placeholder="Senha..." name="senha"
-                           autocomplete="current-password" [(ngModel)]="senha">
-                  </div>
-                </span>
-              </div>
-              <div class="card-footer justify-content-center">
-                <button type="submit" class="btn btn-info btn-link btn-lg" [disabled]="enviando()">
-                  @if (enviando()) {
-                    Entrando...
-                  } @else {
-                    Entrar
-                  }
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
+<div class="login">
+  <section class="marca" aria-label="Previsio">
+    <div class="marca__logo">
+      <span class="marca__nome">Previsio</span>
+      <span class="marca__assinatura">by Soft.IO</span>
     </div>
 
-    <footer class="footer">
-      <div class="container">
-        <div class="copyright pull-right">
-          &copy; {{ ano }} Previsio · Soft.IO
+    <div class="marca__conteudo">
+      <p class="marca__frase">Contas a pagar dos próximos 30 dias, direto das notas do seu <span class="text-nowrap">e-mail</span></p>
+      <ul class="marca__itens">
+        <li><i class="material-icons" aria-hidden="true">mark_email_read</i> Notas lidas automaticamente</li>
+        <li><i class="material-icons" aria-hidden="true">sync_alt</i> Lançadas no Bling de cada CNPJ</li>
+        <li><i class="material-icons" aria-hidden="true">insights</i> Valor real a pagar por empresa</li>
+      </ul>
+    </div>
+
+    <p class="marca__rodape">&copy; {{ ano }} Previsio · Soft.IO</p>
+  </section>
+
+  <main class="acesso">
+    <form class="formulario" (ngSubmit)="entrar()" novalidate>
+      <h1 class="formulario__titulo">Entrar</h1>
+      <p class="formulario__subtitulo">Use o e-mail e a senha cadastrados para sua empresa</p>
+
+      <!-- bmd-form-group: sem ele o Bootstrap Material Design embrulha o input num span (tira o foco e muda o DOM) -->
+      <div class="campo">
+        <label class="campo__rotulo" for="login-email">E-mail</label>
+        <div class="campo__caixa bmd-form-group">
+          <i class="material-icons campo__icone" aria-hidden="true">mail_outline</i>
+          <input #campoEmail id="login-email" class="campo__entrada" type="email" name="email"
+                 autocomplete="username" autocapitalize="off" spellcheck="false" [(ngModel)]="email">
         </div>
       </div>
-    </footer>
-  </div>
+
+      <div class="campo">
+        <label class="campo__rotulo" for="login-senha">Senha</label>
+        <div class="campo__caixa bmd-form-group">
+          <i class="material-icons campo__icone" aria-hidden="true">lock_outline</i>
+          <input id="login-senha" class="campo__entrada campo__entrada--senha" [type]="tipoSenha()" name="senha"
+                 autocomplete="current-password" autocapitalize="off" spellcheck="false" [(ngModel)]="senha"
+                 (keydown)="verificarCapsLock($event)" (keyup)="verificarCapsLock($event)" (blur)="capsLock.set(false)">
+          <button type="button" class="campo__olho" [attr.aria-label]="rotuloOlho()"
+                  [attr.aria-pressed]="senhaVisivel()" (click)="alternarSenha()">
+            @if (senhaVisivel()) {
+              <i class="material-icons" aria-hidden="true">visibility_off</i>
+            } @else {
+              <i class="material-icons" aria-hidden="true">visibility</i>
+            }
+          </button>
+        </div>
+        @if (capsLock()) {
+          <p class="campo__aviso" role="status"><i class="material-icons" aria-hidden="true">keyboard_capslock</i> Caps Lock ativado</p>
+        }
+      </div>
+
+      @if (aviso()) {
+        <div class="alert alert-info" role="alert"><span>{{ aviso() }}</span></div>
+      }
+      @if (erro()) {
+        <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+      }
+
+      <button type="submit" class="btn btn-info btn-block formulario__botao" [disabled]="enviando()">
+        @if (enviando()) {
+          <span class="formulario__spinner" aria-hidden="true"></span> Entrando...
+        } @else {
+          Entrar
+        }
+      </button>
+
+      <p class="formulario__ajuda">Problemas para entrar? Fale com o administrador da sua empresa.</p>
+    </form>
+  </main>
 </div>

@@ -22,6 +22,10 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./painel/painel.component').then(m => m.PainelComponent)
       },
       {
+        path: 'notas-recebidas',
+        loadComponent: () => import('./notas-recebidas/notas-recebidas.component').then(m => m.NotasRecebidasComponent)
+      },
+      {
         path: 'notas-pendentes',
         loadComponent: () => import('./notas-pendentes/notas-pendentes.component').then(m => m.NotasPendentesComponent)
       },

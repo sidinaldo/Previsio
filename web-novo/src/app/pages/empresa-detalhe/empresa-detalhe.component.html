@@ -1,67 +1,67 @@
 <div class="main-content">
   <div class="container-fluid">
 
-    <a routerLink="/pages/painel" class="btn btn-default btn-link btn-sm pl-0">
-      <i class="material-icons">arrow_back</i> Todas as empresas
+    <a routerLink="/pages/painel" class="pv-voltar">
+      <i class="material-icons" aria-hidden="true">arrow_back</i> Todas as empresas
     </a>
 
     @if (empresa(); as e) {
-      <h3 class="mt-1 mb-3">{{ e.nome }}</h3>
+      <div class="pv-pagina__cabecalho">
+        <div>
+          <h1 class="pv-pagina__titulo">{{ e.nome }}</h1>
+          <p class="pv-pagina__subtitulo">Próximos {{ dias }} dias</p>
+        </div>
+      </div>
 
       <div class="row">
         <div class="col-lg-4 col-md-6">
-          <div class="card card-stats">
-            <div class="card-header card-header-info card-header-icon">
-              <div class="card-icon">
+          <div class="card pv-kpi">
+            <div class="pv-kpi__topo">
+              <p class="pv-kpi__rotulo">A pagar em {{ dias }} dias</p>
+              <span class="pv-kpi__icone pv-kpi__icone--valor" aria-hidden="true">
                 <i class="material-icons">account_balance_wallet</i>
-              </div>
-              <p class="card-category">A pagar em {{ dias }} dias</p>
-              <h3 class="card-title"><small>R$</small> {{ e.valor | number:'1.0-0' }}</h3>
+              </span>
             </div>
-            <div class="card-footer">
-              <div class="stats"><i class="material-icons">receipt</i> {{ e.quantidadeContas }} contas</div>
-            </div>
+            <p class="pv-kpi__valor">R$ {{ e.valor | number:'1.0-0' }}</p>
+            <p class="pv-kpi__auxiliar">{{ e.quantidadeContas }} contas</p>
           </div>
         </div>
         <div class="col-lg-4 col-md-6">
-          <div class="card card-stats">
-            <div class="card-header card-header-warning card-header-icon">
-              <div class="card-icon">
+          <div class="card pv-kpi">
+            <div class="pv-kpi__topo">
+              <p class="pv-kpi__rotulo">Fora do Bling</p>
+              <span class="pv-kpi__icone" aria-hidden="true"
+                    [class.pv-kpi__icone--alerta]="e.notasPendentes > 0"
+                    [class.pv-kpi__icone--neutro]="e.notasPendentes === 0">
                 <i class="material-icons">report_problem</i>
-              </div>
-              <p class="card-category">Fora do Bling</p>
-              <h3 class="card-title"><small>R$</small> {{ e.valorNotasPendentes | number:'1.0-0' }}</h3>
+              </span>
             </div>
-            <div class="card-footer">
-              <div class="stats"><i class="material-icons text-warning">warning</i> {{ e.notasPendentes }} notas para resolver</div>
-            </div>
+            <p class="pv-kpi__valor">R$ {{ e.valorNotasPendentes | number:'1.0-0' }}</p>
+            <p class="pv-kpi__auxiliar">{{ e.notasPendentes }} notas para resolver</p>
           </div>
         </div>
         <div class="col-lg-4 col-md-6">
-          <div class="card card-stats">
-            <div class="card-header card-header-success card-header-icon">
-              <div class="card-icon">
+          <div class="card pv-kpi">
+            <div class="pv-kpi__topo">
+              <p class="pv-kpi__rotulo">Última sincronização</p>
+              <span class="pv-kpi__icone pv-kpi__icone--neutro" aria-hidden="true">
                 <i class="material-icons">sync</i>
-              </div>
-              <p class="card-category">Última sincronização</p>
-              <h3 class="card-title">
-                @if (e.ultimaSincronizacaoEm) {
-                  {{ e.ultimaSincronizacaoEm | date:'HH:mm' }}
-                } @else {
-                  —
-                }
-              </h3>
+              </span>
             </div>
-            <div class="card-footer">
-              <div class="stats">
-                <i class="material-icons">access_time</i>
-                @if (e.ultimaSincronizacaoEm) {
-                  {{ e.ultimaSincronizacaoEm | date:'dd/MM/yyyy' }}
-                } @else {
-                  Ainda não sincronizou
-                }
-              </div>
-            </div>
+            <p class="pv-kpi__valor">
+              @if (e.ultimaSincronizacaoEm) {
+                {{ e.ultimaSincronizacaoEm | date:'HH:mm' }}
+              } @else {
+                —
+              }
+            </p>
+            <p class="pv-kpi__auxiliar">
+              @if (e.ultimaSincronizacaoEm) {
+                {{ e.ultimaSincronizacaoEm | date:'dd/MM/yyyy' }}
+              } @else {
+                Ainda não sincronizou
+              }
+            </p>
           </div>
         </div>
       </div>
@@ -74,33 +74,33 @@
 
       <div class="col-lg-4">
         <div class="card">
-          <div class="card-header card-header-info card-header-icon">
-            <div class="card-icon">
-              <i class="material-icons">date_range</i>
+          <div class="pv-card__cabecalho">
+            <div>
+              <h2 class="pv-card__titulo">Próximos vencimentos</h2>
             </div>
-            <h4 class="card-title">Próximos vencimentos</h4>
           </div>
-          <div class="card-body">
-            @if (vencimentos().length === 0) {
-              <p class="card-category">Nenhuma conta em aberto no período.</p>
-            } @else {
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    @for (dia of vencimentos(); track dia.data) {
-                      <tr>
-                        <td>
-                          <strong>{{ dia.data | date:'EEE, dd/MM' }}</strong>
-                          <div class="card-category">{{ dia.quantidade }} contas</div>
-                        </td>
-                        <td class="text-right"><strong>{{ dia.valor | currency:'BRL' }}</strong></td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </div>
+          @if (vencimentos().length === 0) {
+            <div class="pv-vazio pv-vazio--compacto">
+              <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">event_available</i></span>
+              <p class="pv-vazio__titulo">Nenhuma conta em aberto no período.</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table">
+                <tbody>
+                  @for (dia of vencimentos(); track dia.data) {
+                    <tr>
+                      <td>
+                        <strong>{{ dia.data | date:'EEE, dd/MM' }}</strong>
+                        <span class="pv-tabela__auxiliar">{{ dia.quantidade }} contas</span>
+                      </td>
+                      <td class="text-right"><strong>{{ dia.valor | currency:'BRL' }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         </div>
       </div>
     </div>

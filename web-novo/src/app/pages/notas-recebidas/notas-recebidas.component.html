@@ -1,0 +1,264 @@
+<div class="main-content">
+  <div class="container-fluid">
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Notas recebidas</h1>
+        <p class="pv-pagina__subtitulo">Todas as notas lidas do e-mail, lançadas no Bling ou não</p>
+      </div>
+      <div class="pv-pagina__acoes">
+        @if (ehAdmin()) {
+          <button type="button" class="btn btn-secundario" (click)="buscarEmailsAgora()" [disabled]="buscandoEmails()">
+            @if (buscandoEmails()) {
+              <span class="pv-spinner" aria-hidden="true"></span> Buscando e-mails...
+            } @else {
+              <i class="material-icons" aria-hidden="true">mail</i> Buscar e-mails agora
+            }
+          </button>
+        }
+        <button type="button" class="btn btn-secundario" (click)="carregar()" [disabled]="carregando()">
+          <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
+        </button>
+      </div>
+    </div>
+
+    @if (mensagem()) {
+      <div class="alert alert-info" role="status"><span>{{ mensagem() }}</span></div>
+    }
+    @if (erro()) {
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    <!-- Filtros -->
+    <div class="card">
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Filtrar notas</h2>
+        </div>
+      </div>
+      <form (ngSubmit)="filtrar()">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 col-sm-6">
+              <label for="notas-empresa" class="col-form-label pt-0">Empresa</label>
+              <div class="form-group">
+                <select id="notas-empresa" class="form-control" name="empresa"
+                        [ngModel]="empresaId()" (ngModelChange)="empresaId.set($event)">
+                  <option [ngValue]="null">Todas</option>
+                  @for (empresa of empresas(); track empresa.id) {
+                    <option [ngValue]="empresa.id">{{ empresa.nome }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <label for="notas-situacao" class="col-form-label pt-0">Situação</label>
+              <div class="form-group">
+                <select id="notas-situacao" class="form-control" name="situacao"
+                        [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
+                  @for (opcao of situacoes; track opcao.valor) {
+                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <label for="notas-de" class="col-form-label pt-0">Recebida de</label>
+              <div class="form-group">
+                <input id="notas-de" type="date" class="form-control" name="de"
+                       [ngModel]="de()" (ngModelChange)="de.set($event)">
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <label for="notas-ate" class="col-form-label pt-0">Até</label>
+              <div class="form-group">
+                <input id="notas-ate" type="date" class="form-control" name="ate"
+                       [ngModel]="ate()" (ngModelChange)="ate.set($event)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pv-formulario__acoes">
+          <button type="submit" class="btn btn-info" [disabled]="carregando()">
+            <i class="material-icons" aria-hidden="true">search</i> Filtrar
+          </button>
+          <button type="button" class="btn btn-secundario" (click)="limpar()" [disabled]="carregando()">
+            Limpar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lista -->
+    <div class="card">
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Notas lidas do e-mail</h2>
+          <p class="pv-card__descricao">{{ total() }} notas</p>
+        </div>
+      </div>
+
+      @if (carregada() && !carregando() && notas().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">inbox</i></span>
+          <p class="pv-vazio__titulo">Nenhuma nota recebida com esses filtros.</p>
+          <p class="pv-vazio__texto">As notas aparecem aqui quando o XML chega na caixa de e-mail do cliente.</p>
+        </div>
+      }
+
+      @if (notas().length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Recebida</th>
+                <th>NF</th>
+                <th>Fornecedor</th>
+                <th>Empresa</th>
+                <th>Emissão</th>
+                <th class="text-right">Valor</th>
+                <th>1º vencimento</th>
+                <th>Situação</th>
+                <th class="text-right">Detalhes</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (nota of notas(); track nota.id) {
+                <tr>
+                  <td class="pv-numero">{{ nota.recebidaEm | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="pv-numero"><strong>{{ nota.numero }}</strong></td>
+                  <td>{{ nota.fornecedor }}</td>
+                  <td>{{ nota.empresaNome || '—' }}</td>
+                  <td class="pv-numero">{{ nota.dataEmissao | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-right"><strong>{{ nota.valorTotal | currency:'BRL' }}</strong></td>
+                  <td class="pv-numero">
+                    @if (nota.primeiroVencimento) {
+                      {{ nota.primeiroVencimento | date:'dd/MM/yyyy' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td><span class="badge" [class]="classe(nota.status)">{{ descricao(nota.status) }}</span></td>
+                  <td class="text-right">
+                    <div class="pv-acoes-linha">
+                      <button type="button" class="pv-botao-icone"
+                              [attr.aria-expanded]="abertaId() === nota.id"
+                              [attr.aria-label]="(abertaId() === nota.id ? 'Fechar detalhes da NF ' : 'Ver detalhes da NF ') + nota.numero"
+                              [title]="abertaId() === nota.id ? 'Fechar detalhes' : 'Ver detalhes'"
+                              (click)="alternarDetalhes(nota)">
+                        <i class="material-icons" aria-hidden="true">{{ abertaId() === nota.id ? 'expand_less' : 'expand_more' }}</i>
+                      </button>
+                      @if (podeReprocessar(nota) || temFalhas(nota)) {
+                        <app-menu-acoes [rotulo]="'Mais ações para a NF ' + nota.numero">
+                          @if (podeReprocessar(nota)) {
+                            <button type="button" class="pv-acoes__item" (click)="reprocessar(nota)">
+                              <i class="material-icons" aria-hidden="true">replay</i> Tentar lançar novamente
+                            </button>
+                          }
+                          @if (temFalhas(nota)) {
+                            <a class="pv-acoes__item" [routerLink]="['/pages/falhas']" [queryParams]="{ notaId: nota.id }">
+                              <i class="material-icons" aria-hidden="true">history</i> Ver as tentativas que falharam
+                            </a>
+                          }
+                        </app-menu-acoes>
+                      }
+                    </div>
+                  </td>
+                </tr>
+
+                @if (abertaId() === nota.id) {
+                  <tr class="pv-tabela__detalhe">
+                    <td colspan="9">
+                      <div class="row">
+                        <div class="col-lg-7">
+                          <h3 class="pv-detalhe__titulo">Parcelas</h3>
+                          @if (nota.parcelas.length === 0) {
+                            <p class="pv-detalhe__texto">O XML não trouxe vencimentos (duplicatas).</p>
+                          } @else {
+                            <div class="table-responsive pv-detalhe__tabela">
+                              <table class="table table-sm">
+                                <thead>
+                                  <tr>
+                                    <th>Parcela</th>
+                                    <th>Vencimento</th>
+                                    <th class="text-right">Valor</th>
+                                    <th>Conta a pagar no Bling</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  @for (parcela of nota.parcelas; track parcela.numeroParcela) {
+                                    <tr>
+                                      <td class="pv-numero">{{ parcela.numeroParcela }}</td>
+                                      <td class="pv-numero">{{ parcela.vencimento | date:'dd/MM/yyyy' }}</td>
+                                      <td class="text-right">{{ parcela.valor | currency:'BRL' }}</td>
+                                      <td class="pv-numero">
+                                        @if (parcela.blingContaPagarId) {
+                                          <span class="badge badge-success">Criada</span> nº {{ parcela.blingContaPagarId }}
+                                        } @else {
+                                          <span class="badge badge-default">Ainda não criada</span>
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          }
+                        </div>
+                        <div class="col-lg-5">
+                          <h3 class="pv-detalhe__titulo">Lançamento no Bling</h3>
+                          <p class="pv-detalhe__texto">
+                            @if (nota.lancadaEm) {
+                              Lançada em {{ nota.lancadaEm | date:'dd/MM/yyyy HH:mm' }}
+                            } @else {
+                              Ainda não lançada
+                            }
+                          </p>
+
+                          @if (nota.mensagemErro) {
+                            <h3 class="pv-detalhe__titulo">Por que não foi lançada</h3>
+                            <p class="pv-detalhe__texto">{{ nota.mensagemErro }}</p>
+                          }
+
+                          <h3 class="pv-detalhe__titulo">Fornecedor</h3>
+                          <p class="pv-detalhe__texto">
+                            {{ nota.fornecedor }}
+                            <span class="pv-tabela__auxiliar">CNPJ {{ formatarCnpj(nota.cnpjFornecedor) }}</span>
+                          </p>
+
+                          <h3 class="pv-detalhe__titulo">Nota</h3>
+                          <p class="pv-detalhe__texto">
+                            NF {{ nota.numero }}
+                            @if (nota.serie) {
+                              · série {{ nota.serie }}
+                            }
+                            <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">Chave {{ nota.chaveAcesso }}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (totalPaginas() > 1) {
+          <div class="pv-paginacao">
+            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
+                    [disabled]="pagina() <= 1 || carregando()">
+              <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
+            </button>
+            <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
+            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
+                    [disabled]="pagina() >= totalPaginas() || carregando()">
+              Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
+            </button>
+          </div>
+        }
+      }
+    </div>
+
+  </div>
+</div>

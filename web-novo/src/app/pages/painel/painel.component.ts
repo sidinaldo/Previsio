@@ -23,6 +23,7 @@ export class PainelComponent {
   readonly carregando = signal(false);
   readonly erro = signal('');
 
+  // Semana com mais saídas; nenhuma quando todas estão zeradas
   readonly maiorSemana = computed<TotalSemana | null>(() => {
     const resumo = this.resumo();
     if (!resumo || resumo.semanas.length === 0) {
@@ -34,8 +35,23 @@ export class PainelComponent {
         maior = semana;
       }
     }
+    if (maior.valor <= 0) {
+      return null;
+    }
     return maior;
   });
+
+  // Nada previsto e nenhuma nota pendente: a tela mostra o estado vazio no lugar dos zeros
+  readonly semDados = computed(() => {
+    const resumo = this.resumo();
+    if (!resumo) {
+      return false;
+    }
+    return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0;
+  });
+
+  // Todas as semanas zeradas: no lugar do gráfico (que mostraria uma escala sem sentido) vai o aviso
+  readonly graficoVazio = computed(() => this.maiorSemana() === null);
 
   constructor() {
     this.carregar();
@@ -74,7 +90,7 @@ export class PainelComponent {
 
   private desenharGrafico(): void {
     const resumo = this.resumo();
-    if (!resumo) {
+    if (!resumo || this.semDados() || this.graficoVazio()) {
       return;
     }
 
@@ -98,22 +114,30 @@ export class PainelComponent {
     const opcoes: any = {
       axisX: { showGrid: false },
       axisY: {
+        // Espaço para "R$ 12 mil"
+        offset: 64,
         labelInterpolationFnc: (valor: number) => this.abreviarValor(valor)
       },
       low: 0,
       high: topo,
-      chartPadding: { top: 0, right: 5, bottom: 0, left: 10 }
+      chartPadding: { top: 12, right: 8, bottom: 0, left: 0 }
     };
 
     const grafico = new Chartist.Bar('#previsioSemanasChart', { labels: rotulos, series: [valores] }, opcoes);
     this.animarBarras(grafico);
   }
 
-  // Mesma animação usada no dashboard de exemplo do template
+  // Mesma animação usada no dashboard de exemplo do template, só no primeiro desenho:
+  // o Chartist redesenha a cada resize (ex.: ao recolher o menu) e, sem isso,
+  // as barras sumiam e reapareciam com atraso cada vez maior
   private animarBarras(grafico: any): void {
     let sequencia = 0;
+    let primeiroDesenho = true;
+    grafico.on('created', () => {
+      primeiroDesenho = false;
+    });
     grafico.on('draw', (dado: any) => {
-      if (dado.type === 'bar') {
+      if (dado.type === 'bar' && primeiroDesenho) {
         sequencia++;
         dado.element.animate({
           opacity: {
@@ -128,14 +152,15 @@ export class PainelComponent {
     });
   }
 
+  // Eixo Y em reais, abreviado: "R$ 800", "R$ 12 mil", "R$ 1,5 mi"
   private abreviarValor(valor: number): string {
     if (valor >= 1000000) {
-      return (valor / 1000000).toFixed(1).replace('.', ',') + 'M';
+      return 'R$ ' + (valor / 1000000).toFixed(1).replace('.', ',').replace(',0', '') + ' mi';
     }
     if (valor >= 1000) {
-      return Math.round(valor / 1000) + 'k';
+      return 'R$ ' + Math.round(valor / 1000) + ' mil';
     }
-    return String(Math.round(valor));
+    return 'R$ ' + Math.round(valor);
   }
 
   private formatarDiaMes(dataIso: string): string {

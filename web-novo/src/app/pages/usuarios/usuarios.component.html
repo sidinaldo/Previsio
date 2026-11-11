@@ -1,37 +1,57 @@
 <div class="main-content">
   <div class="container-fluid">
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Usuários</h1>
+        <p class="pv-pagina__subtitulo">Quem entra no painel e de qual cliente</p>
+      </div>
+    </div>
+
     @if (mensagem()) {
-      <div class="alert alert-success"><span>{{ mensagem() }}</span></div>
+      <div class="alert alert-success" role="status"><span>{{ mensagem() }}</span></div>
     }
     @if (erro()) {
-      <div class="alert alert-danger"><span>{{ erro() }}</span></div>
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
     }
 
-    <div class="card">
-      <div class="card-header card-header-info card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">person_add</i>
+    <!-- O mesmo formulário cadastra um usuário novo ou altera o escolhido em "Editar" -->
+    <div #cartaoFormulario class="card" [class.pv-card--editando]="editando() !== null">
+      <div class="pv-card__cabecalho">
+        <div>
+          @if (editando(); as u) {
+            <h2 class="pv-card__titulo">Editar usuário</h2>
+            <p class="pv-card__descricao">Alterando {{ u.nome }}. E-mail, perfil e cliente não mudam depois do cadastro.</p>
+          } @else {
+            <h2 class="pv-card__titulo">Novo usuário</h2>
+          }
         </div>
-        <h4 class="card-title">Novo usuário</h4>
       </div>
-      <form (ngSubmit)="adicionar()">
+      <form (ngSubmit)="salvar()">
         <div class="card-body">
           <div class="row">
             <div class="col-md-4">
               <div class="form-group bmd-form-group">
                 <label for="usuario-nome" class="bmd-label-floating">Nome</label>
-                <input id="usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+                <input #campoNome id="usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group bmd-form-group">
                 <label for="usuario-email" class="bmd-label-floating">E-mail</label>
-                <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email">
+                <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email"
+                       [readonly]="editando() !== null">
               </div>
             </div>
             <div class="col-md-4">
               <div class="form-group bmd-form-group">
-                <label for="usuario-senha" class="bmd-label-floating">Senha provisória (mínimo 8 caracteres)</label>
+                <label for="usuario-senha" class="bmd-label-floating">
+                  @if (editando()) {
+                    Nova senha (em branco mantém a atual)
+                  } @else {
+                    Senha provisória (mínimo 8 caracteres)
+                  }
+                </label>
                 <input id="usuario-senha" type="password" class="form-control" name="senha" autocomplete="new-password"
                        [(ngModel)]="senha">
               </div>
@@ -41,7 +61,8 @@
             <div class="col-md-4">
               <div class="form-group bmd-form-group">
                 <label for="usuario-perfil" class="bmd-label-floating">Perfil</label>
-                <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)">
+                <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)"
+                        [disabled]="editando() !== null">
                   <option [value]="perfilCliente">Cliente</option>
                   <option [value]="perfilAdmin">Admin</option>
                 </select>
@@ -51,7 +72,8 @@
               <div class="col-md-4">
                 <div class="form-group bmd-form-group">
                   <label for="usuario-cliente" class="bmd-label-floating">Cliente</label>
-                  <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId">
+                  <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId"
+                          [disabled]="editando() !== null">
                     <option [ngValue]="null"></option>
                     @for (cliente of clientes(); track cliente.id) {
                       <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
@@ -62,32 +84,39 @@
             }
           </div>
         </div>
-        <div class="card-footer">
-          <button type="submit" class="btn btn-fill btn-info" [disabled]="enviando()">
-            @if (enviando()) {
-              Cadastrando...
-            } @else {
-              Cadastrar
-            }
-          </button>
+        <div class="pv-formulario__acoes">
+          @if (editando(); as u) {
+            <button type="submit" class="btn btn-info" [disabled]="processandoId() === u.id">Salvar alterações</button>
+            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
+          } @else {
+            <button type="submit" class="btn btn-info" [disabled]="enviando()">
+              @if (enviando()) {
+                Cadastrando...
+              } @else {
+                Cadastrar
+              }
+            </button>
+          }
         </div>
       </form>
     </div>
 
     <div class="card">
-      <div class="card-header card-header-info card-header-icon">
-        <div class="card-icon">
-          <i class="material-icons">supervisor_account</i>
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Usuários</h2>
+          <p class="pv-card__descricao">{{ usuarios().length }} usuários cadastrados</p>
         </div>
-        <h4 class="card-title">
-          Usuários
-          <small class="description">· quem entra no painel e de qual cliente</small>
-        </h4>
       </div>
-      <div class="card-body">
+      @if (usuarios().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">manage_accounts</i></span>
+          <p class="pv-vazio__titulo">Nenhum usuário cadastrado.</p>
+        </div>
+      } @else {
         <div class="table-responsive">
           <table class="table">
-            <thead class="text-info">
+            <thead>
               <tr>
                 <th>Nome</th>
                 <th>E-mail</th>
@@ -100,55 +129,57 @@
             </thead>
             <tbody>
               @for (usuario of usuarios(); track usuario.id) {
-                <tr [class.text-muted]="!usuario.ativo">
-                  <td><strong>{{ usuario.nome }}</strong></td>
+                <tr [class.pv-linha--inativa]="!usuario.ativo" [class.pv-linha--editando]="estaEditando(usuario)">
+                  <td>
+                    <strong>{{ usuario.nome }}</strong>
+                    @if (estaEditando(usuario)) {
+                      <span class="badge badge-info ml-1">Em edição</span>
+                    }
+                  </td>
                   <td>{{ usuario.email }}</td>
                   <td>{{ usuario.perfil }}</td>
                   <td>{{ nomeDoCliente(usuario) }}</td>
                   <td>
                     @if (usuario.ativo) {
-                      <span class="text-success">Ativo</span>
+                      <span class="badge badge-success">Ativo</span>
                     } @else {
-                      <span class="text-muted">Inativo</span>
+                      <span class="badge badge-default">Inativo</span>
                     }
                   </td>
-                  <td>
+                  <td class="pv-numero">
                     @if (usuario.ultimoAcessoEm) {
                       {{ usuario.ultimoAcessoEm | date:'dd/MM/yyyy HH:mm' }}
                     } @else {
                       —
                     }
                   </td>
-                  <td class="td-actions text-right">
-                    @if (redefinindoId() === usuario.id) {
-                      <input type="password" class="form-control d-inline-block w-auto" placeholder="Nova senha"
-                             aria-label="Nova senha" autocomplete="new-password"
-                             [(ngModel)]="novaSenha" (keyup.enter)="salvarSenha(usuario)" (keyup.escape)="cancelarRedefinicao()">
-                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-info" [disabled]="processandoId() === usuario.id"
-                              (click)="salvarSenha(usuario)">Salvar</button>
-                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" (click)="cancelarRedefinicao()">Cancelar</button>
-                    } @else {
-                      @if (usuario.ativo) {
-                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === usuario.id"
-                                (click)="alternarAtivo(usuario)">Desativar</button>
-                      } @else {
-                        <button type="button" class="btn btn-sm ml-1 mb-1 btn-success" [disabled]="processandoId() === usuario.id"
-                                (click)="alternarAtivo(usuario)">Ativar</button>
-                      }
-                      <button type="button" class="btn btn-sm ml-1 mb-1 btn-default" [disabled]="processandoId() === usuario.id"
-                              (click)="abrirRedefinicao(usuario)">Redefinir senha</button>
-                    }
+                  <td class="text-right">
+                    <div class="pv-acoes-linha">
+                      <app-menu-acoes [rotulo]="'Mais ações para ' + usuario.nome">
+                        <button type="button" class="pv-acoes__item" [disabled]="processandoId() === usuario.id"
+                                (click)="editar(usuario)">
+                          <i class="material-icons" aria-hidden="true">edit</i> Editar
+                        </button>
+                        @if (usuario.ativo) {
+                          <button type="button" class="pv-acoes__item pv-acoes__item--perigo" [disabled]="processandoId() === usuario.id"
+                                  (click)="alternarAtivo(usuario)">
+                            <i class="material-icons" aria-hidden="true">block</i> Desativar
+                          </button>
+                        } @else {
+                          <button type="button" class="pv-acoes__item" [disabled]="processandoId() === usuario.id"
+                                  (click)="alternarAtivo(usuario)">
+                            <i class="material-icons" aria-hidden="true">check_circle_outline</i> Ativar
+                          </button>
+                        }
+                      </app-menu-acoes>
+                    </div>
                   </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="card-category">Nenhum usuário cadastrado.</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>

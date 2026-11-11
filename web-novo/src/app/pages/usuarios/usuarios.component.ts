@@ -1,24 +1,28 @@
-import { Component, ElementRef, afterNextRender, inject, signal } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { avisarCamposPreenchidos } from '../../core/campos-preenchidos';
 import { ClientesService } from '../../core/clientes.service';
 import { mensagemDaApi } from '../../core/mensagem-erro';
-import { NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } from '../../core/previsio.models';
+import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
+import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 /**
  * Cadastro de usuários (só admin): quem entra no painel e de qual cliente.
+ * O mesmo formulário do topo cadastra um usuário novo ou, depois de "Editar", altera o nome
+ * e redefine a senha do escolhido (e-mail, perfil e cliente não mudam depois do cadastro).
  */
 @Component({
   selector: 'app-usuarios',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, MenuAcoesComponent],
   templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent {
   private readonly previsio = inject(PrevisioService);
   private readonly elemento = inject(ElementRef<HTMLElement>);
+  private readonly injector = inject(Injector);
 
   readonly perfilAdmin = PERFIL_ADMIN;
   readonly perfilCliente = PERFIL_CLIENTE;
@@ -28,7 +32,7 @@ export class UsuariosComponent {
   readonly mensagem = signal('');
   readonly erro = signal('');
 
-  // Novo usuário
+  // Campos do formulário (cadastro e edição)
   readonly nome = signal('');
   readonly email = signal('');
   readonly senha = signal('');
@@ -36,10 +40,14 @@ export class UsuariosComponent {
   readonly clienteId = signal<number | null>(null);
   readonly enviando = signal(false);
 
+  // Usuário sendo alterado no formulário; null = cadastro de um novo
+  readonly editando = signal<Usuario | null>(null);
+
   // Ações por linha
   readonly processandoId = signal<number | null>(null);
-  readonly redefinindoId = signal<number | null>(null);
-  readonly novaSenha = signal('');
+
+  private readonly cartaoFormulario = viewChild<ElementRef<HTMLElement>>('cartaoFormulario');
+  private readonly campoNome = viewChild<ElementRef<HTMLInputElement>>('campoNome');
 
   constructor() {
     this.carregar();
@@ -68,6 +76,16 @@ export class UsuariosComponent {
     this.perfil.set(perfil);
     // O campo do cliente aparece ou some conforme o perfil
     avisarCamposPreenchidos(this.elemento.nativeElement);
+  }
+
+  /** Envio do formulário: altera o usuário em edição ou cadastra um novo. */
+  salvar(): void {
+    const usuario = this.editando();
+    if (usuario !== null) {
+      this.salvarEdicao(usuario);
+    } else {
+      this.adicionar();
+    }
   }
 
   adicionar(): void {
@@ -118,38 +136,77 @@ export class UsuariosComponent {
     this.alterar(usuario, { ativo: !usuario.ativo }, sucesso);
   }
 
-  // ---------- redefinir senha na própria linha ----------
+  // ---------- edição no formulário do topo ----------
 
-  abrirRedefinicao(usuario: Usuario): void {
-    this.redefinindoId.set(usuario.id);
-    this.novaSenha.set('');
+  /** Preenche o formulário com o usuário e leva a tela até ele. */
+  editar(usuario: Usuario): void {
+    this.limparAvisos();
+    this.editando.set(usuario);
+    this.nome.set(usuario.nome);
+    this.email.set(usuario.email);
+    this.senha.set('');
+    this.perfil.set(usuario.perfil);
+    this.clienteId.set(usuario.clienteId);
+
+    afterNextRender(() => {
+      const cartao = this.cartaoFormulario();
+      if (cartao) {
+        cartao.nativeElement.scrollIntoView({ block: 'start' });
+      }
+      const campo = this.campoNome();
+      if (campo) {
+        campo.nativeElement.focus({ preventScroll: true });
+      }
+    }, { injector: this.injector });
   }
 
-  cancelarRedefinicao(): void {
-    this.redefinindoId.set(null);
+  estaEditando(usuario: Usuario): boolean {
+    const editando = this.editando();
+    return editando !== null && editando.id === usuario.id;
   }
 
-  salvarSenha(usuario: Usuario): void {
-    if (this.novaSenha() === '') {
-      this.erro.set('Informe a nova senha.');
+  cancelarEdicao(): void {
+    this.limparFormulario();
+  }
+
+  private salvarEdicao(usuario: Usuario): void {
+    const nome = this.nome().trim();
+    if (nome === '') {
+      this.erro.set('Informe o nome do usuário.');
       return;
     }
-    this.alterar(usuario, { novaSenha: this.novaSenha() }, 'Senha redefinida. As sessões abertas do usuário foram encerradas.');
+
+    const dados: AlteracaoUsuario = { nome: nome };
+    let sucesso = 'Usuário alterado.';
+    // Senha em branco mantém a atual
+    if (this.senha() !== '') {
+      dados.novaSenha = this.senha();
+      sucesso = 'Usuário alterado. Senha redefinida: as sessões abertas dele foram encerradas.';
+    }
+    this.alterar(usuario, dados, sucesso);
   }
 
-  private alterar(usuario: Usuario, dados: { ativo?: boolean; novaSenha?: string }, sucesso: string): void {
+  private alterar(usuario: Usuario, dados: AlteracaoUsuario, sucesso: string): void {
     this.limparAvisos();
     this.processandoId.set(usuario.id);
     this.previsio.alterarUsuario(usuario.id, dados).subscribe({
       next: alterado => {
         this.processandoId.set(null);
-        this.redefinindoId.set(null);
         this.usuarios.set(this.usuarios().map(item => {
           if (item.id === alterado.id) {
             return alterado;
           }
           return item;
         }));
+        // Salvou o formulário de edição: volta ao cadastro de um novo
+        const editando = this.editando();
+        if (editando !== null && editando.id === alterado.id) {
+          if (dados.nome !== undefined) {
+            this.limparFormulario();
+          } else {
+            this.editando.set(alterado);
+          }
+        }
         this.mensagem.set(sucesso);
       },
       error: resposta => {
@@ -157,6 +214,15 @@ export class UsuariosComponent {
         this.erro.set(mensagemDaApi(resposta, 'Não foi possível alterar o usuário.'));
       }
     });
+  }
+
+  private limparFormulario(): void {
+    this.editando.set(null);
+    this.nome.set('');
+    this.email.set('');
+    this.senha.set('');
+    this.perfil.set(PERFIL_CLIENTE);
+    this.clienteId.set(null);
   }
 
   private limparAvisos(): void {

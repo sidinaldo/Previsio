@@ -1,47 +1,71 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PREVISIO_CONFIG } from '../../core/previsio.config';
 import { PrevisioService } from '../../core/previsio.service';
 import { AlteracaoEmpresa, Empresa, NovaEmpresa } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
 
+/**
+ * Empresas (CNPJs) do cliente exibido e a conexão de cada uma com o Bling.
+ * O mesmo formulário do topo cadastra uma empresa nova ou, depois de "Editar", altera a escolhida.
+ */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
   private readonly previsio = inject(PrevisioService);
   private readonly rota = inject(ActivatedRoute);
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
   readonly ehAdmin = inject(SessaoService).ehAdmin;
   readonly empresas = signal<Empresa[]>([]);
-  readonly novoNome = signal('');
-  readonly novoCnpj = signal('');
-  readonly novoClientId = signal('');
-  readonly novoClientSecret = signal('');
+  // Só depois de a lista chegar dá para dizer "nenhuma empresa" (com erro, fica só o aviso)
+  readonly carregada = signal(false);
+
+  // Campos do formulário (cadastro e edição)
+  readonly nome = signal('');
+  readonly cnpj = signal('');
+  readonly clientId = signal('');
+  readonly clientSecret = signal('');
+
+  // Empresa sendo alterada no formulário; null = cadastro de uma nova
+  readonly editando = signal<Empresa | null>(null);
 
   // Endereço que deve ser cadastrado como "Link de redirecionamento" no aplicativo do Bling
   readonly linkRedirecionamento = PREVISIO_CONFIG.apiUrl + '/bling/callback';
   readonly mensagem = signal('');
+  // Sincronização com o Bling rodando: o botão fica desabilitado até ela terminar
+  readonly sincronizando = signal(false);
   readonly erro = signal('');
-
-  // Edição do nome e do aplicativo do Bling na própria linha
-  readonly editandoId = signal<number | null>(null);
-  readonly nomeEditado = signal('');
-  readonly clientIdEditado = signal('');
-  readonly clientSecretEditado = signal('');
 
   // Desativar e desconectar pedem confirmação na própria linha
   readonly confirmacao = signal<{ empresaId: number; acao: AcaoConfirmada } | null>(null);
   readonly processandoId = signal<number | null>(null);
+
+  /** Trocar o aplicativo de uma empresa conectada derruba a conexão (os tokens são do aplicativo anterior). */
+  readonly vaiDesconectar = computed(() => {
+    const empresa = this.editando();
+    if (empresa === null) {
+      return false;
+    }
+    return empresa.blingConectado && this.clientId().trim() !== (empresa.blingClientId ?? '');
+  });
+
+  private readonly cartaoFormulario = viewChild<ElementRef<HTMLElement>>('cartaoFormulario');
+  private readonly campoNome = viewChild<ElementRef<HTMLInputElement>>('campoNome');
 
   constructor() {
     // Retorno do OAuth do Bling: /pages/empresas?bling=conectado
@@ -56,7 +80,7 @@ export class EmpresasComponent {
 
     // Vindo da tela Clientes, logo depois de cadastrar a rede
     if (this.rota.snapshot.queryParamMap.get('cliente') === 'novo') {
-      this.mensagem.set('Cliente cadastrado. Agora cadastre as empresas (CNPJs) dele ao lado e conecte o Bling de cada uma.');
+      this.mensagem.set('Cliente cadastrado. Agora cadastre as empresas (CNPJs) dele no formulário abaixo e conecte o Bling de cada uma.');
     }
 
     this.carregar();
@@ -64,21 +88,34 @@ export class EmpresasComponent {
 
   carregar(): void {
     this.previsio.listarEmpresas().subscribe({
-      next: empresas => this.empresas.set(empresas),
+      next: empresas => {
+        this.empresas.set(empresas);
+        this.carregada.set(true);
+      },
       error: () => this.erro.set('Não foi possível carregar as empresas.')
     });
   }
 
+  /** Envio do formulário: altera a empresa em edição ou cadastra uma nova. */
+  salvar(): void {
+    const empresa = this.editando();
+    if (empresa !== null) {
+      this.salvarEdicao(empresa);
+    } else {
+      this.adicionar();
+    }
+  }
+
   adicionar(): void {
-    const nome = this.novoNome().trim();
-    const cnpj = this.novoCnpj().replace(/\D/g, '');
+    const nome = this.nome().trim();
+    const cnpj = this.cnpj().replace(/\D/g, '');
     if (nome === '' || cnpj.length !== 14) {
       this.erro.set('Informe o nome e um CNPJ com 14 dígitos.');
       return;
     }
 
-    const clientId = this.novoClientId().trim();
-    const clientSecret = this.novoClientSecret().trim();
+    const clientId = this.clientId().trim();
+    const clientSecret = this.clientSecret().trim();
     if ((clientId === '') !== (clientSecret === '')) {
       this.erro.set('Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.');
       return;
@@ -93,10 +130,7 @@ export class EmpresasComponent {
     this.limparAvisos();
     this.previsio.criarEmpresa(dados).subscribe({
       next: () => {
-        this.novoNome.set('');
-        this.novoCnpj.set('');
-        this.novoClientId.set('');
-        this.novoClientSecret.set('');
+        this.limparFormulario();
         this.mensagem.set('Empresa cadastrada. Agora conecte a conta Bling dela.');
         this.carregar();
       },
@@ -114,41 +148,80 @@ export class EmpresasComponent {
     });
   }
 
+  /** Busca as contas a pagar no Bling e atualiza a lista (última sincronização) sozinha quando termina. */
   sincronizarAgora(): void {
-    this.previsio.executarJob('sincronizacao').subscribe({
-      next: () => this.mensagem.set('Sincronização iniciada.'),
-      error: () => this.erro.set('Não foi possível iniciar a sincronização.')
+    this.limparAvisos();
+    this.sincronizando.set(true);
+    this.mensagem.set('Sincronizando as contas com o Bling... a lista atualiza sozinha quando terminar.');
+    this.previsio.executarJob('sincronizacao').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.esperarSincronizacao(),
+      error: () => {
+        this.sincronizando.set(false);
+        this.mensagem.set('');
+        this.erro.set('Não foi possível iniciar a sincronização.');
+      }
     });
   }
 
-  // ---------- edição do nome e do aplicativo do Bling ----------
-
-  editar(empresa: Empresa): void {
-    this.confirmacao.set(null);
-    this.editandoId.set(empresa.id);
-    this.nomeEditado.set(empresa.nome);
-    this.clientIdEditado.set(empresa.blingClientId ?? '');
-    this.clientSecretEditado.set('');
+  private esperarSincronizacao(): void {
+    aguardarFimDoJob(() => this.previsio.situacaoJob('sincronizacao'))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.sincronizando.set(false);
+          this.mensagem.set('Sincronização concluída. As contas do Bling já aparecem no painel.');
+          this.carregar();
+        },
+        error: () => {
+          this.sincronizando.set(false);
+          this.mensagem.set('A sincronização ainda não terminou. Confira o painel em alguns instantes.');
+          this.carregar();
+        }
+      });
   }
 
-  /** Trocar o aplicativo de uma empresa conectada derruba a conexão (os tokens são do aplicativo anterior). */
-  vaiDesconectar(empresa: Empresa): boolean {
-    return empresa.blingConectado && this.clientIdEditado().trim() !== (empresa.blingClientId ?? '');
+  // ---------- edição no formulário do topo ----------
+
+  /** Preenche o formulário com a empresa e leva a tela até ele. */
+  editar(empresa: Empresa): void {
+    this.confirmacao.set(null);
+    this.limparAvisos();
+    this.editando.set(empresa);
+    this.nome.set(empresa.nome);
+    this.cnpj.set(empresa.cnpj);
+    this.clientId.set(empresa.blingClientId ?? '');
+    this.clientSecret.set('');
+
+    afterNextRender(() => {
+      const cartao = this.cartaoFormulario();
+      if (cartao) {
+        cartao.nativeElement.scrollIntoView({ block: 'start' });
+      }
+      const campo = this.campoNome();
+      if (campo) {
+        campo.nativeElement.focus({ preventScroll: true });
+      }
+    }, { injector: this.injector });
+  }
+
+  estaEditando(empresa: Empresa): boolean {
+    const editando = this.editando();
+    return editando !== null && editando.id === empresa.id;
   }
 
   cancelarEdicao(): void {
-    this.editandoId.set(null);
+    this.limparFormulario();
   }
 
-  salvarEdicao(empresa: Empresa): void {
-    const nome = this.nomeEditado().trim();
+  private salvarEdicao(empresa: Empresa): void {
+    const nome = this.nome().trim();
     if (nome === '') {
       this.erro.set('Informe o nome da empresa.');
       return;
     }
 
-    const clientId = this.clientIdEditado().trim();
-    const clientSecret = this.clientSecretEditado().trim();
+    const clientId = this.clientId().trim();
+    const clientSecret = this.clientSecret().trim();
     const trocouAplicativo = clientId !== (empresa.blingClientId ?? '');
     if (clientId !== '' && clientSecret === '' && (trocouAplicativo || !empresa.blingClientSecretCadastrado)) {
       this.erro.set('Informe o Client Secret do aplicativo do Bling.');
@@ -165,7 +238,7 @@ export class EmpresasComponent {
     this.previsio.alterarEmpresa(empresa.id, dados).subscribe({
       next: alterada => {
         this.substituir(alterada);
-        this.editandoId.set(null);
+        this.limparFormulario();
         this.processandoId.set(null);
         if (empresa.blingConectado && !alterada.blingConectado) {
           this.mensagem.set('Empresa alterada. O aplicativo do Bling mudou: clique em "Conectar Bling" para autorizar de novo.');
@@ -183,7 +256,6 @@ export class EmpresasComponent {
   // ---------- ativar, desativar e desconectar ----------
 
   pedirConfirmacao(empresa: Empresa, acao: AcaoConfirmada): void {
-    this.editandoId.set(null);
     this.confirmacao.set({ empresaId: empresa.id, acao: acao });
   }
 
@@ -257,6 +329,19 @@ export class EmpresasComponent {
       }
       return empresa;
     }));
+    // A empresa em edição também passa a ser a versão nova (ex.: desativada pelo menu)
+    const editando = this.editando();
+    if (editando !== null && editando.id === alterada.id) {
+      this.editando.set(alterada);
+    }
+  }
+
+  private limparFormulario(): void {
+    this.editando.set(null);
+    this.nome.set('');
+    this.cnpj.set('');
+    this.clientId.set('');
+    this.clientSecret.set('');
   }
 
   private limparAvisos(): void {

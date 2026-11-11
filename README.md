@@ -206,9 +206,11 @@ npm start
 | GET | `/api/bling/callback` | Retorno do OAuth (sem login) |
 | GET | `/api/clientes/{id}/painel?dias=30` | Painel consolidado |
 | GET | `/api/empresas/{id}/vencimentos?dias=30` | Vencimentos por dia de uma empresa |
+| GET | `/api/clientes/{id}/notas` | Todas as notas lidas do e-mail, com as parcelas (`?empresaId=&situacao=&de=&ate=&pagina=`; `situacao` aceita o nome da situação ou `Pendentes`; 50 por página) |
 | GET | `/api/clientes/{id}/notas/pendentes` | Notas fora do Bling |
 | POST | `/api/notas/{id}/reprocessar` | Tentar lançar de novo |
 | POST | `/api/jobs/{leitura-email\|lancamento\|sincronizacao}/executar` | Rodar um job agora (só admin) |
+| GET | `/api/jobs/{leitura-email\|lancamento\|sincronizacao}/situacao` | Se o job ainda está na fila ou rodando (`emExecucao`); a tela consulta para atualizar sozinha quando ele termina (só admin) |
 | POST | `/api/auth/login` | Login: devolve o token (sem login) |
 | GET | `/api/auth/eu` | Dados do usuário logado |
 | POST | `/api/auth/trocar-senha` | Trocar a própria senha (devolve um token novo) |

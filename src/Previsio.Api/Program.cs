@@ -139,6 +139,7 @@ builder.Services.AddHangfireServer(opcoes =>
 {
     opcoes.WorkerCount = 2;
 });
+builder.Services.AddSingleton<IExecucaoJobs, ExecucaoJobsHangfire>();
 
 // Painel Angular
 string urlFront = builder.Configuration["Front:Url"] ?? "http://localhost:4200";

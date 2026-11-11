@@ -1,64 +1,38 @@
-<div class="logo">
-  <a class="simple-text logo-mini" routerLink="/pages/painel">PV</a>
-  <a class="simple-text logo-normal" routerLink="/pages/painel">Previsio</a>
+<div class="pv-menu__logo">
+  <a class="pv-logo" routerLink="/pages/painel" aria-label="Previsio, ir para o painel">
+    <span class="pv-logo__mini" aria-hidden="true">P</span>
+    <span class="pv-logo__texto" aria-hidden="true">
+      <span class="pv-logo__nome">Previsio</span>
+      <span class="pv-logo__assinatura">by Soft.IO</span>
+    </span>
+  </a>
 </div>
 
-<div class="sidebar-wrapper">
-  @if (usuario(); as u) {
-    <div class="user">
-      <div class="photo">
-        <img src="assets/img/default-avatar.png" alt="">
-      </div>
-      <div class="user-info">
-        <a class="username" href="#" data-toggle="collapse" [title]="u.email" [class.collapsed]="!menuUsuarioAberto()"
-           [attr.aria-expanded]="menuUsuarioAberto()" (click)="alternarMenuUsuario($event)">
-          <span>{{ u.nome }}<b class="caret"></b></span>
+<!-- sidebar-wrapper: o layout liga a barra de rolagem do template nesta classe -->
+<nav class="sidebar-wrapper pv-menu__navegacao" aria-label="Menu principal">
+  <ul class="pv-menu__lista">
+    @for (item of itens(); track item.path) {
+      <li>
+        <a class="pv-menu__item" [routerLink]="item.path" routerLinkActive="pv-menu__item--ativo"
+           ariaCurrentWhenActive="page" [title]="item.title">
+          <i class="material-icons" aria-hidden="true">{{ item.icone }}</i>
+          <span class="pv-menu__texto">{{ item.title }}</span>
         </a>
-        <div class="collapse" [class.show]="menuUsuarioAberto()">
-          <ul class="nav">
-            <li class="nav-item">
-              <a class="nav-link" href="#" (click)="sair($event)">
-                <span class="sidebar-mini">SA</span>
-                <span class="sidebar-normal">Sair</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  }
-
-  <ul class="nav">
-    @for (item of itens; track item.path) {
-      <li class="nav-item" routerLinkActive="active">
-        @if (item.type === 'link') {
-          <a class="nav-link" [routerLink]="[item.path]">
-            <i class="material-icons">{{ item.icontype }}</i>
-            <p>{{ item.title }}</p>
-          </a>
-        }
-
-        @if (item.type === 'sub') {
-          <a class="nav-link" href="#" data-toggle="collapse" [class.collapsed]="!estaAberto(item)"
-             [attr.aria-expanded]="estaAberto(item)" (click)="alternar(item, $event)">
-            <i class="material-icons">{{ item.icontype }}</i>
-            <p>{{ item.title }}<b class="caret"></b></p>
-          </a>
-
-          <div class="collapse" [class.show]="estaAberto(item)">
-            <ul class="nav">
-              @for (filho of filhosVisiveis(item); track filho.path) {
-                <li class="nav-item" routerLinkActive="active">
-                  <a class="nav-link" [routerLink]="[item.path, filho.path]">
-                    <span class="sidebar-mini">{{ filho.ab }}</span>
-                    <span class="sidebar-normal">{{ filho.title }}</span>
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
       </li>
     }
   </ul>
-</div>
+</nav>
+
+@if (usuario(); as u) {
+  <div class="pv-menu__usuario">
+    <span class="pv-menu__avatar" aria-hidden="true"><i class="material-icons">person</i></span>
+    <div class="pv-menu__dados">
+      <span class="pv-menu__nome" [title]="u.email">{{ u.nome }}</span>
+      <span class="pv-menu__perfil">{{ descricaoPerfil(u.perfil) }}</span>
+    </div>
+    <button type="button" class="pv-menu__sair" (click)="sair()" title="Sair">
+      <i class="material-icons" aria-hidden="true">logout</i>
+      <span>Sair</span>
+    </button>
+  </div>
+}

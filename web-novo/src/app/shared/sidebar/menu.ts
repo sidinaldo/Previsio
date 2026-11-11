@@ -1,71 +1,33 @@
-// Itens do menu lateral (equivalente ao array ROUTES do template)
-
-export interface ItemSubmenu {
-  path: string;
-  title: string;
-  ab: string;
-  // Escondido de quem não é admin (a rota também confere)
-  somenteAdmin?: boolean;
-}
+// Itens do menu lateral, na ordem em que aparecem
 
 export interface ItemMenu {
   path: string;
   title: string;
-  type: 'link' | 'sub';
-  icontype: string;
-  collapse?: string;
-  children?: ItemSubmenu[];
+  // Nome do ícone do Material Icons
+  icone: string;
+  // Escondido de quem não é admin (a rota também confere)
+  somenteAdmin?: boolean;
 }
 
 export const MENU: ItemMenu[] = [
-  {
-    path: '/pages',
-    title: 'Previsio',
-    type: 'sub',
-    icontype: 'payments',
-    collapse: 'previsio',
-    children: [
-      { path: 'painel', title: 'Painel', ab: 'PA' },
-      { path: 'notas-pendentes', title: 'Notas pendentes', ab: 'NP' },
-      { path: 'falhas', title: 'Falhas', ab: 'FA' },
-      { path: 'empresas', title: 'Empresas', ab: 'EM' },
-      { path: 'clientes', title: 'Clientes', ab: 'CL', somenteAdmin: true },
-      { path: 'usuarios', title: 'Usuários', ab: 'US', somenteAdmin: true }
-    ]
-  }
+  { path: '/pages/painel', title: 'Painel', icone: 'dashboard' },
+  { path: '/pages/notas-recebidas', title: 'Notas recebidas', icone: 'receipt_long' },
+  { path: '/pages/notas-pendentes', title: 'Notas pendentes', icone: 'pending_actions' },
+  { path: '/pages/falhas', title: 'Falhas', icone: 'error_outline' },
+  { path: '/pages/empresas', title: 'Empresas', icone: 'store' },
+  { path: '/pages/clientes', title: 'Clientes', icone: 'groups', somenteAdmin: true },
+  { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true }
 ];
 
 /**
- * Itens do submenu que o usuário pode ver: quem não é admin não vê os marcados como somenteAdmin.
+ * Itens que o usuário pode ver: quem não é admin não vê os marcados como somenteAdmin.
  */
-export function itensVisiveis(filhos: ItemSubmenu[] | undefined, ehAdmin: boolean): ItemSubmenu[] {
-  if (!filhos) {
+export function itensVisiveis(itens: ItemMenu[] | undefined, ehAdmin: boolean): ItemMenu[] {
+  if (!itens) {
     return [];
   }
   if (ehAdmin) {
-    return filhos;
+    return itens;
   }
-  return filhos.filter(filho => !filho.somenteAdmin);
-}
-
-/**
- * Título da tela atual a partir da URL (usado na barra do topo).
- */
-export function tituloDaRota(url: string): string {
-  const caminho = url.split('?')[0];
-
-  for (const item of MENU) {
-    if (item.type === 'link' && item.path === caminho) {
-      return item.title;
-    }
-    if (item.type === 'sub' && item.children) {
-      for (const filho of item.children) {
-        const completo = item.path + '/' + filho.path;
-        if (caminho === completo || caminho.startsWith(completo + '/')) {
-          return filho.title;
-        }
-      }
-    }
-  }
-  return 'Previsio';
+  return itens.filter(item => !item.somenteAdmin);
 }

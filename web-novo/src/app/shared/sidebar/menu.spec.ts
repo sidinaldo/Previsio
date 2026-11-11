@@ -1,29 +1,45 @@
-import { ItemSubmenu, MENU, itensVisiveis } from './menu';
+import { ItemMenu, MENU, itensVisiveis } from './menu';
 
 describe('menu lateral', () => {
-  const filhos: ItemSubmenu[] = [
-    { path: 'painel', title: 'Painel', ab: 'PA' },
-    { path: 'clientes', title: 'Clientes', ab: 'CL', somenteAdmin: true },
-    { path: 'empresas', title: 'Empresas', ab: 'EM' },
-    { path: 'usuarios', title: 'Usuários', ab: 'US', somenteAdmin: true }
+  const itens: ItemMenu[] = [
+    { path: '/pages/painel', title: 'Painel', icone: 'dashboard' },
+    { path: '/pages/clientes', title: 'Clientes', icone: 'groups', somenteAdmin: true },
+    { path: '/pages/empresas', title: 'Empresas', icone: 'store' },
+    { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true }
   ];
 
   it('admin vê todos os itens, inclusive os somenteAdmin', () => {
-    expect(itensVisiveis(filhos, true).map(f => f.path)).toEqual(['painel', 'clientes', 'empresas', 'usuarios']);
+    expect(itensVisiveis(itens, true).map(i => i.path))
+      .toEqual(['/pages/painel', '/pages/clientes', '/pages/empresas', '/pages/usuarios']);
   });
 
   it('usuário de cliente não vê os itens somenteAdmin', () => {
-    expect(itensVisiveis(filhos, false).map(f => f.path)).toEqual(['painel', 'empresas']);
+    expect(itensVisiveis(itens, false).map(i => i.path)).toEqual(['/pages/painel', '/pages/empresas']);
   });
 
-  it('item sem submenu não quebra', () => {
+  it('lista vazia não quebra', () => {
     expect(itensVisiveis(undefined, false)).toEqual([]);
   });
 
+  it('os itens ficam direto no menu, cada um com ícone, na ordem das telas', () => {
+    expect(MENU.map(i => i.path)).toEqual([
+      '/pages/painel',
+      '/pages/notas-recebidas',
+      '/pages/notas-pendentes',
+      '/pages/falhas',
+      '/pages/empresas',
+      '/pages/clientes',
+      '/pages/usuarios'
+    ]);
+    expect(MENU.map(i => i.icone)).toEqual([
+      'dashboard', 'receipt_long', 'pending_actions', 'error_outline', 'store', 'groups', 'manage_accounts'
+    ]);
+  });
+
   it('Clientes e Usuários do menu real são somenteAdmin', () => {
-    const doMenu = itensVisiveis(MENU[0].children, false).map(f => f.path);
-    expect(doMenu).not.toContain('clientes');
-    expect(doMenu).not.toContain('usuarios');
-    expect(doMenu).toContain('empresas');
+    const doMenu = itensVisiveis(MENU, false).map(i => i.path);
+    expect(doMenu).not.toContain('/pages/clientes');
+    expect(doMenu).not.toContain('/pages/usuarios');
+    expect(doMenu).toContain('/pages/empresas');
   });
 });

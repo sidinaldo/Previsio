@@ -10,17 +10,22 @@ import {
   Cliente,
   Empresa,
   FiltroFalhas,
+  FiltroNotas,
+  NomeJob,
   Nota,
   NovaEmpresa,
   NovoCliente,
   NovoUsuario,
   PaginaFalhas,
+  PaginaNotas,
+  SituacaoJob,
   ResumoPainel,
   Usuario,
   VencimentoDia
 } from './previsio.models';
 import { SessaoService } from './sessao.service';
 import { parametrosDasFalhas } from './filtro-falhas';
+import { parametrosDasNotas } from './filtro-notas';
 
 /**
  * Chamadas à API do Previsio.
@@ -48,6 +53,12 @@ export class PrevisioService {
       params = params.set('empresaId', String(empresaId));
     }
     return this.doCliente(url => this.http.get<Nota[]>(`${url}/notas/pendentes`, { params }));
+  }
+
+  /** Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga. */
+  obterNotas(filtro: FiltroNotas): Observable<PaginaNotas> {
+    const params = parametrosDasNotas(filtro);
+    return this.doCliente(url => this.http.get<PaginaNotas>(`${url}/notas`, { params }));
   }
 
   /** Falhas ao ler notas do e-mail e ao lançá-las no Bling, da mais recente para a mais antiga. */
@@ -120,8 +131,13 @@ export class PrevisioService {
   }
 
   /** Só admin. */
-  executarJob(nome: 'leitura-email' | 'lancamento' | 'sincronizacao'): Observable<void> {
+  executarJob(nome: NomeJob): Observable<void> {
     return this.http.post<void>(`${this.api}/jobs/${nome}/executar`, {});
+  }
+
+  /** Só admin. Se o job ainda está na fila ou rodando. */
+  situacaoJob(nome: NomeJob): Observable<SituacaoJob> {
+    return this.http.get<SituacaoJob>(`${this.api}/jobs/${nome}/situacao`);
   }
 
   // Monta a URL /clientes/{id} do cliente atual. O layout só abre as telas

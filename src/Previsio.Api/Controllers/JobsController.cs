@@ -2,18 +2,24 @@ using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
+using Previsio.Api.Servicos;
 
 namespace Previsio.Api.Controllers;
 
 [ApiController]
 public class JobsController : ControllerBase
 {
-    private readonly IBackgroundJobClient _jobs;
+    private const string NomesValidos = "Use: leitura-email, lancamento ou sincronizacao.";
 
-    public JobsController(IBackgroundJobClient jobs)
+    private readonly IBackgroundJobClient _jobs;
+    private readonly IExecucaoJobs _execucao;
+
+    public JobsController(IBackgroundJobClient jobs, IExecucaoJobs execucao)
     {
         _jobs = jobs;
+        _execucao = execucao;
     }
 
     /// <summary>
@@ -38,8 +44,44 @@ public class JobsController : ControllerBase
         }
         else
         {
-            return NotFound("Use: leitura-email, lancamento ou sincronizacao.");
+            return NotFound(NomesValidos);
         }
         return Accepted();
+    }
+
+    /// <summary>
+    /// Se o job ainda está na fila ou rodando. A tela consulta depois de "executar" para
+    /// atualizar sozinha quando ele terminar.
+    /// </summary>
+    [HttpGet("api/jobs/{nome}/situacao")]
+    [Authorize(Roles = Perfis.Admin)]
+    public ActionResult<SituacaoJobDto> Situacao(string nome)
+    {
+        Type tipo;
+        string metodo;
+        if (nome == "leitura-email")
+        {
+            tipo = typeof(LeituraEmailJob);
+            metodo = nameof(LeituraEmailJob.ExecutarAsync);
+        }
+        else if (nome == "lancamento")
+        {
+            tipo = typeof(LancamentoNotaJob);
+            metodo = nameof(LancamentoNotaJob.LancarPendentesAsync);
+        }
+        else if (nome == "sincronizacao")
+        {
+            tipo = typeof(SincronizacaoContasJob);
+            metodo = nameof(SincronizacaoContasJob.ExecutarAsync);
+        }
+        else
+        {
+            return NotFound(NomesValidos);
+        }
+
+        var dto = new SituacaoJobDto();
+        dto.Nome = nome;
+        dto.EmExecucao = _execucao.EstaEmExecucao(tipo, metodo);
+        return dto;
     }
 }

@@ -1,18 +1,23 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
+import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_STATUS, Nota } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
   private readonly previsio = inject(PrevisioService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Quando usado dentro da tela da empresa, filtra por ela
   readonly empresaId = input<number | undefined>(undefined);
@@ -25,6 +30,8 @@ export class NotasPendentesComponent {
   readonly carregando = signal(false);
   readonly erro = signal('');
   readonly mensagem = signal('');
+  // Leitura dos e-mails rodando: o botão fica desabilitado até ela terminar
+  readonly buscandoEmails = signal(false);
 
   readonly valorTotal = computed(() => {
     let total = 0;
@@ -54,6 +61,11 @@ export class NotasPendentesComponent {
     return status;
   }
 
+  // Cor do badge da situação (a mesma da tela de notas recebidas)
+  classeStatus(status: string): string {
+    return classeDaSituacao(status);
+  }
+
   // Notas com erro ou desconectadas têm tentativas registradas na tela de falhas
   temFalhas(nota: Nota): boolean {
     return nota.status === 'Erro' || nota.status === 'BlingDesconectado';
@@ -73,11 +85,37 @@ export class NotasPendentesComponent {
     });
   }
 
+  /** Roda a leitura dos e-mails e atualiza a lista sozinha quando ela termina. */
   buscarEmailsAgora(): void {
-    this.previsio.executarJob('leitura-email').subscribe({
-      next: () => this.mensagem.set('Leitura dos e-mails iniciada. Atualize em alguns instantes.'),
-      error: () => this.erro.set('Não foi possível iniciar a leitura dos e-mails.')
+    this.erro.set('');
+    this.buscandoEmails.set(true);
+    this.mensagem.set('Buscando os e-mails... a lista atualiza sozinha quando terminar.');
+    this.previsio.executarJob('leitura-email').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.esperarLeitura(),
+      error: () => {
+        this.buscandoEmails.set(false);
+        this.mensagem.set('');
+        this.erro.set('Não foi possível iniciar a leitura dos e-mails.');
+      }
     });
+  }
+
+  private esperarLeitura(): void {
+    aguardarFimDoJob(() => this.previsio.situacaoJob('leitura-email'))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.buscandoEmails.set(false);
+          this.mensagem.set('Leitura dos e-mails concluída e lista atualizada. As notas novas são lançadas no Bling em até 10 minutos.');
+          this.carregar();
+        },
+        error: () => {
+          // Demorou demais (ou a API não respondeu): mostra o que já chegou
+          this.buscandoEmails.set(false);
+          this.mensagem.set('A leitura dos e-mails ainda não terminou. Clique em Atualizar em alguns instantes.');
+          this.carregar();
+        }
+      });
   }
 
   private buscar(empresaId: number | undefined): void {

@@ -1,0 +1,1684 @@
+// =============================================================================
+// Tema do Previsio
+//
+// Camada visual por cima do Material Dashboard PRO. É importado depois do SCSS
+// do template (styles.scss), que continua sem alteração em src/assets/scss.
+//
+// 1. Tokens (CSS variables)
+// 2. Base: tipografia, links, foco, utilitários de cor
+// 3. Componentes: botões, cards, tabelas, alertas, badges, campos com borda,
+//    estado vazio, cabeçalho de página
+// 4. Shell: menu lateral, barra superior, rodapé
+// 5. Painel: indicadores, gráfico e resumo semanal
+// 6. Formulários: rótulo fixo acima, campo com borda e anel de foco
+// 7. Menu de ações "⋯" e ações por linha
+// 8. Detalhes: código e resposta do Bling, linha expandida, voltar
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// 1. Tokens
+// -----------------------------------------------------------------------------
+:root {
+  // Marca
+  --pv-primaria: #1D4ED8;
+  --pv-primaria-hover: #1E40AF;
+  --pv-primaria-suave: rgba(29, 78, 216, .10);
+  --pv-menu: #0B1B36;
+
+  // Superfícies
+  --pv-fundo: #F5F7FA;
+  --pv-superficie: #FFFFFF;
+  --pv-superficie-hover: #F8FAFC;
+  --pv-borda: #E3E8EF;
+  --pv-borda-forte: #CBD5E1;
+
+  // Texto: nenhum texto mais claro que o auxiliar
+  --pv-texto: #0F172A;
+  --pv-texto-secundario: #475569;
+  --pv-texto-auxiliar: #64748B;
+
+  // Semânticas: só com significado
+  --pv-sucesso: #15803D;
+  --pv-alerta: #B45309;
+  --pv-erro: #B91C1C;
+  --pv-sucesso-suave: rgba(21, 128, 61, .10);
+  --pv-alerta-suave: rgba(180, 83, 9, .10);
+  --pv-erro-suave: rgba(185, 28, 28, .10);
+  --pv-neutro-suave: rgba(71, 85, 105, .10);
+  // Texto sobre o fundo suave: o verde e o laranja puros ficam abaixo de 4,5:1 ali
+  --pv-sucesso-texto: #166534;
+  --pv-alerta-texto: #92400E;
+
+  // Forma
+  --pv-raio-card: 8px;
+  --pv-raio-controle: 6px;
+  --pv-sombra-card: 0 1px 2px rgba(15, 23, 42, .06);
+  --pv-anel-foco: 0 0 0 3px rgba(29, 78, 216, .35);
+
+  // Tipografia
+  --pv-fonte: Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  // Shell
+  --pv-menu-largura: 260px;
+  --pv-topo-altura: 64px;
+}
+
+// -----------------------------------------------------------------------------
+// 2. Base
+// -----------------------------------------------------------------------------
+html,
+body {
+  background-color: var(--pv-fundo);
+}
+
+body {
+  font-family: var(--pv-fonte);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--pv-texto);
+}
+
+// O template usa peso 300 em quase todos os títulos
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--pv-fonte);
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+b,
+strong {
+  font-weight: 500;
+}
+
+// h6 do template vem em caixa alta
+h6,
+.h6 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pv-texto-secundario);
+  text-transform: none;
+}
+
+code {
+  padding: 1px 4px;
+  font-size: 12px;
+  color: var(--pv-texto);
+  background-color: var(--pv-fundo);
+  border-radius: 4px;
+}
+
+a {
+  color: var(--pv-primaria);
+
+  &:hover,
+  &:focus {
+    color: var(--pv-primaria-hover);
+  }
+}
+
+// Foco visível em todos os controles (o template tira o outline dos botões)
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--pv-primaria);
+  outline-offset: 2px;
+}
+
+// Utilitários de cor do Bootstrap: o "info" ciano vira a primária
+.text-info,
+.text-primary {
+  color: var(--pv-primaria) !important;
+}
+
+.text-success {
+  color: var(--pv-sucesso) !important;
+}
+
+.text-warning {
+  color: var(--pv-alerta) !important;
+}
+
+.text-danger {
+  color: var(--pv-erro) !important;
+}
+
+.text-muted {
+  color: var(--pv-texto-auxiliar) !important;
+}
+
+// O cinza #999 do template não chega a 4,5:1 no branco
+.card-category,
+.card-description,
+.card .card-category:not([class*="text-"]),
+.card .card-description {
+  color: var(--pv-texto-secundario);
+}
+
+// Valores em tabelas e indicadores alinham os dígitos
+.pv-numero,
+.table td.text-right,
+.table th.text-right {
+  font-variant-numeric: tabular-nums;
+}
+
+// -----------------------------------------------------------------------------
+// 3. Componentes
+// -----------------------------------------------------------------------------
+
+// ---------- Botões ----------
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  border-radius: var(--pv-raio-controle);
+  box-shadow: none;
+
+  .material-icons {
+    position: static;
+    top: auto;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  &.btn-sm {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  &.btn-lg {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+
+  &:disabled,
+  &.disabled {
+    opacity: .55;
+  }
+}
+
+// Monta os estados de um botão sólido sem as sombras coloridas do template
+@mixin pv-botao-solido($fundo, $fundo-hover) {
+  &,
+  &:focus,
+  &.focus,
+  &:active,
+  &.active,
+  &:active:focus,
+  &.active:focus,
+  &:disabled,
+  &.disabled,
+  &:disabled:focus,
+  &.disabled:focus {
+    background-color: $fundo;
+    border-color: $fundo;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  &:hover,
+  &:active:hover,
+  &.active:hover,
+  &:focus:hover {
+    background-color: $fundo-hover;
+    border-color: $fundo-hover;
+    color: #fff;
+    box-shadow: none;
+  }
+}
+
+// Primário: info e primary do template
+.btn.btn-info,
+.btn.btn-primary {
+  @include pv-botao-solido(var(--pv-primaria), var(--pv-primaria-hover));
+}
+
+// Perigo: só para ações destrutivas
+.btn.btn-danger {
+  @include pv-botao-solido(var(--pv-erro), #991B1B);
+}
+
+.btn.btn-success {
+  @include pv-botao-solido(var(--pv-sucesso), #166534);
+}
+
+.btn.btn-warning {
+  @include pv-botao-solido(var(--pv-alerta), #92400E);
+}
+
+// Secundário: com borda (btn-default do template também vira este)
+.btn.btn-secundario,
+.btn.btn-default,
+.btn.btn-secondary {
+  &,
+  &:focus,
+  &.focus,
+  &:active,
+  &.active,
+  &:active:focus,
+  &.active:focus,
+  &:disabled,
+  &.disabled {
+    background-color: var(--pv-superficie);
+    border: 1px solid var(--pv-borda-forte);
+    color: var(--pv-texto);
+    box-shadow: none;
+  }
+
+  &:hover,
+  &:active:hover,
+  &.active:hover,
+  &:focus:hover {
+    background-color: var(--pv-superficie-hover);
+    border-color: var(--pv-texto-auxiliar);
+    color: var(--pv-texto);
+    box-shadow: none;
+  }
+}
+
+// O foco por teclado mostra o anel por cima das cores acima
+.btn:focus-visible,
+.btn.btn-info:focus-visible,
+.btn.btn-primary:focus-visible,
+.btn.btn-danger:focus-visible,
+.btn.btn-secundario:focus-visible,
+.btn.btn-default:focus-visible {
+  box-shadow: var(--pv-anel-foco);
+  outline: none;
+}
+
+// Indicador de "trabalhando" dentro de botões
+.pv-spinner {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--pv-borda-forte);
+  border-top-color: var(--pv-primaria);
+  border-radius: 50%;
+  animation: pv-girar .7s linear infinite;
+}
+
+@keyframes pv-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-spinner {
+    animation-duration: 2s;
+  }
+}
+
+// ---------- Cards ----------
+.card {
+  margin: 0 0 24px;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  box-shadow: var(--pv-sombra-card);
+  color: var(--pv-texto);
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--pv-texto);
+  }
+
+  .card-body {
+    padding: 16px 20px;
+  }
+}
+
+// Cabeçalho de card: título + descrição opcional + ações à direita, dentro do card
+.pv-card__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--pv-borda);
+}
+
+.pv-card__titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--pv-texto);
+}
+
+.pv-card__descricao {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-card__acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pv-card__rodape {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--pv-borda);
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
+// ---------- Tabelas ----------
+.table {
+  margin-bottom: 0;
+  color: var(--pv-texto);
+
+  > thead > tr > th {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: var(--pv-texto-secundario);
+    text-transform: none;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-top: 0;
+    border-bottom: 1px solid var(--pv-borda);
+  }
+
+  > tbody > tr > td,
+  > tbody > tr > th,
+  > tfoot > tr > td {
+    height: 48px;
+    padding: 8px 12px;
+    font-size: 14px;
+    vertical-align: middle;
+    border-top: 1px solid var(--pv-borda);
+  }
+
+  > tbody > tr:hover {
+    background-color: var(--pv-superficie-hover);
+  }
+}
+
+// O cabeçalho da tabela não é colorido, mesmo com thead.text-info
+.table > thead[class*="text-"] {
+  color: var(--pv-texto-secundario) !important;
+}
+
+// Linha de total
+.pv-tabela__total > td {
+  font-weight: 500;
+  background-color: var(--pv-superficie-hover);
+}
+
+.pv-tabela__auxiliar {
+  display: block;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+}
+
+// Texto auxiliar longo (ex.: mensagem de erro) quebra a linha
+.pv-tabela__auxiliar--quebra {
+  max-width: 320px;
+  margin-top: 4px;
+  white-space: normal;
+}
+
+// ---------- Alertas: fundo suave + borda à esquerda, texto escuro ----------
+.alert {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pv-texto);
+  background-color: var(--pv-neutro-suave);
+  border: 0;
+  border-left: 4px solid var(--pv-texto-secundario);
+  border-radius: var(--pv-raio-controle);
+  box-shadow: none;
+
+  span {
+    max-width: none;
+  }
+
+  &.alert-info,
+  &.alert-primary {
+    background-color: var(--pv-primaria-suave);
+    border-left-color: var(--pv-primaria);
+    color: var(--pv-texto);
+  }
+
+  &.alert-success {
+    background-color: var(--pv-sucesso-suave);
+    border-left-color: var(--pv-sucesso);
+    color: var(--pv-texto);
+  }
+
+  &.alert-warning {
+    background-color: var(--pv-alerta-suave);
+    border-left-color: var(--pv-alerta);
+    color: var(--pv-texto);
+  }
+
+  &.alert-danger {
+    background-color: var(--pv-erro-suave);
+    border-left-color: var(--pv-erro);
+    color: var(--pv-texto);
+  }
+
+  // O template põe uma sombra colorida em cada cor de alerta
+  &.alert-info,
+  &.alert-primary,
+  &.alert-success,
+  &.alert-warning,
+  &.alert-danger {
+    box-shadow: none;
+  }
+
+  a {
+    color: var(--pv-primaria-hover);
+    text-decoration: underline;
+  }
+}
+
+// ---------- Badges de status: fundo suave ----------
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-transform: none;
+  border-radius: 999px;
+  color: var(--pv-texto-secundario);
+  background-color: var(--pv-neutro-suave);
+
+  &.badge-success {
+    color: var(--pv-sucesso-texto);
+    background-color: var(--pv-sucesso-suave);
+  }
+
+  &.badge-warning {
+    color: var(--pv-alerta-texto);
+    background-color: var(--pv-alerta-suave);
+  }
+
+  &.badge-danger {
+    color: var(--pv-erro);
+    background-color: var(--pv-erro-suave);
+  }
+
+  &.badge-info,
+  &.badge-primary {
+    color: var(--pv-primaria);
+    background-color: var(--pv-primaria-suave);
+  }
+
+  &.badge-default,
+  &.badge-secondary {
+    color: var(--pv-texto-secundario);
+    background-color: var(--pv-neutro-suave);
+  }
+}
+
+// ---------- Campo com borda (selects da barra superior e do painel) ----------
+// O span.bmd-form-group em volta evita que o Bootstrap Material Design embrulhe
+// o select sozinho (ele procura esse ancestral antes de criar um).
+.pv-campo-grupo.bmd-form-group {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.pv-campo {
+  height: 36px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 32px 0 12px;
+  font-family: var(--pv-fonte);
+  font-size: 14px;
+  color: var(--pv-texto);
+  background-color: var(--pv-superficie);
+  // Seta do select desenhada no fundo (o appearance: none tira a nativa)
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23475569' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: var(--pv-raio-controle);
+  appearance: none;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:hover {
+    border-color: var(--pv-texto-auxiliar);
+  }
+
+  &:focus,
+  &:focus-visible {
+    border-color: var(--pv-primaria);
+    box-shadow: var(--pv-anel-foco);
+    outline: none;
+  }
+}
+
+.pv-rotulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pv-texto-secundario);
+}
+
+// ---------- Cabeçalho de página ----------
+.pv-pagina__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pv-pagina__titulo {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 32px;
+  color: var(--pv-texto);
+}
+
+.pv-pagina__subtitulo {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-pagina__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+// ---------- Estado vazio: ícone + frase + ação ----------
+.pv-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  text-align: center;
+
+  .btn {
+    margin: 16px 0 0;
+  }
+}
+
+.pv-vazio--compacto {
+  padding: 32px 16px;
+}
+
+.pv-vazio__icone {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  color: var(--pv-primaria);
+  background-color: var(--pv-primaria-suave);
+
+  .material-icons {
+    font-size: 24px;
+  }
+}
+
+.pv-vazio__titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+.pv-vazio__texto {
+  max-width: 420px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+}
+
+// -----------------------------------------------------------------------------
+// 4. Shell
+// -----------------------------------------------------------------------------
+
+// ---------- Menu lateral ----------
+// Fundo sólido, sem a imagem e o filtro do template
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--pv-menu);
+  background-image: none;
+  box-shadow: none;
+  color: #fff;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+}
+
+app-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.pv-menu__logo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: var(--pv-topo-altura);
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.pv-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+
+  &:hover,
+  &:focus {
+    color: #fff;
+  }
+}
+
+.pv-logo__texto {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.pv-logo__nome {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+}
+
+.pv-logo__assinatura {
+  font-size: 12px;
+  color: rgba(255, 255, 255, .72);
+}
+
+// Só aparece com o menu recolhido
+.pv-logo__mini {
+  display: none;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sidebar .sidebar-wrapper.pv-menu__navegacao {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 12px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.pv-menu__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-menu__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  margin: 2px 12px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .78);
+  white-space: nowrap;
+  border-radius: var(--pv-raio-controle);
+  overflow: hidden;
+
+  .material-icons {
+    flex: 0 0 auto;
+    font-size: 20px;
+    color: rgba(255, 255, 255, .78);
+  }
+
+  &:hover,
+  &:focus {
+    color: #fff;
+    background-color: rgba(255, 255, 255, .05);
+
+    .material-icons {
+      color: #fff;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+  }
+}
+
+// Item ativo: fundo leve + barra de 3px na primária à esquerda
+.pv-menu__item--ativo {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .08);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background-color: var(--pv-primaria);
+  }
+
+  .material-icons {
+    color: #fff;
+  }
+}
+
+.pv-menu__texto {
+  transition: opacity .2s;
+}
+
+// Bloco do usuário no rodapé do menu
+.pv-menu__usuario {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 12px 24px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pv-menu__avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, .12);
+  color: #fff;
+
+  .material-icons {
+    font-size: 20px;
+  }
+}
+
+.pv-menu__dados {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 18px;
+}
+
+.pv-menu__nome {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  text-overflow: ellipsis;
+}
+
+.pv-menu__perfil {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, .72);
+}
+
+.pv-menu__sair {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 8px;
+  font-family: var(--pv-fonte);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .85);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, .08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 0;
+  }
+}
+
+// Menu recolhido (desktop): só ícones; ao passar o mouse (ou navegar com o
+// teclado) ele abre por cima, como no template
+@media (min-width: 991px) {
+  .sidebar-mini .sidebar:focus-within {
+    width: var(--pv-menu-largura);
+  }
+
+  .sidebar-mini .sidebar:not(:hover):not(:focus-within) {
+    .pv-menu__logo {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .pv-logo__mini {
+      display: inline;
+    }
+
+    .pv-logo__texto {
+      display: none;
+    }
+
+    .pv-menu__texto,
+    .pv-menu__dados,
+    .pv-menu__sair {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pv-menu__usuario {
+      padding-left: 24px;
+    }
+  }
+}
+
+// ---------- Área principal ----------
+// Cada tela traz o próprio .main-content (dentro do componente da rota)
+.main-panel {
+  background-color: var(--pv-fundo);
+
+  .main-content {
+    margin-top: 0;
+    padding: 24px;
+    min-height: calc(100vh - var(--pv-topo-altura) - 49px);
+
+    > .container-fluid {
+      padding: 0;
+    }
+  }
+
+  .footer {
+    border-top: 1px solid var(--pv-borda);
+  }
+}
+
+// ---------- Barra superior ----------
+.pv-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--pv-topo-altura);
+  padding: 0 24px 0 16px;
+  background-color: var(--pv-superficie);
+  border-bottom: 1px solid var(--pv-borda);
+}
+
+.pv-topo__menu {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--pv-texto-secundario);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pv-texto);
+    background-color: var(--pv-fundo);
+  }
+}
+
+.pv-topo__direita {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.pv-topo__cliente {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+
+  .pv-campo-grupo {
+    min-width: 0;
+  }
+
+  .pv-campo {
+    width: 240px;
+    text-overflow: ellipsis;
+  }
+}
+
+.pv-topo__usuario {
+  font-size: 14px;
+  color: var(--pv-texto);
+  white-space: nowrap;
+}
+
+// ---------- Rodapé ----------
+// Link à esquerda e copyright à direita numa linha só (as classes pull-* do
+// HTML são do Bootstrap 3 e não existem no 4)
+.footer {
+  padding: 14px 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--pv-texto-secundario);
+  background-color: transparent;
+
+  .container-fluid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 16px;
+    padding: 0 24px;
+  }
+
+  nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: inline-block;
+    }
+  }
+
+  nav ul li a {
+    padding: 0;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: none;
+    color: var(--pv-texto-secundario);
+
+    &:hover {
+      color: var(--pv-primaria);
+    }
+  }
+
+  .copyright {
+    padding: 0;
+    color: var(--pv-texto-secundario);
+  }
+}
+
+// ---------- Celular e tablet: menu sai pela esquerda, por cima do conteúdo ----------
+@media (max-width: 991px) {
+  .sidebar {
+    left: 0;
+    right: auto;
+    width: var(--pv-menu-largura);
+    background-color: var(--pv-menu);
+    visibility: hidden;
+    transform: translate3d(calc(-1 * var(--pv-menu-largura)), 0, 0);
+    transition: transform .33s cubic-bezier(.685, .0473, .346, 1), visibility .33s;
+  }
+
+  .nav-open {
+    .sidebar {
+      visibility: visible;
+      transform: none;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, .25);
+    }
+
+    .main-panel {
+      transform: none;
+    }
+  }
+
+  // A camada escura fica abaixo do menu (z-index 1032 no template)
+  .close-layer {
+    z-index: 1031;
+    background: rgba(15, 23, 42, .45);
+  }
+
+  .main-panel .main-content {
+    padding: 16px;
+  }
+
+  .pv-topo {
+    padding: 0 16px 0 8px;
+  }
+
+  .footer .container-fluid {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  // No celular o nome do usuário fica só no rodapé do menu
+  .pv-topo__usuario {
+    display: none;
+  }
+
+  .pv-topo__cliente .pv-campo {
+    width: 200px;
+  }
+
+  .footer .container-fluid {
+    flex-direction: column;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. Painel
+// -----------------------------------------------------------------------------
+
+// ---------- Indicadores ----------
+.pv-kpi {
+  height: calc(100% - 24px);
+  padding: 16px 20px;
+}
+
+.pv-kpi__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pv-kpi__rotulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-kpi__valor {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+  color: var(--pv-texto);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pv-kpi__auxiliar {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--pv-texto-secundario);
+
+  a {
+    font-weight: 500;
+  }
+}
+
+.pv-kpi__icone {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  .material-icons {
+    font-size: 20px;
+  }
+}
+
+.pv-kpi__icone--valor {
+  color: var(--pv-primaria);
+  background-color: var(--pv-primaria-suave);
+}
+
+.pv-kpi__icone--alerta {
+  color: var(--pv-alerta);
+  background-color: var(--pv-alerta-suave);
+}
+
+.pv-kpi__icone--neutro {
+  color: var(--pv-texto-secundario);
+  background-color: var(--pv-neutro-suave);
+}
+
+// ---------- Gráfico de barras (Chartist) sobre fundo branco ----------
+.pv-grafico {
+  height: 260px;
+
+  .ct-grid {
+    stroke: var(--pv-borda);
+    stroke-dasharray: none;
+  }
+
+  .ct-label {
+    font-size: 12px;
+    color: var(--pv-texto-auxiliar);
+    fill: var(--pv-texto-auxiliar);
+  }
+
+  .ct-series-a .ct-bar {
+    stroke: var(--pv-primaria);
+    stroke-width: 40px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .pv-grafico {
+    height: 220px;
+
+    .ct-series-a .ct-bar {
+      stroke-width: 20px;
+    }
+  }
+}
+
+// ---------- Resumo semanal (embaixo do gráfico) ----------
+// As linhas entre as semanas são sombras de 1px (célula vazia na última linha fica branca)
+.pv-semanas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-controle);
+  overflow: hidden;
+
+  li {
+    padding: 10px 12px;
+    box-shadow: 1px 0 0 var(--pv-borda), 0 1px 0 var(--pv-borda);
+  }
+}
+
+.pv-semanas__periodo {
+  display: block;
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-semanas__valor {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pv-semanas__item--maior .pv-semanas__valor {
+  color: var(--pv-primaria);
+}
+
+// -----------------------------------------------------------------------------
+// 6. Formulários
+// -----------------------------------------------------------------------------
+
+// Rótulo fixo acima do campo. O Bootstrap Material Design posiciona o rótulo
+// "flutuante" por cima do campo e o move com várias combinações de classe
+// (is-focused, is-filled...); por isso os !important aqui.
+.bmd-form-group {
+  padding-top: 0;
+
+  [class^='bmd-label'],
+  [class*=' bmd-label'] {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    display: block;
+    margin: 0 0 6px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    line-height: 16px !important;
+    color: var(--pv-texto-secundario) !important;
+    transform: none !important;
+    pointer-events: auto;
+    transition: none;
+  }
+}
+
+.form-group {
+  margin: 0 0 16px;
+  padding-bottom: 0;
+}
+
+// O template alinha à direita e com 30px em cima dentro de .card-body
+.col-form-label,
+.card .card-body .col-form-label {
+  display: block;
+  padding: 8px 0 6px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--pv-texto-secundario);
+}
+
+// Campo com borda completa (sem o sublinhado animado do template)
+.form-control,
+.bmd-form-group .form-control,
+.bmd-form-group.is-focused .form-control,
+.is-focused .form-control,
+select.form-control:not([size]):not([multiple]) {
+  height: 36px;
+  padding: 0 12px;
+  font-family: var(--pv-fonte);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pv-texto);
+  background-color: var(--pv-superficie);
+  background-image: none;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: var(--pv-raio-controle);
+  box-shadow: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.form-control:hover {
+  border-color: var(--pv-texto-auxiliar);
+}
+
+.form-control:focus,
+.bmd-form-group.is-focused .form-control,
+.is-focused .form-control:focus,
+select.form-control:not([size]):not([multiple]):focus {
+  border-color: var(--pv-primaria);
+  box-shadow: var(--pv-anel-foco);
+  background-image: none;
+  outline: none;
+}
+
+// Select com a mesma seta dos selects da barra superior (também com foco)
+select.form-control,
+.bmd-form-group select.form-control,
+.bmd-form-group.is-focused select.form-control,
+select.form-control:not([size]):not([multiple]),
+select.form-control:not([size]):not([multiple]):focus {
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23475569' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 20px 20px;
+  appearance: none;
+}
+
+textarea.form-control {
+  height: auto;
+  padding: 8px 12px;
+}
+
+.form-control::placeholder {
+  color: var(--pv-texto-auxiliar);
+  opacity: 1;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+select.form-control:not([size]):not([multiple]):disabled {
+  color: var(--pv-texto-secundario);
+  background-color: var(--pv-fundo);
+  cursor: not-allowed;
+}
+
+// O autofill do Chrome/Edge pinta o campo de azul: cobre com branco por dentro da borda
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover {
+  -webkit-text-fill-color: var(--pv-texto);
+  box-shadow: 0 0 0 1000px var(--pv-superficie) inset;
+  transition: background-color 9999s;
+}
+
+.form-control:-webkit-autofill:focus {
+  box-shadow: 0 0 0 1000px var(--pv-superficie) inset, var(--pv-anel-foco);
+}
+
+// Caixa de seleção do template na cor primária, com foco visível
+.form-check {
+  .form-check-label {
+    color: var(--pv-texto);
+  }
+
+  .form-check-sign .check {
+    border-color: var(--pv-borda-forte);
+    border-radius: 4px;
+  }
+
+  .form-check-input:checked + .form-check-sign .check {
+    background-color: var(--pv-primaria);
+    border-color: var(--pv-primaria);
+  }
+
+  .form-check-input:focus-visible + .form-check-sign .check {
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+// Formulário do topo em modo de edição: borda na primária, para não confundir com o cadastro
+.card.pv-card--editando {
+  border-color: var(--pv-primaria);
+  box-shadow: 0 0 0 1px var(--pv-primaria), var(--pv-sombra-card);
+}
+
+// Linha da tabela que está sendo alterada no formulário
+.table > tbody > tr.pv-linha--editando > td {
+  background-color: var(--pv-primaria-suave);
+}
+
+// Botões no fim do formulário
+.pv-formulario__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--pv-borda);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.pv-formulario__ajuda {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-formulario__secao {
+  margin: 8px 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+// -----------------------------------------------------------------------------
+// 7. Menu de ações "⋯" e ações por linha
+// -----------------------------------------------------------------------------
+
+// Na tabela: no máximo uma ação visível + o "⋯"
+.pv-acoes-linha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.pv-acoes-linha__pergunta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+.pv-acoes {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+// Botão só com ícone (o "⋯" e as ações de linha com ícone)
+.pv-acoes__gatilho,
+.pv-botao-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--pv-texto-secundario);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  &:hover,
+  &[aria-expanded="true"] {
+    color: var(--pv-texto);
+    background-color: var(--pv-fundo);
+    border-color: var(--pv-borda);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+.pv-acoes__menu {
+  position: fixed;
+  z-index: 1060;
+  min-width: 200px;
+  padding: 4px;
+  text-align: left;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+}
+
+.pv-acoes__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-family: var(--pv-fonte);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--pv-texto);
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--pv-texto-secundario);
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--pv-texto);
+    text-decoration: none;
+    background-color: var(--pv-fundo);
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--pv-primaria);
+  }
+
+  &:disabled {
+    opacity: .55;
+    cursor: default;
+  }
+}
+
+.pv-acoes__item--perigo,
+.pv-acoes__item--perigo:hover,
+.pv-acoes__item--perigo:focus {
+  color: var(--pv-erro);
+
+  .material-icons {
+    color: var(--pv-erro);
+  }
+}
+
+.pv-acoes__separador {
+  height: 1px;
+  margin: 4px 0;
+  background-color: var(--pv-borda);
+}
+
+// Campo curto dentro da linha da tabela (ex.: nova senha)
+.pv-campo-curto {
+  width: 160px;
+}
+
+// Paginação embaixo da tabela
+.pv-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--pv-borda);
+
+  .btn {
+    margin: 0;
+  }
+}
+
+.pv-paginacao__texto {
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+}
+
+// Linha inativa: texto mais apagado, mas ainda legível (auxiliar = 4,76:1)
+.table > tbody > tr.pv-linha--inativa > td {
+  color: var(--pv-texto-auxiliar);
+}
+
+// -----------------------------------------------------------------------------
+// 8. Detalhes
+// -----------------------------------------------------------------------------
+
+// Resposta do Bling e outros textos técnicos
+.pv-codigo {
+  margin: 0;
+  padding: 12px;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--pv-texto);
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  background-color: var(--pv-fundo);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-controle);
+}
+
+// Linha expandida com o detalhe da falha
+.table > tbody > tr.pv-tabela__detalhe:hover {
+  background-color: transparent;
+}
+
+.table > tbody > tr.pv-tabela__detalhe > td {
+  padding: 16px 12px 20px;
+  background-color: var(--pv-superficie-hover);
+}
+
+// Tabela dentro do detalhe expandido (ex.: parcelas da nota)
+.pv-detalhe__tabela {
+  margin-bottom: 16px;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-controle);
+
+  .table > tbody > tr > td {
+    height: 40px;
+  }
+}
+
+.pv-detalhe__titulo {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-detalhe__texto {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--pv-texto);
+  word-break: break-word;
+}
+
+// Link de voltar no topo das telas de detalhe
+.pv-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+
+  .material-icons {
+    font-size: 18px;
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, DOCUMENT, afterNextRender, inject, signal } from '@angular/core';
+import { Component, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,37 +11,59 @@ import { SessaoService } from '../../core/sessao.service';
 @Component({
   selector: 'app-login',
   imports: [FormsModule],
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-  private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly rota = inject(ActivatedRoute);
   private readonly sessao = inject(SessaoService);
+  private readonly campoEmail = viewChild<ElementRef<HTMLInputElement>>('campoEmail');
 
   readonly ano = new Date().getFullYear();
   readonly email = signal('');
   readonly senha = signal('');
-  readonly cartaoVisivel = signal(false);
   readonly enviando = signal(false);
   readonly erro = signal('');
   readonly aviso = signal('');
+  readonly senhaVisivel = signal(false);
+  readonly capsLock = signal(false);
+
+  readonly tipoSenha = computed(() => {
+    if (this.senhaVisivel()) {
+      return 'text';
+    }
+    return 'password';
+  });
+
+  readonly rotuloOlho = computed(() => {
+    if (this.senhaVisivel()) {
+      return 'Ocultar senha';
+    }
+    return 'Mostrar senha';
+  });
 
   constructor() {
-    const body = this.document.body;
-    body.classList.add('login-page', 'off-canvas-sidebar');
-
-    // Mesma animação do template: o cartão aparece logo depois de a página carregar
     afterNextRender(() => {
-      setTimeout(() => this.cartaoVisivel.set(true), 700);
-    });
-
-    inject(DestroyRef).onDestroy(() => {
-      body.classList.remove('login-page', 'off-canvas-sidebar');
+      const campo = this.campoEmail();
+      if (campo) {
+        campo.nativeElement.focus();
+      }
     });
 
     if (this.rota.snapshot.queryParamMap.get('motivo') === 'expirou') {
       this.aviso.set('Sua sessão terminou. Entre novamente para continuar.');
+    }
+  }
+
+  alternarSenha(): void {
+    this.senhaVisivel.set(!this.senhaVisivel());
+  }
+
+  verificarCapsLock(evento: KeyboardEvent): void {
+    // getModifierState não existe em eventos sintéticos de alguns navegadores antigos
+    if (typeof evento.getModifierState === 'function') {
+      this.capsLock.set(evento.getModifierState('CapsLock'));
     }
   }
 

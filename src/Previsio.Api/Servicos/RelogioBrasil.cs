@@ -12,6 +12,15 @@ public static class RelogioBrasil
         return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Fuso).Date;
     }
 
+    /// <summary>
+    /// Instante UTC em que começa o dia informado no horário de Brasília (filtros de período: no banco tudo é UTC).
+    /// </summary>
+    public static DateTime InicioDoDiaEmUtc(DateTime dia)
+    {
+        DateTime inicioLocal = DateTime.SpecifyKind(dia.Date, DateTimeKind.Unspecified);
+        return TimeZoneInfo.ConvertTimeToUtc(inicioLocal, Fuso);
+    }
+
     private static TimeZoneInfo CarregarFuso()
     {
         try

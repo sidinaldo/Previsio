@@ -54,3 +54,6 @@
 @import "plugins/perfect-scrollbar";
 
 @import "dashboard/responsive";
+
+// Tema do Previsio: tokens e ajustes visuais por cima do template (vem por último)
+@import "styles/previsio-tema";
