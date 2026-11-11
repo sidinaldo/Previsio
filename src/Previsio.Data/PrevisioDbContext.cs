@@ -16,6 +16,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<ContaPagarSincronizada> ContasPagar => Set<ContaPagarSincronizada>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
+    public DbSet<Aviso> Avisos => Set<Aviso>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,6 +26,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(c => c.ImapHost).HasMaxLength(200);
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);
+            entidade.Property(c => c.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(c => c.BlingClientId).HasMaxLength(200);
         });
 
@@ -33,6 +35,7 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("empresas");
             entidade.Property(e => e.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(e => e.Cnpj).HasMaxLength(14).IsRequired();
+            entidade.Property(e => e.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(e => e.BlingClientId).HasMaxLength(200);
             entidade.Property(e => e.ImapHost).HasMaxLength(200);
             entidade.Property(e => e.ImapUsuario).HasMaxLength(200);
@@ -156,6 +159,25 @@ public class PrevisioDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(f => f.NotaFiscalId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Aviso>(entidade =>
+        {
+            entidade.ToTable("avisos");
+            entidade.Property(a => a.Tipo).HasConversion<int>();
+            entidade.Property(a => a.Chave).HasMaxLength(100).IsRequired();
+            entidade.Property(a => a.Titulo).HasMaxLength(200).IsRequired();
+            entidade.Property(a => a.Mensagem).HasMaxLength(500);
+            entidade.Property(a => a.Link).HasMaxLength(200);
+
+            // Um aviso aberto por problema: o mesmo problema só gera aviso novo depois de resolvido
+            entidade.HasIndex(a => new { a.ClienteId, a.Chave })
+                .IsUnique()
+                .HasFilter("\"ResolvidoEm\" IS NULL");
+
+            entidade.HasOne(a => a.Cliente)
+                .WithMany()
+                .HasForeignKey(a => a.ClienteId);
         });
     }
 }

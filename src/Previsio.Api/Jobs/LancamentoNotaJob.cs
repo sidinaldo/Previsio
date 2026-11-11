@@ -15,7 +15,8 @@ namespace Previsio.Api.Jobs;
 /// </summary>
 public class LancamentoNotaJob
 {
-    private const int MaximoTentativas = 5;
+    // Depois disso a nota com erro para de ser tentada e vira aviso para alguém resolver
+    public const int MaximoTentativas = 5;
     private const int LoteMaximo = 100;
 
     private readonly PrevisioDbContext _db;

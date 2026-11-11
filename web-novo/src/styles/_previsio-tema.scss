@@ -2417,3 +2417,193 @@ app-paginacao.pv-paginacao {
   color: inherit;
   text-decoration: underline;
 }
+
+// -----------------------------------------------------------------------------
+// Sininho de avisos (topo)
+// -----------------------------------------------------------------------------
+.pv-sininho {
+  position: relative;
+  display: inline-flex;
+}
+
+.pv-sininho__gatilho {
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--pv-texto-secundario);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 24px;
+  }
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: var(--pv-texto);
+    background-color: var(--pv-fundo);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+.pv-sininho__contador {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #FFFFFF;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  background-color: var(--pv-erro);
+  border: 2px solid var(--pv-superficie);
+  border-radius: 999px;
+  box-sizing: content-box;
+}
+
+.pv-sininho__painel {
+  position: fixed;
+  z-index: 1060;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  max-height: min(70vh, 560px);
+  text-align: left;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+}
+
+.pv-sininho__cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--pv-borda);
+}
+
+.pv-sininho__titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pv-texto);
+}
+
+.pv-sininho__total,
+.pv-sininho__mais {
+  font-size: 12px;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-sininho__lista {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pv-sininho__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--pv-fonte);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    background-color: var(--pv-fundo);
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--pv-primaria);
+  }
+}
+
+.pv-sininho__icone {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  color: var(--pv-alerta);
+  background-color: var(--pv-alerta-suave);
+  border-radius: 50%;
+}
+
+.pv-sininho__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pv-sininho__item-titulo {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+.pv-sininho__mensagem {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--pv-texto-secundario);
+  overflow-wrap: anywhere;
+}
+
+.pv-sininho__rodape {
+  font-size: 12px;
+  color: var(--pv-texto-auxiliar);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-sininho__novo {
+  font-weight: 500;
+  color: var(--pv-primaria);
+}
+
+.pv-sininho__item--novo .pv-sininho__item-titulo {
+  font-weight: 600;
+}
+
+.pv-sininho__vazio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+
+  .material-icons {
+    color: var(--pv-sucesso);
+  }
+}
+
+.pv-sininho__mais {
+  padding: 8px 16px 12px;
+  border-top: 1px solid var(--pv-borda);
+}

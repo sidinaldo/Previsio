@@ -19,6 +19,9 @@ public class Cliente : ICaixaEmail
     // e UID do último e-mail já processado (nulos até a primeira leitura)
     public long? ImapUidValidity { get; set; }
     public long? ImapUltimoUid { get; set; }
+    public DateTime? ImapUltimaConexaoEm { get; set; }
+    public DateTime? ImapUltimaFalhaConexaoEm { get; set; }
+    public string? ImapUltimoErroConexao { get; set; }
 
     // Aplicativo privado do Bling da rede: vale para as empresas que não têm um próprio.
     // Vazio: as empresas sem aplicativo próprio usam o aplicativo global do Previsio (appsettings).

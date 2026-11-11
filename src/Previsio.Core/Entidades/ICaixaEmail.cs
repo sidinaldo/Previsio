@@ -16,4 +16,10 @@ public interface ICaixaEmail
     // e UID do último e-mail já processado (nulos até a primeira leitura)
     long? ImapUidValidity { get; set; }
     long? ImapUltimoUid { get; set; }
+
+    // Última vez que o Previsio conseguiu entrar na caixa e a última vez que não conseguiu
+    // (com o motivo). A caixa está com problema quando a falha é mais recente que o sucesso.
+    DateTime? ImapUltimaConexaoEm { get; set; }
+    DateTime? ImapUltimaFalhaConexaoEm { get; set; }
+    string? ImapUltimoErroConexao { get; set; }
 }

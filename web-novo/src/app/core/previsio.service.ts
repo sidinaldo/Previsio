@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
+import { SEM_BARRA_CARREGAMENTO } from './carregamento.interceptor';
 import { PREVISIO_CONFIG } from './previsio.config';
 import {
   AlteracaoCliente,
@@ -18,6 +19,7 @@ import {
   NovoUsuario,
   PaginaFalhas,
   PaginaNotas,
+  PainelAvisos,
   SituacaoJob,
   ResumoPainel,
   ResultadoTesteEmail,
@@ -67,6 +69,18 @@ export class PrevisioService {
   obterFalhas(filtro: FiltroFalhas): Observable<PaginaFalhas> {
     const params = parametrosDasFalhas(filtro);
     return this.doCliente(url => this.http.get<PaginaFalhas>(`${url}/falhas`, { params }));
+  }
+
+  /** Avisos em aberto do usuário logado. Chamado de tempos em tempos, sem a barra de carregamento. */
+  obterAvisos(): Observable<PainelAvisos> {
+    const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
+    return this.http.get<PainelAvisos>(`${this.api}/avisos`, { context });
+  }
+
+  /** Marca como vistos os avisos abertos até agora (zera o número do sininho). */
+  marcarAvisosVistos(): Observable<void> {
+    const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
+    return this.http.post<void>(`${this.api}/avisos/vistos`, {}, { context });
   }
 
   /** Marca a nota com problema como resolvida e lançada manualmente no Bling. */

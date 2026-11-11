@@ -353,3 +353,26 @@ export const DESCRICAO_ETAPA: { [etapa: string]: string } = {
   CadastroFornecedor: 'Cadastro do fornecedor no Bling',
   LancamentoContaPagar: 'Lançamento da conta a pagar'
 };
+
+export type TipoAviso = 'NotaComProblema' | 'BlingDesconectado' | 'CaixaEmailFalhando';
+
+/** Um problema em aberto que precisa de alguém (sininho do topo). */
+export interface Aviso {
+  id: number;
+  tipo: TipoAviso;
+  titulo: string;
+  mensagem: string;
+  // Rota do front, ex.: "/pages/notas-pendentes"
+  link: string;
+  clienteId: number;
+  clienteNome: string;
+  criadoEm: string;
+  // Ainda não visto por este usuário
+  novo: boolean;
+}
+
+export interface PainelAvisos {
+  novos: number;
+  total: number;
+  itens: Aviso[];
+}

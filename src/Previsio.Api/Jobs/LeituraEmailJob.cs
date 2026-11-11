@@ -26,6 +26,10 @@ public class LeituraEmailJob
     // de novo depois desse intervalo, para não encher a tela com o mesmo erro
     private static readonly TimeSpan IntervaloFalhaRepetida = TimeSpan.FromHours(1);
 
+    // Motivo da última falha de conexão guardado na caixa (para o aviso)
+    private const int TamanhoMaximoErroConexao = 500;
+
+
     private readonly PrevisioDbContext _db;
     private readonly ProtetorSegredos _protetor;
     private readonly RegistroNotaService _registro;
@@ -113,6 +117,10 @@ public class LeituraEmailJob
             passo = "abrir a caixa de entrada";
             caixa = imap.Inbox;
             await caixa.OpenAsync(FolderAccess.ReadOnly, cancelamento);
+
+            // Entrou: a caixa deixa de aparecer como "com erro" nos avisos
+            dados.ImapUltimaConexaoEm = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancelamento);
 
             passo = "procurar e-mails novos";
             long validadeAtual = caixa.UidValidity;
@@ -294,13 +302,16 @@ public class LeituraEmailJob
                 && f.Mensagem == falha.Mensagem
                 && f.OcorridaEm >= limite, cancelamento);
 
-            if (jaRegistrada)
-            {
-                return;
-            }
-
             _db.ChangeTracker.Clear();
-            _db.Falhas.Add(falha);
+            AcompanharDonoDaCaixa(caixaParaLer);
+
+            // Marca a caixa como "com erro" (para os avisos) mesmo quando a falha repetida não é gravada de novo
+            caixaParaLer.Dados.ImapUltimaFalhaConexaoEm = DateTime.UtcNow;
+            caixaParaLer.Dados.ImapUltimoErroConexao = LimitarErro(mensagem);
+            if (!jaRegistrada)
+            {
+                _db.Falhas.Add(falha);
+            }
             await _db.SaveChangesAsync(cancelamento);
         }
         catch (Exception erro)
@@ -324,6 +335,15 @@ public class LeituraEmailJob
         {
             _db.Empresas.Attach(caixaParaLer.Empresa);
         }
+    }
+
+    private static string LimitarErro(string mensagem)
+    {
+        if (mensagem.Length <= TamanhoMaximoErroConexao)
+        {
+            return mensagem;
+        }
+        return mensagem.Substring(0, TamanhoMaximoErroConexao);
     }
 
     private static string DescreverOrigem(MimeMessage mensagem)

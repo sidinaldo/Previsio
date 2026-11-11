@@ -21,6 +21,9 @@ public class Empresa : ICaixaEmail
     public string ImapSenhaProtegida { get; set; } = "";
     public long? ImapUidValidity { get; set; }
     public long? ImapUltimoUid { get; set; }
+    public DateTime? ImapUltimaConexaoEm { get; set; }
+    public DateTime? ImapUltimaFalhaConexaoEm { get; set; }
+    public string? ImapUltimoErroConexao { get; set; }
 
     // Aplicativo privado criado dentro da conta Bling desta empresa.
     // Vazio: usa o aplicativo da rede (Cliente) e, se a rede também não tiver, o global do Previsio.

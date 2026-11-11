@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Avisos;
 using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
@@ -82,6 +83,8 @@ builder.Services.AddSingleton<GeradorTokenJwt>();
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
 builder.Services.AddScoped<RedefinicaoSenhaService>();
+builder.Services.AddScoped<AvisosService>();
+builder.Services.AddScoped<AvisosJob>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
 builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
@@ -242,6 +245,9 @@ agenda.AddOrUpdate<LeituraEmailJob>(
     "leitura-email", j => j.ExecutarAsync(CancellationToken.None), "*/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<LancamentoNotaJob>(
     "lancamento", j => j.LancarPendentesAsync(CancellationToken.None), "*/10 * * * *", opcoesAgenda);
+// 5 minutos depois da leitura e do lançamento: avisos do que precisa de alguém e o e-mail dos novos
+agenda.AddOrUpdate<AvisosJob>(
+    "avisos", j => j.ExecutarAsync(CancellationToken.None), "5-59/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<SincronizacaoContasJob>(
     "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), "*/30 * * * *", opcoesAgenda);
 
