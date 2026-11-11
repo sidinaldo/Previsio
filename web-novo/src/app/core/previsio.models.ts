@@ -51,21 +51,57 @@ export interface Nota {
   recebidaEm: string;
 }
 
+/** Preenchidos quando alguém marcou a nota como lançada manualmente no Bling. */
+export interface ResolucaoManual {
+  resolvidaManualmenteEm: string | null;
+  resolvidaManualmentePor: string | null;
+  observacaoResolucao: string | null;
+}
+
 export interface Empresa {
   id: number;
   nome: string;
   cnpj: string;
   blingConectado: boolean;
-  /** Aplicativo privado criado na conta Bling desta empresa; null usa o aplicativo padrão do Previsio. */
+  /** Aplicativo privado criado na conta Bling desta empresa; null usa o da rede ou, sem ele, o padrão do Previsio. */
   blingClientId: string | null;
   /** O secret nunca volta da API, só se está cadastrado. */
   blingClientSecretCadastrado: boolean;
+  /** De onde vem o aplicativo do Bling em uso. */
+  origemAplicativoBling: OrigemAplicativoBling;
+  /** Caixa de e-mail própria; sem ela, as notas chegam só pela caixa da rede. */
+  emailProprio: boolean;
+  imapHost: string;
+  imapPorta: number;
+  imapSsl: boolean;
+  imapUsuario: string;
+  /** A senha nunca volta da API, só se está cadastrada. */
+  imapSenhaCadastrada: boolean;
   ultimaSincronizacaoEm: string | null;
   ativo: boolean;
 }
 
+export type OrigemAplicativoBling = 'Empresa' | 'Rede' | 'Padrao';
+
+export const DESCRICAO_ORIGEM_APLICATIVO: Record<OrigemAplicativoBling, string> = {
+  Empresa: 'Aplicativo próprio',
+  Rede: 'Aplicativo da rede',
+  Padrao: 'Aplicativo padrão'
+};
+
+/** Caixa de e-mail própria da empresa, no cadastro e na alteração. */
+export interface EmailEmpresa {
+  /** "" remove a caixa própria (na alteração). */
+  imapHost?: string;
+  imapPorta?: number;
+  imapSsl?: boolean;
+  imapUsuario?: string;
+  /** Vazio ou ausente mantém a senha atual. */
+  imapSenha?: string;
+}
+
 /** POST /api/clientes/{id}/empresas. Client ID e Secret são opcionais, mas vão juntos. */
-export interface NovaEmpresa {
+export interface NovaEmpresa extends EmailEmpresa {
   nome: string;
   cnpj: string;
   blingClientId?: string;
@@ -73,10 +109,10 @@ export interface NovaEmpresa {
 }
 
 /** PUT /api/empresas/{id}: só os campos enviados mudam. O CNPJ não pode ser alterado. */
-export interface AlteracaoEmpresa {
+export interface AlteracaoEmpresa extends EmailEmpresa {
   nome?: string;
   ativo?: boolean;
-  /** "" volta ao aplicativo padrão do Previsio. Trocar o Client ID desconecta a empresa. */
+  /** "" volta ao aplicativo da rede (ou ao padrão). Trocar o Client ID desconecta a empresa. */
   blingClientId?: string;
   /** Vazio ou ausente mantém o secret atual. */
   blingClientSecret?: string;
@@ -89,6 +125,10 @@ export interface Cliente {
   imapPorta: number;
   imapSsl: boolean;
   imapUsuario: string;
+  /** Aplicativo privado do Bling da rede, usado pelas empresas que não têm um próprio. */
+  blingClientId: string | null;
+  /** O secret nunca volta da API, só se está cadastrado. */
+  blingClientSecretCadastrado: boolean;
   ativo: boolean;
 }
 
@@ -100,6 +140,10 @@ export interface AlteracaoCliente {
   imapSsl?: boolean;
   imapUsuario?: string;
   imapSenha?: string;
+  /** "" remove o aplicativo da rede. Trocar o Client ID desconecta as empresas que usam o da rede. */
+  blingClientId?: string;
+  /** Vazio ou ausente mantém o secret atual. */
+  blingClientSecret?: string;
   ativo?: boolean;
 }
 
@@ -159,7 +203,7 @@ export interface ParcelaNota {
 }
 
 /** Nota lida do e-mail, lançada ou não no Bling (GET /api/clientes/{id}/notas). */
-export interface NotaRecebida {
+export interface NotaRecebida extends ResolucaoManual {
   id: number;
   empresaId: number | null;
   empresaNome: string | null;
@@ -204,11 +248,15 @@ export interface SituacaoJob {
   emExecucao: boolean;
 }
 
+/** Situações em que alguém precisa resolver a nota; só estas podem ser marcadas como lançadas manualmente. */
+export const SITUACOES_COM_PROBLEMA = ['Erro', 'BlingDesconectado', 'EmpresaNaoEncontrada', 'SemParcelas'];
+
 /** Filtro que junta todas as situações que ainda não viraram conta a pagar. */
 export const SITUACAO_PENDENTES = 'Pendentes';
 
 export const DESCRICAO_STATUS: { [status: string]: string } = {
   Lancada: 'Lançada no Bling',
+  LancadaManualmente: 'Lançada manualmente',
   Recebida: 'Aguardando lançamento',
   SemParcelas: 'Sem vencimentos no XML',
   EmpresaNaoEncontrada: 'CNPJ não cadastrado',

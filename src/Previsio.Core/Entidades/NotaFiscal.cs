@@ -29,5 +29,11 @@ public class NotaFiscal
     public DateTime RecebidaEm { get; set; } = DateTime.UtcNow;
     public DateTime? LancadaEm { get; set; }
 
+    // Marcação de "resolvida e lançada manualmente no Bling": quem, quando e observação
+    public DateTime? ResolvidaManualmenteEm { get; set; }
+    public int? ResolvidaManualmentePorId { get; set; }
+    public string? ResolvidaManualmentePor { get; set; }
+    public string? ObservacaoResolucao { get; set; }
+
     public List<ParcelaNota> Parcelas { get; set; } = new List<ParcelaNota>();
 }

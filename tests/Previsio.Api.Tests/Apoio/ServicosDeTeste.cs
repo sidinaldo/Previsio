@@ -24,7 +24,7 @@ public static class ServicosDeTeste
 
     public static ClientesService Clientes(PrevisioDbContext db, ProtetorSegredos protetor)
     {
-        return new ClientesService(new Repositorio<Cliente>(db), protetor);
+        return new ClientesService(new Repositorio<Cliente>(db), new Repositorio<Empresa>(db), protetor);
     }
 
     public static EmpresasService Empresas(PrevisioDbContext db, ProtetorSegredos protetor)

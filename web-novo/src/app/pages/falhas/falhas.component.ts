@@ -7,6 +7,10 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_ETAPA, Empresa, Falha, FiltroFalhas } from '../../core/previsio.models';
 import { totalDePaginas } from '../../core/filtro-falhas';
+import { CarregandoDirective } from '../../shared/carregando.directive';
+
+/** Botão que disparou o carregamento da lista, para o spinner aparecer só nele. */
+type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | null;
 
 /**
  * Histórico das falhas: por que falhou, qual endereço tentou, qual nota, empresa e valor.
@@ -14,7 +18,7 @@ import { totalDePaginas } from '../../core/filtro-falhas';
  */
 @Component({
   selector: 'app-falhas',
-  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe],
+  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe, CarregandoDirective],
   templateUrl: './falhas.component.html'
 })
 export class FalhasComponent {
@@ -37,6 +41,7 @@ export class FalhasComponent {
   readonly total = signal(0);
   readonly tamanhoPagina = signal(50);
   readonly carregando = signal(false);
+  readonly acaoLista = signal<AcaoLista>(null);
   readonly erro = signal('');
 
   // Linha com os detalhes abertos
@@ -79,11 +84,13 @@ export class FalhasComponent {
   }
 
   filtrar(): void {
+    this.acaoLista.set('filtrar');
     this.pagina.set(1);
     this.carregar();
   }
 
   limpar(): void {
+    this.acaoLista.set('limpar');
     this.empresaId.set(null);
     this.notaId.set(null);
     this.etapa.set('');
@@ -98,6 +105,11 @@ export class FalhasComponent {
   irParaPagina(pagina: number): void {
     if (pagina < 1 || pagina > this.totalPaginas()) {
       return;
+    }
+    if (pagina > this.pagina()) {
+      this.acaoLista.set('proxima');
+    } else {
+      this.acaoLista.set('anterior');
     }
     this.pagina.set(pagina);
     this.carregar();

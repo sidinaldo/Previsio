@@ -40,7 +40,7 @@ export function descricaoDaSituacao(status: string): string {
  * o resto (precisa de alguém resolver) em alerta.
  */
 export function classeDaSituacao(status: string): string {
-  if (status === 'Lancada') {
+  if (status === 'Lancada' || status === 'LancadaManualmente') {
     return 'badge-success';
   }
   if (status === 'Erro') {

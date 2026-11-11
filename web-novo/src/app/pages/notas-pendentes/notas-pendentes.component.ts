@@ -5,14 +5,16 @@ import { RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { PrevisioService } from '../../core/previsio.service';
-import { DESCRICAO_STATUS, Nota } from '../../core/previsio.models';
+import { DESCRICAO_STATUS, Nota, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
 import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -32,6 +34,15 @@ export class NotasPendentesComponent {
   readonly mensagem = signal('');
   // Leitura dos e-mails rodando: o botão fica desabilitado até ela terminar
   readonly buscandoEmails = signal(false);
+
+  // Nota com a confirmação de "lançada manualmente no Bling" aberta
+  readonly resolvendoId = signal<number | null>(null);
+
+  // Nota sendo enviada para um novo lançamento
+  readonly reprocessandoId = signal<number | null>(null);
+
+  // Colunas da tabela (a de empresa some quando a tela já está filtrada por uma)
+  readonly colunas = computed(() => (this.empresaId() ? 7 : 8));
 
   readonly valorTotal = computed(() => {
     let total = 0;
@@ -71,19 +82,46 @@ export class NotasPendentesComponent {
     return nota.status === 'Erro' || nota.status === 'BlingDesconectado';
   }
 
+  /** Notas com problema podem ser marcadas como lançadas manualmente no Bling. */
+  podeMarcarManual(nota: Nota): boolean {
+    return SITUACOES_COM_PROBLEMA.includes(nota.status);
+  }
+
+  abrirResolucao(nota: Nota): void {
+    this.resolvendoId.set(nota.id);
+  }
+
+  fecharResolucao(): void {
+    this.resolvendoId.set(null);
+  }
+
+  aoResolver(nota: Nota): void {
+    this.resolvendoId.set(null);
+    this.erro.set('');
+    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no Bling.`);
+    this.carregar();
+  }
+
   podeReprocessar(nota: Nota): boolean {
     return nota.status === 'Erro' || nota.status === 'BlingDesconectado' || nota.status === 'Recebida';
   }
 
   reprocessar(nota: Nota): void {
+    this.erro.set('');
+    this.reprocessandoId.set(nota.id);
     this.previsio.reprocessarNota(nota.id).subscribe({
       next: () => {
+        this.reprocessandoId.set(null);
         this.mensagem.set(`NF ${nota.numero} enviada para lançamento.`);
         setTimeout(() => this.carregar(), 3000);
       },
-      error: () => this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`)
+      error: () => {
+        this.reprocessandoId.set(null);
+        this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`);
+      }
     });
   }
+
 
   /** Roda a leitura dos e-mails e atualiza a lista sozinha quando ela termina. */
   buscarEmailsAgora(): void {

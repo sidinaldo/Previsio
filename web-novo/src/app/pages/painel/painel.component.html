@@ -21,7 +21,7 @@
             <option [ngValue]="60">Próximos 60 dias</option>
           </select>
         </span>
-        <button type="button" class="btn btn-secundario" (click)="carregar()" [disabled]="carregando()">
+        <button type="button" class="btn btn-secundario" (click)="carregar()" [pvCarregando]="carregando()" [disabled]="carregando()">
           <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
         </button>
       </div>

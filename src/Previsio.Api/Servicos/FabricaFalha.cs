@@ -52,14 +52,16 @@ public static class FabricaFalha
     /// <summary>
     /// Falha ao conectar ou ler a caixa de e-mail do cliente.
     /// </summary>
-    public static FalhaProcessamento DoEmail(Cliente cliente, string mensagem, string? origem)
+    public static FalhaProcessamento DoEmail(
+        int clienteId, int? empresaId, ICaixaEmail caixa, string mensagem, string? origem)
     {
         var falha = new FalhaProcessamento();
-        falha.ClienteId = cliente.Id;
+        falha.ClienteId = clienteId;
+        falha.EmpresaId = empresaId;
         falha.Etapa = EtapaFalha.LeituraEmail;
         falha.Mensagem = Cortar(mensagem, TamanhoMensagem);
         falha.Metodo = MetodoImap;
-        falha.Endereco = Cortar(EnderecoImap(cliente), TamanhoEndereco);
+        falha.Endereco = Cortar(EnderecoImap(caixa), TamanhoEndereco);
         if (origem != null)
         {
             falha.Origem = Cortar(origem, TamanhoOrigem);
@@ -70,24 +72,25 @@ public static class FabricaFalha
     /// <summary>
     /// Anexo .xml que não foi reconhecido como NF-e.
     /// </summary>
-    public static FalhaProcessamento DoXml(Cliente cliente, string nomeAnexo, string origemEmail)
+    public static FalhaProcessamento DoXml(
+        int clienteId, int? empresaId, ICaixaEmail caixa, string nomeAnexo, string origemEmail)
     {
         string mensagem = "O anexo \"" + nomeAnexo + "\" não foi reconhecido como NF-e (modelo 55). "
             + "Pode ser um evento (cancelamento, carta de correção), CT-e, NFS-e ou um arquivo corrompido.";
 
-        FalhaProcessamento falha = DoEmail(cliente, mensagem, origemEmail);
+        FalhaProcessamento falha = DoEmail(clienteId, empresaId, caixa, mensagem, origemEmail);
         falha.Etapa = EtapaFalha.LeituraXml;
         return falha;
     }
 
-    public static string EnderecoImap(Cliente cliente)
+    public static string EnderecoImap(ICaixaEmail caixa)
     {
         string protocolo = "imap://";
-        if (cliente.ImapSsl)
+        if (caixa.ImapSsl)
         {
             protocolo = "imaps://";
         }
-        return protocolo + cliente.ImapHost + ":" + cliente.ImapPorta + " (usuário " + cliente.ImapUsuario + ")";
+        return protocolo + caixa.ImapHost + ":" + caixa.ImapPorta + " (usuário " + caixa.ImapUsuario + ")";
     }
 
     public static string Cortar(string texto, int tamanho)

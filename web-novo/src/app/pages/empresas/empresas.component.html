@@ -60,7 +60,7 @@
               <div class="form-group">
                 <label for="previsio-client-id" class="bmd-label-floating">Client ID do aplicativo Bling (opcional)</label>
                 <input id="previsio-client-id" type="text" class="form-control" name="clientId" autocomplete="off"
-                       [placeholder]="editando() !== null ? 'Vazio: aplicativo padrão do Previsio' : ''"
+                       [placeholder]="editando() !== null ? 'Vazio: aplicativo da rede' : ''"
                        [(ngModel)]="clientId">
               </div>
             </div>
@@ -81,15 +81,65 @@
           <p class="pv-formulario__ajuda">
             Use quando a conta Bling desta empresa tiver um <strong>aplicativo privado</strong> próprio.
             No cadastro do aplicativo, informe o link de redirecionamento <code>{{ linkRedirecionamento }}</code>.
-            Deixe vazio para usar o aplicativo padrão do Previsio.
+            Deixe vazio para usar o aplicativo da rede (cadastrado em Clientes) ou, sem ele, o padrão do Previsio.
+          </p>
+
+          <h3 class="pv-formulario__secao">E-mail próprio da empresa (opcional)</h3>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="previsio-imap-host" class="bmd-label-floating">Servidor IMAP</label>
+                <input id="previsio-imap-host" type="text" class="form-control" name="imapHost" autocomplete="off"
+                       [(ngModel)]="imapHost">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="previsio-imap-porta" class="bmd-label-floating">Porta</label>
+                <input id="previsio-imap-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
+                       [(ngModel)]="imapPorta">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="previsio-imap-usuario" class="bmd-label-floating">E-mail da caixa</label>
+                <input id="previsio-imap-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
+                       [(ngModel)]="imapUsuario">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="previsio-imap-senha" class="bmd-label-floating">
+                  @if (editando()?.imapSenhaCadastrada) {
+                    Senha de app (em branco mantém)
+                  } @else {
+                    Senha de app
+                  }
+                </label>
+                <input id="previsio-imap-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
+                       [(ngModel)]="imapSenha">
+              </div>
+            </div>
+          </div>
+          <div class="form-check">
+            <label class="form-check-label">
+              <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+              Conexão com SSL
+              <span class="form-check-sign"><span class="check"></span></span>
+            </label>
+          </div>
+          <p class="pv-formulario__ajuda">
+            Deixe o servidor vazio para receber as notas desta empresa só pela caixa de e-mail da rede.
+            Com e-mail próprio, as duas caixas são lidas e a nota vai para a empresa pelo CNPJ do destinatário.
           </p>
         </div>
         <div class="pv-formulario__acoes">
           @if (editando(); as e) {
-            <button type="submit" class="btn btn-info" [disabled]="processandoId() === e.id">Salvar alterações</button>
+            <button type="submit" class="btn btn-info" [pvCarregando]="processandoId() === e.id"
+                    [disabled]="processandoId() === e.id">Salvar alterações</button>
             <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
-            <button type="submit" class="btn btn-info">Cadastrar</button>
+            <button type="submit" class="btn btn-info" [pvCarregando]="cadastrando()" [disabled]="cadastrando()">Cadastrar</button>
           }
         </div>
       </form>
@@ -131,6 +181,11 @@
                     @if (estaEditando(empresa)) {
                       <span class="badge badge-info ml-1">Em edição</span>
                     }
+                    @if (empresa.emailProprio) {
+                      <span class="pv-tabela__auxiliar">E-mail próprio: {{ empresa.imapUsuario }}</span>
+                    } @else {
+                      <span class="pv-tabela__auxiliar">E-mail da rede</span>
+                    }
                   </td>
                   <td class="pv-numero">{{ empresa.cnpj }}</td>
                   <td>
@@ -139,11 +194,7 @@
                     } @else {
                       <span class="badge badge-warning">Desconectado</span>
                     }
-                    @if (empresa.blingClientId) {
-                      <span class="pv-tabela__auxiliar" [title]="'Client ID ' + empresa.blingClientId">Aplicativo próprio</span>
-                    } @else {
-                      <span class="pv-tabela__auxiliar">Aplicativo padrão</span>
-                    }
+                    <span class="pv-tabela__auxiliar">{{ descricaoOrigem(empresa) }}</span>
                   </td>
                   <td class="pv-numero">
                     @if (empresa.ultimaSincronizacaoEm) {
@@ -154,7 +205,11 @@
                   </td>
                   <td class="text-right">
                     <div class="pv-acoes-linha">
-                      @if (aguardandoConfirmacao(empresa)) {
+                      @if (processandoId() === empresa.id) {
+                        <span class="pv-acoes-linha__pergunta" role="status">
+                          <span class="pv-spinner" aria-hidden="true"></span> Processando...
+                        </span>
+                      } @else if (aguardandoConfirmacao(empresa)) {
                         <span class="pv-acoes-linha__pergunta">Confirmar?</span>
                         <button type="button" class="btn btn-sm btn-danger" (click)="confirmar(empresa)">Sim</button>
                         <button type="button" class="btn btn-sm btn-secundario" (click)="cancelarConfirmacao()">Não</button>

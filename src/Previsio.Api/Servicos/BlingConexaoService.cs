@@ -56,7 +56,7 @@ public class BlingConexaoService
             return Resultado<string>.NaoEncontrado(EmpresasService.MensagemNaoEncontrada);
         }
 
-        CredenciaisBling credenciais = _tokens.Credenciais(empresa);
+        CredenciaisBling credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
         if (!credenciais.Completas)
         {
             return Resultado<string>.Invalido("Cadastre o Client ID e o Client Secret do aplicativo do Bling desta empresa antes de conectar.");
@@ -115,7 +115,8 @@ public class BlingConexaoService
 
         try
         {
-            TokenBling token = await _bling.TrocarCodigoPorTokenAsync(_tokens.Credenciais(empresa), codigo, cancelamento);
+            CredenciaisBling credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
+            TokenBling token = await _bling.TrocarCodigoPorTokenAsync(credenciais, codigo, cancelamento);
             _tokens.SalvarToken(empresa, token);
             await _empresas.SalvarAsync(cancelamento);
         }

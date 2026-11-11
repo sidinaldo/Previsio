@@ -8,9 +8,11 @@ import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { classeDaSituacao, descricaoDaSituacao } from '../../core/filtro-notas';
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { PrevisioService } from '../../core/previsio.service';
-import { Empresa, FiltroNotas, NotaRecebida, SITUACAO_PENDENTES } from '../../core/previsio.models';
+import { Empresa, FiltroNotas, NotaRecebida, SITUACAO_PENDENTES, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
 
 /** Opção do filtro de situação. */
 interface OpcaoSituacao {
@@ -18,13 +20,16 @@ interface OpcaoSituacao {
   texto: string;
 }
 
+/** Botão que disparou o carregamento da lista, para o spinner aparecer só nele. */
+type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | null;
+
 /**
  * Todas as notas lidas do e-mail, lançadas no Bling ou não, da mais recente para a mais antiga.
  * A linha abre o detalhe com as parcelas e a conta a pagar criada no Bling para cada uma.
  */
 @Component({
   selector: 'app-notas-recebidas',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective],
   templateUrl: './notas-recebidas.component.html'
 })
 export class NotasRecebidasComponent {
@@ -37,6 +42,7 @@ export class NotasRecebidasComponent {
   readonly situacoes: OpcaoSituacao[] = [
     { valor: '', texto: 'Todas' },
     { valor: 'Lancada', texto: 'Lançadas no Bling' },
+    { valor: 'LancadaManualmente', texto: 'Lançadas manualmente no Bling' },
     { valor: SITUACAO_PENDENTES, texto: 'Pendentes (todas as não lançadas)' },
     { valor: 'Recebida', texto: descricaoDaSituacao('Recebida') },
     { valor: 'Erro', texto: descricaoDaSituacao('Erro') },
@@ -58,6 +64,7 @@ export class NotasRecebidasComponent {
   readonly total = signal(0);
   readonly tamanhoPagina = signal(50);
   readonly carregando = signal(false);
+  readonly acaoLista = signal<AcaoLista>(null);
   readonly carregada = signal(false);
   readonly erro = signal('');
   readonly mensagem = signal('');
@@ -66,6 +73,12 @@ export class NotasRecebidasComponent {
 
   // Linha com o detalhe aberto
   readonly abertaId = signal<number | null>(null);
+
+  // Nota com a confirmação de "lançada manualmente no Bling" aberta
+  readonly resolvendoId = signal<number | null>(null);
+
+  // Nota sendo enviada para um novo lançamento
+  readonly reprocessandoId = signal<number | null>(null);
 
   readonly totalPaginas = computed(() => totalDePaginas(this.total(), this.tamanhoPagina()));
 
@@ -94,6 +107,26 @@ export class NotasRecebidasComponent {
     return nota.status === 'Erro' || nota.status === 'BlingDesconectado';
   }
 
+  /** Notas com problema podem ser marcadas como lançadas manualmente no Bling. */
+  podeMarcarManual(nota: NotaRecebida): boolean {
+    return SITUACOES_COM_PROBLEMA.includes(nota.status);
+  }
+
+  abrirResolucao(nota: NotaRecebida): void {
+    this.resolvendoId.set(nota.id);
+  }
+
+  fecharResolucao(): void {
+    this.resolvendoId.set(null);
+  }
+
+  aoResolver(nota: NotaRecebida): void {
+    this.resolvendoId.set(null);
+    this.erro.set('');
+    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no Bling.`);
+    this.carregar();
+  }
+
   podeReprocessar(nota: NotaRecebida): boolean {
     return nota.status === 'Erro' || nota.status === 'BlingDesconectado' || nota.status === 'Recebida';
   }
@@ -107,11 +140,13 @@ export class NotasRecebidasComponent {
   }
 
   filtrar(): void {
+    this.acaoLista.set('filtrar');
     this.pagina.set(1);
     this.carregar();
   }
 
   limpar(): void {
+    this.acaoLista.set('limpar');
     this.empresaId.set(null);
     this.situacao.set('');
     this.de.set('');
@@ -123,6 +158,11 @@ export class NotasRecebidasComponent {
   irParaPagina(pagina: number): void {
     if (pagina < 1 || pagina > this.totalPaginas()) {
       return;
+    }
+    if (pagina > this.pagina()) {
+      this.acaoLista.set('proxima');
+    } else {
+      this.acaoLista.set('anterior');
     }
     this.pagina.set(pagina);
     this.carregar();
@@ -138,14 +178,20 @@ export class NotasRecebidasComponent {
 
   reprocessar(nota: NotaRecebida): void {
     this.erro.set('');
+    this.reprocessandoId.set(nota.id);
     this.previsio.reprocessarNota(nota.id).subscribe({
       next: () => {
+        this.reprocessandoId.set(null);
         this.mensagem.set(`NF ${nota.numero} enviada para lançamento.`);
         setTimeout(() => this.carregar(), 3000);
       },
-      error: () => this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`)
+      error: () => {
+        this.reprocessandoId.set(null);
+        this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`);
+      }
     });
   }
+
 
   /** Roda a leitura dos e-mails e atualiza a lista sozinha quando ela termina. */
   buscarEmailsAgora(): void {

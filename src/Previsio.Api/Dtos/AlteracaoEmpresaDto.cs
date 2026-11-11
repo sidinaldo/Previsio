@@ -13,4 +13,12 @@ public class AlteracaoEmpresaDto
     // Trocar o Client ID desconecta a empresa: os tokens pertencem ao aplicativo anterior.
     public string? BlingClientId { get; set; }
     public string? BlingClientSecret { get; set; }
+
+    // Caixa de e-mail própria. Servidor vazio ("") remove a caixa própria e as notas
+    // dela voltam a chegar só pela caixa da rede. A senha só troca se vier preenchida.
+    public string? ImapHost { get; set; }
+    public int? ImapPorta { get; set; }
+    public bool? ImapSsl { get; set; }
+    public string? ImapUsuario { get; set; }
+    public string? ImapSenha { get; set; }
 }

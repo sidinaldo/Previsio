@@ -14,11 +14,13 @@ public class ClientesService
     public const string MensagemNaoEncontrado = "Cliente não encontrado.";
 
     private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Empresa> _empresas;
     private readonly ProtetorSegredos _protetor;
 
-    public ClientesService(IRepositorio<Cliente> clientes, ProtetorSegredos protetor)
+    public ClientesService(IRepositorio<Cliente> clientes, IRepositorio<Empresa> empresas, ProtetorSegredos protetor)
     {
         _clientes = clientes;
+        _empresas = empresas;
         _protetor = protetor;
     }
 
@@ -57,6 +59,18 @@ public class ClientesService
         if (!string.IsNullOrEmpty(dados.ImapSenha))
         {
             cliente.ImapSenhaProtegida = _protetor.Proteger(dados.ImapSenha);
+        }
+
+        string clientId = (dados.BlingClientId ?? "").Trim();
+        string clientSecret = (dados.BlingClientSecret ?? "").Trim();
+        if (clientId != "" || clientSecret != "")
+        {
+            if (clientId == "" || clientSecret == "")
+            {
+                return Resultado<ClienteDto>.Invalido("Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.");
+            }
+            cliente.BlingClientId = clientId;
+            cliente.BlingClientSecretProtegido = _protetor.Proteger(clientSecret);
         }
 
         _clientes.Adicionar(cliente);
@@ -113,6 +127,48 @@ public class ClientesService
         if (dados.Ativo.HasValue)
         {
             cliente.Ativo = dados.Ativo.Value;
+        }
+
+        string clientIdAnterior = cliente.BlingClientId ?? "";
+
+        if (dados.BlingClientId != null)
+        {
+            string clientId = dados.BlingClientId.Trim();
+            if (clientId == "")
+            {
+                // As empresas sem aplicativo próprio passam a usar o global do Previsio
+                cliente.BlingClientId = null;
+                cliente.BlingClientSecretProtegido = null;
+            }
+            else
+            {
+                cliente.BlingClientId = clientId;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(dados.BlingClientSecret) && !string.IsNullOrEmpty(cliente.BlingClientId))
+        {
+            cliente.BlingClientSecretProtegido = _protetor.Proteger(dados.BlingClientSecret.Trim());
+        }
+
+        if (!string.IsNullOrEmpty(cliente.BlingClientId) && string.IsNullOrEmpty(cliente.BlingClientSecretProtegido))
+        {
+            return Resultado<ClienteDto>.Invalido("Informe o Client Secret do aplicativo do Bling.");
+        }
+
+        // Os tokens pertencem ao aplicativo que autorizou: as empresas que usam o aplicativo
+        // da rede precisam conectar de novo
+        if (clientIdAnterior != (cliente.BlingClientId ?? ""))
+        {
+            List<Empresa> semAplicativoProprio = await _empresas.Consultar()
+                .Where(e => e.ClienteId == cliente.Id && (e.BlingClientId == null || e.BlingClientId == ""))
+                .ToListAsync(cancelamento);
+            foreach (Empresa empresa in semAplicativoProprio)
+            {
+                empresa.BlingAccessTokenProtegido = null;
+                empresa.BlingRefreshTokenProtegido = null;
+                empresa.BlingTokenExpiraEm = null;
+            }
         }
 
         // Outra caixa de e-mail: os UIDs da caixa anterior não valem nela

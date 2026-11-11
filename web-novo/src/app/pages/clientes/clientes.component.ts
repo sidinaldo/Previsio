@@ -7,6 +7,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { AlteracaoCliente, Cliente } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
+import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 /**
@@ -16,7 +17,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-clientes',
-  imports: [FormsModule, RouterLink, MenuAcoesComponent],
+  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {

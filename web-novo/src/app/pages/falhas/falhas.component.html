@@ -59,10 +59,11 @@
           </div>
         </div>
         <div class="pv-formulario__acoes">
-          <button type="submit" class="btn btn-info" [disabled]="carregando()">
+          <button type="submit" class="btn btn-info" [pvCarregando]="carregando() && acaoLista() === 'filtrar'" [disabled]="carregando()">
             <i class="material-icons" aria-hidden="true">search</i> Filtrar
           </button>
-          <button type="button" class="btn btn-secundario" (click)="limpar()" [disabled]="carregando()">
+          <button type="button" class="btn btn-secundario" (click)="limpar()"
+                  [pvCarregando]="carregando() && acaoLista() === 'limpar'" [disabled]="carregando()">
             Limpar
           </button>
         </div>
@@ -219,11 +220,13 @@
         @if (totalPaginas() > 1) {
           <div class="pv-paginacao">
             <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
+                    [pvCarregando]="carregando() && acaoLista() === 'anterior'"
                     [disabled]="pagina() <= 1 || carregando()">
               <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
             </button>
             <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
             <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
+                    [pvCarregando]="carregando() && acaoLista() === 'proxima'"
                     [disabled]="pagina() >= totalPaginas() || carregando()">
               Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
             </button>

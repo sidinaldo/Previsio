@@ -1,9 +1,9 @@
 namespace Previsio.Core.Entidades;
 
 /// <summary>
-/// Cliente do Previsio (tenant). Ex.: o grupo de autopeças com 5 CNPJs.
+/// Cliente do Previsio (tenant, a rede). Ex.: o grupo de autopeças com 5 CNPJs.
 /// </summary>
-public class Cliente
+public class Cliente : ICaixaEmail
 {
     public int Id { get; set; }
     public string Nome { get; set; } = "";
@@ -19,6 +19,11 @@ public class Cliente
     // e UID do último e-mail já processado (nulos até a primeira leitura)
     public long? ImapUidValidity { get; set; }
     public long? ImapUltimoUid { get; set; }
+
+    // Aplicativo privado do Bling da rede: vale para as empresas que não têm um próprio.
+    // Vazio: as empresas sem aplicativo próprio usam o aplicativo global do Previsio (appsettings).
+    public string? BlingClientId { get; set; }
+    public string? BlingClientSecretProtegido { get; set; }
 
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;

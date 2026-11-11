@@ -57,6 +57,17 @@ public class NotasController : PrevisioControllerBase
         return Responder(await _notas.ListarAsync(clienteId, empresaId, situacao, de, ate, pagina, cancelamento));
     }
 
+    /// <summary>
+    /// Marca a nota com problema como resolvida e lançada manualmente no Bling.
+    /// </summary>
+    [HttpPost("api/notas/{notaId:int}/lancada-manualmente")]
+    public async Task<IActionResult> MarcarLancadaManualmente(
+        int notaId, ResolucaoManualDto dados, CancellationToken cancelamento)
+    {
+        Resultado resultado = await _notas.MarcarLancadaManualmenteAsync(notaId, dados.Observacao, User, cancelamento);
+        return Responder(resultado, () => NoContent());
+    }
+
     [HttpPost("api/notas/{notaId:int}/reprocessar")]
     public async Task<IActionResult> Reprocessar(int notaId, CancellationToken cancelamento)
     {

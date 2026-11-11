@@ -86,10 +86,10 @@
         </div>
         <div class="pv-formulario__acoes">
           @if (editando(); as u) {
-            <button type="submit" class="btn btn-info" [disabled]="processandoId() === u.id">Salvar alterações</button>
+            <button type="submit" class="btn btn-info" [pvCarregando]="processandoId() === u.id" [disabled]="processandoId() === u.id">Salvar alterações</button>
             <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
-            <button type="submit" class="btn btn-info" [disabled]="enviando()">
+            <button type="submit" class="btn btn-info" [pvCarregando]="enviando()" [disabled]="enviando()">
               @if (enviando()) {
                 Cadastrando...
               } @else {
@@ -155,6 +155,11 @@
                   </td>
                   <td class="text-right">
                     <div class="pv-acoes-linha">
+                      @if (processandoId() === usuario.id) {
+                        <span class="pv-acoes-linha__pergunta" role="status">
+                          <span class="pv-spinner" aria-hidden="true"></span> Processando...
+                        </span>
+                      }
                       <app-menu-acoes [rotulo]="'Mais ações para ' + usuario.nome">
                         <button type="button" class="pv-acoes__item" [disabled]="processandoId() === usuario.id"
                                 (click)="editar(usuario)">

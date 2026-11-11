@@ -1473,6 +1473,9 @@ select.form-control:not([size]):not([multiple]):disabled {
 }
 
 .pv-acoes-linha__pergunta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 500;
   color: var(--pv-texto);
@@ -1680,5 +1683,132 @@ select.form-control:not([size]):not([multiple]):disabled {
 
   .material-icons {
     font-size: 18px;
+  }
+}
+
+// Confirmação de "nota lançada manualmente no Bling" (linha aberta embaixo da nota)
+.pv-resolucao {
+  padding: 4px 0;
+}
+
+.pv-resolucao__titulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-weight: 500;
+  color: var(--pv-texto);
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--pv-sucesso, #15803d);
+  }
+}
+
+.pv-resolucao__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+// O tema envolve o campo numa div própria: a largura fica no contêiner
+.pv-resolucao__campo {
+  flex: 1 1 320px;
+  max-width: 560px;
+
+  .bmd-form-group,
+  .form-group {
+    margin: 0;
+    padding: 0;
+  }
+
+  .form-control {
+    width: 100%;
+  }
+}
+
+// ---------- Carregamento ----------
+
+// Barra fina no topo enquanto alguma chamada à API está em andamento.
+// Aparece só depois de 150ms, para respostas rápidas não piscarem.
+.pv-barra-carregamento {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  height: 3px;
+  overflow: hidden;
+  background: var(--pv-primaria-suave, rgba(29, 78, 216, .15));
+  opacity: 0;
+  animation: pv-aparecer 0s linear 150ms forwards;
+}
+
+.pv-barra-carregamento__faixa {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 40%;
+  background: var(--pv-primaria);
+  animation: pv-barra-correr 1.1s ease-in-out infinite;
+}
+
+@keyframes pv-aparecer {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pv-barra-correr {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// Botão com a ação em andamento: spinner antes do texto e sem novo clique
+.pv-botao--carregando {
+  pointer-events: none;
+  cursor: progress;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    vertical-align: -2px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: pv-girar .7s linear infinite;
+  }
+
+  // O spinner toma o lugar do ícone do botão
+  .material-icons {
+    display: none;
+  }
+
+  &.pv-botao-icone::before {
+    margin-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-barra-carregamento__faixa {
+    animation-duration: 3s;
+  }
+
+  .pv-botao--carregando::before {
+    animation-duration: 2s;
   }
 }

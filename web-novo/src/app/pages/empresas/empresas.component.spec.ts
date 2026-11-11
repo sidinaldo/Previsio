@@ -11,9 +11,11 @@ import { SessaoService } from '../../core/sessao.service';
 const API = PREVISIO_CONFIG.apiUrl;
 
 const EMPRESAS: Empresa[] = [
-  { id: 1, nome: 'Loja Centro', cnpj: '11222333000181', blingConectado: true, blingClientId: null, blingClientSecretCadastrado: false,
+  { id: 1, nome: 'Loja Centro', cnpj: '11222333000181', blingConectado: true, blingClientId: null, blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false,
+    imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false,
     ultimaSincronizacaoEm: null, ativo: true },
-  { id: 2, nome: 'Loja Norte', cnpj: '11222333000262', blingConectado: false, blingClientId: null, blingClientSecretCadastrado: false,
+  { id: 2, nome: 'Loja Norte', cnpj: '11222333000262', blingConectado: false, blingClientId: null, blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false,
+    imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false,
     ultimaSincronizacaoEm: null, ativo: true }
 ];
 
@@ -98,5 +100,106 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
     const chamada = api.expectOne(`${API}/clientes/7/empresas`);
     expect(chamada.request.method).toBe('POST');
     expect(chamada.request.body).toEqual({ nome: 'Loja Sul', cnpj: '11222333000405' });
+  });
+});
+
+describe('EmpresasComponent: e-mail próprio da empresa', () => {
+  it('cadastro com e-mail próprio envia servidor, porta, SSL, e-mail e senha', async () => {
+    const { fixture, api } = await montar();
+    const componente = fixture.componentInstance;
+    componente.nome.set('Loja Sul');
+    componente.cnpj.set('11222333000405');
+    componente.imapHost.set('imap.gmail.com');
+    componente.imapUsuario.set('sul@rede.com.br');
+    componente.imapSenha.set('senha-de-app');
+    componente.salvar();
+
+    const chamada = api.expectOne(`${API}/clientes/7/empresas`);
+    expect(chamada.request.body).toEqual({
+      nome: 'Loja Sul', cnpj: '11222333000405',
+      imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'sul@rede.com.br', imapSenha: 'senha-de-app'
+    });
+  });
+
+  it('servidor sem e-mail da caixa não chama a API', async () => {
+    const { fixture, api, tela } = await montar();
+    const componente = fixture.componentInstance;
+    componente.nome.set('Loja Sul');
+    componente.cnpj.set('11222333000405');
+    componente.imapHost.set('imap.gmail.com');
+    componente.salvar();
+    await fixture.whenStable();
+
+    api.expectNone(`${API}/clientes/7/empresas`);
+    expect(tela.textContent).toContain('Informe o e-mail da caixa própria');
+  });
+
+  it('na edição, a senha em branco mantém a atual da mesma caixa', async () => {
+    const { fixture, api } = await montar();
+    const componente = fixture.componentInstance;
+    const comEmail: Empresa = {
+      ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'centro@rede.com.br', imapSenhaCadastrada: true
+    };
+    componente.editar(comEmail);
+    componente.salvar();
+
+    const chamada = api.expectOne(`${API}/empresas/1`);
+    expect(chamada.request.body).toEqual({
+      nome: 'Loja Centro', blingClientId: '',
+      imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'centro@rede.com.br'
+    });
+  });
+
+  it('a tabela mostra de onde vêm o e-mail e o aplicativo do Bling', async () => {
+    const { tela } = await montar();
+    expect(tela.textContent).toContain('E-mail da rede');
+    expect(tela.textContent).toContain('Aplicativo padrão');
+  });
+});
+
+describe('EmpresasComponent: conectar o Bling numa janela separada', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('abre a janela no clique e manda ela para o Bling, sem sair do Previsio', async () => {
+    const { fixture, api, tela } = await montar();
+    const janela = { closed: false, location: { href: '' }, focus: vi.fn(), close: vi.fn() };
+    const abrir = vi.spyOn(window, 'open').mockReturnValue(janela as unknown as Window);
+
+    fixture.componentInstance.conectarBling(EMPRESAS[1]);
+    expect(abrir).toHaveBeenCalledWith('', 'previsio-bling', expect.stringContaining('popup'));
+
+    api.expectOne(`${API}/empresas/2/bling/conectar`).flush({ url: 'https://www.bling.com.br/Api/v3/oauth/authorize?x=1' });
+    await fixture.whenStable();
+
+    expect(janela.location.href).toBe('https://www.bling.com.br/Api/v3/oauth/authorize?x=1');
+    expect(tela.textContent).toContain('Conclua o login e a autorização na janela do Bling');
+  });
+
+  it('se a API recusar, fecha a janela e mostra o motivo', async () => {
+    const { fixture, api, tela } = await montar();
+    const janela = { closed: false, location: { href: '' }, focus: vi.fn(), close: vi.fn() };
+    vi.spyOn(window, 'open').mockReturnValue(janela as unknown as Window);
+
+    fixture.componentInstance.conectarBling(EMPRESAS[1]);
+    api.expectOne(`${API}/empresas/2/bling/conectar`).flush(
+      'Cadastre o Client ID e o Client Secret do aplicativo do Bling desta empresa antes de conectar.',
+      { status: 400, statusText: 'Bad Request' });
+    await fixture.whenStable();
+
+    expect(janela.close).toHaveBeenCalled();
+    expect(tela.textContent).toContain('Cadastre o Client ID');
+  });
+
+  it('quando a janela avisa que conectou, mostra a mensagem e recarrega a lista', async () => {
+    const { fixture, api, tela } = await montar();
+
+    const canal = new BroadcastChannel('previsio-bling');
+    canal.postMessage('conectado');
+    canal.close();
+    await new Promise(resolve => setTimeout(resolve, 20));
+
+    api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
+    await fixture.whenStable();
+    expect(tela.textContent).toContain('Conta Bling conectada');
   });
 });

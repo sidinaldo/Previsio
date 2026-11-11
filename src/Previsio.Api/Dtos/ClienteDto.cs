@@ -11,5 +11,10 @@ public class ClienteDto
     public int ImapPorta { get; set; }
     public bool ImapSsl { get; set; }
     public string ImapUsuario { get; set; } = "";
+
+    // Aplicativo privado do Bling da rede. O secret nunca é devolvido, só se está cadastrado.
+    public string? BlingClientId { get; set; }
+    public bool BlingClientSecretCadastrado { get; set; }
+
     public bool Ativo { get; set; }
 }

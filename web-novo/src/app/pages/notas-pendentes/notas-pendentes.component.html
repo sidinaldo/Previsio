@@ -17,7 +17,7 @@
               }
             </button>
           }
-          <button type="button" class="btn btn-secundario" (click)="carregar()" [disabled]="carregando()">
+          <button type="button" class="btn btn-secundario" (click)="carregar()" [pvCarregando]="carregando()" [disabled]="carregando()">
             <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
           </button>
         </div>
@@ -94,8 +94,16 @@
                     <div class="pv-acoes-linha">
                       @if (podeReprocessar(nota)) {
                         <button type="button" class="pv-botao-icone" title="Tentar lançar novamente"
-                                aria-label="Tentar lançar novamente" (click)="reprocessar(nota)">
+                                aria-label="Tentar lançar novamente" (click)="reprocessar(nota)"
+                                [pvCarregando]="reprocessandoId() === nota.id" [disabled]="reprocessandoId() === nota.id">
                           <i class="material-icons" aria-hidden="true">replay</i>
+                        </button>
+                      }
+                      @if (podeMarcarManual(nota)) {
+                        <button type="button" class="pv-botao-icone" title="Já lancei no Bling"
+                                [attr.aria-label]="'Marcar a NF ' + nota.numero + ' como lançada manualmente no Bling'"
+                                [attr.aria-expanded]="resolvendoId() === nota.id" (click)="abrirResolucao(nota)">
+                          <i class="material-icons" aria-hidden="true">task_alt</i>
                         </button>
                       }
                       @if (temFalhas(nota)) {
@@ -108,6 +116,14 @@
                     </div>
                   </td>
                 </tr>
+                @if (resolvendoId() === nota.id) {
+                  <tr class="pv-tabela__detalhe">
+                    <td [attr.colspan]="colunas()">
+                      <app-resolucao-manual [notaId]="nota.id" [numero]="nota.numero"
+                                            (concluido)="aoResolver(nota)" (cancelado)="fecharResolucao()" />
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>

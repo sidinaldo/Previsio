@@ -6,6 +6,7 @@ import localePt from '@angular/common/locales/pt';
 
 import { routes } from './app.routes';
 import { autenticacaoInterceptor } from './core/autenticacao.interceptor';
+import { carregamentoInterceptor } from './core/carregamento.interceptor';
 
 registerLocaleData(localePt, 'pt-BR');
 
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     // Rotas com "#" como no template: a API redireciona o OAuth do Bling para /#/pages/empresas
     provideRouter(routes, withHashLocation()),
     // Coloca o token JWT nas chamadas à API e trata o login vencido
-    provideHttpClient(withInterceptors([autenticacaoInterceptor])),
+    provideHttpClient(withInterceptors([carregamentoInterceptor, autenticacaoInterceptor])),
     { provide: LOCALE_ID, useValue: 'pt-BR' }
   ]
 };

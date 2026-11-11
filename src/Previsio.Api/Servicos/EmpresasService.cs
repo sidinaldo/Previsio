@@ -35,6 +35,7 @@ public class EmpresasService
     public async Task<List<EmpresaDto>> ListarDoClienteAsync(int clienteId, CancellationToken cancelamento)
     {
         List<Empresa> empresas = await _empresas.ConsultarSomenteLeitura()
+            .Include(e => e.Cliente)
             .Where(e => e.ClienteId == clienteId)
             .OrderBy(e => e.Nome)
             .ToListAsync(cancelamento);
@@ -50,8 +51,8 @@ public class EmpresasService
     public async Task<Resultado<EmpresaDto>> CriarAsync(
         int clienteId, NovaEmpresaDto dados, CancellationToken cancelamento)
     {
-        bool clienteExiste = await _clientes.ExisteAsync(c => c.Id == clienteId, cancelamento);
-        if (!clienteExiste)
+        Cliente? rede = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        if (rede == null)
         {
             return Resultado<EmpresaDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
         }
@@ -70,6 +71,7 @@ public class EmpresasService
 
         var empresa = new Empresa();
         empresa.ClienteId = clienteId;
+        empresa.Cliente = rede;
         empresa.Nome = dados.Nome.Trim();
         empresa.Cnpj = cnpj;
 
@@ -85,6 +87,25 @@ public class EmpresasService
             empresa.BlingClientSecretProtegido = _protetor.Proteger(clientSecret);
         }
 
+        string host = (dados.ImapHost ?? "").Trim();
+        if (host != "")
+        {
+            empresa.ImapHost = host;
+            empresa.ImapUsuario = (dados.ImapUsuario ?? "").Trim();
+            if (dados.ImapPorta.HasValue)
+            {
+                empresa.ImapPorta = dados.ImapPorta.Value;
+            }
+            if (dados.ImapSsl.HasValue)
+            {
+                empresa.ImapSsl = dados.ImapSsl.Value;
+            }
+            if (!string.IsNullOrEmpty(dados.ImapSenha))
+            {
+                empresa.ImapSenhaProtegida = _protetor.Proteger(dados.ImapSenha);
+            }
+        }
+
         _empresas.Adicionar(empresa);
         await _empresas.SalvarAsync(cancelamento);
 
@@ -98,7 +119,9 @@ public class EmpresasService
     public async Task<Resultado<EmpresaDto>> AlterarAsync(
         int empresaId, AlteracaoEmpresaDto dados, ClaimsPrincipal usuario, CancellationToken cancelamento)
     {
-        Empresa? empresa = await _empresas.Consultar().FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        Empresa? empresa = await _empresas.Consultar()
+            .Include(e => e.Cliente)
+            .FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
         if (empresa == null)
         {
             return Resultado<EmpresaDto>.NaoEncontrado(MensagemNaoEncontrada);
@@ -152,6 +175,8 @@ public class EmpresasService
             return Resultado<EmpresaDto>.Invalido("Informe o Client Secret do aplicativo do Bling.");
         }
 
+        AlterarEmailProprio(empresa, dados);
+
         // Os tokens pertencem ao aplicativo que autorizou: outro aplicativo exige conectar de novo
         if (clientIdAnterior != (empresa.BlingClientId ?? ""))
         {
@@ -162,5 +187,60 @@ public class EmpresasService
 
         await _empresas.SalvarAsync(cancelamento);
         return Resultado<EmpresaDto>.Ok(EmpresaMapeamento.ParaDto(empresa));
+    }
+
+    /// <summary>
+    /// Caixa de e-mail própria da empresa: mesmas regras da caixa da rede.
+    /// Servidor vazio remove a caixa própria.
+    /// </summary>
+    private void AlterarEmailProprio(Empresa empresa, AlteracaoEmpresaDto dados)
+    {
+        // Guardados para saber se a caixa de e-mail mudou
+        string hostAnterior = empresa.ImapHost;
+        string usuarioAnterior = empresa.ImapUsuario;
+
+        if (dados.ImapHost != null)
+        {
+            string host = dados.ImapHost.Trim();
+            if (host == "")
+            {
+                empresa.ImapHost = "";
+                empresa.ImapUsuario = "";
+                empresa.ImapSenhaProtegida = "";
+            }
+            else
+            {
+                empresa.ImapHost = host;
+            }
+        }
+
+        if (empresa.ImapHost != "")
+        {
+            if (dados.ImapPorta.HasValue)
+            {
+                empresa.ImapPorta = dados.ImapPorta.Value;
+            }
+            if (dados.ImapSsl.HasValue)
+            {
+                empresa.ImapSsl = dados.ImapSsl.Value;
+            }
+            if (dados.ImapUsuario != null)
+            {
+                empresa.ImapUsuario = dados.ImapUsuario.Trim();
+            }
+            if (!string.IsNullOrEmpty(dados.ImapSenha))
+            {
+                empresa.ImapSenhaProtegida = _protetor.Proteger(dados.ImapSenha);
+            }
+        }
+
+        // Outra caixa de e-mail: os UIDs da caixa anterior não valem nela
+        bool trocouCaixa = !string.Equals(hostAnterior, empresa.ImapHost, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(usuarioAnterior, empresa.ImapUsuario, StringComparison.OrdinalIgnoreCase);
+        if (trocouCaixa)
+        {
+            empresa.ImapUidValidity = null;
+            empresa.ImapUltimoUid = null;
+        }
     }
 }

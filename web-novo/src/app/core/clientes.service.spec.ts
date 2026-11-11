@@ -12,7 +12,7 @@ import { SessaoService } from './sessao.service';
 const API = PREVISIO_CONFIG.apiUrl;
 
 function cliente(id: number, nome: string): Cliente {
-  return { id: id, nome: nome, imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@exemplo.com', ativo: true };
+  return { id: id, nome: nome, imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@exemplo.com', blingClientId: null, blingClientSecretCadastrado: false, ativo: true };
 }
 
 function configurarComAdmin(): { clientes: ClientesService; sessao: SessaoService; api: HttpTestingController } {

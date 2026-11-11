@@ -21,4 +21,9 @@ public class NotaRecebidaDto
     public DateTime RecebidaEm { get; set; }
     public DateTime? LancadaEm { get; set; }
     public List<ParcelaNotaDto> Parcelas { get; set; } = new List<ParcelaNotaDto>();
+
+    // Preenchidos quando alguém marcou a nota como lançada manualmente no Bling
+    public DateTime? ResolvidaManualmenteEm { get; set; }
+    public string? ResolvidaManualmentePor { get; set; }
+    public string? ObservacaoResolucao { get; set; }
 }

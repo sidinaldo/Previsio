@@ -7,6 +7,7 @@ import { ClientesService } from '../../core/clientes.service';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
+import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 /**
@@ -16,7 +17,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-usuarios',
-  imports: [FormsModule, DatePipe, MenuAcoesComponent],
+  imports: [FormsModule, DatePipe, MenuAcoesComponent, CarregandoDirective],
   templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent {

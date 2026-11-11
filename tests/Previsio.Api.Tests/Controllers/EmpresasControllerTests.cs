@@ -120,7 +120,7 @@ public class EmpresasControllerTests
 
         BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
         var tokens = new TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        Assert.Equal("id-teste", tokens.Credenciais(empresa).ClientId);
+        Assert.Equal("id-teste", (await tokens.CredenciaisAsync(empresa, CancellationToken.None)).ClientId);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class EmpresasControllerTests
 
         BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
         var tokens = new TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        CredenciaisBling credenciais = tokens.Credenciais(empresa);
+        CredenciaisBling credenciais = await tokens.CredenciaisAsync(empresa, CancellationToken.None);
 
         Assert.Equal("app-antigo", credenciais.ClientId);
         Assert.Equal("segredo-antigo", credenciais.ClientSecret);

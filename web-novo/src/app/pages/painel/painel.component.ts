@@ -8,10 +8,11 @@ import { ResumoPainel, TotalSemana } from '../../core/previsio.models';
 
 // Chartist 0.11 é carregado como script global (angular.json), como no template
 declare const Chartist: any;
+import { CarregandoDirective } from '../../shared/carregando.directive';
 
 @Component({
   selector: 'app-painel',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective],
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {

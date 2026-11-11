@@ -1,12 +1,14 @@
 import { Component, afterNextRender } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { BarraCarregamentoComponent } from './shared/barra-carregamento/barra-carregamento.component';
+
 // jQuery é carregado como script global (angular.json), só para o Bootstrap Material Design
 declare const $: any;
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, BarraCarregamentoComponent],
   templateUrl: './app.html'
 })
 export class App {

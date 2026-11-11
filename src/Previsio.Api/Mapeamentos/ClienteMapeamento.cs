@@ -17,6 +17,8 @@ public static class ClienteMapeamento
         ImapPorta = c.ImapPorta,
         ImapSsl = c.ImapSsl,
         ImapUsuario = c.ImapUsuario,
+        BlingClientId = c.BlingClientId,
+        BlingClientSecretCadastrado = c.BlingClientSecretProtegido != null && c.BlingClientSecretProtegido != "",
         Ativo = c.Ativo
     };
 
@@ -29,6 +31,8 @@ public static class ClienteMapeamento
         dto.ImapPorta = cliente.ImapPorta;
         dto.ImapSsl = cliente.ImapSsl;
         dto.ImapUsuario = cliente.ImapUsuario;
+        dto.BlingClientId = cliente.BlingClientId;
+        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(cliente.BlingClientSecretProtegido);
         dto.Ativo = cliente.Ativo;
         return dto;
     }

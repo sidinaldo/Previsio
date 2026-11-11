@@ -30,6 +30,9 @@ public static class NotaMapeamento
         dto.Status = nota.Status.ToString();
         dto.MensagemErro = nota.MensagemErro;
         dto.RecebidaEm = nota.RecebidaEm;
+        dto.ResolvidaManualmenteEm = nota.ResolvidaManualmenteEm;
+        dto.ResolvidaManualmentePor = nota.ResolvidaManualmentePor;
+        dto.ObservacaoResolucao = nota.ObservacaoResolucao;
         return dto;
     }
 
@@ -56,6 +59,9 @@ public static class NotaMapeamento
         dto.MensagemErro = nota.MensagemErro;
         dto.RecebidaEm = nota.RecebidaEm;
         dto.LancadaEm = nota.LancadaEm;
+        dto.ResolvidaManualmenteEm = nota.ResolvidaManualmenteEm;
+        dto.ResolvidaManualmentePor = nota.ResolvidaManualmentePor;
+        dto.ObservacaoResolucao = nota.ObservacaoResolucao;
 
         List<ParcelaNota> parcelas = nota.Parcelas
             .OrderBy(p => p.Vencimento)

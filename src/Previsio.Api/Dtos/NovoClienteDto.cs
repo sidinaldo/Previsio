@@ -8,4 +8,8 @@ public class NovoClienteDto
     public bool ImapSsl { get; set; } = true;
     public string ImapUsuario { get; set; } = "";
     public string ImapSenha { get; set; } = "";
+
+    // Opcionais: aplicativo privado do Bling da rede, usado pelas empresas que não têm um próprio
+    public string? BlingClientId { get; set; }
+    public string? BlingClientSecret { get; set; }
 }

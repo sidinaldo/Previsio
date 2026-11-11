@@ -25,6 +25,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(c => c.ImapHost).HasMaxLength(200);
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);
+            entidade.Property(c => c.BlingClientId).HasMaxLength(200);
         });
 
         modelBuilder.Entity<Empresa>(entidade =>
@@ -33,8 +34,11 @@ public class PrevisioDbContext : DbContext
             entidade.Property(e => e.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(e => e.Cnpj).HasMaxLength(14).IsRequired();
             entidade.Property(e => e.BlingClientId).HasMaxLength(200);
+            entidade.Property(e => e.ImapHost).HasMaxLength(200);
+            entidade.Property(e => e.ImapUsuario).HasMaxLength(200);
             entidade.HasIndex(e => new { e.ClienteId, e.Cnpj }).IsUnique();
             entidade.Ignore(e => e.BlingConectado);
+            entidade.Ignore(e => e.TemEmailProprio);
 
             entidade.HasOne(e => e.Cliente)
                 .WithMany(c => c.Empresas)
@@ -54,6 +58,8 @@ public class PrevisioDbContext : DbContext
             entidade.Property(n => n.ValorTotal).HasPrecision(14, 2);
             entidade.Property(n => n.DataEmissao).HasColumnType("date");
             entidade.Property(n => n.Status).HasConversion<int>();
+            entidade.Property(n => n.ResolvidaManualmentePor).HasMaxLength(200);
+            entidade.Property(n => n.ObservacaoResolucao).HasMaxLength(500);
 
             // A mesma nota nunca é processada duas vezes para o mesmo cliente
             entidade.HasIndex(n => new { n.ClienteId, n.ChaveAcesso }).IsUnique();

@@ -7,5 +7,8 @@ public enum StatusNota
     SemParcelas = 2,
     EmpresaNaoEncontrada = 3,
     BlingDesconectado = 4,
-    Erro = 5
+    Erro = 5,
+
+    // Alguém resolveu o problema e lançou a conta a pagar direto no Bling
+    LancadaManualmente = 6
 }

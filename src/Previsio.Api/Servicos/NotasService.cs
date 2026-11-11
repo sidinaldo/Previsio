@@ -23,6 +23,8 @@ public class NotasService
     // Filtro de situação que junta todas as que ainda não viraram conta a pagar
     public const string SituacaoPendentes = "Pendentes";
 
+    public const int TamanhoMaximoObservacao = 500;
+
     private readonly IRepositorio<NotaFiscal> _notas;
     private readonly IBackgroundJobClient _jobs;
 
@@ -157,7 +159,7 @@ public class NotasService
         {
             return Resultado.NaoEncontrado(null);
         }
-        if (nota.Status == StatusNota.Lancada)
+        if (nota.Status == StatusNota.Lancada || nota.Status == StatusNota.LancadaManualmente)
         {
             return Resultado.Invalido("A nota já foi lançada.");
         }
@@ -172,6 +174,48 @@ public class NotasService
         await _notas.SalvarAsync(cancelamento);
 
         _jobs.Enqueue<LancamentoNotaJob>(j => j.LancarAsync(notaId, CancellationToken.None));
+        return Resultado.Ok();
+    }
+
+    /// <summary>
+    /// Marca a nota com problema como resolvida e lançada manualmente no Bling:
+    /// sai das pendentes e do painel, guardando quem marcou, quando e a observação.
+    /// </summary>
+    public async Task<Resultado> MarcarLancadaManualmenteAsync(
+        int notaId, string? observacao, ClaimsPrincipal usuario, CancellationToken cancelamento)
+    {
+        NotaFiscal? nota = await _notas.Consultar().FirstOrDefaultAsync(n => n.Id == notaId, cancelamento);
+
+        // Nota de outro cliente responde igual a inexistente, para não revelar ids
+        if (nota == null || !usuario.PodeAcessarCliente(nota.ClienteId))
+        {
+            return Resultado.NaoEncontrado(null);
+        }
+        if (!StatusComProblema.Todos.Contains(nota.Status))
+        {
+            return Resultado.Invalido("Só notas com problema podem ser marcadas como lançadas manualmente no Bling.");
+        }
+
+        string texto = (observacao ?? "").Trim();
+        if (texto.Length > TamanhoMaximoObservacao)
+        {
+            return Resultado.Invalido("A observação pode ter no máximo " + TamanhoMaximoObservacao + " caracteres.");
+        }
+
+        nota.Status = StatusNota.LancadaManualmente;
+        nota.ResolvidaManualmenteEm = DateTime.UtcNow;
+        nota.ResolvidaManualmentePorId = usuario.UsuarioId();
+        nota.ResolvidaManualmentePor = usuario.Identity?.Name;
+        if (texto != "")
+        {
+            nota.ObservacaoResolucao = texto;
+        }
+        else
+        {
+            nota.ObservacaoResolucao = null;
+        }
+
+        await _notas.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 }

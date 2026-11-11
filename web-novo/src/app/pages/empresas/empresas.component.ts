@@ -5,11 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
+import { abrirJanelaBling, avisarRetornoBling, ehJanelaBling, ouvirRetornoBling } from '../../core/janela-bling';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PREVISIO_CONFIG } from '../../core/previsio.config';
 import { PrevisioService } from '../../core/previsio.service';
-import { AlteracaoEmpresa, Empresa, NovaEmpresa } from '../../core/previsio.models';
+import { AlteracaoEmpresa, DESCRICAO_ORIGEM_APLICATIVO, Empresa, NovaEmpresa } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -20,7 +22,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -41,6 +43,13 @@ export class EmpresasComponent {
   readonly clientId = signal('');
   readonly clientSecret = signal('');
 
+  // Caixa de e-mail própria (opcional): servidor vazio = notas só pela caixa da rede
+  readonly imapHost = signal('');
+  readonly imapPorta = signal<number | null>(993);
+  readonly imapSsl = signal(true);
+  readonly imapUsuario = signal('');
+  readonly imapSenha = signal('');
+
   // Empresa sendo alterada no formulário; null = cadastro de uma nova
   readonly editando = signal<Empresa | null>(null);
 
@@ -54,6 +63,8 @@ export class EmpresasComponent {
   // Desativar e desconectar pedem confirmação na própria linha
   readonly confirmacao = signal<{ empresaId: number; acao: AcaoConfirmada } | null>(null);
   readonly processandoId = signal<number | null>(null);
+  // Cadastro de empresa nova em andamento
+  readonly cadastrando = signal(false);
 
   /** Trocar o aplicativo de uma empresa conectada derruba a conexão (os tokens são do aplicativo anterior). */
   readonly vaiDesconectar = computed(() => {
@@ -70,12 +81,23 @@ export class EmpresasComponent {
   constructor() {
     // Retorno do OAuth do Bling: /pages/empresas?bling=conectado
     const retornoBling = this.rota.snapshot.queryParamMap.get('bling');
-    if (retornoBling === 'conectado') {
-      this.mensagem.set('Conta Bling conectada. As contas a pagar serão sincronizadas em instantes.');
-    } else if (retornoBling === 'expirado') {
-      this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" novamente.');
-    } else if (retornoBling === 'erro') {
-      this.erro.set('Não foi possível conectar ao Bling. Tente novamente.');
+    if (retornoBling !== null && ehJanelaBling()) {
+      // Esta é a janela de autorização: avisa o Previsio que ficou aberto atrás e se fecha.
+      // Se o navegador não deixar fechar, a própria janela mostra o resultado.
+      avisarRetornoBling(retornoBling);
+      window.close();
+    } else {
+      // Previsio aberto atrás da janela do Bling: atualiza quando a autorização terminar
+      const pararDeOuvir = ouvirRetornoBling(retorno => {
+        this.limparAvisos();
+        this.mostrarRetornoBling(retorno);
+        this.carregar();
+        window.focus();
+      });
+      this.destroyRef.onDestroy(pararDeOuvir);
+    }
+    if (retornoBling !== null) {
+      this.mostrarRetornoBling(retornoBling);
     }
 
     // Vindo da tela Clientes, logo depois de cadastrar a rede
@@ -127,25 +149,70 @@ export class EmpresasComponent {
       dados.blingClientSecret = clientSecret;
     }
 
+    if (!this.emailProprioValido(null)) {
+      return;
+    }
+    if (this.imapHost().trim() !== '') {
+      dados.imapHost = this.imapHost().trim();
+      dados.imapPorta = Number(this.imapPorta());
+      dados.imapSsl = this.imapSsl();
+      dados.imapUsuario = this.imapUsuario().trim();
+      dados.imapSenha = this.imapSenha();
+    }
+
     this.limparAvisos();
+    this.cadastrando.set(true);
     this.previsio.criarEmpresa(dados).subscribe({
       next: () => {
+        this.cadastrando.set(false);
         this.limparFormulario();
         this.mensagem.set('Empresa cadastrada. Agora conecte a conta Bling dela.');
         this.carregar();
       },
-      error: resposta => this.erro.set(mensagemDaApi(resposta, 'Não foi possível cadastrar a empresa.'))
+      error: resposta => {
+        this.cadastrando.set(false);
+        this.erro.set(mensagemDaApi(resposta, 'Não foi possível cadastrar a empresa.'));
+      }
     });
   }
 
+  /**
+   * Abre o Bling numa janela separada para o cliente fazer login e autorizar o Previsio,
+   * sem sair do Previsio. Com popup bloqueado, segue na mesma aba.
+   */
   conectarBling(empresa: Empresa): void {
+    this.limparAvisos();
+    const janela = abrirJanelaBling();
+    this.processandoId.set(empresa.id);
     this.previsio.obterUrlConexaoBling(empresa.id).subscribe({
       next: resposta => {
-        // O cliente faz login no Bling da empresa e autoriza o Previsio
-        window.location.href = resposta.url;
+        this.processandoId.set(null);
+        if (janela !== null && !janela.closed) {
+          janela.location.href = resposta.url;
+          janela.focus();
+          this.mensagem.set('Conclua o login e a autorização na janela do Bling. Esta tela atualiza sozinha quando terminar.');
+        } else {
+          window.location.href = resposta.url;
+        }
       },
-      error: resposta => this.erro.set(mensagemDaApi(resposta, 'Não foi possível gerar o link de conexão.'))
+      error: resposta => {
+        this.processandoId.set(null);
+        if (janela !== null) {
+          janela.close();
+        }
+        this.erro.set(mensagemDaApi(resposta, 'Não foi possível gerar o link de conexão.'));
+      }
     });
+  }
+
+  private mostrarRetornoBling(retorno: string): void {
+    if (retorno === 'conectado') {
+      this.mensagem.set('Conta Bling conectada. As contas a pagar serão sincronizadas em instantes.');
+    } else if (retorno === 'expirado') {
+      this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" novamente.');
+    } else if (retorno === 'erro') {
+      this.erro.set('Não foi possível conectar ao Bling. Tente novamente.');
+    }
   }
 
   /** Busca as contas a pagar no Bling e atualiza a lista (última sincronização) sozinha quando termina. */
@@ -191,6 +258,11 @@ export class EmpresasComponent {
     this.cnpj.set(empresa.cnpj);
     this.clientId.set(empresa.blingClientId ?? '');
     this.clientSecret.set('');
+    this.imapHost.set(empresa.imapHost);
+    this.imapPorta.set(empresa.emailProprio ? empresa.imapPorta : 993);
+    this.imapSsl.set(empresa.emailProprio ? empresa.imapSsl : true);
+    this.imapUsuario.set(empresa.imapUsuario);
+    this.imapSenha.set('');
 
     afterNextRender(() => {
       const cartao = this.cartaoFormulario();
@@ -202,6 +274,41 @@ export class EmpresasComponent {
         campo.nativeElement.focus({ preventScroll: true });
       }
     }, { injector: this.injector });
+  }
+
+  descricaoOrigem(empresa: Empresa): string {
+    return DESCRICAO_ORIGEM_APLICATIVO[empresa.origemAplicativoBling] ?? '';
+  }
+
+  /**
+   * Com servidor preenchido, a caixa própria precisa de e-mail, porta e senha
+   * (na edição, a senha já cadastrada vale enquanto a caixa for a mesma).
+   */
+  private emailProprioValido(empresa: Empresa | null): boolean {
+    const host = this.imapHost().trim();
+    if (host === '') {
+      return true;
+    }
+    const usuario = this.imapUsuario().trim();
+    const porta = Number(this.imapPorta());
+    if (usuario === '') {
+      this.erro.set('Informe o e-mail da caixa própria da empresa (ou deixe o servidor vazio).');
+      return false;
+    }
+    if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
+      this.erro.set('Informe uma porta entre 1 e 65535 (no Gmail, 993).');
+      return false;
+    }
+
+    const mesmaCaixa = empresa !== null
+      && empresa.imapSenhaCadastrada
+      && host.toLowerCase() === empresa.imapHost.toLowerCase()
+      && usuario.toLowerCase() === empresa.imapUsuario.toLowerCase();
+    if (this.imapSenha().trim() === '' && !mesmaCaixa) {
+      this.erro.set('Informe a senha de app do e-mail próprio da empresa.');
+      return false;
+    }
+    return true;
   }
 
   estaEditando(empresa: Empresa): boolean {
@@ -231,6 +338,24 @@ export class EmpresasComponent {
     const dados: AlteracaoEmpresa = { nome: nome, blingClientId: clientId };
     if (clientSecret !== '') {
       dados.blingClientSecret = clientSecret;
+    }
+
+    if (!this.emailProprioValido(empresa)) {
+      return;
+    }
+    // Só mexe no e-mail quando a empresa tem ou passa a ter caixa própria ("" remove a caixa)
+    const host = this.imapHost().trim();
+    if (host !== '' || empresa.emailProprio) {
+      dados.imapHost = host;
+    }
+    if (host !== '') {
+      dados.imapPorta = Number(this.imapPorta());
+      dados.imapSsl = this.imapSsl();
+      dados.imapUsuario = this.imapUsuario().trim();
+      // Senha em branco mantém a atual
+      if (this.imapSenha().trim() !== '') {
+        dados.imapSenha = this.imapSenha();
+      }
     }
 
     this.limparAvisos();
@@ -342,6 +467,11 @@ export class EmpresasComponent {
     this.cnpj.set('');
     this.clientId.set('');
     this.clientSecret.set('');
+    this.imapHost.set('');
+    this.imapPorta.set(993);
+    this.imapSsl.set(true);
+    this.imapUsuario.set('');
+    this.imapSenha.set('');
   }
 
   private limparAvisos(): void {

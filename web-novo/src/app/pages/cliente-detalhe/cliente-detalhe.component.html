@@ -86,15 +86,52 @@
                 <span class="form-check-sign"><span class="check"></span></span>
               </label>
             </div>
+            <p class="pv-formulario__ajuda">
+              Empresas com e-mail próprio continuam recebendo notas por esta caixa também.
+              A nota vai para a empresa pelo CNPJ do destinatário.
+            </p>
+
+            <h3 class="pv-formulario__secao">Aplicativo do Bling da rede (opcional)</h3>
+            <div class="row">
+              <div class="col-md-5">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-client-id" class="bmd-label-floating">Client ID</label>
+                  <input id="detalhe-client-id" type="text" class="form-control" name="clientId" autocomplete="off"
+                         [(ngModel)]="clientId">
+                </div>
+              </div>
+              <div class="col-md-5">
+                <div class="form-group bmd-form-group">
+                  <label for="detalhe-client-secret" class="bmd-label-floating">
+                    @if (atual.blingClientSecretCadastrado) {
+                      Client Secret (cadastrado; em branco mantém)
+                    } @else {
+                      Client Secret
+                    }
+                  </label>
+                  <input id="detalhe-client-secret" type="password" class="form-control" name="clientSecret"
+                         autocomplete="new-password" [(ngModel)]="clientSecret">
+                </div>
+              </div>
+            </div>
+            @if (vaiDesconectarEmpresas()) {
+              <div class="alert alert-warning" role="status">
+                <span>Trocar o aplicativo da rede desconecta do Bling as empresas que usam ele. Depois de salvar, conecte o Bling delas de novo.</span>
+              </div>
+            }
+            <p class="pv-formulario__ajuda">
+              Usado pelas empresas que não têm aplicativo próprio. Sem ele, elas usam o aplicativo padrão do Previsio.
+              No cadastro do aplicativo no Bling, informe o link de redirecionamento <code>{{ linkRedirecionamento }}</code>.
+            </p>
           </div>
           <div class="pv-formulario__acoes">
-            <button type="submit" class="btn btn-info" [disabled]="salvando()">Salvar</button>
+            <button type="submit" class="btn btn-info" [pvCarregando]="salvando() && acao() === 'salvar'" [disabled]="salvando()">Salvar</button>
             @if (atual.ativo) {
-              <button type="button" class="btn btn-secundario" [disabled]="salvando()" (click)="alternarAtivo()">
+              <button type="button" class="btn btn-secundario" [pvCarregando]="salvando() && acao() === 'situacao'" [disabled]="salvando()" (click)="alternarAtivo()">
                 Desativar
               </button>
             } @else {
-              <button type="button" class="btn btn-secundario" [disabled]="salvando()" (click)="alternarAtivo()">
+              <button type="button" class="btn btn-secundario" [pvCarregando]="salvando() && acao() === 'situacao'" [disabled]="salvando()" (click)="alternarAtivo()">
                 Ativar
               </button>
             }
@@ -142,6 +179,7 @@
                       } @else {
                         <span class="badge badge-warning">Desconectado</span>
                       }
+                      <span class="pv-tabela__auxiliar">{{ descricaoOrigem(empresa) }}</span>
                     </td>
                     <td class="pv-numero">
                       @if (empresa.ultimaSincronizacaoEm) {

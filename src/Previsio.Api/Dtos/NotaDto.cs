@@ -15,4 +15,9 @@ public class NotaDto
     public string Status { get; set; } = "";
     public string? MensagemErro { get; set; }
     public DateTime RecebidaEm { get; set; }
+
+    // Preenchidos quando alguém marcou a nota como lançada manualmente no Bling
+    public DateTime? ResolvidaManualmenteEm { get; set; }
+    public string? ResolvidaManualmentePor { get; set; }
+    public string? ObservacaoResolucao { get; set; }
 }

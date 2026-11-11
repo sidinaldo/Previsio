@@ -76,7 +76,8 @@ public class LancamentoNotaJob
         {
             return true;
         }
-        if (nota.Status == StatusNota.Lancada)
+        // Já lançada (pelo Previsio ou manualmente no Bling): não lança de novo
+        if (nota.Status == StatusNota.Lancada || nota.Status == StatusNota.LancadaManualmente)
         {
             return true;
         }

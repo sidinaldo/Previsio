@@ -16,7 +16,8 @@
             }
           </button>
         }
-        <button type="button" class="btn btn-secundario" (click)="carregar()" [disabled]="carregando()">
+        <button type="button" class="btn btn-secundario" (click)="acaoLista.set('atualizar'); carregar()"
+                [pvCarregando]="carregando() && acaoLista() === 'atualizar'" [disabled]="carregando()">
           <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
         </button>
       </div>
@@ -79,10 +80,11 @@
           </div>
         </div>
         <div class="pv-formulario__acoes">
-          <button type="submit" class="btn btn-info" [disabled]="carregando()">
+          <button type="submit" class="btn btn-info" [pvCarregando]="carregando() && acaoLista() === 'filtrar'" [disabled]="carregando()">
             <i class="material-icons" aria-hidden="true">search</i> Filtrar
           </button>
-          <button type="button" class="btn btn-secundario" (click)="limpar()" [disabled]="carregando()">
+          <button type="button" class="btn btn-secundario" (click)="limpar()"
+                  [pvCarregando]="carregando() && acaoLista() === 'limpar'" [disabled]="carregando()">
             Limpar
           </button>
         </div>
@@ -148,11 +150,20 @@
                               (click)="alternarDetalhes(nota)">
                         <i class="material-icons" aria-hidden="true">{{ abertaId() === nota.id ? 'expand_less' : 'expand_more' }}</i>
                       </button>
-                      @if (podeReprocessar(nota) || temFalhas(nota)) {
+                      @if (reprocessandoId() === nota.id) {
+                        <span class="pv-acoes-linha__pergunta" role="status">
+                          <span class="pv-spinner" aria-hidden="true"></span> Enviando...
+                        </span>
+                      } @else if (podeReprocessar(nota) || temFalhas(nota) || podeMarcarManual(nota)) {
                         <app-menu-acoes [rotulo]="'Mais ações para a NF ' + nota.numero">
                           @if (podeReprocessar(nota)) {
                             <button type="button" class="pv-acoes__item" (click)="reprocessar(nota)">
                               <i class="material-icons" aria-hidden="true">replay</i> Tentar lançar novamente
+                            </button>
+                          }
+                          @if (podeMarcarManual(nota)) {
+                            <button type="button" class="pv-acoes__item" (click)="abrirResolucao(nota)">
+                              <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no Bling
                             </button>
                           }
                           @if (temFalhas(nota)) {
@@ -165,6 +176,15 @@
                     </div>
                   </td>
                 </tr>
+
+                @if (resolvendoId() === nota.id) {
+                  <tr class="pv-tabela__detalhe">
+                    <td colspan="9">
+                      <app-resolucao-manual [notaId]="nota.id" [numero]="nota.numero"
+                                            (concluido)="aoResolver(nota)" (cancelado)="fecharResolucao()" />
+                    </td>
+                  </tr>
+                }
 
                 @if (abertaId() === nota.id) {
                   <tr class="pv-tabela__detalhe">
@@ -210,6 +230,14 @@
                           <p class="pv-detalhe__texto">
                             @if (nota.lancadaEm) {
                               Lançada em {{ nota.lancadaEm | date:'dd/MM/yyyy HH:mm' }}
+                            } @else if (nota.resolvidaManualmenteEm) {
+                              Lançada manualmente no Bling, marcada em {{ nota.resolvidaManualmenteEm | date:'dd/MM/yyyy HH:mm' }}
+                              @if (nota.resolvidaManualmentePor) {
+                                por {{ nota.resolvidaManualmentePor }}
+                              }
+                              @if (nota.observacaoResolucao) {
+                                <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ nota.observacaoResolucao }}</span>
+                              }
                             } @else {
                               Ainda não lançada
                             }
@@ -247,11 +275,13 @@
         @if (totalPaginas() > 1) {
           <div class="pv-paginacao">
             <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
+                    [pvCarregando]="carregando() && acaoLista() === 'anterior'"
                     [disabled]="pagina() <= 1 || carregando()">
               <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
             </button>
             <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
             <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
+                    [pvCarregando]="carregando() && acaoLista() === 'proxima'"
                     [disabled]="pagina() >= totalPaginas() || carregando()">
               Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
             </button>

@@ -67,6 +67,11 @@ export class PrevisioService {
     return this.doCliente(url => this.http.get<PaginaFalhas>(`${url}/falhas`, { params }));
   }
 
+  /** Marca a nota com problema como resolvida e lançada manualmente no Bling. */
+  marcarLancadaManualmente(notaId: number, observacao: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/notas/${notaId}/lancada-manualmente`, { observacao: observacao });
+  }
+
   reprocessarNota(notaId: number): Observable<void> {
     return this.http.post<void>(`${this.api}/notas/${notaId}/reprocessar`, {});
   }

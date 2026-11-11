@@ -33,6 +33,13 @@ namespace Previsio.Data.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("BlingClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BlingClientSecretProtegido")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -146,6 +153,32 @@ namespace Previsio.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(14)
                         .HasColumnType("character varying(14)");
+
+                    b.Property<string>("ImapHost")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ImapPorta")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImapSenhaProtegida")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ImapSsl")
+                        .HasColumnType("boolean");
+
+                    b.Property<long?>("ImapUidValidity")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ImapUltimoUid")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ImapUsuario")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -307,6 +340,10 @@ namespace Previsio.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<string>("ObservacaoResolucao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("OrigemEmail")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -314,6 +351,16 @@ namespace Previsio.Data.Migrations
 
                     b.Property<DateTime>("RecebidaEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ResolvidaManualmenteEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvidaManualmentePor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("ResolvidaManualmentePorId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Serie")
                         .IsRequired()

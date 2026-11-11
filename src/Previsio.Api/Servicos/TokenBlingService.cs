@@ -1,4 +1,5 @@
 using Previsio.Api.Excecoes;
+using Microsoft.EntityFrameworkCore;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
@@ -52,7 +53,8 @@ public class TokenBlingService
         TokenBling novoToken;
         try
         {
-            novoToken = await _bling.RenovarTokenAsync(Credenciais(empresa), refreshToken, cancelamento);
+            CredenciaisBling credenciais = await CredenciaisAsync(empresa, cancelamento);
+            novoToken = await _bling.RenovarTokenAsync(credenciais, refreshToken, cancelamento);
         }
         catch (BlingException erro)
         {
@@ -83,21 +85,36 @@ public class TokenBlingService
     }
 
     /// <summary>
-    /// Aplicativo do Bling usado pela empresa: o privado dela, quando cadastrado,
-    /// ou o aplicativo global do Previsio.
+    /// Aplicativo do Bling usado pela empresa, nesta ordem: o privado dela, o da rede (Cliente)
+    /// e, se nenhum dos dois estiver cadastrado, o aplicativo global do Previsio.
     /// </summary>
-    public CredenciaisBling Credenciais(Empresa empresa)
+    public async Task<CredenciaisBling> CredenciaisAsync(Empresa empresa, CancellationToken cancelamento)
     {
-        if (string.IsNullOrWhiteSpace(empresa.BlingClientId))
+        if (!string.IsNullOrWhiteSpace(empresa.BlingClientId))
         {
-            return _bling.CredenciaisPadrao;
+            return Montar(empresa.BlingClientId, empresa.BlingClientSecretProtegido);
         }
 
-        var credenciais = new CredenciaisBling();
-        credenciais.ClientId = empresa.BlingClientId;
-        if (!string.IsNullOrEmpty(empresa.BlingClientSecretProtegido))
+        Cliente? rede = empresa.Cliente;
+        if (rede == null)
         {
-            credenciais.ClientSecret = _protetor.Revelar(empresa.BlingClientSecretProtegido);
+            rede = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
+        }
+        if (rede != null && !string.IsNullOrWhiteSpace(rede.BlingClientId))
+        {
+            return Montar(rede.BlingClientId, rede.BlingClientSecretProtegido);
+        }
+
+        return _bling.CredenciaisPadrao;
+    }
+
+    private CredenciaisBling Montar(string clientId, string? secretProtegido)
+    {
+        var credenciais = new CredenciaisBling();
+        credenciais.ClientId = clientId;
+        if (!string.IsNullOrEmpty(secretProtegido))
+        {
+            credenciais.ClientSecret = _protetor.Revelar(secretProtegido);
         }
         return credenciais;
     }
