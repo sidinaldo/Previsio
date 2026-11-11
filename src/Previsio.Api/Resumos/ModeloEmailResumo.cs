@@ -29,10 +29,15 @@ public static class ModeloEmailResumo
 
         html.Append("<div style=\"" + Fonte + "font-size:14px;line-height:22px;color:" + CorTexto + ";max-width:600px\">");
         html.Append("<p style=\"font-size:20px;font-weight:600;color:#0B1B36;margin:0 0 4px\">Previsio</p>");
-        html.Append("<p style=\"color:" + CorAuxiliar + ";margin:0 0 20px\">Resumo da semana · " + Html(resumo.ClienteNome) + " · " + Data(resumo.Hoje) + "</p>");
-        html.Append("<p>Olá, " + Html(usuario.Nome) + ". Este é o resumo da semana.</p>");
-        texto.Append("Previsio · Resumo da semana · " + resumo.ClienteNome + " · " + Data(resumo.Hoje) + "\n\n");
-        texto.Append("Olá, " + usuario.Nome + ". Este é o resumo da semana.\n\n");
+        string periodo = "da semana";
+        if (resumo.Diario)
+        {
+            periodo = "do dia";
+        }
+        html.Append("<p style=\"color:" + CorAuxiliar + ";margin:0 0 20px\">Resumo " + periodo + " · " + Html(resumo.ClienteNome) + " · " + Data(resumo.Hoje) + "</p>");
+        html.Append("<p>Olá, " + Html(usuario.Nome) + ". Este é o resumo " + periodo + ".</p>");
+        texto.Append("Previsio · Resumo " + periodo + " · " + resumo.ClienteNome + " · " + Data(resumo.Hoje) + "\n\n");
+        texto.Append("Olá, " + usuario.Nome + ". Este é o resumo " + periodo + ".\n\n");
 
         // Os dois números principais
         html.Append("<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%;border-collapse:separate;border-spacing:0 0;margin:8px 0 24px\"><tr>");
@@ -71,9 +76,10 @@ public static class ModeloEmailResumo
         }
         texto.Append("\n");
 
-        // Notas da semana que passou
-        html.Append(Titulo("Notas dos últimos 7 dias"));
-        texto.Append("NOTAS DOS ÚLTIMOS 7 DIAS\n");
+        // Notas desde o último resumo
+        string tituloNotas = "Notas desde " + resumo.NotasDesde.ToString("dd/MM", Brasil) + " às " + resumo.NotasDesde.ToString("HH:mm", Brasil);
+        html.Append(Titulo(tituloNotas));
+        texto.Append(tituloNotas.ToUpper(Brasil) + "\n");
         string recebidas;
         if (resumo.NotasRecebidas == 0)
         {

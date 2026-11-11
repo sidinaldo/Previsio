@@ -20,7 +20,7 @@ public class SaudeService
         new string[] { "lancamento", "Lançamento no Bling" },
         new string[] { "avisos", "Avisos" },
         new string[] { "sincronizacao", "Sincronização das contas do Bling" },
-        new string[] { "resumo-semanal", "Resumo semanal" }
+        new string[] { "resumo-semanal", "Resumo por e-mail" }
     };
 
     private readonly PrevisioDbContext _db;

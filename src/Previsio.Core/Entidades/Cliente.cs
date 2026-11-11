@@ -28,8 +28,8 @@ public class Cliente : ICaixaEmail
     public string? BlingClientId { get; set; }
     public string? BlingClientSecretProtegido { get; set; }
 
-    // Resumo semanal por e-mail para os usuários da rede. Dia da semana como DayOfWeek (0 = domingo)
-    // e hora cheia no horário de Brasília. EnviadoEm evita mandar duas vezes na mesma semana.
+    // Resumo semanal por e-mail para os usuários da rede. Dia da semana como DayOfWeek (0 = domingo) ou 7 = todo dia útil
+    // e hora cheia no horário de Brasília. EnviadoEm evita mandar duas vezes no mesmo dia.
     public bool ResumoSemanalAtivo { get; set; } = true;
     public int ResumoSemanalDia { get; set; } = (int)DayOfWeek.Monday;
     public int ResumoSemanalHora { get; set; } = 7;

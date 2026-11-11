@@ -14,7 +14,10 @@ namespace Previsio.Api.Resumos;
 /// </summary>
 public class ResumoSemanalService
 {
-    public const string MensagemDiaInvalido = "Escolha um dia da semana.";
+    public const string MensagemDiaInvalido = "Escolha um dia da semana ou todo dia útil.";
+
+    // Valor de "Dia" para mandar de segunda a sexta (0 a 6 são os dias da semana, como DayOfWeek)
+    public const int TodoDiaUtil = 7;
     public const string MensagemHoraInvalida = "Escolha uma hora entre 0 e 23.";
     public const string MensagemSmtpNaoConfigurado = "O envio de e-mail não está configurado no servidor (seção Smtp).";
     public const string MensagemFalhaEnvio = "Não consegui enviar o e-mail. Confira a configuração do Smtp no servidor.";
@@ -55,7 +58,7 @@ public class ResumoSemanalService
     public async Task<Resultado<ResumoSemanalDto>> AlterarAsync(
         int clienteId, AlteracaoResumoSemanalDto dados, CancellationToken cancelamento)
     {
-        if (dados.Dia < 0 || dados.Dia > 6)
+        if (dados.Dia < 0 || dados.Dia > TodoDiaUtil)
         {
             return Resultado<ResumoSemanalDto>.Invalido(MensagemDiaInvalido);
         }
@@ -115,16 +118,21 @@ public class ResumoSemanalService
     }
 
     /// <summary>
-    /// Chamado de hora em hora: envia o resumo das redes cujo dia chegou e cuja hora já passou,
-    /// uma vez por semana. Se o servidor ficou fora na hora marcada, envia na primeira hora seguinte do mesmo dia.
+    /// Chamado de hora em hora: envia o resumo das redes cujo dia chegou (o dia da semana escolhido
+    /// ou qualquer dia útil) e cuja hora já passou, uma vez por dia. Se o servidor ficou fora na hora marcada, envia na primeira hora seguinte do mesmo dia.
     /// </summary>
     public async Task EnviarDevidosAsync(CancellationToken cancelamento)
     {
         DateTime agoraUtc = _relogio.GetUtcNow().UtcDateTime;
         DateTime agoraLocal = TimeZoneInfo.ConvertTimeFromUtc(agoraUtc, RelogioBrasil.Fuso);
 
+        int diaDaSemana = (int)agoraLocal.DayOfWeek;
+        bool diaUtil = agoraLocal.DayOfWeek != DayOfWeek.Saturday && agoraLocal.DayOfWeek != DayOfWeek.Sunday;
         List<Cliente> clientes = await _db.Clientes
-            .Where(c => c.Ativo && c.ResumoSemanalAtivo && c.ResumoSemanalDia == (int)agoraLocal.DayOfWeek && c.ResumoSemanalHora <= agoraLocal.Hour)
+            .Where(c => c.Ativo
+                && c.ResumoSemanalAtivo
+                && (c.ResumoSemanalDia == diaDaSemana || (diaUtil && c.ResumoSemanalDia == TodoDiaUtil))
+                && c.ResumoSemanalHora <= agoraLocal.Hour)
             .ToListAsync(cancelamento);
 
         foreach (Cliente cliente in clientes)
@@ -220,10 +228,12 @@ public class ResumoSemanalService
             resumo.Dias.Add(dia);
         }
 
-        DateTime inicioSemanaPassada = RelogioBrasil.InicioDoDiaEmUtc(hoje.AddDays(-7));
-        DateTime inicioHoje = RelogioBrasil.InicioDoDiaEmUtc(hoje);
+        // Notas desde o último resumo: o diário mostra o que chegou de um envio para o outro, sem repetir
+        resumo.Diario = cliente.ResumoSemanalDia == TodoDiaUtil;
+        DateTime notasDesdeUtc = InicioDasNotas(cliente, agoraUtc);
+        resumo.NotasDesde = TimeZoneInfo.ConvertTimeFromUtc(notasDesdeUtc, RelogioBrasil.Fuso);
         List<NotaFiscal> notas = await _db.NotasFiscais.AsNoTracking()
-            .Where(n => n.ClienteId == cliente.Id && n.RecebidaEm >= inicioSemanaPassada && n.RecebidaEm < inicioHoje)
+            .Where(n => n.ClienteId == cliente.Id && n.RecebidaEm >= notasDesdeUtc && n.RecebidaEm < agoraUtc)
             .ToListAsync(cancelamento);
         resumo.NotasRecebidas = notas.Count;
         resumo.ValorNotasRecebidas = notas.Sum(n => n.ValorTotal);
@@ -238,6 +248,28 @@ public class ResumoSemanalService
             .ToListAsync(cancelamento);
 
         return resumo;
+    }
+
+    /// <summary>
+    /// Início do trecho de notas: o último envio, se foi nos últimos 7 dias; sem envio recente,
+    /// 1 dia para o resumo diário e 7 para o semanal.
+    /// </summary>
+    public static DateTime InicioDasNotas(Cliente cliente, DateTime agoraUtc)
+    {
+        DateTime limite = agoraUtc.AddDays(-7);
+        if (cliente.ResumoSemanalEnviadoEm.HasValue)
+        {
+            DateTime enviado = DateTime.SpecifyKind(cliente.ResumoSemanalEnviadoEm.Value, DateTimeKind.Utc);
+            if (enviado > limite && enviado < agoraUtc)
+            {
+                return enviado;
+            }
+        }
+        if (cliente.ResumoSemanalDia == TodoDiaUtil)
+        {
+            return agoraUtc.AddDays(-1);
+        }
+        return limite;
     }
 
     private static bool JaEnviadoHoje(Cliente cliente, DateTime agoraLocal)

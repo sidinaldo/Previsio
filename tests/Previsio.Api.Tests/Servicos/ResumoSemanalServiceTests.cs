@@ -202,12 +202,12 @@ public class ResumoSemanalServiceTests
         Conta(_centro, 30, 50.00m);
         Conta(_centro, 31, 9999.00m);
         Conta(_centro, -1, 7777.00m);
-        // Últimos 7 dias em Brasília: de 09/11 00h até 15/11 23h59
+        // Sem envio anterior, o semanal pega as notas dos últimos 7 dias: de 09/11 13h UTC até agora
         Nota("1", StatusNota.Lancada, new DateTime(2026, 11, 10, 12, 0, 0, DateTimeKind.Utc), 1000m);
         Nota("2", StatusNota.LancadaManualmente, new DateTime(2026, 11, 15, 20, 0, 0, DateTimeKind.Utc), 200m);
-        Nota("3", StatusNota.SemParcelas, new DateTime(2026, 11, 9, 4, 0, 0, DateTimeKind.Utc), 300m);
-        Nota("4", StatusNota.Lancada, new DateTime(2026, 11, 9, 2, 0, 0, DateTimeKind.Utc), 5000m);
-        Nota("5", StatusNota.Recebida, new DateTime(2026, 11, 16, 12, 0, 0, DateTimeKind.Utc), 7000m);
+        Nota("3", StatusNota.SemParcelas, new DateTime(2026, 11, 9, 14, 0, 0, DateTimeKind.Utc), 300m);
+        Nota("4", StatusNota.Lancada, new DateTime(2026, 11, 9, 12, 0, 0, DateTimeKind.Utc), 5000m);
+        Nota("5", StatusNota.Recebida, new DateTime(2026, 11, 16, 14, 0, 0, DateTimeKind.Utc), 7000m);
         await _db.SaveChangesAsync();
 
         ResumoSemanal resumo = await CriarServico().MontarAsync(_rede, CancellationToken.None);
@@ -256,7 +256,7 @@ public class ResumoSemanalServiceTests
         await CadastrarRede();
         ResumoSemanalService servico = CriarServico();
 
-        var dados = new AlteracaoResumoSemanalDto { Ativo = true, Dia = 7, Hora = 8 };
+        var dados = new AlteracaoResumoSemanalDto { Ativo = true, Dia = 8, Hora = 8 };
         Assert.Equal(TipoResultado.Invalido, (await servico.AlterarAsync(_rede.Id, dados, CancellationToken.None)).Tipo);
         dados = new AlteracaoResumoSemanalDto { Ativo = true, Dia = 5, Hora = 24 };
         Assert.Equal(TipoResultado.Invalido, (await servico.AlterarAsync(_rede.Id, dados, CancellationToken.None)).Tipo);
@@ -300,5 +300,66 @@ public class ResumoSemanalServiceTests
         _email.Falhar = true;
         Resultado comFalha = await servico.EnviarTesteAsync(_rede.Id, _ana.Id, CancellationToken.None);
         Assert.Equal(ResumoSemanalService.MensagemFalhaEnvio, comFalha.Mensagem);
+    }
+
+    [Fact]
+    public async Task Todo_dia_util_envia_de_segunda_a_sexta_e_nao_no_fim_de_semana()
+    {
+        await CadastrarRede();
+        Cliente rede = _db.Clientes.Single(c => c.Id == _rede.Id);
+        rede.ResumoSemanalDia = ResumoSemanalService.TodoDiaUtil;
+        await _db.SaveChangesAsync();
+        ResumoSemanalService servico = CriarServico();
+
+        // Segunda 16/11 a domingo 22/11, sempre às 10h em Brasília
+        for (int dia = 0; dia < 7; dia++)
+        {
+            _relogio.Agora = new DateTimeOffset(2026, 11, 16, 13, 0, 0, TimeSpan.Zero).AddDays(dia);
+            await servico.EnviarDevidosAsync(CancellationToken.None);
+            // Rodar de novo na mesma hora não repete
+            await servico.EnviarDevidosAsync(CancellationToken.None);
+        }
+
+        // 5 dias úteis × 2 usuários (a outra rede, semanal na sexta, manda só para o usuário dela)
+        Assert.Equal(10, _email.Enviados.Count(e => e.Para.EndsWith("@autocenter.com.br")));
+        Assert.StartsWith("Previsio · Resumo do dia", _email.Enviados[0].Texto);
+    }
+
+    [Fact]
+    public async Task Notas_desde_o_ultimo_envio_sem_repetir_as_do_resumo_anterior()
+    {
+        await CadastrarRede();
+        Cliente rede = _db.Clientes.Single(c => c.Id == _rede.Id);
+        rede.ResumoSemanalDia = ResumoSemanalService.TodoDiaUtil;
+        // Último resumo: sexta 13/11 às 7h em Brasília
+        rede.ResumoSemanalEnviadoEm = new DateTime(2026, 11, 13, 10, 0, 0, DateTimeKind.Utc);
+        Nota("1", StatusNota.Lancada, new DateTime(2026, 11, 13, 9, 0, 0, DateTimeKind.Utc), 100m);
+        Nota("2", StatusNota.Lancada, new DateTime(2026, 11, 14, 15, 0, 0, DateTimeKind.Utc), 200m);
+        Nota("3", StatusNota.Erro, new DateTime(2026, 11, 16, 11, 0, 0, DateTimeKind.Utc), 300m);
+        await _db.SaveChangesAsync();
+
+        ResumoSemanal resumo = await CriarServico().MontarAsync(rede, CancellationToken.None);
+
+        Assert.True(resumo.Diario);
+        Assert.Equal(new DateTime(2026, 11, 13, 7, 0, 0), resumo.NotasDesde);
+        Assert.Equal(2, resumo.NotasRecebidas);
+        Assert.Equal(500m, resumo.ValorNotasRecebidas);
+        Assert.Contains("NOTAS DESDE 13/11 ÀS 07:00", ModeloEmailResumo.Montar(resumo, _ana, "https://x/#").Texto);
+    }
+
+    [Fact]
+    public void Sem_envio_recente_o_diario_pega_1_dia_e_o_semanal_7()
+    {
+        DateTime agora = new DateTime(2026, 11, 16, 13, 0, 0, DateTimeKind.Utc);
+        var semanal = new Cliente();
+        Assert.Equal(agora.AddDays(-7), ResumoSemanalService.InicioDasNotas(semanal, agora));
+
+        var diario = new Cliente();
+        diario.ResumoSemanalDia = ResumoSemanalService.TodoDiaUtil;
+        Assert.Equal(agora.AddDays(-1), ResumoSemanalService.InicioDasNotas(diario, agora));
+
+        // Resumo desligado por um mês: não traz o mês inteiro
+        diario.ResumoSemanalEnviadoEm = agora.AddDays(-30);
+        Assert.Equal(agora.AddDays(-1), ResumoSemanalService.InicioDasNotas(diario, agora));
     }
 }

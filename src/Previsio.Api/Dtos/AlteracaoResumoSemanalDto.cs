@@ -1,7 +1,7 @@
 namespace Previsio.Api.Dtos;
 
 /// <summary>
-/// Dia: 0 = domingo ... 6 = sábado. Hora cheia de 0 a 23, no horário de Brasília.
+/// Dia: 0 = domingo ... 6 = sábado; 7 = todo dia útil (segunda a sexta). Hora cheia de 0 a 23, no horário de Brasília.
 /// </summary>
 public class AlteracaoResumoSemanalDto
 {

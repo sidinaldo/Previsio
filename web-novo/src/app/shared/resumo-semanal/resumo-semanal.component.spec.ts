@@ -49,7 +49,7 @@ describe('ResumoSemanalComponent', () => {
     (tela.querySelector('button[type=submit]') as HTMLButtonElement).click();
     await fixture.whenStable();
     expect(api.alterarResumoSemanal).toHaveBeenCalledWith(7, { ativo: true, dia: 5, hora: 16 });
-    expect(tela.querySelector('.alert-success')?.textContent).toContain('sexta-feira, às 16h');
+    expect(tela.querySelector('.alert-success')?.textContent).toContain('Resumo salvo: sexta-feira, às 16h');
   });
 
   it('desligado, avisa que não vai mais e bloqueia dia e hora', async () => {
@@ -60,7 +60,7 @@ describe('ResumoSemanalComponent', () => {
     expect((tela.querySelector('#resumo-dia') as HTMLSelectElement).disabled).toBe(true);
     (tela.querySelector('button[type=submit]') as HTMLButtonElement).click();
     await fixture.whenStable();
-    expect(tela.querySelector('.alert-success')?.textContent).toContain('Resumo semanal desligado.');
+    expect(tela.querySelector('.alert-success')?.textContent).toContain('Resumo por e-mail desligado.');
   });
 
   it('"Enviar para mim agora" mostra o motivo quando a API recusa', async () => {
@@ -73,6 +73,18 @@ describe('ResumoSemanalComponent', () => {
     await fixture.whenStable();
     expect(api.enviarResumoSemanalTeste).toHaveBeenCalledWith(7);
     expect(tela.querySelector('.alert-danger')?.textContent).toContain('seção Smtp');
+  });
+
+  it('"Todo dia útil" vem primeiro na lista e salva como dia 7', async () => {
+    const api = apiPadrao();
+    const { fixture, tela } = await montar(api);
+    const dia = tela.querySelector('#resumo-dia') as HTMLSelectElement;
+    expect(dia.options[0].text).toBe('Todo dia útil (seg a sex)');
+    fixture.componentInstance.dia.set(7);
+    (tela.querySelector('button[type=submit]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(api.alterarResumoSemanal).toHaveBeenCalledWith(7, { ativo: true, dia: 7, hora: 7 });
+    expect(tela.querySelector('.alert-success')?.textContent).toContain('Resumo salvo: todo dia útil, às 07h.');
   });
 
   it('recarrega quando o cliente muda', async () => {

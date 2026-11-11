@@ -1,7 +1,7 @@
 namespace Previsio.Api.Dtos;
 
 /// <summary>
-/// Configuração do resumo semanal de uma rede. Dia: 0 = domingo ... 6 = sábado. Hora no horário de Brasília.
+/// Configuração do resumo semanal de uma rede. Dia: 0 = domingo ... 6 = sábado; 7 = todo dia útil (segunda a sexta). Hora no horário de Brasília.
 /// </summary>
 public class ResumoSemanalDto
 {

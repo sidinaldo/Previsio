@@ -16,7 +16,11 @@ public class ResumoSemanal
     public decimal Total7Dias { get; set; }
     public List<VencimentoDoDia> Dias { get; set; } = new List<VencimentoDoDia>();
 
-    // Notas lidas do e-mail nos últimos 7 dias
+    // Resumo de todo dia útil (e não de um dia da semana)
+    public bool Diario { get; set; }
+
+    // Notas lidas do e-mail desde o último resumo (horário de Brasília)
+    public DateTime NotasDesde { get; set; }
     public int NotasRecebidas { get; set; }
     public decimal ValorNotasRecebidas { get; set; }
     public int NotasLancadas { get; set; }

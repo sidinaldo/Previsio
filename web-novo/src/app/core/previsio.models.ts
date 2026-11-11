@@ -377,7 +377,7 @@ export interface PainelAvisos {
   itens: Aviso[];
 }
 
-/** Resumo semanal por e-mail da rede. dia: 0 = domingo ... 6 = sábado; hora no horário de Brasília. */
+/** Resumo por e-mail da rede. dia: 0 = domingo ... 6 = sábado; 7 = todo dia útil (seg a sex); hora no horário de Brasília. */
 export interface ResumoSemanal {
   ativo: boolean;
   dia: number;
