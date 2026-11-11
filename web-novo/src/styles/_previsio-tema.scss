@@ -2734,3 +2734,35 @@ app-paginacao.pv-paginacao {
   font-weight: 600;
   color: var(--pv-erro);
 }
+
+// -----------------------------------------------------------------------------
+// Exportar Excel
+// -----------------------------------------------------------------------------
+.pv-exportar {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.pv-exportar__erro {
+  max-width: 320px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-erro);
+  text-align: right;
+}
+
+// Busca e botões lado a lado no cabeçalho do card
+.pv-card__ferramentas {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px 12px;
+
+  .pv-busca {
+    flex: 0 1 320px;
+  }
+}

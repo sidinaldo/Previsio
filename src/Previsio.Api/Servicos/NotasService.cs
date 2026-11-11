@@ -85,6 +85,84 @@ public class NotasService
             pagina = 1;
         }
 
+        Resultado<IOrderedQueryable<NotaFiscal>> filtro = Filtrar(clienteId, empresaId, situacao, de, ate, busca, ordem);
+        if (!filtro.Sucesso)
+        {
+            return Resultado<PaginaNotasDto>.Invalido(filtro.Mensagem!);
+        }
+        IOrderedQueryable<NotaFiscal> ordenada = filtro.Valor!;
+
+        int total = await ordenada.CountAsync(cancelamento);
+
+        List<NotaFiscal> notas = await ordenada
+            .ThenByDescending(n => n.Id)
+            .Include(n => n.Empresa)
+            .Include(n => n.EmpresaCaixa)
+            .Include(n => n.Parcelas)
+            .Skip((pagina - 1) * TamanhoPagina)
+            .Take(TamanhoPagina)
+            .ToListAsync(cancelamento);
+
+        var resposta = new PaginaNotasDto();
+        resposta.Total = total;
+        resposta.Pagina = pagina;
+        resposta.TamanhoPagina = TamanhoPagina;
+        foreach (NotaFiscal nota in notas)
+        {
+            resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
+        }
+        return Resultado<PaginaNotasDto>.Ok(resposta);
+    }
+
+    public const int MaximoExportacao = 20000;
+
+    public const string MensagemExportacaoGrande =
+        "São mais de 20.000 notas. Escolha um período menor ou uma empresa para exportar.";
+
+    /// <summary>
+    /// As mesmas notas da listagem (mesmos filtros, busca e ordem), todas de uma vez e com as parcelas, para a planilha.
+    /// </summary>
+    public async Task<Resultado<List<NotaFiscal>>> ListarParaExportarAsync(
+        int clienteId,
+        int? empresaId,
+        string? situacao,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem,
+        CancellationToken cancelamento)
+    {
+        Resultado<IOrderedQueryable<NotaFiscal>> filtro = Filtrar(clienteId, empresaId, situacao, de, ate, busca, ordem);
+        if (!filtro.Sucesso)
+        {
+            return Resultado<List<NotaFiscal>>.Invalido(filtro.Mensagem!);
+        }
+
+        List<NotaFiscal> notas = await filtro.Valor!
+            .ThenByDescending(n => n.Id)
+            .Include(n => n.Empresa)
+            .Include(n => n.Parcelas)
+            .Take(MaximoExportacao + 1)
+            .ToListAsync(cancelamento);
+        if (notas.Count > MaximoExportacao)
+        {
+            return Resultado<List<NotaFiscal>>.Invalido(MensagemExportacaoGrande);
+        }
+        return Resultado<List<NotaFiscal>>.Ok(notas);
+    }
+
+    /// <summary>
+    /// Consulta das notas do cliente com os filtros da tela e a ordem pedida.
+    /// </summary>
+    private Resultado<IOrderedQueryable<NotaFiscal>> Filtrar(
+        int clienteId,
+        int? empresaId,
+        string? situacao,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem)
+    {
         IQueryable<NotaFiscal> consulta = _notas.ConsultarSomenteLeitura().Where(n => n.ClienteId == clienteId);
 
         if (empresaId.HasValue)
@@ -103,7 +181,7 @@ public class NotasService
                 StatusNota escolhida;
                 if (!Enum.TryParse(situacao, true, out escolhida) || !Enum.IsDefined(typeof(StatusNota), escolhida))
                 {
-                    return Resultado<PaginaNotasDto>.Invalido("Situação inválida.");
+                    return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido("Situação inválida.");
                 }
                 consulta = consulta.Where(n => n.Status == escolhida);
             }
@@ -112,7 +190,7 @@ public class NotasService
         string? erroPeriodo = ValidacaoPeriodo.Validar(de, ate);
         if (erroPeriodo != null)
         {
-            return Resultado<PaginaNotasDto>.Invalido(erroPeriodo);
+            return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido(erroPeriodo);
         }
 
         if (de.HasValue)
@@ -154,29 +232,9 @@ public class NotasService
         IOrderedQueryable<NotaFiscal>? ordenada = Ordenar(consulta, OrdemLista.Ler(ordem, "recebida", true));
         if (ordenada == null)
         {
-            return Resultado<PaginaNotasDto>.Invalido(MensagemOrdemInvalida);
+            return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido(MensagemOrdemInvalida);
         }
-
-        int total = await consulta.CountAsync(cancelamento);
-
-        List<NotaFiscal> notas = await ordenada
-            .ThenByDescending(n => n.Id)
-            .Include(n => n.Empresa)
-            .Include(n => n.EmpresaCaixa)
-            .Include(n => n.Parcelas)
-            .Skip((pagina - 1) * TamanhoPagina)
-            .Take(TamanhoPagina)
-            .ToListAsync(cancelamento);
-
-        var resposta = new PaginaNotasDto();
-        resposta.Total = total;
-        resposta.Pagina = pagina;
-        resposta.TamanhoPagina = TamanhoPagina;
-        foreach (NotaFiscal nota in notas)
-        {
-            resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
-        }
-        return Resultado<PaginaNotasDto>.Ok(resposta);
+        return Resultado<IOrderedQueryable<NotaFiscal>>.Ok(ordenada);
     }
 
     public const string MensagemOrdemInvalida =

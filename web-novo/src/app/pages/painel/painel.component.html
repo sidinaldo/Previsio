@@ -24,6 +24,8 @@
         <button type="button" class="btn btn-secundario" (click)="carregar()" [pvCarregando]="carregando()" [disabled]="carregando()">
           <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
         </button>
+        <app-exportar [gerar]="exportar" nomePadrao="previsio-contas-a-pagar.xlsx"
+                      titulo="Baixar as contas a pagar em aberto deste período no Excel" />
       </div>
     </div>
 

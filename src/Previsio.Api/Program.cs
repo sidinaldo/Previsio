@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
+using Previsio.Api.Exportacao;
 using Previsio.Api.Resumos;
 using Previsio.Api.Saude;
 using Previsio.Api.Email;
@@ -90,6 +91,7 @@ builder.Services.AddScoped<AvisosJob>();
 builder.Services.AddScoped<ResumoSemanalService>();
 builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddScoped<SaudeService>();
+builder.Services.AddScoped<ExportacaoService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
 builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
@@ -181,7 +183,9 @@ builder.Services.AddCors(opcoes =>
     opcoes.AddPolicy("front", politica => politica
         .WithOrigins(origemFront)
         .AllowAnyHeader()
-        .AllowAnyMethod());
+        .AllowAnyMethod()
+        // Nome do arquivo das exportações (o front usa para salvar)
+        .WithExposedHeaders("Content-Disposition"));
 });
 
 builder.Services.AddControllers();

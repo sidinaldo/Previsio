@@ -30,7 +30,11 @@
           <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no Bling</h2>
           <p class="pv-card__descricao pv-numero">{{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</p>
         </div>
-        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por NF, fornecedor ou CNPJ" />
+        <div class="pv-card__ferramentas">
+          <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por NF, fornecedor ou CNPJ" />
+          <app-exportar [gerar]="exportar" nomePadrao="previsio-notas-pendentes.xlsx" [desabilitado]="notasFiltradas().length === 0"
+                        titulo="Baixar as notas pendentes no Excel, uma linha por parcela" />
+        </div>
       </div>
 
       @if (mensagem() || erro()) {

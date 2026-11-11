@@ -101,6 +101,8 @@
           <h2 class="pv-card__titulo">Notas lidas do e-mail</h2>
           <p class="pv-card__descricao">{{ total() }} notas</p>
         </div>
+        <app-exportar [gerar]="exportar" nomePadrao="previsio-notas.xlsx" [desabilitado]="total() === 0"
+                      titulo="Baixar as notas destes filtros no Excel, uma linha por parcela" />
       </div>
 
       @if (carregada() && !carregando() && notas().length === 0) {

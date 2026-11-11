@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { PrevisioService } from '../../core/previsio.service';
-import { DESCRICAO_STATUS, Nota, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
+import { DESCRICAO_STATUS, Nota, SITUACAO_PENDENTES, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
@@ -14,12 +14,13 @@ import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
-import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
+import { ExportarComponent } from '../../shared/exportar/exportar.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista, parametroOrdem } from '../../core/ordenacao';
 import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -76,6 +77,14 @@ export class NotasPendentesComponent {
       total = total + nota.valorTotal;
     }
     return total;
+  });
+
+  // Mesma lista da tela: pendentes, da empresa (se filtrada), com a busca e a ordem escolhidas
+  readonly exportar = () => this.previsio.exportarNotas({
+    empresaId: this.empresaId() ?? null,
+    situacao: SITUACAO_PENDENTES,
+    busca: this.busca(),
+    ordem: parametroOrdem(this.ordenacao()) || 'recebida'
   });
 
   constructor() {

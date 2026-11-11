@@ -16,6 +16,7 @@ import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resoluca
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
 
 /** Opção do filtro de situação. */
@@ -33,7 +34,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
  */
 @Component({
   selector: 'app-notas-recebidas',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent],
   templateUrl: './notas-recebidas.component.html'
 })
 export class NotasRecebidasComponent {
@@ -88,6 +89,10 @@ export class NotasRecebidasComponent {
   readonly reprocessandoId = signal<number | null>(null);
 
   readonly totalPaginas = computed(() => totalDePaginas(this.total(), this.tamanhoPagina()));
+
+  // Filtros da lista mostrada: a exportação usa estes, não o que ainda está sendo digitado
+  private filtroAplicado: FiltroNotas = {};
+  readonly exportar = () => this.previsio.exportarNotas(this.filtroAplicado);
 
   constructor() {
     this.previsio.listarEmpresas().subscribe({
@@ -256,6 +261,7 @@ export class NotasRecebidasComponent {
       ordem: parametroOrdem(this.ordenacao()),
       pagina: this.pagina()
     };
+    this.filtroAplicado = filtro;
 
     this.carregando.set(true);
     this.erro.set('');

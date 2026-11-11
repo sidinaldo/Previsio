@@ -11,10 +11,11 @@ declare const Chartist: any;
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { ExportarComponent } from '../../shared/exportar/exportar.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective, PaginacaoComponent, ExportarComponent],
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {
@@ -34,6 +35,7 @@ export class PainelComponent {
     return paginar(resumo.empresas, this.pagina(), this.tamanhoPagina());
   });
   readonly dias = signal(30);
+  readonly exportar = () => this.previsio.exportarContasPagar(this.dias());
   readonly carregando = signal(false);
   readonly erro = signal('');
 

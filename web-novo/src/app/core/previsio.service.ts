@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
 import { SEM_BARRA_CARREGAMENTO } from './carregamento.interceptor';
@@ -66,6 +66,21 @@ export class PrevisioService {
   obterNotas(filtro: FiltroNotas): Observable<PaginaNotas> {
     const params = parametrosDasNotas(filtro);
     return this.doCliente(url => this.http.get<PaginaNotas>(`${url}/notas`, { params }));
+  }
+
+  /** Planilha das notas com os mesmos filtros, busca e ordem da lista (uma linha por parcela). */
+  exportarNotas(filtro: FiltroNotas): Observable<HttpResponse<Blob>> {
+    const params = parametrosDasNotas({ ...filtro, pagina: 1 });
+    return this.doCliente(url => this.http.get(`${url}/notas/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
+  /** Planilha das contas a pagar em aberto no Bling dos próximos N dias (as do painel). */
+  exportarContasPagar(dias: number, empresaId?: number): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams().set('dias', String(dias));
+    if (empresaId) {
+      params = params.set('empresaId', String(empresaId));
+    }
+    return this.doCliente(url => this.http.get(`${url}/contas-pagar/exportar`, { params, observe: 'response', responseType: 'blob' }));
   }
 
   /** Falhas ao ler notas do e-mail e ao lançá-las no Bling, da mais recente para a mais antiga. */
