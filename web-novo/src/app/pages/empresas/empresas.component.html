@@ -165,6 +165,7 @@
               <tr>
                 <th>Empresa</th>
                 <th>CNPJ</th>
+                <th>E-mail</th>
                 <th>Bling</th>
                 <th>Última sincronização</th>
                 <th class="text-right">Ações</th>
@@ -181,13 +182,21 @@
                     @if (estaEditando(empresa)) {
                       <span class="badge badge-info ml-1">Em edição</span>
                     }
-                    @if (empresa.emailProprio) {
-                      <span class="pv-tabela__auxiliar">E-mail próprio: {{ empresa.imapUsuario }}</span>
-                    } @else {
-                      <span class="pv-tabela__auxiliar">E-mail da rede</span>
-                    }
                   </td>
                   <td class="pv-numero">{{ empresa.cnpj }}</td>
+                  <td>
+                    @if (empresa.emailProprio) {
+                      {{ empresa.imapUsuario }}
+                      <span class="pv-tabela__auxiliar">Caixa própria (também recebe pela da rede)</span>
+                    } @else {
+                      @if (emailRede()) {
+                        {{ emailRede() }}
+                      } @else {
+                        —
+                      }
+                      <span class="pv-tabela__auxiliar">Caixa da rede</span>
+                    }
+                  </td>
                   <td>
                     @if (empresa.blingConectado) {
                       <span class="badge badge-success">Conectado</span>

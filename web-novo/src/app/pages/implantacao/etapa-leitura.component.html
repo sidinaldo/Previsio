@@ -1,0 +1,90 @@
+<div class="card">
+  <div class="pv-card__cabecalho">
+    <div>
+      <h2 class="pv-card__titulo">5. Primeira leitura</h2>
+      <p class="pv-card__descricao">Lê a caixa de e-mail agora e lança as parcelas no Bling, sem esperar o agendamento</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <p class="pv-formulario__ajuda">
+      Na primeira vez o Previsio lê os e-mails dos últimos dias. Notas que já estiverem no Previsio não duplicam.
+      A leitura roda para todas as redes, como o agendamento.
+    </p>
+
+    @if (rodando() || fase() === 'pronta') {
+      <ol class="pv-progresso" aria-live="polite">
+        <li class="pv-progresso__item" [class.pv-progresso__item--feito]="fase() !== 'lendo'">
+          @if (fase() === 'lendo') {
+            <span class="pv-progresso__giro" aria-hidden="true"></span>
+          } @else {
+            <i class="material-icons" aria-hidden="true">check_circle</i>
+          }
+          Lendo a caixa de e-mail
+        </li>
+        <li class="pv-progresso__item" [class.pv-progresso__item--feito]="fase() === 'pronta'"
+            [class.pv-progresso__item--espera]="fase() === 'lendo'">
+          @if (fase() === 'lancando') {
+            <span class="pv-progresso__giro" aria-hidden="true"></span>
+          } @else if (fase() === 'pronta') {
+            <i class="material-icons" aria-hidden="true">check_circle</i>
+          } @else {
+            <i class="material-icons" aria-hidden="true">radio_button_unchecked</i>
+          }
+          Lançando as contas a pagar no Bling
+        </li>
+      </ol>
+    }
+
+    @if (erro()) {
+      <div class="alert alert-warning" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    @if (resultado(); as r) {
+      <div class="pv-implantacao__numeros">
+        <div class="pv-implantacao__numero">
+          <span class="pv-implantacao__rotulo">Notas lidas</span>
+          <span class="pv-implantacao__valor">{{ r.notasLidas }}</span>
+        </div>
+        <div class="pv-implantacao__numero">
+          <span class="pv-implantacao__rotulo">Lançadas no Bling</span>
+          <span class="pv-implantacao__valor">{{ r.lancadas }}</span>
+        </div>
+        <div class="pv-implantacao__numero">
+          <span class="pv-implantacao__rotulo">Aguardando ou com problema</span>
+          <span class="pv-implantacao__valor" [class.pv-implantacao__valor--alerta]="r.pendentes > 0">{{ r.pendentes }}</span>
+        </div>
+        <div class="pv-implantacao__numero">
+          <span class="pv-implantacao__rotulo">Falhas hoje</span>
+          <span class="pv-implantacao__valor" [class.pv-implantacao__valor--erro]="r.falhasHoje > 0">{{ r.falhasHoje }}</span>
+        </div>
+      </div>
+      @if (fase() === 'pronta' && r.notasLidas === 0) {
+        <p class="pv-formulario__ajuda">
+          Nenhuma nota encontrada. Confira se os fornecedores já mandam as notas para {{ cliente().imapUsuario }}.
+        </p>
+      }
+    }
+  </div>
+
+  <div class="pv-formulario__acoes">
+    <button type="button" class="btn btn-info" (click)="executar()" [pvCarregando]="rodando()" [disabled]="rodando()">
+      <i class="material-icons" aria-hidden="true">mark_email_read</i>
+      @if (fase() === 'pronta') {
+        Ler de novo
+      } @else {
+        Ler o e-mail agora
+      }
+    </button>
+    <a class="btn btn-secundario" routerLink="/pages/notas-recebidas">Ver notas recebidas</a>
+    @if (resultado(); as r) {
+      @if (r.pendentes > 0) {
+        <a class="btn btn-link" routerLink="/pages/notas-pendentes">Ver pendentes</a>
+      }
+      @if (r.falhasHoje > 0) {
+        <a class="btn btn-link" routerLink="/pages/falhas">Ver falhas</a>
+      }
+    }
+    <a class="btn btn-link" routerLink="/pages/painel">Ir para o painel</a>
+  </div>
+</div>

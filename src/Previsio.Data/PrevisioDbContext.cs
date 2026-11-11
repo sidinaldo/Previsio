@@ -68,6 +68,11 @@ public class PrevisioDbContext : DbContext
             entidade.HasOne(n => n.Empresa)
                 .WithMany()
                 .HasForeignKey(n => n.EmpresaId);
+
+            entidade.HasOne(n => n.EmpresaCaixa)
+                .WithMany()
+                .HasForeignKey(n => n.EmpresaCaixaId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ParcelaNota>(entidade =>

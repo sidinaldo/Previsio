@@ -130,7 +130,14 @@
                   <td class="pv-numero">{{ nota.recebidaEm | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td class="pv-numero"><strong>{{ nota.numero }}</strong></td>
                   <td>{{ nota.fornecedor }}</td>
-                  <td>{{ nota.empresaNome || '—' }}</td>
+                  <td>
+                    {{ nota.empresaNome || '—' }}
+                    @if (nota.caixaDeOutraEmpresa) {
+                      <span class="pv-aviso-caixa" title="A nota é de outro CNPJ: peça ao fornecedor para mandar ao e-mail certo">
+                        <i class="material-icons" aria-hidden="true">mail</i> Chegou na caixa de {{ nota.caixaDeOutraEmpresa }}
+                      </span>
+                    }
+                  </td>
                   <td class="pv-numero">{{ nota.dataEmissao | date:'dd/MM/yyyy' }}</td>
                   <td class="text-right"><strong>{{ nota.valorTotal | currency:'BRL' }}</strong></td>
                   <td class="pv-numero">
@@ -272,21 +279,9 @@
           </table>
         </div>
 
-        @if (totalPaginas() > 1) {
-          <div class="pv-paginacao">
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'anterior'"
-                    [disabled]="pagina() <= 1 || carregando()">
-              <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
-            </button>
-            <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'proxima'"
-                    [disabled]="pagina() >= totalPaginas() || carregando()">
-              Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
-            </button>
-          </div>
-        }
+        <!-- A API devolve uma página por vez, no tamanho dela: sem "Por página" -->
+        <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
+                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
       }
     </div>
 

@@ -39,6 +39,10 @@ async function montar() {
   fixture.autoDetectChanges();
   const api = TestBed.inject(HttpTestingController);
   api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
+  api.expectOne(`${API}/clientes/7`).flush({
+    id: 7, nome: 'Rede', imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@rede.com.br',
+    blingClientId: null, blingClientSecretCadastrado: false, ativo: true
+  });
   await fixture.whenStable();
   return { fixture, api, tela: fixture.nativeElement as HTMLElement };
 }
@@ -152,7 +156,7 @@ describe('EmpresasComponent: e-mail próprio da empresa', () => {
 
   it('a tabela mostra de onde vêm o e-mail e o aplicativo do Bling', async () => {
     const { tela } = await montar();
-    expect(tela.textContent).toContain('E-mail da rede');
+    expect(tela.textContent).toContain('Caixa da rede');
     expect(tela.textContent).toContain('Aplicativo padrão');
   });
 });
@@ -201,5 +205,22 @@ describe('EmpresasComponent: conectar o Bling numa janela separada', () => {
     api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
     await fixture.whenStable();
     expect(tela.textContent).toContain('Conta Bling conectada');
+  });
+});
+
+describe('EmpresasComponent: coluna E-mail', () => {
+  it('mostra a caixa da rede para quem não tem caixa própria e a própria para quem tem', async () => {
+    const { fixture, api, tela } = await montar();
+    const linhas = tela.querySelectorAll('tbody tr');
+    expect(linhas[0].textContent).toContain('notas@rede.com.br');
+    expect(linhas[0].textContent).toContain('Caixa da rede');
+
+    const comCaixaPropria: Empresa[] = [{ ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'filial@loja.com.br' }, EMPRESAS[1]];
+    fixture.componentInstance.carregar();
+    api.expectOne(`${API}/clientes/7/empresas`).flush(comCaixaPropria);
+    await fixture.whenStable();
+    const primeira = tela.querySelectorAll('tbody tr')[0];
+    expect(primeira.textContent).toContain('filial@loja.com.br');
+    expect(primeira.textContent).toContain('Caixa própria');
   });
 });

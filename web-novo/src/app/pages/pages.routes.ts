@@ -52,6 +52,16 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./cliente-detalhe/cliente-detalhe.component').then(m => m.ClienteDetalheComponent)
       },
       {
+        path: 'implantacao',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./implantacao/implantacao.component').then(m => m.ImplantacaoComponent)
+      },
+      {
+        path: 'implantacao/:id',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./implantacao/implantacao.component').then(m => m.ImplantacaoComponent)
+      },
+      {
         path: 'usuarios',
         canActivate: [somenteAdmin],
         loadComponent: () => import('./usuarios/usuarios.component').then(m => m.UsuariosComponent)

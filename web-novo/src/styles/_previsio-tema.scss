@@ -13,6 +13,7 @@
 // 6. Formulários: rótulo fixo acima, campo com borda e anel de foco
 // 7. Menu de ações "⋯" e ações por linha
 // 8. Detalhes: código e resposta do Bling, linha expandida, voltar
+// 9. Implantação de cliente: etapas, resumo, opcionais, progresso da leitura
 // =============================================================================
 
 // -----------------------------------------------------------------------------
@@ -24,6 +25,10 @@
   --pv-primaria-hover: #1E40AF;
   --pv-primaria-suave: rgba(29, 78, 216, .10);
   --pv-menu: #0B1B36;
+  // Destaque da marca: só para o que é previsão (tracejado do previsto, "próximos 30 dias")
+  --pv-horizonte: #0F766E;
+  --pv-horizonte-suave: rgba(15, 118, 110, .10);
+  --pv-horizonte-sobre-menu: #2DD4BF;
 
   // Superfícies
   --pv-fundo: #F5F7FA;
@@ -35,7 +40,7 @@
   // Texto: nenhum texto mais claro que o auxiliar
   --pv-texto: #0F172A;
   --pv-texto-secundario: #475569;
-  --pv-texto-auxiliar: #64748B;
+  --pv-texto-auxiliar: #5E6E85; // 4,8:1 sobre o fundo (o #64748B ficava em 4,4:1)
 
   // Semânticas: só com significado
   --pv-sucesso: #15803D;
@@ -56,7 +61,8 @@
   --pv-anel-foco: 0 0 0 3px rgba(29, 78, 216, .35);
 
   // Tipografia
-  --pv-fonte: Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pv-fonte: "IBM Plex Sans", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pv-fonte-mono: "IBM Plex Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 
   // Shell
   --pv-menu-largura: 260px;
@@ -707,6 +713,50 @@ app-sidebar {
   min-height: 0;
 }
 
+// Símbolo da marca (app-simbolo): o tamanho vem de quem usa
+.pv-simbolo {
+  display: inline-block;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+.pv-simbolo__letra {
+  fill: var(--pv-primaria);
+}
+
+.pv-simbolo__curva {
+  stroke: var(--pv-primaria);
+}
+
+.pv-simbolo__vencimento {
+  fill: var(--pv-horizonte);
+}
+
+.pv-simbolo__previsto {
+  stroke: var(--pv-horizonte);
+}
+
+.pv-simbolo--negativo {
+  .pv-simbolo__letra {
+    fill: #fff;
+  }
+
+  .pv-simbolo__curva {
+    stroke: #fff;
+  }
+
+  .pv-simbolo__vencimento {
+    fill: var(--pv-horizonte-sobre-menu);
+  }
+
+  .pv-simbolo__previsto {
+    stroke: var(--pv-horizonte-sobre-menu);
+  }
+}
+
 .pv-menu__logo {
   flex: 0 0 auto;
   display: flex;
@@ -718,8 +768,8 @@ app-sidebar {
 
 .pv-logo {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
@@ -736,10 +786,16 @@ app-sidebar {
   gap: 6px;
 }
 
+.pv-logo__simbolo {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+}
+
 .pv-logo__nome {
   font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -.2px;
+  font-weight: 600;
+  letter-spacing: -.02em;
 }
 
 .pv-logo__assinatura {
@@ -747,12 +803,6 @@ app-sidebar {
   color: rgba(255, 255, 255, .72);
 }
 
-// Só aparece com o menu recolhido
-.pv-logo__mini {
-  display: none;
-  font-size: 20px;
-  font-weight: 700;
-}
 
 .sidebar .sidebar-wrapper.pv-menu__navegacao {
   flex: 1 1 auto;
@@ -922,10 +972,6 @@ app-sidebar {
     .pv-menu__logo {
       justify-content: center;
       padding: 0;
-    }
-
-    .pv-logo__mini {
-      display: inline;
     }
 
     .pv-logo__texto {
@@ -1158,7 +1204,7 @@ app-sidebar {
 .pv-kpi__valor {
   margin: 4px 0 0;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 36px;
   color: var(--pv-texto);
   font-variant-numeric: tabular-nums;
@@ -1439,6 +1485,18 @@ select.form-control:not([size]):not([multiple]):disabled {
   .btn {
     margin: 0;
   }
+
+  // Ação secundária em forma de link (o template deixa cinza, parecendo desabilitada)
+  .btn.btn-link {
+    color: var(--pv-primaria);
+    text-transform: none;
+
+    &:hover,
+    &:focus {
+      color: var(--pv-primaria-hover);
+      text-decoration: underline;
+    }
+  }
 }
 
 .pv-formulario__ajuda {
@@ -1657,7 +1715,7 @@ app-paginacao.pv-paginacao {
 .pv-codigo {
   margin: 0;
   padding: 12px;
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: var(--pv-fonte-mono);
   font-size: 12px;
   line-height: 18px;
   color: var(--pv-texto);
@@ -1843,5 +1901,261 @@ app-paginacao.pv-paginacao {
 
   .pv-botao--carregando::before {
     animation-duration: 2s;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 9. Implantação de cliente
+// -----------------------------------------------------------------------------
+
+// Trilho das cinco etapas
+.pv-etapas {
+  margin-bottom: 24px;
+}
+
+.pv-etapas__lista {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-etapas__botao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  background-color: var(--pv-superficie);
+  color: var(--pv-texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--pv-superficie-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+  }
+}
+
+.pv-etapas__marca {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pv-texto-secundario);
+  font-variant-numeric: tabular-nums;
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.pv-etapas__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pv-etapas__titulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.pv-etapas__estado {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-etapas__item--concluida .pv-etapas__marca {
+  border-color: var(--pv-sucesso);
+  background-color: var(--pv-sucesso);
+  color: #fff;
+}
+
+.pv-etapas__item--concluida .pv-etapas__estado {
+  color: var(--pv-sucesso-texto);
+}
+
+.pv-etapas__item--atual .pv-etapas__botao {
+  border-color: var(--pv-primaria);
+  box-shadow: inset 0 0 0 1px var(--pv-primaria);
+}
+
+.pv-etapas__item--atual:not(.pv-etapas__item--concluida) .pv-etapas__marca {
+  border-color: var(--pv-primaria);
+  background-color: var(--pv-primaria);
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .pv-etapas__lista {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+// Resumo do que já está cadastrado (rótulo em cima, valor embaixo)
+.pv-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px 24px;
+  margin: 0 0 16px;
+
+  dt {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: var(--pv-texto-secundario);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    color: var(--pv-texto);
+  }
+}
+
+.pv-codigo-inline,
+.form-control.pv-entrada-codigo {
+  font-family: var(--pv-fonte-mono);
+  font-size: 13px;
+}
+
+// Bloco opcional que abre ao clicar (aplicativo Bling, caixa própria)
+.pv-opcional {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+
+  > summary {
+    font-weight: 500;
+    color: var(--pv-primaria);
+    cursor: pointer;
+  }
+
+  &[open] > summary {
+    margin-bottom: 8px;
+  }
+}
+
+// Passos da primeira leitura
+.pv-progresso {
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-progresso__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  color: var(--pv-texto);
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--pv-texto-auxiliar);
+  }
+}
+
+.pv-progresso__item--feito .material-icons {
+  color: var(--pv-sucesso);
+}
+
+.pv-progresso__item--espera {
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-progresso__giro {
+  width: 18px;
+  height: 18px;
+  margin: 1px;
+  border: 2px solid var(--pv-borda-forte);
+  border-top-color: var(--pv-primaria);
+  border-radius: 50%;
+  animation: pv-girar .8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-progresso__giro {
+    animation-duration: 2s;
+  }
+}
+
+// Números do resultado da leitura
+.pv-implantacao__numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pv-implantacao__numero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+}
+
+.pv-implantacao__rotulo {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-implantacao__valor {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  color: var(--pv-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-implantacao__valor--alerta {
+  color: var(--pv-alerta-texto);
+}
+
+.pv-implantacao__valor--erro {
+  color: var(--pv-erro);
+}
+
+// Nota que chegou na caixa de e-mail de outra empresa (vai pelo CNPJ; isto só avisa)
+.pv-aviso-caixa {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-alerta-texto);
+
+  .material-icons {
+    flex: 0 0 auto;
+    font-size: 14px;
   }
 }

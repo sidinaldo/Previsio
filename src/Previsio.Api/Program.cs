@@ -57,6 +57,8 @@ builder.Services.AddScoped<PainelService>();
 builder.Services.AddScoped<NotasService>();
 builder.Services.AddScoped<FalhasService>();
 builder.Services.AddScoped<BlingConexaoService>();
+builder.Services.AddScoped<IConexaoImap, ConexaoImapMailKit>();
+builder.Services.AddScoped<TesteEmailService>();
 builder.Services.AddScoped<LeituraEmailJob>();
 builder.Services.AddScoped<LancamentoNotaJob>();
 builder.Services.AddScoped<SincronizacaoContasJob>();

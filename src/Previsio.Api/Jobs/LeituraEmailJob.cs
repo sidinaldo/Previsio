@@ -176,7 +176,7 @@ public class LeituraEmailJob
                         continue;
                     }
 
-                    ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, cancelamento);
+                    ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, caixaParaLer.EmpresaId, cancelamento);
                     if (resultado == ResultadoRegistro.Registrada)
                     {
                         registradas++;

@@ -42,10 +42,10 @@ export class AdminLayoutComponent {
     if (!this.sessao.ehAdmin()) {
       return true;
     }
-    // Clientes e Usuários não dependem do cliente exibido: abrem mesmo sem nenhum escolhido
-    // (é na tela Clientes que se cadastra o primeiro)
+    // Clientes, Usuários e a implantação não dependem do cliente exibido: abrem mesmo sem
+    // nenhum escolhido (é nelas que se cadastra o primeiro)
     const url = this.urlAtual();
-    if (url.startsWith('/pages/clientes') || url.startsWith('/pages/usuarios')) {
+    if (url.startsWith('/pages/clientes') || url.startsWith('/pages/usuarios') || url.startsWith('/pages/implantacao')) {
       return true;
     }
     const clienteId = this.sessao.clienteId();

@@ -70,7 +70,15 @@
             <tbody>
               @for (nota of notasDaPagina(); track nota.id) {
                 <tr>
-                  <td><strong>{{ nota.fornecedor }}</strong></td>
+                  <td>
+                    <strong>{{ nota.fornecedor }}</strong>
+                    <!-- No fornecedor, e não na empresa, para aparecer também com o filtro por empresa (coluna oculta) -->
+                    @if (nota.caixaDeOutraEmpresa) {
+                      <span class="pv-aviso-caixa" title="A nota é de outro CNPJ: peça ao fornecedor para mandar ao e-mail certo">
+                        <i class="material-icons" aria-hidden="true">mail</i> Chegou na caixa de {{ nota.caixaDeOutraEmpresa }}
+                      </span>
+                    }
+                  </td>
                   <td class="pv-numero">{{ nota.numero }}</td>
                   @if (!empresaId()) {
                     <td>{{ nota.empresaNome || '—' }}</td>

@@ -49,6 +49,11 @@ export interface Nota {
   status: string;
   mensagemErro: string | null;
   recebidaEm: string;
+  /**
+   * Nome da empresa dona da caixa em que a nota chegou, quando não é a do CNPJ da nota
+   * (o fornecedor mandou para o e-mail de outra loja). A nota vai pelo CNPJ; isto só avisa.
+   */
+  caixaDeOutraEmpresa?: string | null;
 }
 
 /** Preenchidos quando alguém marcou a nota como lançada manualmente no Bling. */
@@ -155,6 +160,25 @@ export interface NovoCliente {
   imapSsl: boolean;
   imapUsuario: string;
   imapSenha: string;
+  /** Opcionais: aplicativo privado do Bling da rede. Vão juntos ou nenhum. */
+  blingClientId?: string;
+  blingClientSecret?: string;
+}
+
+/** POST /api/email/testar: dados da caixa digitados; sem senha e com clienteId usa a senha gravada da rede. */
+export interface TesteEmail {
+  imapHost: string;
+  imapPorta: number;
+  imapSsl: boolean;
+  imapUsuario: string;
+  imapSenha?: string;
+  clienteId?: number;
+}
+
+/** Se o Previsio conseguiu entrar na caixa e, quando não, o motivo. */
+export interface ResultadoTesteEmail {
+  conectou: boolean;
+  mensagem: string;
 }
 
 export const PERFIL_ADMIN = 'Admin';
@@ -220,6 +244,11 @@ export interface NotaRecebida extends ResolucaoManual {
   recebidaEm: string;
   lancadaEm: string | null;
   parcelas: ParcelaNota[];
+  /**
+   * Nome da empresa dona da caixa em que a nota chegou, quando não é a do CNPJ da nota
+   * (o fornecedor mandou para o e-mail de outra loja). A nota vai pelo CNPJ; isto só avisa.
+   */
+  caixaDeOutraEmpresa?: string | null;
 }
 
 export interface PaginaNotas {

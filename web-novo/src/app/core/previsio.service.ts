@@ -20,6 +20,8 @@ import {
   PaginaNotas,
   SituacaoJob,
   ResumoPainel,
+  ResultadoTesteEmail,
+  TesteEmail,
   Usuario,
   VencimentoDia
 } from './previsio.models';
@@ -82,6 +84,16 @@ export class PrevisioService {
 
   criarEmpresa(dados: NovaEmpresa): Observable<Empresa> {
     return this.doCliente(url => this.http.post<Empresa>(`${url}/empresas`, dados));
+  }
+
+  /** Cadastra a empresa num cliente específico (implantação), não no cliente exibido. */
+  criarEmpresaDoCliente(clienteId: number, dados: NovaEmpresa): Observable<Empresa> {
+    return this.http.post<Empresa>(`${this.api}/clientes/${clienteId}/empresas`, dados);
+  }
+
+  /** Só admin. Conecta e entra na caixa, sem ler nem gravar nada. */
+  testarEmail(dados: TesteEmail): Observable<ResultadoTesteEmail> {
+    return this.http.post<ResultadoTesteEmail>(`${this.api}/email/testar`, dados);
   }
 
   /** Empresas de um cliente específico (tela de detalhe do cliente), não do cliente exibido. */

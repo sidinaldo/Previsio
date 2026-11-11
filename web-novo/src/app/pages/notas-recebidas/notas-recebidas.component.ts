@@ -13,6 +13,7 @@ import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 /** Opção do filtro de situação. */
 interface OpcaoSituacao {
@@ -29,7 +30,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
  */
 @Component({
   selector: 'app-notas-recebidas',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent],
   templateUrl: './notas-recebidas.component.html'
 })
 export class NotasRecebidasComponent {

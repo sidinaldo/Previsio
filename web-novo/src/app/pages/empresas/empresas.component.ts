@@ -34,7 +34,11 @@ export class EmpresasComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
-  readonly ehAdmin = inject(SessaoService).ehAdmin;
+  private readonly sessao = inject(SessaoService);
+  readonly ehAdmin = this.sessao.ehAdmin;
+
+  // Caixa da rede, mostrada na coluna E-mail das empresas sem caixa própria
+  readonly emailRede = signal('');
   readonly empresas = signal<Empresa[]>([]);
 
   // Paginação da tabela (a API devolve a lista inteira)
@@ -113,6 +117,19 @@ export class EmpresasComponent {
     }
 
     this.carregar();
+    this.carregarEmailRede();
+  }
+
+  private carregarEmailRede(): void {
+    const clienteId = this.sessao.clienteId();
+    if (clienteId === null) {
+      return;
+    }
+    this.previsio.obterCliente(clienteId).subscribe({
+      next: cliente => this.emailRede.set(cliente.imapUsuario),
+      // Sem o e-mail da rede a coluna mostra só "Caixa da rede"
+      error: () => this.emailRede.set('')
+    });
   }
 
   carregar(): void {

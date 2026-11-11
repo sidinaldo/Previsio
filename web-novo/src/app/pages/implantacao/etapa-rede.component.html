@@ -1,0 +1,143 @@
+<div class="card">
+  <div class="pv-card__cabecalho">
+    <div>
+      <h2 class="pv-card__titulo">1. Rede e caixa de e-mail</h2>
+      <p class="pv-card__descricao">A caixa dedicada onde os fornecedores mandam as notas (XML) de todas as lojas da rede</p>
+    </div>
+  </div>
+
+  @if (cliente(); as c) {
+    <div class="card-body">
+      <dl class="pv-resumo">
+        <div><dt>Rede</dt><dd>{{ c.nome }}</dd></div>
+        <div><dt>Caixa de e-mail</dt><dd>{{ c.imapUsuario }}</dd></div>
+        <div><dt>Servidor</dt><dd class="pv-codigo-inline">{{ c.imapHost }}:{{ c.imapPorta }}@if (c.imapSsl) { · SSL }</dd></div>
+        <div>
+          <dt>Aplicativo Bling da rede</dt>
+          <dd>
+            @if (c.blingClientId) {
+              Configurado
+            } @else {
+              Não configurado (as empresas usam o próprio ou o padrão do Previsio)
+            }
+          </dd>
+        </div>
+      </dl>
+
+      @if (erro()) {
+        <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+      }
+      @if (teste(); as t) {
+        <div class="alert" [class.alert-success]="t.conectou" [class.alert-danger]="!t.conectou" role="status">
+          <span>{{ t.mensagem }}</span>
+        </div>
+      }
+    </div>
+    <div class="pv-formulario__acoes">
+      <button type="button" class="btn btn-info" (click)="continuar.emit()">Continuar para Empresas</button>
+      <button type="button" class="btn btn-secundario" (click)="testar()" [pvCarregando]="testando()" [disabled]="testando()">
+        Testar caixa de e-mail
+      </button>
+      <a class="btn btn-link" [routerLink]="['/pages/clientes', c.id]">Alterar dados da rede</a>
+    </div>
+  } @else {
+    <form (ngSubmit)="cadastrar()">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group bmd-form-group">
+              <label for="implantacao-nome" class="bmd-label-floating">Nome da rede</label>
+              <input id="implantacao-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="pv-formulario__secao">Caixa de e-mail dedicada</h3>
+        <div class="row">
+          <div class="col-md-4">
+            <div class="form-group bmd-form-group">
+              <label for="implantacao-host" class="bmd-label-floating">Servidor IMAP</label>
+              <input id="implantacao-host" type="text" class="form-control" name="imapHost" [(ngModel)]="imapHost">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-group bmd-form-group">
+              <label for="implantacao-porta" class="bmd-label-floating">Porta</label>
+              <input id="implantacao-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
+                     [(ngModel)]="imapPorta">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group bmd-form-group">
+              <label for="implantacao-usuario" class="bmd-label-floating">E-mail da caixa</label>
+              <input id="implantacao-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
+                     [(ngModel)]="imapUsuario">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-group bmd-form-group">
+              <label for="implantacao-senha" class="bmd-label-floating">Senha de app</label>
+              <input id="implantacao-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
+                     [(ngModel)]="imapSenha">
+            </div>
+          </div>
+        </div>
+        <div class="form-check">
+          <label class="form-check-label">
+            <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+            Conexão com SSL
+            <span class="form-check-sign"><span class="check"></span></span>
+          </label>
+        </div>
+        <p class="pv-formulario__ajuda mt-3">
+          No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app. O Previsio só lê a caixa:
+          não marca e-mails como lidos nem apaga nada.
+        </p>
+
+        <details class="pv-opcional">
+          <summary>Aplicativo Bling da rede (opcional)</summary>
+          <p class="pv-formulario__ajuda">
+            Usado pelas empresas que não tiverem um aplicativo próprio. Pode deixar vazio e cadastrar o de cada empresa na próxima etapa.
+          </p>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group bmd-form-group">
+                <label for="implantacao-client-id" class="bmd-label-floating">Client ID</label>
+                <input id="implantacao-client-id" type="text" class="form-control pv-entrada-codigo" name="clientId"
+                       autocomplete="off" [(ngModel)]="clientId">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group bmd-form-group">
+                <label for="implantacao-client-secret" class="bmd-label-floating">Client Secret</label>
+                <input id="implantacao-client-secret" type="password" class="form-control" name="clientSecret"
+                       autocomplete="new-password" [(ngModel)]="clientSecret">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        @if (erro()) {
+          <div class="alert alert-danger mt-3" role="alert"><span>{{ erro() }}</span></div>
+        }
+        @if (teste(); as t) {
+          @if (t.conectou && !testeValido()) {
+            <div class="alert alert-warning mt-3" role="status"><span>Os dados da caixa mudaram depois do teste. Teste de novo.</span></div>
+          } @else {
+            <div class="alert mt-3" [class.alert-success]="t.conectou" [class.alert-danger]="!t.conectou" role="status">
+              <span>{{ t.mensagem }}</span>
+            </div>
+          }
+        }
+      </div>
+      <div class="pv-formulario__acoes">
+        <button type="submit" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando() || !testeValido()">
+          Cadastrar rede e continuar
+        </button>
+        <button type="button" class="btn btn-secundario" (click)="testar()" [pvCarregando]="testando()" [disabled]="testando()">
+          Testar caixa de e-mail
+        </button>
+      </div>
+    </form>
+  }
+</div>

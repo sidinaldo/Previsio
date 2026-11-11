@@ -1,0 +1,80 @@
+<div class="main-content">
+  <div class="container-fluid">
+    <a routerLink="/pages/clientes" class="pv-voltar">
+      <i class="material-icons" aria-hidden="true">arrow_back</i> Voltar para Clientes
+    </a>
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Implantação de cliente</h1>
+        <p class="pv-pagina__subtitulo">
+          @if (cliente(); as c) {
+            {{ c.nome }} · {{ concluidas() }} de {{ etapas.length }} etapas concluídas
+          } @else {
+            Cadastre a rede, as empresas e conecte o Bling num só caminho
+          }
+        </p>
+      </div>
+    </div>
+
+    @if (erro()) {
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    <nav class="pv-etapas" aria-label="Etapas da implantação">
+      <ol class="pv-etapas__lista">
+        @for (etapa of etapas; track etapa) {
+          <li class="pv-etapas__item"
+              [class.pv-etapas__item--atual]="etapaAtual() === etapa"
+              [class.pv-etapas__item--concluida]="concluida(etapa)">
+            <button type="button" class="pv-etapas__botao" (click)="abrir(etapa)" [disabled]="!podeAbrir(etapa)"
+                    [attr.aria-current]="etapaAtual() === etapa ? 'step' : null">
+              <span class="pv-etapas__marca" aria-hidden="true">
+                @if (concluida(etapa)) {
+                  <i class="material-icons">check</i>
+                } @else {
+                  {{ numero(etapa) }}
+                }
+              </span>
+              <span class="pv-etapas__texto">
+                <span class="pv-etapas__titulo">{{ titulos[etapa] }}</span>
+                <span class="pv-etapas__estado">
+                  @if (concluida(etapa)) {
+                    Concluída
+                  } @else if (etapaAtual() === etapa) {
+                    Em andamento
+                  } @else {
+                    Pendente
+                  }
+                </span>
+              </span>
+            </button>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    @if (carregando() && cliente() === null) {
+      <p class="pv-pagina__subtitulo">Carregando...</p>
+    } @else {
+      @switch (etapaAtual()) {
+        @case ('rede') {
+          <app-etapa-rede [cliente]="cliente()" (cadastrada)="redeCadastrada($event)" (continuar)="continuar()" />
+        }
+        @case ('empresas') {
+          <app-etapa-empresas [cliente]="cliente()!" [empresas]="situacao().empresas"
+                              (alterou)="carregar()" (continuar)="continuar()" />
+        }
+        @case ('bling') {
+          <app-etapa-bling [empresas]="situacao().empresas" (alterou)="carregar()" (continuar)="continuar()" />
+        }
+        @case ('usuario') {
+          <app-etapa-usuario [cliente]="cliente()!" [situacao]="situacao()" (alterou)="carregar()" (continuar)="continuar()" />
+        }
+        @case ('leitura') {
+          <app-etapa-leitura [cliente]="cliente()!" (alterou)="carregar()" />
+        }
+      }
+    }
+  </div>
+</div>

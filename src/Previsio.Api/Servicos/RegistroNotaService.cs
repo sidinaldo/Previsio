@@ -18,8 +18,9 @@ public class RegistroNotaService
         _db = db;
     }
 
+    /// <param name="empresaDaCaixaId">Empresa dona da caixa em que a nota chegou; nula para a caixa da rede.</param>
     public async Task<ResultadoRegistro> RegistrarAsync(
-        int clienteId, NotaFiscalXml xml, string origemEmail, CancellationToken cancelamento)
+        int clienteId, NotaFiscalXml xml, string origemEmail, int? empresaDaCaixaId, CancellationToken cancelamento)
     {
         bool jaExiste = await _db.NotasFiscais
             .AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == xml.ChaveAcesso, cancelamento);
@@ -43,6 +44,7 @@ public class RegistroNotaService
         nota.CnpjFornecedor = xml.CnpjFornecedor;
         nota.NomeFornecedor = Limitar(xml.NomeFornecedor, 200);
         nota.OrigemEmail = Limitar(origemEmail, 300);
+        nota.EmpresaCaixaId = empresaDaCaixaId;
         nota.RecebidaEm = DateTime.UtcNow;
 
         if (empresa == null)

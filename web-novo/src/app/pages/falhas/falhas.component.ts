@@ -8,6 +8,7 @@ import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_ETAPA, Empresa, Falha, FiltroFalhas } from '../../core/previsio.models';
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 /** Botão que disparou o carregamento da lista, para o spinner aparecer só nele. */
 type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | null;
@@ -18,7 +19,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
  */
 @Component({
   selector: 'app-falhas',
-  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe, CarregandoDirective],
+  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe, CarregandoDirective, PaginacaoComponent],
   templateUrl: './falhas.component.html'
 })
 export class FalhasComponent {

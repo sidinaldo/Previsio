@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { SessaoService } from '../../core/sessao.service';
+import { SimboloComponent } from '../../shared/simbolo/simbolo.component';
 
 /**
  * Tela de login: troca e-mail e senha por um token JWT na API (POST /api/auth/login).
  */
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, SimboloComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })

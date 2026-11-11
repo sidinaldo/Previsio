@@ -26,6 +26,11 @@ public class NotaFiscal
     public int Tentativas { get; set; }
 
     public string OrigemEmail { get; set; } = "";
+
+    // Empresa dona da caixa de e-mail em que a nota chegou; nula quando chegou na caixa da rede.
+    // A nota vai para a empresa pelo CNPJ do XML; isto só serve para avisar quando as duas não batem.
+    public int? EmpresaCaixaId { get; set; }
+    public Empresa? EmpresaCaixa { get; set; }
     public DateTime RecebidaEm { get; set; } = DateTime.UtcNow;
     public DateTime? LancadaEm { get; set; }
 

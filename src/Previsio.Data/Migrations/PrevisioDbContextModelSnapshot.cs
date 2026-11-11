@@ -321,6 +321,9 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime>("DataEmissao")
                         .HasColumnType("date");
 
+                    b.Property<int?>("EmpresaCaixaId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("EmpresaId")
                         .HasColumnType("integer");
 
@@ -378,6 +381,8 @@ namespace Previsio.Data.Migrations
                         .HasColumnType("numeric(14,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EmpresaCaixaId");
 
                     b.HasIndex("EmpresaId");
 
@@ -520,11 +525,18 @@ namespace Previsio.Data.Migrations
 
             modelBuilder.Entity("Previsio.Core.Entidades.NotaFiscal", b =>
                 {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "EmpresaCaixa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaCaixaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
                         .WithMany()
                         .HasForeignKey("EmpresaId");
 
                     b.Navigation("Empresa");
+
+                    b.Navigation("EmpresaCaixa");
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.ParcelaNota", b =>

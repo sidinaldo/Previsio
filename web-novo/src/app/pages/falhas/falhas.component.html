@@ -217,21 +217,9 @@
           </table>
         </div>
 
-        @if (totalPaginas() > 1) {
-          <div class="pv-paginacao">
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'anterior'"
-                    [disabled]="pagina() <= 1 || carregando()">
-              <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
-            </button>
-            <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'proxima'"
-                    [disabled]="pagina() >= totalPaginas() || carregando()">
-              Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
-            </button>
-          </div>
-        }
+        <!-- A API devolve uma página por vez, no tamanho dela: sem "Por página" -->
+        <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
+                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
       }
     </div>
 

@@ -41,6 +41,7 @@ public class NotasService
     {
         IQueryable<NotaFiscal> consulta = _notas.ConsultarSomenteLeitura()
             .Include(n => n.Empresa)
+            .Include(n => n.EmpresaCaixa)
             .Include(n => n.Parcelas)
             .Where(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status));
 
@@ -127,6 +128,7 @@ public class NotasService
 
         List<NotaFiscal> notas = await consulta
             .Include(n => n.Empresa)
+            .Include(n => n.EmpresaCaixa)
             .Include(n => n.Parcelas)
             .OrderByDescending(n => n.RecebidaEm)
             .ThenByDescending(n => n.Id)
