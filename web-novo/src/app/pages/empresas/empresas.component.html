@@ -6,8 +6,8 @@
         <h1 class="pv-pagina__titulo">Empresas</h1>
         <p class="pv-pagina__subtitulo">Cada CNPJ se conecta à sua própria conta Bling</p>
       </div>
-      @if (ehAdmin()) {
-        <div class="pv-pagina__acoes">
+      <div class="pv-pagina__acoes">
+        @if (ehAdmin()) {
           <button type="button" class="btn btn-secundario" (click)="sincronizarAgora()" [disabled]="sincronizando()">
             @if (sincronizando()) {
               <span class="pv-spinner" aria-hidden="true"></span> Sincronizando...
@@ -15,8 +15,13 @@
               <i class="material-icons" aria-hidden="true">sync</i> Sincronizar contas agora
             }
           </button>
-        </div>
-      }
+        }
+        @if (!mostrarFormulario()) {
+          <button type="button" class="btn btn-info" (click)="abrirNovo()">
+            <i class="material-icons" aria-hidden="true">add</i> Nova empresa
+          </button>
+        }
+      </div>
     </div>
 
     @if (mensagem()) {
@@ -26,8 +31,9 @@
       <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
     }
 
-    <!-- O mesmo formulário cadastra uma empresa nova ou altera a escolhida em "Editar" -->
-    <div #cartaoFormulario class="card" [class.pv-card--editando]="editando() !== null">
+    <!-- Fechado por padrão: abre em "+ Nova empresa" ou "Editar". O mesmo formulário cadastra ou altera -->
+    @if (mostrarFormulario()) {
+    <div #cartaoFormulario class="card pv-card--formulario" [class.pv-card--editando]="editando() !== null">
       <div class="pv-card__cabecalho">
         <div>
           @if (editando(); as e) {
@@ -39,76 +45,86 @@
         </div>
       </div>
       <form (ngSubmit)="salvar()">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group">
-                <label for="previsio-nome" class="bmd-label-floating">Nome</label>
-                <input #campoNome id="previsio-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
-              </div>
+        <div class="card-body pv-formulario">
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo pv-formulario__campo--largo">
+              <label for="previsio-nome" class="bmd-label-floating">Nome</label>
+              <input #campoNome id="previsio-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
             </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="previsio-cnpj" class="bmd-label-floating">CNPJ</label>
-                <input id="previsio-cnpj" type="text" class="form-control" name="cnpj" [(ngModel)]="cnpj"
-                       [readonly]="editando() !== null">
-              </div>
+            <div class="form-group pv-formulario__campo pv-formulario__campo--cnpj">
+              <label for="previsio-cnpj" class="bmd-label-floating">CNPJ</label>
+              <input id="previsio-cnpj" type="text" class="form-control pv-entrada-codigo" name="cnpj" inputmode="numeric"
+                     placeholder="00.000.000/0000-00" [(ngModel)]="cnpj" [readonly]="editando() !== null">
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-5">
-              <div class="form-group">
-                <label for="previsio-client-id" class="bmd-label-floating">Client ID do aplicativo Bling (opcional)</label>
-                <input id="previsio-client-id" type="text" class="form-control" name="clientId" autocomplete="off"
+
+          <details class="pv-opcional" [open]="!!editando()?.blingClientId">
+            <summary>Aplicativo Bling próprio desta empresa (opcional)</summary>
+            <p class="pv-formulario__ajuda">
+              Quando a conta Bling desta empresa tem um <strong>aplicativo privado</strong> próprio.
+              Vazio, usa o aplicativo da rede (cadastrado em Clientes) ou, sem ele, o padrão do Previsio.
+            </p>
+            <div class="pv-formulario__linha">
+              <div class="form-group pv-formulario__campo">
+                <label for="previsio-client-id" class="bmd-label-floating">Client ID</label>
+                <input id="previsio-client-id" type="text" class="form-control pv-entrada-codigo" name="clientId" autocomplete="off"
                        [placeholder]="editando() !== null ? 'Vazio: aplicativo da rede' : ''"
                        [(ngModel)]="clientId">
               </div>
-            </div>
-            <div class="col-md-5">
-              <div class="form-group">
-                <label for="previsio-client-secret" class="bmd-label-floating">Client Secret (opcional)</label>
+              <div class="form-group pv-formulario__campo">
+                <label for="previsio-client-secret" class="bmd-label-floating">Client Secret</label>
                 <input id="previsio-client-secret" type="password" class="form-control" name="clientSecret" autocomplete="new-password"
                        [placeholder]="editando()?.blingClientSecretCadastrado ? 'Cadastrado. Deixe vazio para manter' : ''"
                        [(ngModel)]="clientSecret">
               </div>
             </div>
-          </div>
+            <div class="pv-link-copiar">
+              <span class="pv-formulario__ajuda">Link de redirecionamento para o cadastro do aplicativo:</span>
+              <code>{{ linkRedirecionamento }}</code>
+              <button type="button" class="btn btn-link btn-sm" (click)="copiarLink()">
+                <i class="material-icons" aria-hidden="true">{{ linkCopiado() ? 'check' : 'content_copy' }}</i>
+                {{ linkCopiado() ? 'Copiado' : 'Copiar' }}
+              </button>
+            </div>
+          </details>
           @if (vaiDesconectar()) {
             <div class="alert alert-warning" role="status">
               <span>Trocar o aplicativo desconecta a empresa do Bling. Depois de salvar, clique em "Conectar Bling".</span>
             </div>
           }
-          <p class="pv-formulario__ajuda">
-            Use quando a conta Bling desta empresa tiver um <strong>aplicativo privado</strong> próprio.
-            No cadastro do aplicativo, informe o link de redirecionamento <code>{{ linkRedirecionamento }}</code>.
-            Deixe vazio para usar o aplicativo da rede (cadastrado em Clientes) ou, sem ele, o padrão do Previsio.
-          </p>
 
-          <h3 class="pv-formulario__secao">E-mail próprio da empresa (opcional)</h3>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
+          <details class="pv-opcional" [open]="!!editando()?.emailProprio">
+            <summary>Caixa de e-mail própria desta empresa (opcional)</summary>
+            <p class="pv-formulario__ajuda">
+              Vazio, as notas desta empresa chegam só pela caixa da rede. Com caixa própria, as duas são lidas
+              e a nota vai para a empresa pelo CNPJ do destinatário.
+            </p>
+            <div class="pv-formulario__linha">
+              <div class="form-group pv-formulario__campo">
                 <label for="previsio-imap-host" class="bmd-label-floating">Servidor IMAP</label>
                 <input id="previsio-imap-host" type="text" class="form-control" name="imapHost" autocomplete="off"
-                       [(ngModel)]="imapHost">
+                       placeholder="imap.gmail.com" [(ngModel)]="imapHost">
               </div>
-            </div>
-            <div class="col-md-2">
-              <div class="form-group">
+              <div class="form-group pv-formulario__campo pv-formulario__campo--porta">
                 <label for="previsio-imap-porta" class="bmd-label-floating">Porta</label>
                 <input id="previsio-imap-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
                        [(ngModel)]="imapPorta">
               </div>
+              <div class="form-check pv-formulario__ssl">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+                  SSL
+                  <span class="form-check-sign"><span class="check"></span></span>
+                </label>
+              </div>
             </div>
-            <div class="col-md-3">
-              <div class="form-group">
+            <div class="pv-formulario__linha">
+              <div class="form-group pv-formulario__campo">
                 <label for="previsio-imap-usuario" class="bmd-label-floating">E-mail da caixa</label>
                 <input id="previsio-imap-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
                        [(ngModel)]="imapUsuario">
               </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
+              <div class="form-group pv-formulario__campo">
                 <label for="previsio-imap-senha" class="bmd-label-floating">
                   @if (editando()?.imapSenhaCadastrada) {
                     Senha de app (em branco mantém)
@@ -120,30 +136,22 @@
                        [(ngModel)]="imapSenha">
               </div>
             </div>
-          </div>
-          <div class="form-check">
-            <label class="form-check-label">
-              <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
-              Conexão com SSL
-              <span class="form-check-sign"><span class="check"></span></span>
-            </label>
-          </div>
-          <p class="pv-formulario__ajuda">
-            Deixe o servidor vazio para receber as notas desta empresa só pela caixa de e-mail da rede.
-            Com e-mail próprio, as duas caixas são lidas e a nota vai para a empresa pelo CNPJ do destinatário.
-          </p>
+          </details>
         </div>
         <div class="pv-formulario__acoes">
           @if (editando(); as e) {
             <button type="submit" class="btn btn-info" [pvCarregando]="processandoId() === e.id"
                     [disabled]="processandoId() === e.id">Salvar alterações</button>
-            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
             <button type="submit" class="btn btn-info" [pvCarregando]="cadastrando()" [disabled]="cadastrando()">Cadastrar</button>
+          }
+          @if (empresas().length > 0) {
+            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           }
         </div>
       </form>
     </div>
+    }
 
     <div class="card">
       <div class="pv-card__cabecalho">
@@ -151,6 +159,7 @@
           <h2 class="pv-card__titulo">Empresas e conexões com o Bling</h2>
           <p class="pv-card__descricao">{{ empresas().length }} empresas cadastradas</p>
         </div>
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por nome, CNPJ ou e-mail" />
       </div>
       @if (carregada() && empresas().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
@@ -163,11 +172,11 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Empresa</th>
-                <th>CNPJ</th>
-                <th>E-mail</th>
-                <th>Bling</th>
-                <th>Última sincronização</th>
+                <th pvColuna="nome" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
+                <th pvColuna="cnpj" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">CNPJ</th>
+                <th pvColuna="email" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">E-mail</th>
+                <th pvColuna="bling" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Bling</th>
+                <th pvColuna="sincronizacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Última sincronização</th>
                 <th class="text-right">Ações</th>
               </tr>
             </thead>
@@ -183,7 +192,7 @@
                       <span class="badge badge-info ml-1">Em edição</span>
                     }
                   </td>
-                  <td class="pv-numero">{{ empresa.cnpj }}</td>
+                  <td class="pv-numero">{{ formatarCnpj(empresa.cnpj) }}</td>
                   <td>
                     @if (empresa.emailProprio) {
                       {{ empresa.imapUsuario }}
@@ -262,7 +271,10 @@
             </tbody>
           </table>
         </div>
-        <app-paginacao [total]="empresas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
+        @if (empresasFiltradas().length === 0) {
+          <p class="pv-sem-resultado">Nenhum resultado para "{{ busca() }}".</p>
+        }
+        <app-paginacao [total]="empresasFiltradas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

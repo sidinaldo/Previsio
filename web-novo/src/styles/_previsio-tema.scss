@@ -1506,6 +1506,77 @@ select.form-control:not([size]):not([multiple]):disabled {
   color: var(--pv-texto-secundario);
 }
 
+// Formulário compacto: campos lado a lado que quebram linha em telas estreitas,
+// sem esticar até a largura toda em monitores largos
+.pv-formulario {
+  max-width: 960px;
+}
+
+.pv-formulario__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 16px;
+}
+
+.pv-formulario__campo {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.pv-formulario__campo--largo {
+  flex: 2 1 320px;
+}
+
+.pv-formulario__campo--cnpj {
+  flex: 0 1 220px;
+}
+
+.pv-formulario__campo--perfil {
+  flex: 0 1 180px;
+}
+
+.pv-formulario__campo--porta {
+  flex: 0 0 100px;
+}
+
+.pv-formulario__ssl {
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
+}
+
+// Link para copiar (redirecionamento do aplicativo do Bling)
+.pv-link-copiar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+
+  code {
+    padding: 2px 6px;
+    border-radius: var(--pv-raio-controle);
+    background-color: var(--pv-fundo);
+    font-family: var(--pv-fonte-mono);
+    font-size: 12px;
+    color: var(--pv-texto);
+    word-break: break-all;
+  }
+
+  .btn.btn-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 6px;
+    color: var(--pv-primaria);
+    text-transform: none;
+
+    .material-icons {
+      font-size: 16px;
+    }
+  }
+}
+
 .pv-formulario__secao {
   margin: 8px 0 12px;
   font-size: 14px;
@@ -2058,6 +2129,10 @@ app-paginacao.pv-paginacao {
   &[open] > summary {
     margin-bottom: 8px;
   }
+
+  > .pv-formulario__ajuda {
+    margin-bottom: 12px;
+  }
 }
 
 // Passos da primeira leitura
@@ -2158,4 +2233,187 @@ app-paginacao.pv-paginacao {
     flex: 0 0 auto;
     font-size: 14px;
   }
+}
+
+// -----------------------------------------------------------------------------
+// 10. Busca e ordenação das listas
+// -----------------------------------------------------------------------------
+
+// Caixa de busca com lupa e botão de limpar
+.pv-busca {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+.pv-busca.bmd-form-group {
+  margin: 0;
+  padding-top: 0;
+}
+
+.pv-busca__lupa {
+  position: absolute;
+  left: 10px;
+  font-size: 18px;
+  color: var(--pv-texto-auxiliar);
+  pointer-events: none;
+}
+
+.pv-busca__campo {
+  width: 100%;
+  height: 36px;
+  padding: 0 34px 0 34px;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: var(--pv-raio-controle);
+  background-color: var(--pv-superficie);
+  color: var(--pv-texto);
+  font: inherit;
+  font-size: 14px;
+
+  &::placeholder {
+    color: var(--pv-texto-auxiliar);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--pv-primaria);
+    box-shadow: var(--pv-anel-foco);
+  }
+
+  // Sem o "x" do navegador: o componente já tem o botão de limpar
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+.pv-busca__limpar {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  background: transparent;
+  color: var(--pv-texto-secundario);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--pv-neutro-suave);
+  }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+// Busca no cabeçalho do card da lista, à direita do título
+.pv-card__cabecalho .pv-busca {
+  flex: 0 1 320px;
+}
+
+// Cabeçalho de coluna que ordena ao clicar
+.table > thead > tr > th.pv-th-ordenavel {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.pv-coluna {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 -4px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pv-texto);
+    background-color: var(--pv-superficie-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+.pv-coluna__seta {
+  font-size: 14px;
+  color: var(--pv-texto-auxiliar);
+  opacity: .6;
+}
+
+.pv-coluna--ativa {
+  .pv-coluna {
+    color: var(--pv-texto);
+  }
+
+  .pv-coluna__seta {
+    color: var(--pv-primaria);
+    opacity: 1;
+  }
+}
+
+// Busca no topo do card de filtros, acima dos outros campos
+.pv-filtros__busca {
+  margin-bottom: 16px;
+
+  .pv-busca {
+    max-width: 520px;
+  }
+}
+
+// Busca sem nenhuma linha encontrada (a lista tem itens, a busca não achou)
+.pv-sem-resultado {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+}
+
+// Telas de acesso (login, esqueci minha senha, nova senha): links abaixo do formulário.
+// Ficam aqui, e não no SCSS do login, que as três telas compartilham e tem limite de tamanho.
+.formulario__ajuda a {
+  font-weight: 500;
+  color: var(--pv-primaria);
+
+  &:hover {
+    color: var(--pv-primaria-hover);
+  }
+}
+
+// "Enviar de novo" com cara de link
+.formulario__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--pv-primaria);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pv-primaria-hover);
+    text-decoration: underline;
+  }
+}
+
+.formulario__link-alerta {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: underline;
 }

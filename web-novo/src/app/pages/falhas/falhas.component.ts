@@ -9,6 +9,9 @@ import { DESCRICAO_ETAPA, Empresa, Falha, FiltroFalhas } from '../../core/previs
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
 
 /** Botão que disparou o carregamento da lista, para o spinner aparecer só nele. */
 type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | null;
@@ -19,7 +22,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
  */
 @Component({
   selector: 'app-falhas',
-  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, CurrencyPipe, DatePipe, SlicePipe, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './falhas.component.html'
 })
 export class FalhasComponent {
@@ -36,7 +39,10 @@ export class FalhasComponent {
   readonly etapa = signal('');
   readonly de = signal('');
   readonly ate = signal('');
+  readonly busca = signal('');
   readonly pagina = signal(1);
+  // Começa como a API ordena sem escolha: da falha mais recente para a mais antiga
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'data', decrescente: true });
 
   readonly falhas = signal<Falha[]>([]);
   readonly total = signal(0);
@@ -97,9 +103,17 @@ export class FalhasComponent {
     this.etapa.set('');
     this.de.set('');
     this.ate.set('');
+    this.busca.set('');
     this.pagina.set(1);
     // Tira ?notaId= / ?empresaId= da URL para o filtro não voltar ao atualizar a página
     this.router.navigate([], { relativeTo: this.rota, queryParams: {} });
+    this.carregar();
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna (a API ordena todas as páginas) e volta para a primeira. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
     this.carregar();
   }
 
@@ -136,6 +150,8 @@ export class FalhasComponent {
       etapa: this.etapa(),
       de: this.de(),
       ate: this.ate(),
+      busca: this.busca(),
+      ordem: parametroOrdem(this.ordenacao()),
       pagina: this.pagina()
     };
 

@@ -15,6 +15,13 @@ describe('filtro de notas recebidas', () => {
     expect(params.get('pagina')).toBe('3');
   });
 
+  it('envia a busca sem espaços nas pontas e a ordem; busca só com espaços não vai', () => {
+    const params = parametrosDasNotas({ busca: '  48213 ', ordem: '-valor', pagina: 1 });
+    expect(params.get('busca')).toBe('48213');
+    expect(params.get('ordem')).toBe('-valor');
+    expect(parametrosDasNotas({ busca: '   ' }).has('busca')).toBe(false);
+  });
+
   it('descreve e colore a situação', () => {
     expect(descricaoDaSituacao('Lancada')).toBe('Lançada no Bling');
     expect(descricaoDaSituacao('Desconhecida')).toBe('Desconhecida');

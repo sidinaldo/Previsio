@@ -64,9 +64,10 @@ public class NotasService
     }
 
     /// <summary>
-    /// Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga, com as parcelas.
-    /// Filtros opcionais: empresa, situação (nome da situação ou "Pendentes") e período em que a nota
-    /// chegou (dias no horário de Brasília).
+    /// Todas as notas lidas do e-mail (lançadas ou não), com as parcelas; por padrão, da recebida mais
+    /// recente para a mais antiga. Filtros opcionais: empresa, situação (nome da situação ou "Pendentes"),
+    /// período em que a nota chegou (dias no horário de Brasília) e busca por NF, fornecedor, empresa ou CNPJ.
+    /// Ordem: recebida, numero, fornecedor, empresa, emissao, valor, vencimento ou situacao ("-" = decrescente).
     /// </summary>
     public async Task<Resultado<PaginaNotasDto>> ListarAsync(
         int clienteId,
@@ -74,6 +75,8 @@ public class NotasService
         string? situacao,
         DateTime? de,
         DateTime? ate,
+        string? busca,
+        string? ordem,
         int pagina,
         CancellationToken cancelamento)
     {
@@ -124,14 +127,43 @@ public class NotasService
             consulta = consulta.Where(n => n.RecebidaEm < fimUtc);
         }
 
+        BuscaTexto? termo = BuscaTexto.Ler(busca);
+        if (termo != null)
+        {
+            string texto = termo.Texto;
+            string digitos = termo.Digitos;
+            if (termo.TemDigitos)
+            {
+                consulta = consulta.Where(n =>
+                    n.Numero.Contains(texto)
+                    || n.NomeFornecedor.ToLower().Contains(texto)
+                    || (n.Empresa != null && n.Empresa.Nome.ToLower().Contains(texto))
+                    || n.CnpjFornecedor.Contains(digitos)
+                    || n.CnpjDestinatario.Contains(digitos)
+                    || n.ChaveAcesso.Contains(digitos));
+            }
+            else
+            {
+                consulta = consulta.Where(n =>
+                    n.Numero.Contains(texto)
+                    || n.NomeFornecedor.ToLower().Contains(texto)
+                    || (n.Empresa != null && n.Empresa.Nome.ToLower().Contains(texto)));
+            }
+        }
+
+        IOrderedQueryable<NotaFiscal>? ordenada = Ordenar(consulta, OrdemLista.Ler(ordem, "recebida", true));
+        if (ordenada == null)
+        {
+            return Resultado<PaginaNotasDto>.Invalido(MensagemOrdemInvalida);
+        }
+
         int total = await consulta.CountAsync(cancelamento);
 
-        List<NotaFiscal> notas = await consulta
+        List<NotaFiscal> notas = await ordenada
+            .ThenByDescending(n => n.Id)
             .Include(n => n.Empresa)
             .Include(n => n.EmpresaCaixa)
             .Include(n => n.Parcelas)
-            .OrderByDescending(n => n.RecebidaEm)
-            .ThenByDescending(n => n.Id)
             .Skip((pagina - 1) * TamanhoPagina)
             .Take(TamanhoPagina)
             .ToListAsync(cancelamento);
@@ -145,6 +177,63 @@ public class NotasService
             resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
         }
         return Resultado<PaginaNotasDto>.Ok(resposta);
+    }
+
+    public const string MensagemOrdemInvalida =
+        "Ordenação inválida. Use recebida, numero, fornecedor, empresa, emissao, valor, vencimento ou situacao.";
+
+    /// <summary>
+    /// Ordena pela coluna pedida; nula quando a coluna não existe.
+    /// O número da nota é texto: ordena pelo tamanho antes, para 900 vir antes de 48213.
+    /// </summary>
+    private static IOrderedQueryable<NotaFiscal>? Ordenar(IQueryable<NotaFiscal> consulta, OrdemLista ordem)
+    {
+        bool desc = ordem.Decrescente;
+        if (ordem.Coluna == "recebida")
+        {
+            return desc ? consulta.OrderByDescending(n => n.RecebidaEm) : consulta.OrderBy(n => n.RecebidaEm);
+        }
+        if (ordem.Coluna == "numero")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Numero.Length).ThenByDescending(n => n.Numero);
+            }
+            return consulta.OrderBy(n => n.Numero.Length).ThenBy(n => n.Numero);
+        }
+        if (ordem.Coluna == "fornecedor")
+        {
+            return desc ? consulta.OrderByDescending(n => n.NomeFornecedor) : consulta.OrderBy(n => n.NomeFornecedor);
+        }
+        if (ordem.Coluna == "empresa")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Empresa != null ? n.Empresa.Nome : "");
+            }
+            return consulta.OrderBy(n => n.Empresa != null ? n.Empresa.Nome : "");
+        }
+        if (ordem.Coluna == "emissao")
+        {
+            return desc ? consulta.OrderByDescending(n => n.DataEmissao) : consulta.OrderBy(n => n.DataEmissao);
+        }
+        if (ordem.Coluna == "valor")
+        {
+            return desc ? consulta.OrderByDescending(n => n.ValorTotal) : consulta.OrderBy(n => n.ValorTotal);
+        }
+        if (ordem.Coluna == "vencimento")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Parcelas.Min(p => (DateTime?)p.Vencimento));
+            }
+            return consulta.OrderBy(n => n.Parcelas.Min(p => (DateTime?)p.Vencimento));
+        }
+        if (ordem.Coluna == "situacao")
+        {
+            return desc ? consulta.OrderByDescending(n => n.Status) : consulta.OrderBy(n => n.Status);
+        }
+        return null;
     }
 
     /// <summary>

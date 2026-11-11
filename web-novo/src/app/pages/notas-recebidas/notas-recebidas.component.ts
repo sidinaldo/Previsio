@@ -14,6 +14,9 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
 
 /** Opção do filtro de situação. */
 interface OpcaoSituacao {
@@ -30,7 +33,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
  */
 @Component({
   selector: 'app-notas-recebidas',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './notas-recebidas.component.html'
 })
 export class NotasRecebidasComponent {
@@ -59,7 +62,10 @@ export class NotasRecebidasComponent {
   readonly situacao = signal('');
   readonly de = signal('');
   readonly ate = signal('');
+  readonly busca = signal('');
   readonly pagina = signal(1);
+  // Começa como a API ordena sem escolha: da recebida mais recente para a mais antiga
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'recebida', decrescente: true });
 
   readonly notas = signal<NotaRecebida[]>([]);
   readonly total = signal(0);
@@ -152,6 +158,14 @@ export class NotasRecebidasComponent {
     this.situacao.set('');
     this.de.set('');
     this.ate.set('');
+    this.busca.set('');
+    this.pagina.set(1);
+    this.carregar();
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna (a API ordena todas as páginas) e volta para a primeira. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
     this.pagina.set(1);
     this.carregar();
   }
@@ -238,6 +252,8 @@ export class NotasRecebidasComponent {
       situacao: this.situacao(),
       de: this.de(),
       ate: this.ate(),
+      busca: this.busca(),
+      ordem: parametroOrdem(this.ordenacao()),
       pagina: this.pagina()
     };
 

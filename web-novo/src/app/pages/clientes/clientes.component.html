@@ -6,16 +6,25 @@
         <h1 class="pv-pagina__titulo">Clientes</h1>
         <p class="pv-pagina__subtitulo">Cada cliente é uma rede, com a própria caixa de e-mail e as suas empresas</p>
       </div>
-      <a class="btn btn-info" routerLink="/pages/implantacao">
-        <i class="material-icons" aria-hidden="true">rocket_launch</i> Implantar novo cliente
-      </a>
+      <div class="pv-pagina__acoes">
+        @if (!mostrarFormulario()) {
+          <button type="button" class="btn btn-secundario" (click)="abrirNovo()"
+                  title="Só a rede e a caixa de e-mail, sem o passo a passo">
+            <i class="material-icons" aria-hidden="true">add</i> Cadastro rápido
+          </button>
+        }
+        <a class="btn btn-info" routerLink="/pages/implantacao">
+          <i class="material-icons" aria-hidden="true">rocket_launch</i> Implantar novo cliente
+        </a>
+      </div>
     </div>
 
     @if (mensagem()) {
       <div class="alert alert-success" role="status"><span>{{ mensagem() }}</span></div>
     }
 
-    <!-- O mesmo formulário cadastra um cliente novo ou altera o escolhido em "Editar" -->
+    <!-- Fechado por padrão: abre em "Cadastro rápido" ou "Editar". O mesmo formulário cadastra ou altera -->
+    @if (mostrarFormulario()) {
     <div #cartaoFormulario class="card" [class.pv-card--editando]="editando() !== null">
       <div class="pv-card__cabecalho">
         <div>
@@ -24,75 +33,66 @@
             <p class="pv-card__descricao">Alterando {{ c.nome }}</p>
           } @else {
             <h2 class="pv-card__titulo">Novo cliente</h2>
+            <p class="pv-card__descricao">Cadastro rápido. Para o passo a passo com empresas, Bling e usuário, use "Implantar novo cliente"</p>
           }
         </div>
       </div>
       <form (ngSubmit)="salvar()">
-        <div class="card-body">
+        <div class="card-body pv-formulario">
           @if (erro()) {
             <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
           }
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group bmd-form-group">
-                <label for="cliente-nome" class="bmd-label-floating">Nome da rede</label>
-                <input #campoNome id="cliente-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group bmd-form-group">
-                <label for="cliente-host" class="bmd-label-floating">Servidor IMAP</label>
-                <input id="cliente-host" type="text" class="form-control" name="imapHost" value="imap.gmail.com"
-                       [(ngModel)]="imapHost">
-              </div>
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo pv-formulario__campo--largo">
+              <label for="cliente-nome" class="bmd-label-floating">Nome da rede</label>
+              <input #campoNome id="cliente-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
             </div>
           </div>
 
           <h3 class="pv-formulario__secao">Caixa de e-mail dedicada (onde chegam as notas)</h3>
-          <div class="row">
-            <div class="col-md-2">
-              <div class="form-group bmd-form-group">
-                <label for="cliente-porta" class="bmd-label-floating">Porta</label>
-                <input id="cliente-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
-                       value="993" [(ngModel)]="imapPorta">
-              </div>
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo">
+              <label for="cliente-host" class="bmd-label-floating">Servidor IMAP</label>
+              <input id="cliente-host" type="text" class="form-control" name="imapHost" [(ngModel)]="imapHost">
             </div>
-            <div class="col-md-3">
-              <div class="form-group bmd-form-group">
-                <label for="cliente-usuario" class="bmd-label-floating">E-mail da caixa</label>
-                <input id="cliente-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
-                       [(ngModel)]="imapUsuario">
-              </div>
+            <div class="form-group pv-formulario__campo pv-formulario__campo--porta">
+              <label for="cliente-porta" class="bmd-label-floating">Porta</label>
+              <input id="cliente-porta" type="number" min="1" max="65535" class="form-control" name="imapPorta"
+                     [(ngModel)]="imapPorta">
             </div>
-            <div class="col-md-3">
-              <div class="form-group bmd-form-group">
-                <label for="cliente-senha" class="bmd-label-floating">
-                  @if (editando()) {
-                    Nova senha de app (em branco mantém)
-                  } @else {
-                    Senha de app
-                  }
-                </label>
-                <input id="cliente-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
-                       [(ngModel)]="imapSenha">
-              </div>
+            <div class="form-check pv-formulario__ssl">
+              <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
+                SSL
+                <span class="form-check-sign"><span class="check"></span></span>
+              </label>
             </div>
           </div>
-          <div class="form-check">
-            <label class="form-check-label">
-              <input class="form-check-input" type="checkbox" name="imapSsl" [(ngModel)]="imapSsl">
-              Conexão com SSL
-              <span class="form-check-sign"><span class="check"></span></span>
-            </label>
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo">
+              <label for="cliente-usuario" class="bmd-label-floating">E-mail da caixa</label>
+              <input id="cliente-usuario" type="email" class="form-control" name="imapUsuario" autocomplete="off"
+                     [(ngModel)]="imapUsuario">
+            </div>
+            <div class="form-group pv-formulario__campo">
+              <label for="cliente-senha" class="bmd-label-floating">
+                @if (editando()) {
+                  Nova senha de app (em branco mantém)
+                } @else {
+                  Senha de app
+                }
+              </label>
+              <input id="cliente-senha" type="password" class="form-control" name="imapSenha" autocomplete="new-password"
+                     [(ngModel)]="imapSenha">
+            </div>
           </div>
-          <p class="pv-formulario__ajuda mt-3">
+          <p class="pv-formulario__ajuda">
             No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app.
           </p>
         </div>
         <div class="pv-formulario__acoes">
           @if (editando()) {
             <button type="submit" class="btn btn-info" [pvCarregando]="enviando()" [disabled]="enviando()">Salvar alterações</button>
-            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
             <button type="submit" class="btn btn-info" [pvCarregando]="enviando()" [disabled]="enviando()">
               @if (enviando()) {
@@ -102,9 +102,13 @@
               }
             </button>
           }
+          @if (lista().length > 0) {
+            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
+          }
         </div>
       </form>
     </div>
+    }
 
     <div class="card">
       <div class="pv-card__cabecalho">
@@ -112,21 +116,22 @@
           <h2 class="pv-card__titulo">Clientes</h2>
           <p class="pv-card__descricao">{{ lista().length }} clientes cadastrados</p>
         </div>
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por nome ou e-mail" />
       </div>
       @if (lista().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
           <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">groups</i></span>
           <p class="pv-vazio__titulo">Nenhum cliente cadastrado ainda.</p>
-          <p class="pv-vazio__texto">Cadastre o primeiro no formulário acima.</p>
+          <p class="pv-vazio__texto">Use "Implantar novo cliente" ou o cadastro rápido acima.</p>
         </div>
       } @else {
         <div class="table-responsive">
           <table class="table">
             <thead>
               <tr>
-                <th>Cliente</th>
-                <th>Caixa de e-mail</th>
-                <th>Situação</th>
+                <th pvColuna="nome" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Cliente</th>
+                <th pvColuna="email" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Caixa de e-mail</th>
+                <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th class="text-right">Ações</th>
               </tr>
             </thead>
@@ -178,7 +183,10 @@
             </tbody>
           </table>
         </div>
-        <app-paginacao [total]="lista().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
+        @if (clientesFiltrados().length === 0) {
+          <p class="pv-sem-resultado">Nenhum resultado para "{{ busca() }}".</p>
+        }
+        <app-paginacao [total]="clientesFiltrados().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

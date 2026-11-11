@@ -21,8 +21,9 @@ public class FalhasService
     }
 
     /// <summary>
-    /// Falhas do cliente, da mais recente para a mais antiga.
-    /// Filtros opcionais: empresa, nota, etapa e período (dias no horário de Brasília).
+    /// Falhas do cliente; por padrão, da mais recente para a mais antiga.
+    /// Filtros opcionais: empresa, nota, etapa, período (dias no horário de Brasília) e busca por NF,
+    /// fornecedor, empresa ou CNPJ. Ordem: data, etapa, empresa, nota, fornecedor ou valor ("-" = decrescente).
     /// </summary>
     public async Task<Resultado<PaginaFalhasDto>> ListarAsync(
         int clienteId,
@@ -31,6 +32,8 @@ public class FalhasService
         string? etapa,
         DateTime? de,
         DateTime? ate,
+        string? busca,
+        string? ordem,
         int pagina,
         CancellationToken cancelamento)
     {
@@ -80,12 +83,40 @@ public class FalhasService
             consulta = consulta.Where(f => f.OcorridaEm < fimUtc);
         }
 
+        BuscaTexto? termo = BuscaTexto.Ler(busca);
+        if (termo != null)
+        {
+            string texto = termo.Texto;
+            string digitos = termo.Digitos;
+            if (termo.TemDigitos)
+            {
+                consulta = consulta.Where(f =>
+                    (f.NumeroNota != null && f.NumeroNota.Contains(texto))
+                    || (f.Fornecedor != null && f.Fornecedor.ToLower().Contains(texto))
+                    || (f.Empresa != null && f.Empresa.Nome.ToLower().Contains(texto))
+                    || (f.CnpjFornecedor != null && f.CnpjFornecedor.Contains(digitos))
+                    || (f.ChaveAcesso != null && f.ChaveAcesso.Contains(digitos)));
+            }
+            else
+            {
+                consulta = consulta.Where(f =>
+                    (f.NumeroNota != null && f.NumeroNota.Contains(texto))
+                    || (f.Fornecedor != null && f.Fornecedor.ToLower().Contains(texto))
+                    || (f.Empresa != null && f.Empresa.Nome.ToLower().Contains(texto)));
+            }
+        }
+
+        IOrderedQueryable<FalhaProcessamento>? ordenada = Ordenar(consulta, OrdemLista.Ler(ordem, "data", true));
+        if (ordenada == null)
+        {
+            return Resultado<PaginaFalhasDto>.Invalido(MensagemOrdemInvalida);
+        }
+
         int total = await consulta.CountAsync(cancelamento);
 
-        List<FalhaProcessamento> falhas = await consulta
-            .Include(f => f.Empresa)
-            .OrderByDescending(f => f.OcorridaEm)
+        List<FalhaProcessamento> falhas = await ordenada
             .ThenByDescending(f => f.Id)
+            .Include(f => f.Empresa)
             .Skip((pagina - 1) * TamanhoPagina)
             .Take(TamanhoPagina)
             .ToListAsync(cancelamento);
@@ -99,5 +130,50 @@ public class FalhasService
             resposta.Itens.Add(FalhaMapeamento.ParaDto(falha));
         }
         return Resultado<PaginaFalhasDto>.Ok(resposta);
+    }
+
+    public const string MensagemOrdemInvalida =
+        "Ordenação inválida. Use data, etapa, empresa, nota, fornecedor ou valor.";
+
+    /// <summary>
+    /// Ordena pela coluna pedida; nula quando a coluna não existe.
+    /// </summary>
+    private static IOrderedQueryable<FalhaProcessamento>? Ordenar(IQueryable<FalhaProcessamento> consulta, OrdemLista ordem)
+    {
+        bool desc = ordem.Decrescente;
+        if (ordem.Coluna == "data")
+        {
+            return desc ? consulta.OrderByDescending(f => f.OcorridaEm) : consulta.OrderBy(f => f.OcorridaEm);
+        }
+        if (ordem.Coluna == "etapa")
+        {
+            return desc ? consulta.OrderByDescending(f => f.Etapa) : consulta.OrderBy(f => f.Etapa);
+        }
+        if (ordem.Coluna == "empresa")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(f => f.Empresa != null ? f.Empresa.Nome : "");
+            }
+            return consulta.OrderBy(f => f.Empresa != null ? f.Empresa.Nome : "");
+        }
+        if (ordem.Coluna == "nota")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(f => f.NumeroNota != null ? f.NumeroNota.Length : 0)
+                    .ThenByDescending(f => f.NumeroNota);
+            }
+            return consulta.OrderBy(f => f.NumeroNota != null ? f.NumeroNota.Length : 0).ThenBy(f => f.NumeroNota);
+        }
+        if (ordem.Coluna == "fornecedor")
+        {
+            return desc ? consulta.OrderByDescending(f => f.Fornecedor) : consulta.OrderBy(f => f.Fornecedor);
+        }
+        if (ordem.Coluna == "valor")
+        {
+            return desc ? consulta.OrderByDescending(f => f.ValorNota) : consulta.OrderBy(f => f.ValorNota);
+        }
+        return null;
     }
 }

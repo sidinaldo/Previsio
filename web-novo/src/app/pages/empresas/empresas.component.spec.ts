@@ -62,7 +62,7 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
     expect(tela.querySelector('tr.pv-linha--editando')!.textContent).toContain('Loja Norte');
   });
 
-  it('Salvar altera a empresa escolhida (PUT) e volta para o cadastro de uma nova', async () => {
+  it('Salvar altera a empresa escolhida (PUT) e fecha o formulário', async () => {
     const { fixture, api, tela } = await montar();
     const componente = fixture.componentInstance;
     componente.editar(EMPRESAS[1]);
@@ -77,7 +77,8 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
 
     expect(componente.editando()).toBeNull();
     expect(componente.nome()).toBe('');
-    expect(tela.querySelector('.pv-card__titulo')!.textContent).toContain('Nova empresa');
+    // Depois de salvar o formulário fecha e a tela volta para a lista
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
     expect(tela.textContent).toContain('Loja Norte Shopping');
     expect(tela.textContent).toContain('Empresa alterada.');
   });
@@ -224,3 +225,58 @@ describe('EmpresasComponent: coluna E-mail', () => {
     expect(primeira.textContent).toContain('Caixa própria');
   });
 });
+
+describe('EmpresasComponent: formulário fechado por padrão', () => {
+  it('com empresas cadastradas, abre só em "Nova empresa" e fecha em Cancelar', async () => {
+    const { fixture, tela } = await montar();
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
+
+    const botao = Array.from(tela.querySelectorAll<HTMLButtonElement>('.pv-pagina__acoes button'))
+      .find(b => b.textContent!.includes('Nova empresa'))!;
+    botao.click();
+    await fixture.whenStable();
+    expect(tela.querySelector('#previsio-nome')).not.toBeNull();
+    expect(tela.querySelector('.pv-opcional[open]')).toBeNull();
+
+    fixture.componentInstance.cancelarEdicao();
+    await fixture.whenStable();
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
+  });
+
+  it('editar empresa com caixa própria abre o bloco do e-mail', async () => {
+    const { fixture, tela } = await montar();
+    fixture.componentInstance.editar({ ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'c@r.com' });
+    await fixture.whenStable();
+    const abertos = tela.querySelectorAll('.pv-opcional[open] summary');
+    expect(abertos.length).toBe(1);
+    expect(abertos[0].textContent).toContain('Caixa de e-mail própria');
+  });
+});
+
+describe('EmpresasComponent: busca e ordenação', () => {
+  it('a busca filtra pelo CNPJ com pontuação e o cabeçalho inverte a ordem', async () => {
+    const { fixture, tela } = await montar();
+    const componente = fixture.componentInstance;
+
+    // Começa por nome, A a Z
+    let nomes = Array.from(tela.querySelectorAll('tbody tr td:first-child strong')).map(e => e.textContent);
+    expect(nomes).toEqual(['Loja Centro', 'Loja Norte']);
+
+    const cabecalho = tela.querySelector<HTMLButtonElement>('th.pv-th-ordenavel .pv-coluna')!;
+    cabecalho.click();
+    await fixture.whenStable();
+    nomes = Array.from(tela.querySelectorAll('tbody tr td:first-child strong')).map(e => e.textContent);
+    expect(nomes).toEqual(['Loja Norte', 'Loja Centro']);
+    expect(tela.querySelector('th.pv-th-ordenavel')!.getAttribute('aria-sort')).toBe('descending');
+
+    componente.mudarBusca('11.222.333/0002');
+    await fixture.whenStable();
+    expect(tela.querySelectorAll('tbody tr').length).toBe(1);
+    expect(tela.querySelector('tbody tr')!.textContent).toContain('Loja Norte');
+
+    componente.mudarBusca('nenhuma');
+    await fixture.whenStable();
+    expect(tela.textContent).toContain('Nenhum resultado para "nenhuma"');
+  });
+});
+

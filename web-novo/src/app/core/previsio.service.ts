@@ -91,6 +91,16 @@ export class PrevisioService {
     return this.http.post<Empresa>(`${this.api}/clientes/${clienteId}/empresas`, dados);
   }
 
+  /** "Esqueci minha senha": a API responde igual exista ou não o e-mail. */
+  solicitarRedefinicaoSenha(email: string): Observable<string> {
+    return this.http.post(`${this.api}/auth/esqueci-senha`, { email: email }, { responseType: 'text' });
+  }
+
+  /** Nova senha pelo token do link enviado por e-mail. */
+  redefinirSenha(token: string, novaSenha: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/auth/redefinir-senha`, { token: token, novaSenha: novaSenha });
+  }
+
   /** Só admin. Conecta e entra na caixa, sem ler nem gravar nada. */
   testarEmail(dados: TesteEmail): Observable<ResultadoTesteEmail> {
     return this.http.post<ResultadoTesteEmail>(`${this.api}/email/testar`, dados);

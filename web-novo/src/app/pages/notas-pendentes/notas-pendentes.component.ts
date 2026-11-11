@@ -12,11 +12,14 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
 import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -35,7 +38,23 @@ export class NotasPendentesComponent {
   // Paginação da tabela (a API devolve a lista inteira)
   readonly pagina = signal(1);
   readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
-  readonly notasDaPagina = computed(() => paginar(this.notas(), this.pagina(), this.tamanhoPagina()));
+  // Caixa de busca e ordenação por coluna, aplicadas aqui (a API devolve a lista inteira)
+  readonly busca = signal('');
+  readonly ordenacao = signal<Ordenacao | null>(null);
+  readonly notasFiltradas = computed(() => {
+    const termo = this.busca();
+    return this.notas().filter(item => combinaComBusca(termo, [item.numero, item.fornecedor, item.cnpjFornecedor, item.empresaNome, item.chaveAcesso]));
+  });
+  readonly notasOrdenadas = computed(() => ordenarLista(this.notasFiltradas(), this.ordenacao(), {
+    fornecedor: item => item.fornecedor,
+    numero: item => Number(item.numero),
+    empresa: item => item.empresaNome,
+    recebida: item => item.recebidaEm,
+    vencimento: item => item.primeiroVencimento,
+    valor: item => item.valorTotal,
+    situacao: item => item.status
+  }));
+  readonly notasDaPagina = computed(() => paginar(this.notasOrdenadas(), this.pagina(), this.tamanhoPagina()));
   readonly carregando = signal(false);
   readonly erro = signal('');
   readonly mensagem = signal('');
@@ -176,5 +195,17 @@ export class NotasPendentesComponent {
         this.carregando.set(false);
       }
     });
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna e volta para a primeira página. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
+  }
+
+  /** Nova busca volta para a primeira página. */
+  mudarBusca(texto: string): void {
+    this.busca.set(texto);
+    this.pagina.set(1);
   }
 }

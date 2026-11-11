@@ -30,6 +30,7 @@
           <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no Bling</h2>
           <p class="pv-card__descricao pv-numero">{{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</p>
         </div>
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por NF, fornecedor ou CNPJ" />
       </div>
 
       @if (mensagem() || erro()) {
@@ -55,15 +56,15 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Fornecedor</th>
-                <th>NF</th>
+                <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
+                <th pvColuna="numero" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">NF</th>
                 @if (!empresaId()) {
-                  <th>Empresa</th>
+                  <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
                 }
-                <th>Recebida</th>
-                <th>1º vencimento</th>
-                <th class="text-right">Valor</th>
-                <th>Situação</th>
+                <th pvColuna="recebida" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Recebida</th>
+                <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">1º vencimento</th>
+                <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
+                <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th class="text-right">Ações</th>
               </tr>
             </thead>
@@ -136,7 +137,10 @@
             </tbody>
           </table>
         </div>
-        <app-paginacao [total]="notas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
+        @if (notasFiltradas().length === 0) {
+          <p class="pv-sem-resultado">Nenhum resultado para "{{ busca() }}".</p>
+        }
+        <app-paginacao [total]="notasFiltradas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

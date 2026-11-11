@@ -462,6 +462,13 @@ namespace Previsio.Data.Migrations
                     b.Property<int>("Perfil")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("RedefinicaoSenhaExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RedefinicaoSenhaHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -476,6 +483,8 @@ namespace Previsio.Data.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("RedefinicaoSenhaHash");
 
                     b.ToTable("usuarios", (string)null);
                 });

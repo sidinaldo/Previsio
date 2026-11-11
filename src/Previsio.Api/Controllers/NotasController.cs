@@ -37,7 +37,8 @@ public class NotasController : PrevisioControllerBase
     /// <summary>
     /// Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga, com as parcelas.
     /// Filtros opcionais: empresa, situação (nome da situação ou "Pendentes") e período em que a nota
-    /// chegou (datas no formato yyyy-MM-dd, horário de Brasília).
+    /// chegou (datas no formato yyyy-MM-dd, horário de Brasília). "busca" procura por NF, fornecedor,
+    /// empresa ou CNPJ; "ordem" é a coluna, com "-" na frente para decrescente.
     /// </summary>
     [HttpGet("api/clientes/{clienteId:int}/notas")]
     public async Task<ActionResult<PaginaNotasDto>> Listar(
@@ -46,6 +47,8 @@ public class NotasController : PrevisioControllerBase
         [FromQuery] string? situacao,
         [FromQuery] DateTime? de,
         [FromQuery] DateTime? ate,
+        [FromQuery] string? busca,
+        [FromQuery] string? ordem,
         [FromQuery] int pagina,
         CancellationToken cancelamento)
     {
@@ -54,7 +57,7 @@ public class NotasController : PrevisioControllerBase
             return Forbid();
         }
 
-        return Responder(await _notas.ListarAsync(clienteId, empresaId, situacao, de, ate, pagina, cancelamento));
+        return Responder(await _notas.ListarAsync(clienteId, empresaId, situacao, de, ate, busca, ordem, pagina, cancelamento));
     }
 
     /// <summary>

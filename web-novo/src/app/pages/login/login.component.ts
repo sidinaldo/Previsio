@@ -1,7 +1,7 @@
 import { Component, ElementRef, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { SessaoService } from '../../core/sessao.service';
 import { SimboloComponent } from '../../shared/simbolo/simbolo.component';
@@ -11,7 +11,7 @@ import { SimboloComponent } from '../../shared/simbolo/simbolo.component';
  */
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, SimboloComponent],
+  imports: [FormsModule, RouterLink, SimboloComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -52,8 +52,11 @@ export class LoginComponent {
       }
     });
 
-    if (this.rota.snapshot.queryParamMap.get('motivo') === 'expirou') {
+    const motivo = this.rota.snapshot.queryParamMap.get('motivo');
+    if (motivo === 'expirou') {
       this.aviso.set('Sua sessão terminou. Entre novamente para continuar.');
+    } else if (motivo === 'senha-redefinida') {
+      this.aviso.set('Senha alterada. Entre com a nova senha.');
     }
   }
 

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
@@ -80,6 +81,10 @@ builder.Services.Configure<JwtOptions>(secaoJwt);
 builder.Services.AddSingleton<GeradorTokenJwt>();
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
+builder.Services.AddScoped<RedefinicaoSenhaService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
+builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>

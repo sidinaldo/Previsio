@@ -39,6 +39,9 @@
       </div>
       <form (ngSubmit)="filtrar()">
         <div class="card-body">
+          <div class="pv-filtros__busca">
+            <app-busca [(valor)]="busca" placeholder="Buscar por NF, fornecedor, empresa ou CNPJ" />
+          </div>
           <div class="row">
             <div class="col-md-3 col-sm-6">
               <label for="notas-empresa" class="col-form-label pt-0">Empresa</label>
@@ -113,14 +116,14 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Recebida</th>
-                <th>NF</th>
-                <th>Fornecedor</th>
-                <th>Empresa</th>
-                <th>Emissão</th>
-                <th class="text-right">Valor</th>
-                <th>1º vencimento</th>
-                <th>Situação</th>
+                <th pvColuna="recebida" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Recebida</th>
+                <th pvColuna="numero" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">NF</th>
+                <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
+                <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
+                <th pvColuna="emissao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Emissão</th>
+                <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
+                <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">1º vencimento</th>
+                <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th class="text-right">Detalhes</th>
               </tr>
             </thead>

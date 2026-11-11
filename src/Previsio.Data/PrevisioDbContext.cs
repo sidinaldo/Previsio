@@ -108,9 +108,11 @@ public class PrevisioDbContext : DbContext
             entidade.Property(u => u.SenhaHash).HasMaxLength(500).IsRequired();
             entidade.Property(u => u.CarimboSeguranca).HasMaxLength(64).IsRequired();
             entidade.Property(u => u.Perfil).HasConversion<int>();
+            entidade.Property(u => u.RedefinicaoSenhaHash).HasMaxLength(64);
 
             // O e-mail é o login: gravado sempre em minúsculas
             entidade.HasIndex(u => u.Email).IsUnique();
+            entidade.HasIndex(u => u.RedefinicaoSenhaHash);
 
             entidade.HasOne(u => u.Cliente)
                 .WithMany()

@@ -76,6 +76,16 @@ export const PAGES_ROUTES: Routes = [
         path: 'login',
         canActivate: [somenteSemLogin],
         loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
+      },
+      {
+        path: 'esqueci-senha',
+        canActivate: [somenteSemLogin],
+        loadComponent: () => import('./esqueci-senha/esqueci-senha.component').then(m => m.EsqueciSenhaComponent)
+      },
+      {
+        // Sem guarda: o link do e-mail pode ser aberto num navegador que já está logado
+        path: 'redefinir-senha',
+        loadComponent: () => import('./redefinir-senha/redefinir-senha.component').then(m => m.RedefinirSenhaComponent)
       }
     ]
   }

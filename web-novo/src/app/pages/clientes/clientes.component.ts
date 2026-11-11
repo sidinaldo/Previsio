@@ -11,6 +11,9 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 /**
  * Cadastro de clientes (só admin). Cada cliente é uma rede: tem a própria caixa de e-mail,
@@ -19,7 +22,7 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
  */
 @Component({
   selector: 'app-clientes',
-  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {
@@ -34,7 +37,19 @@ export class ClientesComponent {
   // Paginação da tabela (a API devolve a lista inteira)
   readonly pagina = signal(1);
   readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
-  readonly clientesDaPagina = computed(() => paginar(this.lista(), this.pagina(), this.tamanhoPagina()));
+  // Caixa de busca e ordenação por coluna, aplicadas aqui (a API devolve a lista inteira)
+  readonly busca = signal('');
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'nome', decrescente: false });
+  readonly clientesFiltrados = computed(() => {
+    const termo = this.busca();
+    return this.lista().filter(item => combinaComBusca(termo, [item.nome, item.imapUsuario, item.imapHost]));
+  });
+  readonly clientesOrdenados = computed(() => ordenarLista(this.clientesFiltrados(), this.ordenacao(), {
+    nome: item => item.nome,
+    email: item => item.imapUsuario,
+    situacao: item => item.ativo ? 0 : 1
+  }));
+  readonly clientesDaPagina = computed(() => paginar(this.clientesOrdenados(), this.pagina(), this.tamanhoPagina()));
   readonly clienteExibido = this.sessao.clienteId;
 
   readonly nome = signal('');
@@ -49,6 +64,11 @@ export class ClientesComponent {
 
   // Cliente sendo alterado no formulário; null = cadastro de um novo
   readonly editando = signal<Cliente | null>(null);
+
+  // O formulário fica fechado e abre em "Cadastro rápido" ou "Editar";
+  // sem nenhum cliente cadastrado ele já aparece aberto
+  readonly formularioAberto = signal(false);
+  readonly mostrarFormulario = computed(() => this.formularioAberto() || this.lista().length === 0);
 
   private readonly cartaoFormulario = viewChild<ElementRef<HTMLElement>>('cartaoFormulario');
   private readonly campoNome = viewChild<ElementRef<HTMLInputElement>>('campoNome');
@@ -106,7 +126,29 @@ export class ClientesComponent {
     });
   }
 
-  // ---------- edição no formulário do topo ----------
+  // ---------- formulário do topo: cadastro rápido ou edição ----------
+
+  /** "Cadastro rápido": abre o formulário vazio (sem o assistente de implantação). */
+  abrirNovo(): void {
+    this.erro.set('');
+    this.mensagem.set('');
+    this.limparFormulario();
+    this.formularioAberto.set(true);
+    this.focarFormulario();
+  }
+
+  private focarFormulario(): void {
+    afterNextRender(() => {
+      const cartao = this.cartaoFormulario();
+      if (cartao) {
+        cartao.nativeElement.scrollIntoView({ block: 'start' });
+      }
+      const campo = this.campoNome();
+      if (campo) {
+        campo.nativeElement.focus({ preventScroll: true });
+      }
+    }, { injector: this.injector });
+  }
 
   /** Preenche o formulário com o cliente e leva a tela até ele. A senha fica em branco (mantém a atual). */
   editar(cliente: Cliente): void {
@@ -119,17 +161,8 @@ export class ClientesComponent {
     this.imapSsl.set(cliente.imapSsl);
     this.imapUsuario.set(cliente.imapUsuario);
     this.imapSenha.set('');
-
-    afterNextRender(() => {
-      const cartao = this.cartaoFormulario();
-      if (cartao) {
-        cartao.nativeElement.scrollIntoView({ block: 'start' });
-      }
-      const campo = this.campoNome();
-      if (campo) {
-        campo.nativeElement.focus({ preventScroll: true });
-      }
-    }, { injector: this.injector });
+    this.formularioAberto.set(true);
+    this.focarFormulario();
   }
 
   estaEditando(cliente: Cliente): boolean {
@@ -189,7 +222,9 @@ export class ClientesComponent {
     });
   }
 
+  // Também fecha o formulário: depois de salvar ou cancelar a tela volta para a lista
   private limparFormulario(): void {
+    this.formularioAberto.set(false);
     this.editando.set(null);
     this.nome.set('');
     this.imapHost.set('imap.gmail.com');
@@ -202,5 +237,17 @@ export class ClientesComponent {
   verEmpresas(cliente: Cliente): void {
     this.sessao.escolherCliente(cliente.id);
     this.router.navigate(['/pages/empresas']);
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna e volta para a primeira página. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
+  }
+
+  /** Nova busca volta para a primeira página. */
+  mudarBusca(texto: string): void {
+    this.busca.set(texto);
+    this.pagina.set(1);
   }
 }

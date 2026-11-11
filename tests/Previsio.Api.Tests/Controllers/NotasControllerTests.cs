@@ -56,7 +56,7 @@ public class NotasControllerTests
     private static Task<ActionResult<PaginaNotasDto>> Listar(
         NotasController controller, int clienteId, int? empresaId, string? situacao, DateTime? de, DateTime? ate, int pagina)
     {
-        return controller.Listar(clienteId, empresaId, situacao, de, ate, pagina, CancellationToken.None);
+        return controller.Listar(clienteId, empresaId, situacao, de, ate, null, null, pagina, CancellationToken.None);
     }
 
     [Fact]

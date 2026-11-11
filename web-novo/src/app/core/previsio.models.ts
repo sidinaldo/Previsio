@@ -265,6 +265,10 @@ export interface FiltroNotas {
   situacao?: string;
   de?: string;
   ate?: string;
+  // Caixa de busca: NF, fornecedor, empresa ou CNPJ
+  busca?: string;
+  // Coluna, com "-" na frente para decrescente (ex.: "-valor")
+  ordem?: string;
   pagina?: number;
 }
 
@@ -333,6 +337,10 @@ export interface FiltroFalhas {
   etapa?: string;
   de?: string;
   ate?: string;
+  // Caixa de busca: NF, fornecedor, empresa ou CNPJ
+  busca?: string;
+  // Coluna, com "-" na frente para decrescente (ex.: "-data")
+  ordem?: string;
   pagina?: number;
 }
 
