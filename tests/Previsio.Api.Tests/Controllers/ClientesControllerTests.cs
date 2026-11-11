@@ -17,7 +17,7 @@ public class ClientesControllerTests
 
     private ClientesController CriarController()
     {
-        var controller = new ClientesController(_db, _protetor);
+        var controller = new ClientesController(ServicosDeTeste.Clientes(_db, _protetor), ServicosDeTeste.Empresas(_db, _protetor));
         controller.ControllerContext = UsuarioDeTeste.Admin();
         return controller;
     }

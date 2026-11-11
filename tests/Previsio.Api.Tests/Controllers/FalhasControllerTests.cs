@@ -14,7 +14,7 @@ public class FalhasControllerTests
 
     private FalhasController CriarController(ControllerContext usuario)
     {
-        var controller = new FalhasController(_db);
+        var controller = new FalhasController(ServicosDeTeste.Falhas(_db));
         controller.ControllerContext = usuario;
         return controller;
     }

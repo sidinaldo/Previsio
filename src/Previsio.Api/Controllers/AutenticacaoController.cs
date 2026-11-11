@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
+using Previsio.Api.Mapeamentos;
+using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 
 namespace Previsio.Api.Controllers;
 
@@ -14,15 +14,13 @@ namespace Previsio.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/auth")]
-public class AutenticacaoController : ControllerBase
+public class AutenticacaoController : PrevisioControllerBase
 {
-    private readonly PrevisioDbContext _db;
     private readonly AutenticacaoService _autenticacao;
     private readonly GeradorTokenJwt _gerador;
 
-    public AutenticacaoController(PrevisioDbContext db, AutenticacaoService autenticacao, GeradorTokenJwt gerador)
+    public AutenticacaoController(AutenticacaoService autenticacao, GeradorTokenJwt gerador)
     {
-        _db = db;
         _autenticacao = autenticacao;
         _gerador = gerador;
     }
@@ -50,7 +48,7 @@ public class AutenticacaoController : ControllerBase
             return Unauthorized();
         }
 
-        return UsuariosController.ParaDto(usuario);
+        return UsuarioMapeamento.ParaDto(usuario);
     }
 
     /// <summary>
@@ -67,19 +65,11 @@ public class AutenticacaoController : ControllerBase
             return Unauthorized();
         }
 
-        if (!_autenticacao.SenhaConfere(usuario, dados.SenhaAtual))
+        Resultado resultado = await _autenticacao.TrocarSenhaAsync(usuario, dados.SenhaAtual, dados.NovaSenha, cancelamento);
+        if (!resultado.Sucesso)
         {
-            return BadRequest("Senha atual incorreta.");
+            return BadRequest(resultado.Mensagem);
         }
-
-        string? erroSenha = RegrasUsuario.ValidarSenha(dados.NovaSenha);
-        if (erroSenha != null)
-        {
-            return BadRequest(erroSenha);
-        }
-
-        _autenticacao.DefinirSenha(usuario, dados.NovaSenha);
-        await _db.SaveChangesAsync(cancelamento);
 
         return MontarResposta(usuario);
     }
@@ -92,7 +82,7 @@ public class AutenticacaoController : ControllerBase
             return null;
         }
 
-        return await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == usuarioId.Value, cancelamento);
+        return await _autenticacao.ObterUsuarioAsync(usuarioId.Value, cancelamento);
     }
 
     private RespostaLoginDto MontarResposta(Usuario usuario)
@@ -102,7 +92,7 @@ public class AutenticacaoController : ControllerBase
         var resposta = new RespostaLoginDto();
         resposta.Token = token.Token;
         resposta.ExpiraEm = token.ExpiraEm;
-        resposta.Usuario = UsuariosController.ParaDto(usuario);
+        resposta.Usuario = UsuarioMapeamento.ParaDto(usuario);
         return resposta;
     }
 }

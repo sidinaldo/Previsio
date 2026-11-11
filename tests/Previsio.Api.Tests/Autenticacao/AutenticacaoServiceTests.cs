@@ -59,4 +59,32 @@ public class AutenticacaoServiceTests
         Assert.NotNull(usuario);
         Assert.Equal(Email, usuario!.Email);
     }
+
+    [Fact]
+    public async Task TrocarSenha_SenhaAtualErrada_EhInvalido()
+    {
+        await CadastrarUsuarioDeCliente(true);
+        Usuario usuario = _db.Usuarios.Single();
+
+        Previsio.Api.Servicos.Resultado resultado = await _servico.TrocarSenhaAsync(
+            usuario, "senha-errada", "nova-senha-456", CancellationToken.None);
+
+        Assert.False(resultado.Sucesso);
+        Assert.Equal("Senha atual incorreta.", resultado.Mensagem);
+    }
+
+    [Fact]
+    public async Task TrocarSenha_GravaANovaEDerrubaAsOutrasSessoes()
+    {
+        await CadastrarUsuarioDeCliente(true);
+        Usuario usuario = _db.Usuarios.Single();
+        string carimboAntes = usuario.CarimboSeguranca;
+
+        Previsio.Api.Servicos.Resultado resultado = await _servico.TrocarSenhaAsync(
+            usuario, Senha, "nova-senha-456", CancellationToken.None);
+
+        Assert.True(resultado.Sucesso);
+        Assert.True(_servico.SenhaConfere(usuario, "nova-senha-456"));
+        Assert.NotEqual(carimboAntes, usuario.CarimboSeguranca);
+    }
 }

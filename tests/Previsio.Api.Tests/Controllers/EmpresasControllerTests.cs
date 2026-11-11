@@ -19,7 +19,7 @@ public class EmpresasControllerTests
 
     private EmpresasController CriarController(int clienteId)
     {
-        var controller = new EmpresasController(_db, _protetor);
+        var controller = new EmpresasController(ServicosDeTeste.Empresas(_db, _protetor));
         controller.ControllerContext = UsuarioDeTeste.DoCliente(clienteId);
         return controller;
     }

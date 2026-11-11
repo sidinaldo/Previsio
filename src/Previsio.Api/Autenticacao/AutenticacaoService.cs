@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 
@@ -77,6 +78,34 @@ public class AutenticacaoService
         await _db.SaveChangesAsync(cancelamento);
 
         return usuario;
+    }
+
+    public async Task<Usuario?> ObterUsuarioAsync(int usuarioId, CancellationToken cancelamento)
+    {
+        return await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+    }
+
+    /// <summary>
+    /// Troca a senha do próprio usuário, conferindo a senha atual.
+    /// Os outros tokens dele deixam de valer.
+    /// </summary>
+    public async Task<Resultado> TrocarSenhaAsync(
+        Usuario usuario, string? senhaAtual, string? novaSenha, CancellationToken cancelamento)
+    {
+        if (!SenhaConfere(usuario, senhaAtual))
+        {
+            return Resultado.Invalido("Senha atual incorreta.");
+        }
+
+        string? erroSenha = RegrasUsuario.ValidarSenha(novaSenha);
+        if (erroSenha != null)
+        {
+            return Resultado.Invalido(erroSenha);
+        }
+
+        DefinirSenha(usuario, novaSenha!);
+        await _db.SaveChangesAsync(cancelamento);
+        return Resultado.Ok();
     }
 
     public bool SenhaConfere(Usuario usuario, string? senha)

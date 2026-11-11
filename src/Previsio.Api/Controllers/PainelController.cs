@@ -1,25 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
-using Previsio.Core.Entidades;
-using Previsio.Core.Painel;
 using Previsio.Core.Painel.Modelos;
-using Previsio.Data;
 
 namespace Previsio.Api.Controllers;
 
 [ApiController]
-public class PainelController : ControllerBase
+public class PainelController : PrevisioControllerBase
 {
-    private readonly PrevisioDbContext _db;
-    private readonly CalculadoraPainel _calculadora;
+    private readonly PainelService _painel;
+    private readonly AcessoEmpresaService _acesso;
 
-    public PainelController(PrevisioDbContext db, CalculadoraPainel calculadora)
+    public PainelController(PainelService painel, AcessoEmpresaService acesso)
     {
-        _db = db;
-        _calculadora = calculadora;
+        _painel = painel;
+        _acesso = acesso;
     }
 
     /// <summary>
@@ -33,30 +29,7 @@ public class PainelController : ControllerBase
             return Forbid();
         }
 
-        if (dias <= 0 || dias > 120)
-        {
-            dias = 30;
-        }
-
-        DateTime hoje = RelogioBrasil.Hoje();
-        DateTime fim = hoje.AddDays(dias);
-
-        List<Empresa> empresas = await _db.Empresas
-            .Where(e => e.ClienteId == clienteId && e.Ativo)
-            .OrderBy(e => e.Nome)
-            .ToListAsync(cancelamento);
-
-        List<int> idsEmpresas = empresas.Select(e => e.Id).ToList();
-
-        List<ContaPagarSincronizada> contas = await _db.ContasPagar
-            .Where(c => idsEmpresas.Contains(c.EmpresaId) && c.Vencimento >= hoje && c.Vencimento <= fim)
-            .ToListAsync(cancelamento);
-
-        List<NotaFiscal> pendentes = await _db.NotasFiscais
-            .Where(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status))
-            .ToListAsync(cancelamento);
-
-        return _calculadora.Calcular(hoje, dias, empresas, contas, pendentes);
+        return await _painel.ResumoAsync(clienteId, dias, cancelamento);
     }
 
     /// <summary>
@@ -65,36 +38,12 @@ public class PainelController : ControllerBase
     [HttpGet("api/empresas/{empresaId:int}/vencimentos")]
     public async Task<ActionResult<List<VencimentoDiaDto>>> Vencimentos(int empresaId, [FromQuery] int dias, CancellationToken cancelamento)
     {
-        bool permitido = await ControleAcesso.PodeAcessarEmpresaAsync(_db, User, empresaId, cancelamento);
+        bool permitido = await _acesso.PodeAcessarAsync(User, empresaId, cancelamento);
         if (!permitido)
         {
-            return NotFound("Empresa não encontrada.");
+            return NotFound(EmpresasService.MensagemNaoEncontrada);
         }
 
-        if (dias <= 0 || dias > 120)
-        {
-            dias = 30;
-        }
-
-        DateTime hoje = RelogioBrasil.Hoje();
-        DateTime fim = hoje.AddDays(dias);
-
-        List<ContaPagarSincronizada> contas = await _db.ContasPagar
-            .Where(c => c.EmpresaId == empresaId
-                && c.Vencimento >= hoje
-                && c.Vencimento <= fim
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
-            .ToListAsync(cancelamento);
-
-        return contas
-            .GroupBy(c => c.Vencimento.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new VencimentoDiaDto
-            {
-                Data = g.Key,
-                Quantidade = g.Count(),
-                Valor = g.Sum(c => c.Valor)
-            })
-            .ToList();
+        return await _painel.VencimentosAsync(empresaId, dias, cancelamento);
     }
 }

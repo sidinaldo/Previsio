@@ -14,7 +14,7 @@ public class NotasControllerTests
 
     private NotasController CriarController(ControllerContext usuario)
     {
-        var controller = new NotasController(_db, new FilaDeJobsDeTeste());
+        var controller = new NotasController(ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()));
         controller.ControllerContext = usuario;
         return controller;
     }
