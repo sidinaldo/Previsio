@@ -298,11 +298,58 @@ public class AvisosService
             }
         }
 
+        problemas.AddRange(await ContasVencidasAsync(cliente, cancelamento));
+
         if (cliente.ImapHost.Trim() != "" && CaixaFalhando(cliente))
         {
             problemas.Add(ProblemaDaCaixa("caixa-rede:" + cliente.Id, cliente, null));
         }
 
+        return problemas;
+    }
+
+    /// <summary>
+    /// Um aviso por loja com contas em aberto no Bling vencidas há pelo menos a tolerância da rede.
+    /// Some sozinho quando as contas são pagas (ou baixadas) no Bling e a sincronização traz isso.
+    /// </summary>
+    private async Task<List<ProblemaAtual>> ContasVencidasAsync(Cliente cliente, CancellationToken cancelamento)
+    {
+        var problemas = new List<ProblemaAtual>();
+        List<Empresa> empresas = cliente.Empresas.Where(e => e.Ativo).ToList();
+        if (empresas.Count == 0)
+        {
+            return problemas;
+        }
+        DateTime hoje = Contratos.PeriodoTeste.HojeBrasil(_relogio.GetUtcNow().UtcDateTime);
+        List<int> ids = empresas.Select(e => e.Id).ToList();
+        List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto
+            .Vencidas(_db, ids, hoje, cliente.AvisoVencidasDias)
+            .ToListAsync(cancelamento);
+
+        foreach (var grupo in vencidas.GroupBy(c => c.EmpresaId))
+        {
+            Empresa empresa = empresas.First(e => e.Id == grupo.Key);
+            int quantidade = grupo.Count();
+            decimal total = grupo.Sum(c => c.Valor);
+            DateTime maisAntiga = grupo.Min(c => c.Vencimento);
+
+            var problema = new ProblemaAtual();
+            problema.Tipo = TipoAviso.ContasVencidas;
+            problema.Chave = "vencidas:" + empresa.Id;
+            if (quantidade == 1)
+            {
+                problema.Titulo = Limitar("1 conta vencida: " + empresa.Nome, 200);
+            }
+            else
+            {
+                problema.Titulo = Limitar(quantidade + " contas vencidas: " + empresa.Nome, 200);
+            }
+            problema.Mensagem = Limitar(Resumos.ModeloEmailResumo.Dinheiro(total) + " em aberto no Bling; a mais antiga venceu em "
+                + maisAntiga.ToString("dd/MM/yyyy") + ". Pague ou dê baixa no Bling.", 500);
+            problema.Link = "/pages/painel";
+            problema.EmpresaId = empresa.Id;
+            problemas.Add(problema);
+        }
         return problemas;
     }
 
@@ -407,6 +454,10 @@ public class AvisosService
         {
             if (chavesAbertas.Contains(problema.Chave))
             {
+                // O mesmo problema mudou de tamanho (ex.: mais contas vencidas): atualiza o texto, sem aviso novo
+                Aviso existente = abertos.First(a => a.Chave == problema.Chave);
+                existente.Titulo = problema.Titulo;
+                existente.Mensagem = problema.Mensagem;
                 continue;
             }
             var aviso = new Aviso();

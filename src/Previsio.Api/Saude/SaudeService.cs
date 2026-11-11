@@ -22,6 +22,7 @@ public class SaudeService
         new string[] { "sincronizacao", "Sincronização das contas do Bling" },
         new string[] { "busca-xml-sefaz", "XML na SEFAZ (notas só em PDF)" },
         new string[] { "resumo-semanal", "Resumo por e-mail" },
+        new string[] { "alerta-vencimentos", "Alerta de vencimentos (hoje e amanhã)" },
         new string[] { "avisos-teste", "Avisos do teste grátis" }
     };
 

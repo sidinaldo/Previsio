@@ -204,6 +204,10 @@ public class ResumoSemanalService
                 && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
             .ToListAsync(cancelamento);
 
+        List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto.Vencidas(_db, idsEmpresas, hoje, 1).ToListAsync(cancelamento);
+        resumo.Vencidas = vencidas.Count;
+        resumo.TotalVencidas = vencidas.Sum(c => c.Valor);
+
         resumo.Total30Dias = contas.Sum(c => c.Valor);
         resumo.Contas30Dias = contas.Count;
 

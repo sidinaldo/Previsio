@@ -48,6 +48,16 @@ public static class ModeloEmailResumo
         texto.Append("Próximos 7 dias: " + Dinheiro(resumo.Total7Dias) + "\n");
         texto.Append("Próximos 30 dias: " + Dinheiro(resumo.Total30Dias) + " (" + Quantidade(resumo.Contas30Dias, "conta", "contas") + ")\n\n");
 
+        // Vencidas em aberto: o que já passou e não foi pago (ou baixado) no Bling
+        if (resumo.Vencidas > 0)
+        {
+            string vencidas = Quantidade(resumo.Vencidas, "conta vencida", "contas vencidas") + " em aberto no Bling, somando "
+                + Dinheiro(resumo.TotalVencidas) + ". Pague ou dê baixa no Bling.";
+            html.Append("<p style=\"margin:0 0 24px;padding:12px 16px;border:1px solid #FCA5A5;border-radius:8px;background:#FEF2F2\">"
+                + "<strong style=\"color:#B91C1C\">Atenção:</strong> " + Html(vencidas) + "</p>");
+            texto.Append("ATENÇÃO: " + vencidas + "\n\n");
+        }
+
         // Vencimentos da semana, dia a dia e por empresa
         html.Append(Titulo("Vencimentos dos próximos 7 dias"));
         texto.Append("VENCIMENTOS DOS PRÓXIMOS 7 DIAS\n");

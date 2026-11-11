@@ -25,6 +25,9 @@ export interface ResumoPainel {
   totalSemanaAtual: number;
   notasPendentes: number;
   valorNotasPendentes: number;
+  /** Contas em aberto no Bling com vencimento antes de hoje. */
+  totalVencidas?: number;
+  quantidadeVencidas?: number;
   semanas: TotalSemana[];
   empresas: TotalEmpresa[];
 }
@@ -367,7 +370,7 @@ export const DESCRICAO_ETAPA: { [etapa: string]: string } = {
   LancamentoContaPagar: 'Lançamento da conta a pagar'
 };
 
-export type TipoAviso = 'NotaComProblema' | 'BlingDesconectado' | 'CaixaEmailFalhando';
+export type TipoAviso = 'NotaComProblema' | 'BlingDesconectado' | 'CaixaEmailFalhando' | 'ContasVencidas';
 
 /** Um problema em aberto que precisa de alguém (sininho do topo). */
 export interface Aviso {
@@ -510,4 +513,11 @@ export function seloContrato(contrato: SituacaoContrato | undefined, diasRestant
     return { texto: 'Teste encerrado', classe: 'badge badge-danger' };
   }
   return { texto: 'Contratado', classe: 'badge badge-success' };
+}
+
+/** Avisos de vencimento da rede: tolerância das vencidas (dias de atraso) e o e-mail diário de hoje e amanhã. */
+export interface AlertasVencimento {
+  avisoVencidasDias: number;
+  alertaDiarioAtivo: boolean;
+  alertaDiarioHora: number;
 }

@@ -88,8 +88,20 @@ namespace Previsio.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AlertaVencimentosAtivo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AlertaVencimentosEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("AlertaVencimentosHora")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("AvisoVencidasDias")
+                        .HasColumnType("integer");
 
                     b.Property<string>("BlingClientId")
                         .HasMaxLength(200)

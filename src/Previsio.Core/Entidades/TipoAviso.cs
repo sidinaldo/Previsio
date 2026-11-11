@@ -13,5 +13,8 @@ public enum TipoAviso
     BlingDesconectado = 1,
 
     // O Previsio não consegue entrar na caixa de e-mail (senha trocada, IMAP desligado)
-    CaixaEmailFalhando = 2
+    CaixaEmailFalhando = 2,
+
+    // Contas a pagar em aberto no Bling com vencimento passado há mais dias que a tolerância da rede
+    ContasVencidas = 3
 }

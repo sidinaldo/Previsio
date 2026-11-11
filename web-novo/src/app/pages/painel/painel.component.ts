@@ -63,7 +63,8 @@ export class PainelComponent {
     if (!resumo) {
       return false;
     }
-    return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0;
+    return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0
+      && (resumo.quantidadeVencidas ?? 0) === 0;
   });
 
   // Todas as semanas zeradas: no lugar do gráfico (que mostraria uma escala sem sentido) vai o aviso

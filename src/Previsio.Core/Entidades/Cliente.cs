@@ -35,6 +35,13 @@ public class Cliente : ICaixaEmail
     public int ResumoSemanalHora { get; set; } = 7;
     public DateTime? ResumoSemanalEnviadoEm { get; set; }
 
+    // Contas vencidas: viram aviso depois de N dias de atraso (1 = no dia seguinte ao vencimento).
+    // Alerta diário: e-mail com as contas que vencem hoje e amanhã, na hora escolhida (Brasília).
+    public int AvisoVencidasDias { get; set; } = 1;
+    public bool AlertaVencimentosAtivo { get; set; } = true;
+    public int AlertaVencimentosHora { get; set; } = 7;
+    public DateTime? AlertaVencimentosEnviadoEm { get; set; }
+
     // Teste grátis: termina no início do dia seguinte ao último dia (UTC). Acabado o teste sem contratar,
     // o Previsio para de ler e-mails e lançar no Bling; os usuários continuam vendo os dados.
     public SituacaoContrato Contrato { get; set; } = SituacaoContrato.Contratado;

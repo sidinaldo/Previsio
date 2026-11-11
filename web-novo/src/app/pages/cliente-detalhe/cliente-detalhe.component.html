@@ -144,6 +144,8 @@
 
       <app-contrato-cliente [cliente]="atual" (alterado)="aoAlterarContrato($event)" />
 
+      <app-alertas-vencimento [clienteId]="atual.id" />
+
       <app-resumo-semanal [clienteId]="atual.id" />
 
       <div class="card">

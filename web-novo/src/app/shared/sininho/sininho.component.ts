@@ -13,7 +13,8 @@ export const INTERVALO_AVISOS_MS = 60000;
 const ICONES: Record<TipoAviso, string> = {
   NotaComProblema: 'receipt_long',
   BlingDesconectado: 'link_off',
-  CaixaEmailFalhando: 'mail'
+  CaixaEmailFalhando: 'mail',
+  ContasVencidas: 'event_busy'
 };
 
 /**

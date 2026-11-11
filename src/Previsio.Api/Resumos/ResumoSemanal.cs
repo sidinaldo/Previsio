@@ -26,6 +26,10 @@ public class ResumoSemanal
     public int NotasLancadas { get; set; }
     public int NotasComProblema { get; set; }
 
+    // Contas em aberto no Bling com vencimento antes de hoje
+    public int Vencidas { get; set; }
+    public decimal TotalVencidas { get; set; }
+
     // Os mesmos avisos abertos do sininho
     public List<Aviso> Problemas { get; set; } = new List<Aviso>();
 }

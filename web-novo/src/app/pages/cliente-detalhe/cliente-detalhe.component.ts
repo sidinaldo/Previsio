@@ -15,6 +15,7 @@ import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 import { ContratoClienteComponent } from './contrato-cliente.component';
+import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -22,7 +23,7 @@ import { ContratoClienteComponent } from './contrato-cliente.component';
  */
 @Component({
   selector: 'app-cliente-detalhe',
-  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent, ContratoClienteComponent],
+  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent, ContratoClienteComponent, AlertasVencimentoComponent],
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {

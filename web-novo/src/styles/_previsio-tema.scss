@@ -1252,6 +1252,11 @@ app-sidebar {
   background-color: var(--pv-alerta-suave);
 }
 
+.pv-kpi__icone--erro {
+  color: var(--pv-erro);
+  background-color: var(--pv-erro-suave);
+}
+
 .pv-kpi__icone--neutro {
   color: var(--pv-texto-secundario);
   background-color: var(--pv-neutro-suave);
@@ -2905,4 +2910,16 @@ app-paginacao.pv-paginacao {
 
 .pv-teste-gratis {
   margin-top: 12px;
+}
+
+// Avisos de vencimento: campo de dias com a unidade ao lado
+.pv-alerta__dias {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.pv-alerta__numero.pv-campo {
+  width: 80px;
 }

@@ -9,6 +9,7 @@ import {
   AlteracaoEmpresa,
   AlteracaoResumoSemanal,
   AlteracaoUsuario,
+  AlertasVencimento,
   Cliente,
   Empresa,
   FiltroFalhas,
@@ -105,6 +106,14 @@ export class PrevisioService {
   /** Saúde das integrações de todas as redes (admin). */
   obterSaude(): Observable<Saude> {
     return this.http.get<Saude>(`${this.api}/saude`);
+  }
+
+  obterAlertasVencimento(clienteId: number): Observable<AlertasVencimento> {
+    return this.http.get<AlertasVencimento>(`${this.api}/clientes/${clienteId}/alertas-vencimento`);
+  }
+
+  alterarAlertasVencimento(clienteId: number, dados: AlertasVencimento): Observable<AlertasVencimento> {
+    return this.http.put<AlertasVencimento>(`${this.api}/clientes/${clienteId}/alertas-vencimento`, dados);
   }
 
   obterResumoSemanal(clienteId: number): Observable<ResumoSemanal> {

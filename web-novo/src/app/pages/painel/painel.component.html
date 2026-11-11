@@ -95,14 +95,22 @@
           <div class="col-lg-3 col-md-6">
             <div class="card pv-kpi">
               <div class="pv-kpi__topo">
-                <p class="pv-kpi__rotulo">Empresas</p>
-                <span class="pv-kpi__icone pv-kpi__icone--neutro" aria-hidden="true">
-                  <i class="material-icons">store</i>
+                <p class="pv-kpi__rotulo">Vencidas em aberto</p>
+                <span class="pv-kpi__icone" aria-hidden="true"
+                      [class.pv-kpi__icone--erro]="(r.quantidadeVencidas ?? 0) > 0"
+                      [class.pv-kpi__icone--neutro]="(r.quantidadeVencidas ?? 0) === 0">
+                  <i class="material-icons">event_busy</i>
                 </span>
               </div>
-              <p class="pv-kpi__valor">{{ r.empresas.length }}</p>
+              <p class="pv-kpi__valor">R$ {{ (r.totalVencidas ?? 0) | number:'1.0-0' }}</p>
               <p class="pv-kpi__auxiliar">
-                <a routerLink="/pages/empresas">Gerenciar conexões</a>
+                @if ((r.quantidadeVencidas ?? 0) === 0) {
+                  Nenhuma conta vencida no Bling
+                } @else if (r.quantidadeVencidas === 1) {
+                  1 conta: pague ou dê baixa no Bling
+                } @else {
+                  {{ r.quantidadeVencidas }} contas: pague ou dê baixa no Bling
+                }
               </p>
             </div>
           </div>

@@ -43,7 +43,8 @@ async function montar() {
     id: 7, nome: 'Rede', imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@rede.com.br',
     blingClientId: null, blingClientSecretCadastrado: false, ativo: true
   });
-  // Card do resumo semanal, no fim da tela
+  // Cards do fim da tela: avisos de vencimento e resumo por e-mail
+  api.expectOne(`${API}/clientes/7/alertas-vencimento`).flush({ avisoVencidasDias: 1, alertaDiarioAtivo: true, alertaDiarioHora: 7 });
   api.expectOne(`${API}/clientes/7/resumo-semanal`).flush({ ativo: true, dia: 1, hora: 7, ultimoEnvioEm: null, destinatarios: 1 });
   await fixture.whenStable();
   return { fixture, api, tela: fixture.nativeElement as HTMLElement };
