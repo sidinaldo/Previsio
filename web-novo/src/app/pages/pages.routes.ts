@@ -65,6 +65,11 @@ export const PAGES_ROUTES: Routes = [
         path: 'usuarios',
         canActivate: [somenteAdmin],
         loadComponent: () => import('./usuarios/usuarios.component').then(m => m.UsuariosComponent)
+      },
+      {
+        path: 'saude',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./saude/saude.component').then(m => m.SaudeComponent)
       }
     ]
   },

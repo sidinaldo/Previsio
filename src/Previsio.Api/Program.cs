@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
 using Previsio.Api.Resumos;
+using Previsio.Api.Saude;
 using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
@@ -88,6 +89,7 @@ builder.Services.AddScoped<AvisosService>();
 builder.Services.AddScoped<AvisosJob>();
 builder.Services.AddScoped<ResumoSemanalService>();
 builder.Services.AddScoped<ResumoSemanalJob>();
+builder.Services.AddScoped<SaudeService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
 builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
@@ -163,6 +165,7 @@ builder.Services.AddHangfireServer(opcoes =>
     opcoes.WorkerCount = 2;
 });
 builder.Services.AddSingleton<IExecucaoJobs, ExecucaoJobsHangfire>();
+builder.Services.AddSingleton<IAgendaJobs, AgendaJobsHangfire>();
 
 // Painel Angular
 string urlFront = builder.Configuration["Front:Url"] ?? "http://localhost:4200";

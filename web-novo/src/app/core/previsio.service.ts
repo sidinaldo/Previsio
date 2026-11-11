@@ -24,6 +24,7 @@ import {
   SituacaoJob,
   ResumoPainel,
   ResumoSemanal,
+  Saude,
   ResultadoTesteEmail,
   TesteEmail,
   Usuario,
@@ -83,6 +84,11 @@ export class PrevisioService {
   marcarAvisosVistos(): Observable<void> {
     const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
     return this.http.post<void>(`${this.api}/avisos/vistos`, {}, { context });
+  }
+
+  /** Saúde das integrações de todas as redes (admin). */
+  obterSaude(): Observable<Saude> {
+    return this.http.get<Saude>(`${this.api}/saude`);
   }
 
   obterResumoSemanal(clienteId: number): Observable<ResumoSemanal> {

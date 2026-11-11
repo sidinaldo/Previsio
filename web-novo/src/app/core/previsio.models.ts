@@ -392,3 +392,57 @@ export interface AlteracaoResumoSemanal {
   dia: number;
   hora: number;
 }
+
+// ---------- Saúde das integrações (admin) ----------
+
+export interface SaudeCaixa {
+  usuario: string;
+  ultimaLeituraEm: string | null;
+  ultimaFalhaEm: string | null;
+  ultimoErro: string | null;
+  falhando: boolean;
+}
+
+export interface SaudeEmpresa {
+  id: number;
+  nome: string;
+  cnpj: string;
+  blingConectado: boolean;
+  tokenValidoAte: string | null;
+  ultimaSincronizacaoEm: string | null;
+  // Só para empresa com caixa de e-mail própria
+  caixa: SaudeCaixa | null;
+  notasAguardando: number;
+  notasComProblema: number;
+  avisosAbertos: number;
+}
+
+export interface SaudeRede {
+  clienteId: number;
+  nome: string;
+  atencao: boolean;
+  avisosAbertos: number;
+  caixa: SaudeCaixa | null;
+  notasAguardando: number;
+  notasComProblema: number;
+  ultimaNotaEm: string | null;
+  empresas: SaudeEmpresa[];
+}
+
+export type SituacaoJobAgendado = 'Ok' | 'Falhou' | 'TentandoDeNovo' | 'Rodando' | 'NuncaRodou';
+
+export interface SaudeJob {
+  id: string;
+  nome: string;
+  situacao: SituacaoJobAgendado;
+  ultimaExecucaoEm: string | null;
+  proximaExecucaoEm: string | null;
+  erro: string | null;
+}
+
+export interface Saude {
+  geradoEm: string;
+  redesComAtencao: number;
+  jobs: SaudeJob[];
+  redes: SaudeRede[];
+}

@@ -16,7 +16,8 @@ export const MENU: ItemMenu[] = [
   { path: '/pages/falhas', title: 'Falhas', icone: 'error_outline' },
   { path: '/pages/empresas', title: 'Empresas', icone: 'store' },
   { path: '/pages/clientes', title: 'Clientes', icone: 'groups', somenteAdmin: true },
-  { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true }
+  { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true },
+  { path: '/pages/saude', title: 'Saúde', icone: 'monitor_heart', somenteAdmin: true }
 ];
 
 /**

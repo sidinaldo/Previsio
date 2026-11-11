@@ -29,15 +29,17 @@ describe('menu lateral', () => {
       '/pages/falhas',
       '/pages/empresas',
       '/pages/clientes',
-      '/pages/usuarios'
+      '/pages/usuarios',
+      '/pages/saude'
     ]);
     expect(MENU.map(i => i.icone)).toEqual([
-      'dashboard', 'receipt_long', 'pending_actions', 'error_outline', 'store', 'groups', 'manage_accounts'
+      'dashboard', 'receipt_long', 'pending_actions', 'error_outline', 'store', 'groups', 'manage_accounts', 'monitor_heart'
     ]);
   });
 
-  it('Clientes e Usuários do menu real são somenteAdmin', () => {
+  it('Clientes, Usuários e Saúde do menu real são somenteAdmin', () => {
     const doMenu = itensVisiveis(MENU, false).map(i => i.path);
+    expect(doMenu).not.toContain('/pages/saude');
     expect(doMenu).not.toContain('/pages/clientes');
     expect(doMenu).not.toContain('/pages/usuarios');
     expect(doMenu).toContain('/pages/empresas');

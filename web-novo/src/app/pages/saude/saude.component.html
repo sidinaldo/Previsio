@@ -1,0 +1,216 @@
+<div class="main-content">
+  <div class="container-fluid">
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Saúde das integrações</h1>
+        <p class="pv-pagina__subtitulo">
+          Caixas de e-mail, Bling e jobs de todas as redes.
+          @if (saude(); as s) {
+            Atualizado às {{ s.geradoEm | date:'HH:mm' }}.
+          }
+        </p>
+      </div>
+      <div class="pv-pagina__acoes">
+        <button type="button" class="btn btn-secundario" [pvCarregando]="carregando()" [disabled]="carregando()" (click)="atualizar()">
+          <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
+        </button>
+      </div>
+    </div>
+
+    @if (erro()) {
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    @if (saude(); as s) {
+      <div class="pv-saude__resumo">
+        <div class="pv-saude__numero" [class.pv-saude__numero--atencao]="s.redesComAtencao > 0">
+          <span class="pv-saude__rotulo">Redes que pedem atenção</span>
+          <span class="pv-saude__valor">{{ s.redesComAtencao }} de {{ s.redes.length }}</span>
+        </div>
+        <div class="pv-saude__numero" [class.pv-saude__numero--atencao]="jobsComProblema() > 0">
+          <span class="pv-saude__rotulo">Jobs com falha</span>
+          <span class="pv-saude__valor">{{ jobsComProblema() }} de {{ s.jobs.length }}</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pv-card__cabecalho">
+          <div>
+            <h2 class="pv-card__titulo">Jobs agendados</h2>
+            <p class="pv-card__descricao">Rodam sozinhos no servidor, para todas as redes</p>
+          </div>
+        </div>
+        @if (s.jobs.length === 0) {
+          <div class="card-body"><p class="pv-formulario__ajuda">Nenhum job agendado encontrado no Hangfire.</p></div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Job</th>
+                  <th>Situação</th>
+                  <th>Última execução</th>
+                  <th>Próxima execução</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (job of s.jobs; track job.id) {
+                  <tr>
+                    <td><strong>{{ job.nome }}</strong></td>
+                    <td>
+                      <span [class]="'badge ' + classeJob(job)">{{ textoJob(job) }}</span>
+                      @if (job.erro) {
+                        <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ job.erro }}</span>
+                      }
+                    </td>
+                    <td class="pv-numero">
+                      @if (job.ultimaExecucaoEm) { {{ job.ultimaExecucaoEm | date:'dd/MM/yyyy HH:mm' }} } @else { — }
+                    </td>
+                    <td class="pv-numero">
+                      @if (job.proximaExecucaoEm) { {{ job.proximaExecucaoEm | date:'dd/MM/yyyy HH:mm' }} } @else { — }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="pv-saude__filtros">
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar rede, empresa ou CNPJ" />
+        <div class="form-check">
+          <label class="form-check-label">
+            <input class="form-check-input" type="checkbox" name="soAtencao" [ngModel]="soAtencao()" (ngModelChange)="mudarSoAtencao($event)">
+            Só redes que pedem atenção
+            <span class="form-check-sign"><span class="check"></span></span>
+          </label>
+        </div>
+      </div>
+
+      @if (s.redes.length === 0) {
+        <div class="card">
+          <div class="pv-vazio pv-vazio--compacto">
+            <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">groups</i></span>
+            <p class="pv-vazio__titulo">Nenhuma rede ativa.</p>
+          </div>
+        </div>
+      } @else if (redesFiltradas().length === 0) {
+        <p class="pv-sem-resultado">Nenhuma rede encontrada com esses filtros.</p>
+      }
+
+      @for (rede of redesDaPagina(); track rede.clienteId) {
+        <div class="card pv-saude__rede">
+          <div class="pv-card__cabecalho">
+            <div>
+              <h2 class="pv-card__titulo">
+                <a [routerLink]="['/pages/clientes', rede.clienteId]">{{ rede.nome }}</a>
+                @if (rede.atencao) {
+                  <span class="badge badge-warning ml-1">Atenção · {{ quantidade(rede.avisosAbertos, 'aviso', 'avisos') }}</span>
+                } @else {
+                  <span class="badge badge-success ml-1">Em dia</span>
+                }
+              </h2>
+              <p class="pv-card__descricao">
+                {{ quantidade(rede.empresas.length, 'empresa', 'empresas') }}
+                · {{ quantidade(rede.notasAguardando, 'nota aguardando lançamento', 'notas aguardando lançamento') }}
+                · {{ quantidade(rede.notasComProblema, 'com problema', 'com problema') }}
+                @if (rede.ultimaNotaEm) {
+                  · última nota em {{ rede.ultimaNotaEm | date:'dd/MM/yyyy HH:mm' }}
+                } @else {
+                  · nenhuma nota recebida ainda
+                }
+              </p>
+            </div>
+          </div>
+
+          <div class="pv-saude__caixa" [class.pv-saude__caixa--falhando]="rede.caixa?.falhando">
+            <i class="material-icons" aria-hidden="true">mail</i>
+            <div>
+              <span class="pv-saude__caixa-titulo">Caixa da rede</span>
+              @if (rede.caixa && rede.caixa.usuario) {
+                <span>{{ rede.caixa.usuario }}</span>
+                @if (rede.caixa.falhando) {
+                  <span class="badge badge-danger ml-1">Falhando</span>
+                  <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">
+                    Desde {{ rede.caixa.ultimaFalhaEm | date:'dd/MM/yyyy HH:mm' }}: {{ rede.caixa.ultimoErro }}
+                  </span>
+                } @else if (rede.caixa.ultimaLeituraEm) {
+                  <span class="pv-tabela__auxiliar">Lida às {{ rede.caixa.ultimaLeituraEm | date:'dd/MM/yyyy HH:mm' }}</span>
+                } @else {
+                  <span class="pv-tabela__auxiliar">Ainda não foi lida</span>
+                }
+              } @else {
+                <span class="pv-tabela__auxiliar">Não cadastrada</span>
+              }
+            </div>
+          </div>
+
+          @if (rede.empresas.length > 0) {
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Empresa</th>
+                    <th>Bling</th>
+                    <th>Última sincronização</th>
+                    <th>Caixa própria</th>
+                    <th class="text-right">Aguardando</th>
+                    <th class="text-right">Com problema</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (empresa of rede.empresas; track empresa.id) {
+                    <tr>
+                      <td>
+                        <strong>{{ empresa.nome }}</strong>
+                        <span class="pv-tabela__auxiliar pv-numero">{{ formatarCnpj(empresa.cnpj) }}</span>
+                      </td>
+                      <td>
+                        @if (empresa.blingConectado) {
+                          <span class="badge badge-success">Conectado</span>
+                          @if (empresa.tokenValidoAte) {
+                            <span class="pv-tabela__auxiliar">Token até {{ empresa.tokenValidoAte | date:'dd/MM HH:mm' }} (renova sozinho)</span>
+                          }
+                        } @else {
+                          <span class="badge badge-danger">Desconectado</span>
+                        }
+                      </td>
+                      <td class="pv-numero">
+                        @if (empresa.ultimaSincronizacaoEm) { {{ empresa.ultimaSincronizacaoEm | date:'dd/MM/yyyy HH:mm' }} } @else { — }
+                      </td>
+                      <td>
+                        @if (empresa.caixa; as caixa) {
+                          {{ caixa.usuario }}
+                          @if (caixa.falhando) {
+                            <span class="badge badge-danger ml-1">Falhando</span>
+                            <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ caixa.ultimoErro }}</span>
+                          } @else if (caixa.ultimaLeituraEm) {
+                            <span class="pv-tabela__auxiliar">Lida às {{ caixa.ultimaLeituraEm | date:'dd/MM/yyyy HH:mm' }}</span>
+                          } @else {
+                            <span class="pv-tabela__auxiliar">Ainda não foi lida</span>
+                          }
+                        } @else {
+                          <span class="pv-tabela__auxiliar">Usa a da rede</span>
+                        }
+                      </td>
+                      <td class="text-right pv-numero">{{ empresa.notasAguardando }}</td>
+                      <td class="text-right pv-numero" [class.pv-saude__problema]="empresa.notasComProblema > 0">{{ empresa.notasComProblema }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
+
+      @if (redesFiltradas().length > 0) {
+        <app-paginacao [total]="redesFiltradas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
+      }
+    } @else if (carregando()) {
+      <p class="pv-pagina__subtitulo">Carregando...</p>
+    }
+  </div>
+</div>
