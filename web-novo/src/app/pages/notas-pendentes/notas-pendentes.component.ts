@@ -10,11 +10,13 @@ import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 import { ResolucaoManualComponent } from '../../shared/resolucao-manual/resolucao-manual.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -29,6 +31,11 @@ export class NotasPendentesComponent {
   readonly ehAdmin = inject(SessaoService).ehAdmin;
 
   readonly notas = signal<Nota[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly notasDaPagina = computed(() => paginar(this.notas(), this.pagina(), this.tamanhoPagina()));
   readonly carregando = signal(false);
   readonly erro = signal('');
   readonly mensagem = signal('');

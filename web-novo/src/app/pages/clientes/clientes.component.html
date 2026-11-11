@@ -128,7 +128,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (cliente of lista(); track cliente.id) {
+              @for (cliente of clientesDaPagina(); track cliente.id) {
                 <tr [class.pv-linha--editando]="estaEditando(cliente)">
                   <td>
                     <a [routerLink]="['/pages/clientes', cliente.id]"><strong>{{ cliente.nome }}</strong></a>
@@ -175,6 +175,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginacao [total]="lista().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

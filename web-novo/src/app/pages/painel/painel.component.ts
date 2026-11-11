@@ -9,10 +9,12 @@ import { ResumoPainel, TotalSemana } from '../../core/previsio.models';
 // Chartist 0.11 é carregado como script global (angular.json), como no template
 declare const Chartist: any;
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective, PaginacaoComponent],
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {
@@ -20,6 +22,17 @@ export class PainelComponent {
   private readonly injector = inject(Injector);
 
   readonly resumo = signal<ResumoPainel | null>(null);
+
+  // Paginação da tabela "Por empresa" (a linha de total soma todas as empresas)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly empresasDaPagina = computed(() => {
+    const resumo = this.resumo();
+    if (!resumo) {
+      return [];
+    }
+    return paginar(resumo.empresas, this.pagina(), this.tamanhoPagina());
+  });
   readonly dias = signal(30);
   readonly carregando = signal(false);
   readonly erro = signal('');

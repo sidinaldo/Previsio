@@ -128,7 +128,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (usuario of usuarios(); track usuario.id) {
+              @for (usuario of usuariosDaPagina(); track usuario.id) {
                 <tr [class.pv-linha--inativa]="!usuario.ativo" [class.pv-linha--editando]="estaEditando(usuario)">
                   <td>
                     <strong>{{ usuario.nome }}</strong>
@@ -184,6 +184,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginacao [total]="usuarios().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

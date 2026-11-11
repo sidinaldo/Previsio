@@ -171,7 +171,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (empresa of empresas(); track empresa.id) {
+              @for (empresa of empresasDaPagina(); track empresa.id) {
                 <tr [class.pv-linha--inativa]="!empresa.ativo" [class.pv-linha--editando]="estaEditando(empresa)">
                   <td>
                     <a [routerLink]="['/pages/empresas', empresa.id]"><strong>{{ empresa.nome }}</strong></a>
@@ -253,6 +253,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginacao [total]="empresas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -9,6 +9,8 @@ import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 /**
  * Cadastro de clientes (só admin). Cada cliente é uma rede: tem a própria caixa de e-mail,
@@ -17,7 +19,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-clientes',
-  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {
@@ -28,6 +30,11 @@ export class ClientesComponent {
   private readonly injector = inject(Injector);
 
   readonly lista = this.clientes.lista;
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly clientesDaPagina = computed(() => paginar(this.lista(), this.pagina(), this.tamanhoPagina()));
   readonly clienteExibido = this.sessao.clienteId;
 
   readonly nome = signal('');

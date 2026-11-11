@@ -1611,6 +1611,39 @@ select.form-control:not([size]):not([multiple]):disabled {
   color: var(--pv-texto-secundario);
 }
 
+// Componente app-paginacao (tabelas paginadas na própria tela)
+app-paginacao.pv-paginacao {
+  flex-wrap: wrap;
+}
+
+.pv-paginacao__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+// "Por página" e a navegação: cada grupo fica inteiro numa linha
+.pv-paginacao__grupo {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  white-space: nowrap;
+
+  label {
+    margin: 0;
+  }
+}
+
+// Select menor, para caber ao lado dos botões da paginação
+.pv-campo.pv-campo--compacto {
+  height: 32px;
+  padding: 0 28px 0 8px;
+  font-size: 13px;
+  background-position: right 4px center;
+}
+
 // Linha inativa: texto mais apagado, mas ainda legível (auxiliar = 4,76:1)
 .table > tbody > tr.pv-linha--inativa > td {
   color: var(--pv-texto-auxiliar);

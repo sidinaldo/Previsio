@@ -11,6 +11,8 @@ import { AlteracaoCliente, Cliente, DESCRICAO_ORIGEM_APLICATIVO, Empresa } from 
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -18,7 +20,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
  */
 @Component({
   selector: 'app-cliente-detalhe',
-  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective],
+  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent],
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {
@@ -32,6 +34,11 @@ export class ClienteDetalheComponent {
 
   readonly cliente = signal<Cliente | null>(null);
   readonly empresas = signal<Empresa[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly empresasDaPagina = computed(() => paginar(this.empresas(), this.pagina(), this.tamanhoPagina()));
   readonly carregando = signal(true);
 
   readonly nome = signal('');

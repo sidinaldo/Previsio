@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -9,6 +9,8 @@ import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } 
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 /**
  * Cadastro de usuários (só admin): quem entra no painel e de qual cliente.
@@ -17,7 +19,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-usuarios',
-  imports: [FormsModule, DatePipe, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent],
   templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent {
@@ -30,6 +32,11 @@ export class UsuariosComponent {
   readonly clientes = inject(ClientesService).lista;
 
   readonly usuarios = signal<Usuario[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly usuariosDaPagina = computed(() => paginar(this.usuarios(), this.pagina(), this.tamanhoPagina()));
   readonly mensagem = signal('');
   readonly erro = signal('');
 
@@ -74,6 +81,11 @@ export class UsuariosComponent {
   }
 
   trocarPerfil(perfil: string): void {
+    // O "change" disparado por avisarCamposPreenchidos chega aqui com o mesmo perfil;
+    // sem esta saída, um chamava o outro sem parar (mais de mil eventos por segundo)
+    if (perfil === this.perfil()) {
+      return;
+    }
     this.perfil.set(perfil);
     // O campo do cliente aparece ou some conforme o perfil
     avisarCamposPreenchidos(this.elemento.nativeElement);

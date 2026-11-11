@@ -13,6 +13,8 @@ import { AlteracaoEmpresa, DESCRICAO_ORIGEM_APLICATIVO, Empresa, NovaEmpresa } f
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
 
@@ -22,7 +24,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -34,6 +36,11 @@ export class EmpresasComponent {
   // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
   readonly ehAdmin = inject(SessaoService).ehAdmin;
   readonly empresas = signal<Empresa[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly empresasDaPagina = computed(() => paginar(this.empresas(), this.pagina(), this.tamanhoPagina()));
   // Só depois de a lista chegar dá para dizer "nenhuma empresa" (com erro, fica só o aviso)
   readonly carregada = signal(false);
 
