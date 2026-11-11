@@ -42,6 +42,14 @@ public class Cliente : ICaixaEmail
     public int AlertaVencimentosHora { get; set; } = 7;
     public DateTime? AlertaVencimentosEnviadoEm { get; set; }
 
+    // Conferência com o Bling: antes de lançar, procura a conta já lançada à mão (mesmo fornecedor,
+    // vencimento e valor, com as tolerâncias); e fecha sozinhas as notas pendentes encontradas lá.
+    public bool ConferirBlingAntesDeLancar { get; set; } = true;
+    public bool ConferenciaExigeNumeroNota { get; set; }
+    public decimal ConferenciaToleranciaValor { get; set; } = 0.10m;
+    public int ConferenciaToleranciaDias { get; set; }
+    public bool ConferenciaFecharPendentes { get; set; } = true;
+
     // Teste grátis: termina no início do dia seguinte ao último dia (UTC). Acabado o teste sem contratar,
     // o Previsio para de ler e-mails e lançar no Bling; os usuários continuam vendo os dados.
     public SituacaoContrato Contrato { get; set; } = SituacaoContrato.Contratado;

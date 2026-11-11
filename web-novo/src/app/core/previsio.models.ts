@@ -367,6 +367,7 @@ export const DESCRICAO_ETAPA: { [etapa: string]: string } = {
   RenovacaoToken: 'Renovação do acesso ao Bling',
   BuscaFornecedor: 'Busca do fornecedor no Bling',
   CadastroFornecedor: 'Cadastro do fornecedor no Bling',
+  ConferenciaBling: 'Conferência no Bling',
   LancamentoContaPagar: 'Lançamento da conta a pagar'
 };
 
@@ -520,4 +521,15 @@ export interface AlertasVencimento {
   avisoVencidasDias: number;
   alertaDiarioAtivo: boolean;
   alertaDiarioHora: number;
+}
+
+/** Conferência com o Bling da rede: evita lançar de novo a nota lançada à mão e fecha as pendentes encontradas lá. */
+export interface ConferenciaBling {
+  conferirAntesDeLancar: boolean;
+  exigeNumeroNota: boolean;
+  /** Diferença de valor aceita, em reais (0 a 5). */
+  toleranciaValor: number;
+  /** Diferença de vencimento aceita, em dias (0 a 5). */
+  toleranciaDias: number;
+  fecharPendentes: boolean;
 }

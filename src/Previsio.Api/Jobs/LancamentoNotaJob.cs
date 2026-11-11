@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Conferencia;
 using Previsio.Api.Contratos;
 using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
@@ -122,6 +123,36 @@ public class LancamentoNotaJob
             {
                 etapa = EtapaFalha.CadastroFornecedor;
                 contatoId = await _bling.CriarContatoAsync(conta, token, MontarFornecedor(nota), cancelamento);
+            }
+
+            // Conferência com o Bling: alguém pode ter lançado esta nota à mão antes do Previsio
+            bool nenhumaLancada = !nota.Parcelas.Any(p => p.BlingContaPagarId.HasValue);
+            if (existente != null && nenhumaLancada)
+            {
+                Cliente? rede = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == nota.ClienteId, cancelamento);
+                if (rede != null && rede.ConferirBlingAntesDeLancar)
+                {
+                    etapa = EtapaFalha.ConferenciaBling;
+                    var conferencia = new ConferenciaBlingService(_db, _bling);
+                    ResultadoConferencia resultado = await conferencia.ConferirNoBlingAsync(nota, rede, conta, token, contatoId, cancelamento);
+                    if (resultado.Completa)
+                    {
+                        ConferenciaBlingService.MarcarEncontrada(nota, resultado);
+                        await _db.SaveChangesAsync(cancelamento);
+                        _logger.LogInformation("NF {Numero} já estava lançada no Bling (contas {Contas}): não lançada de novo",
+                            nota.Numero, resultado.Contas());
+                        return true;
+                    }
+                    if (resultado.Parcial)
+                    {
+                        // Encontro parcial nunca lança sozinho: fica para alguém conferir (e vira aviso)
+                        nota.Status = StatusNota.Erro;
+                        nota.MensagemErro = ConferenciaBlingService.MensagemParcial(resultado);
+                        nota.Tentativas = MaximoTentativas;
+                        await _db.SaveChangesAsync(cancelamento);
+                        return true;
+                    }
+                }
             }
 
             etapa = EtapaFalha.LancamentoContaPagar;

@@ -24,6 +24,7 @@ public class PrevisioDbContext : DbContext
         modelBuilder.Entity<Cliente>(entidade =>
         {
             entidade.ToTable("clientes");
+            entidade.Property(c => c.ConferenciaToleranciaValor).HasPrecision(18, 2);
             entidade.Property(c => c.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(c => c.ImapHost).HasMaxLength(200);
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);

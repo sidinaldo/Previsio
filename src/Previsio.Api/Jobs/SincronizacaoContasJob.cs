@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Conferencia;
 using Previsio.Api.Contratos;
 using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
@@ -157,5 +158,9 @@ public class SincronizacaoContasJob
 
         _logger.LogInformation("Empresa {Empresa}: {Quantidade} contas a pagar sincronizadas",
             empresa.Nome, remotas.Count);
+
+        // Com as contas em dia: as notas pendentes que alguém já lançou à mão fecham sozinhas
+        var conferencia = new ConferenciaBlingService(_db, _bling);
+        await conferencia.FecharPendentesAsync(empresa, conta, token, cancelamento);
     }
 }

@@ -110,6 +110,22 @@ namespace Previsio.Data.Migrations
                     b.Property<string>("BlingClientSecretProtegido")
                         .HasColumnType("text");
 
+                    b.Property<bool>("ConferenciaExigeNumeroNota")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConferenciaFecharPendentes")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ConferenciaToleranciaDias")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ConferenciaToleranciaValor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("ConferirBlingAntesDeLancar")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("ContratadoEm")
                         .HasColumnType("timestamp with time zone");
 

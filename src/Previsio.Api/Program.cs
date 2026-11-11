@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
+using Previsio.Api.Conferencia;
 using Previsio.Api.Contratos;
 using Previsio.Api.Exportacao;
 using Previsio.Api.NotasSoPdf;
@@ -101,6 +102,7 @@ builder.Services.AddScoped<AvisosTesteService>();
 builder.Services.AddScoped<AvisosTesteJob>();
 builder.Services.AddScoped<AlertaVencimentosService>();
 builder.Services.AddScoped<AlertaVencimentosJob>();
+builder.Services.AddScoped<ConfiguracaoConferenciaService>();
 
 // Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
 builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));

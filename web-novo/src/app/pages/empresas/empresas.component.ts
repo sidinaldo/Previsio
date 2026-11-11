@@ -21,6 +21,7 @@ import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-o
 import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 import { CertificadoEmpresaComponent } from './certificado-empresa.component';
 import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
+import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -31,7 +32,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {

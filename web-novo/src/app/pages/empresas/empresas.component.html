@@ -290,6 +290,7 @@
     </div>
 
     @if (clienteId(); as id) {
+      <app-conferencia-bling [clienteId]="id" />
       <app-alertas-vencimento [clienteId]="id" />
       <app-resumo-semanal [clienteId]="id" />
     }

@@ -10,6 +10,7 @@ import {
   AlteracaoResumoSemanal,
   AlteracaoUsuario,
   AlertasVencimento,
+  ConferenciaBling,
   Cliente,
   Empresa,
   FiltroFalhas,
@@ -106,6 +107,14 @@ export class PrevisioService {
   /** Saúde das integrações de todas as redes (admin). */
   obterSaude(): Observable<Saude> {
     return this.http.get<Saude>(`${this.api}/saude`);
+  }
+
+  obterConferenciaBling(clienteId: number): Observable<ConferenciaBling> {
+    return this.http.get<ConferenciaBling>(`${this.api}/clientes/${clienteId}/conferencia-bling`);
+  }
+
+  alterarConferenciaBling(clienteId: number, dados: ConferenciaBling): Observable<ConferenciaBling> {
+    return this.http.put<ConferenciaBling>(`${this.api}/clientes/${clienteId}/conferencia-bling`, dados);
   }
 
   obterAlertasVencimento(clienteId: number): Observable<AlertasVencimento> {
