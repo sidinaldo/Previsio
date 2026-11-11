@@ -17,6 +17,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Core.Painel;
 using Previsio.Data;
+using Previsio.Data.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,7 @@ string conexao = builder.Configuration.GetConnectionString("Previsio")
 
 // Banco
 builder.Services.AddDbContext<PrevisioDbContext>(opcoes => opcoes.UseNpgsql(conexao));
+builder.Services.AddScoped(typeof(IRepositorio<>), typeof(Repositorio<>));
 
 // Criptografia de tokens e senhas. As chaves ficam numa pasta fixa:
 // se ela for apagada, os tokens gravados não poderão mais ser lidos.
