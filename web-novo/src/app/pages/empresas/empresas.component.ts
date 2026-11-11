@@ -18,6 +18,7 @@ import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -28,7 +29,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -39,6 +40,7 @@ export class EmpresasComponent {
 
   // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
   private readonly sessao = inject(SessaoService);
+  readonly clienteId = this.sessao.clienteId;
   readonly ehAdmin = this.sessao.ehAdmin;
 
   // Caixa da rede, mostrada na coluna E-mail das empresas sem caixa própria

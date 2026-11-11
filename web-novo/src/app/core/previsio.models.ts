@@ -376,3 +376,19 @@ export interface PainelAvisos {
   total: number;
   itens: Aviso[];
 }
+
+/** Resumo semanal por e-mail da rede. dia: 0 = domingo ... 6 = sábado; hora no horário de Brasília. */
+export interface ResumoSemanal {
+  ativo: boolean;
+  dia: number;
+  hora: number;
+  ultimoEnvioEm: string | null;
+  // Usuários ativos da rede que recebem
+  destinatarios: number;
+}
+
+export interface AlteracaoResumoSemanal {
+  ativo: boolean;
+  dia: number;
+  hora: number;
+}

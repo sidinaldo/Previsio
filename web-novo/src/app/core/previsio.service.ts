@@ -7,6 +7,7 @@ import { PREVISIO_CONFIG } from './previsio.config';
 import {
   AlteracaoCliente,
   AlteracaoEmpresa,
+  AlteracaoResumoSemanal,
   AlteracaoUsuario,
   Cliente,
   Empresa,
@@ -22,6 +23,7 @@ import {
   PainelAvisos,
   SituacaoJob,
   ResumoPainel,
+  ResumoSemanal,
   ResultadoTesteEmail,
   TesteEmail,
   Usuario,
@@ -81,6 +83,19 @@ export class PrevisioService {
   marcarAvisosVistos(): Observable<void> {
     const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
     return this.http.post<void>(`${this.api}/avisos/vistos`, {}, { context });
+  }
+
+  obterResumoSemanal(clienteId: number): Observable<ResumoSemanal> {
+    return this.http.get<ResumoSemanal>(`${this.api}/clientes/${clienteId}/resumo-semanal`);
+  }
+
+  alterarResumoSemanal(clienteId: number, dados: AlteracaoResumoSemanal): Observable<ResumoSemanal> {
+    return this.http.put<ResumoSemanal>(`${this.api}/clientes/${clienteId}/resumo-semanal`, dados);
+  }
+
+  /** Manda o resumo agora, só para o usuário logado. Não conta como o envio da semana. */
+  enviarResumoSemanalTeste(clienteId: number): Observable<void> {
+    return this.http.post<void>(`${this.api}/clientes/${clienteId}/resumo-semanal/teste`, {});
   }
 
   /** Marca a nota com problema como resolvida e lançada manualmente no Bling. */

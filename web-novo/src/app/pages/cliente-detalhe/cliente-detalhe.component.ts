@@ -13,6 +13,7 @@ import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -20,7 +21,7 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
  */
 @Component({
   selector: 'app-cliente-detalhe',
-  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent],
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {

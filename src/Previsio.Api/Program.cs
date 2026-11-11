@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
+using Previsio.Api.Resumos;
 using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
@@ -85,6 +86,8 @@ builder.Services.AddScoped<AutenticacaoService>();
 builder.Services.AddScoped<RedefinicaoSenhaService>();
 builder.Services.AddScoped<AvisosService>();
 builder.Services.AddScoped<AvisosJob>();
+builder.Services.AddScoped<ResumoSemanalService>();
+builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
 builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
@@ -250,5 +253,8 @@ agenda.AddOrUpdate<AvisosJob>(
     "avisos", j => j.ExecutarAsync(CancellationToken.None), "5-59/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<SincronizacaoContasJob>(
     "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), "*/30 * * * *", opcoesAgenda);
+// De hora em hora: o resumo semanal das redes cujo dia e hora chegaram (cada rede escolhe os seus)
+agenda.AddOrUpdate<ResumoSemanalJob>(
+    "resumo-semanal", j => j.ExecutarAsync(CancellationToken.None), "2 * * * *", opcoesAgenda);
 
 app.Run();
