@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Contratos;
 using Previsio.Api.Avisos;
 using Previsio.Api.Dtos;
 using Previsio.Api.Email;
@@ -128,8 +129,9 @@ public class ResumoSemanalService
 
         int diaDaSemana = (int)agoraLocal.DayOfWeek;
         bool diaUtil = agoraLocal.DayOfWeek != DayOfWeek.Saturday && agoraLocal.DayOfWeek != DayOfWeek.Sunday;
+        List<int> redes = await _db.Clientes.Where(PeriodoTeste.Processa(agoraUtc)).Select(c => c.Id).ToListAsync(cancelamento);
         List<Cliente> clientes = await _db.Clientes
-            .Where(c => c.Ativo
+            .Where(c => redes.Contains(c.Id)
                 && c.ResumoSemanalAtivo
                 && (c.ResumoSemanalDia == diaDaSemana || (diaUtil && c.ResumoSemanalDia == TodoDiaUtil))
                 && c.ResumoSemanalHora <= agoraLocal.Hour)

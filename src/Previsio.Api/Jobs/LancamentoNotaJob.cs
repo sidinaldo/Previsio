@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Contratos;
 using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
@@ -40,10 +41,17 @@ public class LancamentoNotaJob
     [AutomaticRetry(Attempts = 0)]
     public async Task LancarPendentesAsync(CancellationToken cancelamento)
     {
+        // Só das redes ativas e contratadas ou com o teste grátis no prazo
+        List<int> redes = await _db.Clientes
+            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
+            .Select(c => c.Id)
+            .ToListAsync(cancelamento);
+
         List<int> ids = await _db.NotasFiscais
-            .Where(n => n.Status == StatusNota.Recebida
-                || n.Status == StatusNota.BlingDesconectado
-                || (n.Status == StatusNota.Erro && n.Tentativas < MaximoTentativas))
+            .Where(n => redes.Contains(n.ClienteId)
+                && (n.Status == StatusNota.Recebida
+                    || n.Status == StatusNota.BlingDesconectado
+                    || (n.Status == StatusNota.Erro && n.Tentativas < MaximoTentativas)))
             .OrderBy(n => n.RecebidaEm)
             .Select(n => n.Id)
             .Take(LoteMaximo)
@@ -74,6 +82,13 @@ public class LancamentoNotaJob
             .FirstOrDefaultAsync(n => n.Id == notaId, cancelamento);
 
         if (nota == null || nota.Empresa == null)
+        {
+            return true;
+        }
+        // Rede desativada ou com o teste grátis acabado: não lança (nem pelo "tentar de novo")
+        int clienteId = nota.ClienteId;
+        bool processa = await _db.Clientes.Where(c => c.Id == clienteId).AnyAsync(PeriodoTeste.Processa(DateTime.UtcNow), cancelamento);
+        if (!processa)
         {
             return true;
         }

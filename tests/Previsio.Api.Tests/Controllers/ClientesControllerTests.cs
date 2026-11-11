@@ -17,7 +17,7 @@ public class ClientesControllerTests
 
     private ClientesController CriarController()
     {
-        var controller = new ClientesController(ServicosDeTeste.Clientes(_db, _protetor), ServicosDeTeste.Empresas(_db, _protetor));
+        var controller = new ClientesController(ServicosDeTeste.Clientes(_db, _protetor), ServicosDeTeste.Empresas(_db, _protetor), new Previsio.Api.Contratos.ContratosService(_db, TimeProvider.System));
         controller.ControllerContext = UsuarioDeTeste.Admin();
         return controller;
     }

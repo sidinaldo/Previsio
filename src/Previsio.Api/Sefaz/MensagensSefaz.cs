@@ -86,10 +86,17 @@ public static class MensagensSefaz
         documento.PreserveWhitespace = true;
         documento.LoadXml(xml);
 
+        System.Security.Cryptography.RSA? chavePrivada = certificado.GetRSAPrivateKey();
+        if (chavePrivada == null)
+        {
+            throw new InvalidOperationException(CertificadoA1.MensagemSemChavePrivada);
+        }
+
         var assinatura = new SignedXml(documento);
-        assinatura.SigningKey = certificado.GetRSAPrivateKey();
-        assinatura.SignedInfo.CanonicalizationMethod = SignedXml.XmlDsigC14NTransformUrl;
-        assinatura.SignedInfo.SignatureMethod = SignedXml.XmlDsigRSASHA1Url;
+        assinatura.SigningKey = chavePrivada;
+        SignedInfo informacoes = assinatura.SignedInfo!;
+        informacoes.CanonicalizationMethod = SignedXml.XmlDsigC14NTransformUrl;
+        informacoes.SignatureMethod = SignedXml.XmlDsigRSASHA1Url;
 
         var referencia = new Reference("#" + id);
         referencia.DigestMethod = SignedXml.XmlDsigSHA1Url;

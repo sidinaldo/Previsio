@@ -4,6 +4,7 @@
   </div>
   <div class="main-panel">
     <app-navbar [clientes]="clientes()" />
+    <app-faixa-teste />
     @if (podeMostrarTelas()) {
       @for (chave of chaveCliente(); track chave) {
         <router-outlet />

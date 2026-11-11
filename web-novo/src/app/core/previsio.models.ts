@@ -139,8 +139,14 @@ export interface Cliente {
   blingClientId: string | null;
   /** O secret nunca volta da API, só se está cadastrado. */
   blingClientSecretCadastrado: boolean;
+  /** Teste grátis: "EmTeste" com os dias que faltam (contando hoje) e o último dia; "TesteEncerrado" parou de processar. */
+  contrato?: SituacaoContrato;
+  testeUltimoDia?: string | null;
+  diasRestantesTeste?: number | null;
   ativo: boolean;
 }
+
+export type SituacaoContrato = 'Contratado' | 'EmTeste' | 'TesteEncerrado';
 
 /** PUT /api/clientes/{id}: só os campos enviados mudam; a senha só troca se vier preenchida. */
 export interface AlteracaoCliente {
@@ -168,6 +174,8 @@ export interface NovoCliente {
   /** Opcionais: aplicativo privado do Bling da rede. Vão juntos ou nenhum. */
   blingClientId?: string;
   blingClientSecret?: string;
+  /** Começa no teste grátis de 15 dias. */
+  emTeste?: boolean;
 }
 
 /** POST /api/email/testar: dados da caixa digitados; sem senha e com clienteId usa a senha gravada da rede. */
@@ -425,6 +433,8 @@ export interface SaudeEmpresa {
 export interface SaudeRede {
   clienteId: number;
   nome: string;
+  contrato?: SituacaoContrato;
+  diasRestantesTeste?: number | null;
   atencao: boolean;
   avisosAbertos: number;
   caixa: SaudeCaixa | null;
@@ -487,3 +497,17 @@ export interface NotaSoPdf {
 
 export const UFS = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR',
   'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'];
+
+/** Texto e cor do selo do contrato (Clientes, Saúde, detalhe do cliente). */
+export function seloContrato(contrato: SituacaoContrato | undefined, diasRestantes: number | null | undefined): { texto: string; classe: string } {
+  if (contrato === 'EmTeste') {
+    if (diasRestantes === 1) {
+      return { texto: 'Teste · último dia', classe: 'badge badge-warning' };
+    }
+    return { texto: 'Teste · faltam ' + (diasRestantes ?? 0) + ' dias', classe: 'badge badge-info' };
+  }
+  if (contrato === 'TesteEncerrado') {
+    return { texto: 'Teste encerrado', classe: 'badge badge-danger' };
+  }
+  return { texto: 'Contratado', classe: 'badge badge-success' };
+}

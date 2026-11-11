@@ -216,6 +216,16 @@ export class PrevisioService {
     return this.http.delete<void>(`${this.api}/empresas/${empresaId}/bling`);
   }
 
+  /** A rede contratou: sai do teste grátis (admin). */
+  contratarCliente(clienteId: number): Observable<Cliente> {
+    return this.http.post<Cliente>(`${this.api}/clientes/${clienteId}/contratar`, {});
+  }
+
+  /** Mais dias de teste grátis, do fim atual ou de hoje se já acabou (admin). */
+  prorrogarTeste(clienteId: number, dias: number): Observable<Cliente> {
+    return this.http.post<Cliente>(`${this.api}/clientes/${clienteId}/prorrogar-teste`, { dias: dias });
+  }
+
   obterCliente(clienteId: number): Observable<Cliente> {
     return this.http.get<Cliente>(`${this.api}/clientes/${clienteId}`);
   }

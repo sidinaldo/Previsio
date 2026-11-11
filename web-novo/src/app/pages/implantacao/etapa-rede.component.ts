@@ -30,6 +30,8 @@ export class EtapaRedeComponent {
   readonly imapHost = signal('imap.gmail.com');
   readonly imapPorta = signal<number | null>(993);
   readonly imapSsl = signal(true);
+  // Só no cadastro: a rede nova começa no teste grátis
+  readonly emTeste = signal(true);
   readonly imapUsuario = signal('');
   readonly imapSenha = signal('');
   readonly clientId = signal('');
@@ -126,7 +128,8 @@ export class EtapaRedeComponent {
       imapPorta: Number(this.imapPorta()),
       imapSsl: this.imapSsl(),
       imapUsuario: this.imapUsuario().trim(),
-      imapSenha: this.imapSenha()
+      imapSenha: this.imapSenha(),
+      emTeste: this.emTeste()
     };
     if (clientId !== '') {
       dados.blingClientId = clientId;

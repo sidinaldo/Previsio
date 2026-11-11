@@ -111,6 +111,9 @@
                 } @else {
                   <span class="badge badge-success ml-1">Em dia</span>
                 }
+                @if (rede.contrato && rede.contrato !== 'Contratado') {
+                  <span [class]="selo(rede).classe + ' ml-1'">{{ selo(rede).texto }}</span>
+                }
               </h2>
               <p class="pv-card__descricao">
                 {{ quantidade(rede.empresas.length, 'empresa', 'empresas') }}

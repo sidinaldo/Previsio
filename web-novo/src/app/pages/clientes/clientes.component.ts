@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { ClientesService } from '../../core/clientes.service';
 import { mensagemDaApi } from '../../core/mensagem-erro';
-import { AlteracaoCliente, Cliente } from '../../core/previsio.models';
+import { AlteracaoCliente, Cliente, seloContrato } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
@@ -47,7 +47,9 @@ export class ClientesComponent {
   readonly clientesOrdenados = computed(() => ordenarLista(this.clientesFiltrados(), this.ordenacao(), {
     nome: item => item.nome,
     email: item => item.imapUsuario,
-    situacao: item => item.ativo ? 0 : 1
+    situacao: item => item.ativo ? 0 : 1,
+    // Teste encerrado primeiro, depois os testes com menos dias, por fim os contratados
+    contrato: item => ordemContrato(item)
   }));
   readonly clientesDaPagina = computed(() => paginar(this.clientesOrdenados(), this.pagina(), this.tamanhoPagina()));
   readonly clienteExibido = this.sessao.clienteId;
@@ -56,6 +58,8 @@ export class ClientesComponent {
   readonly imapHost = signal('imap.gmail.com');
   readonly imapPorta = signal<number | null>(993);
   readonly imapSsl = signal(true);
+  // Rede nova começa no teste grátis (o admin desmarca quando já fechou contrato)
+  readonly emTeste = signal(true);
   readonly imapUsuario = signal('');
   readonly imapSenha = signal('');
   readonly enviando = signal(false);
@@ -74,6 +78,10 @@ export class ClientesComponent {
   private readonly campoNome = viewChild<ElementRef<HTMLInputElement>>('campoNome');
 
   /** Envio do formulário: altera o cliente em edição ou cadastra um novo. */
+  selo(cliente: Cliente): { texto: string; classe: string } {
+    return seloContrato(cliente.contrato, cliente.diasRestantesTeste);
+  }
+
   salvar(): void {
     const cliente = this.editando();
     if (cliente !== null) {
@@ -113,7 +121,8 @@ export class ClientesComponent {
       imapPorta: porta,
       imapSsl: this.imapSsl(),
       imapUsuario: usuario,
-      imapSenha: senha
+      imapSenha: senha,
+      emTeste: this.emTeste()
     }).subscribe({
       next: () => {
         // O cliente novo já está escolhido: o próximo passo é cadastrar as empresas dele
@@ -250,4 +259,14 @@ export class ClientesComponent {
     this.busca.set(texto);
     this.pagina.set(1);
   }
+}
+
+function ordemContrato(cliente: Cliente): number {
+  if (cliente.contrato === 'TesteEncerrado') {
+    return -1;
+  }
+  if (cliente.contrato === 'EmTeste') {
+    return cliente.diasRestantesTeste ?? 0;
+  }
+  return 1000;
 }

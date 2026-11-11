@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
+using Previsio.Api.Contratos;
 using Previsio.Api.Exportacao;
 using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Resumos;
@@ -94,6 +95,9 @@ builder.Services.AddScoped<ResumoSemanalService>();
 builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddScoped<SaudeService>();
 builder.Services.AddScoped<ExportacaoService>();
+builder.Services.AddScoped<ContratosService>();
+builder.Services.AddScoped<AvisosTesteService>();
+builder.Services.AddScoped<AvisosTesteJob>();
 
 // Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
 builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));
@@ -274,6 +278,9 @@ agenda.AddOrUpdate<SincronizacaoContasJob>(
 // De 5 em 5 minutos: o XML das notas que chegaram só em PDF, na SEFAZ
 agenda.AddOrUpdate<BuscaXmlSefazJob>(
     "busca-xml-sefaz", j => j.ExecutarAsync(CancellationToken.None), "2-59/5 * * * *", opcoesAgenda);
+// De hora em hora: e-mails do fim do teste grátis (3 dias antes e quando acaba)
+agenda.AddOrUpdate<AvisosTesteJob>(
+    "avisos-teste", j => j.ExecutarAsync(CancellationToken.None), "12 * * * *", opcoesAgenda);
 // De hora em hora: o resumo semanal das redes cujo dia e hora chegaram (cada rede escolhe os seus)
 agenda.AddOrUpdate<ResumoSemanalJob>(
     "resumo-semanal", j => j.ExecutarAsync(CancellationToken.None), "2 * * * *", opcoesAgenda);

@@ -98,6 +98,12 @@ namespace Previsio.Data.Migrations
                     b.Property<string>("BlingClientSecretProtegido")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ContratadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Contrato")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -153,6 +159,15 @@ namespace Previsio.Data.Migrations
 
                     b.Property<int>("ResumoSemanalHora")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TesteAvisoEncerradoEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TesteAvisoFinalEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TesteTerminaEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

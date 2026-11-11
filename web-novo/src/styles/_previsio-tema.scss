@@ -2856,3 +2856,53 @@ app-paginacao.pv-paginacao {
 .pv-certificado__erro {
   color: var(--pv-erro);
 }
+
+// -----------------------------------------------------------------------------
+// Faixa do teste grátis (abaixo da barra do topo)
+// -----------------------------------------------------------------------------
+.pv-faixa-teste {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pv-texto);
+  background-color: var(--pv-primaria-suave);
+  border-bottom: 1px solid var(--pv-borda);
+
+  > .material-icons {
+    font-size: 20px;
+    color: var(--pv-primaria);
+  }
+
+  > span {
+    flex: 1 1 320px;
+  }
+}
+
+.pv-faixa-teste--fim {
+  background-color: var(--pv-alerta-suave);
+
+  > .material-icons {
+    color: var(--pv-alerta);
+  }
+}
+
+.pv-faixa-teste--encerrado {
+  background-color: var(--pv-erro-suave);
+
+  > .material-icons {
+    color: var(--pv-erro);
+  }
+}
+
+.pv-faixa-teste__link {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pv-teste-gratis {
+  margin-top: 12px;
+}

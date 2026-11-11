@@ -7,7 +7,7 @@ import { formatarCnpj } from '../../core/implantacao';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { combinaComBusca } from '../../core/ordenacao';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
-import { Saude, SaudeJob, SituacaoJobAgendado } from '../../core/previsio.models';
+import { Saude, SaudeJob, SaudeRede, SituacaoJobAgendado, seloContrato } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { CarregandoDirective } from '../../shared/carregando.directive';
@@ -106,6 +106,10 @@ export class SaudeComponent implements OnInit {
   mudarSoAtencao(valor: boolean): void {
     this.soAtencao.set(valor);
     this.pagina.set(1);
+  }
+
+  selo(rede: SaudeRede): { texto: string; classe: string } {
+    return seloContrato(rede.contrato, rede.diasRestantesTeste);
   }
 
   textoJob(job: SaudeJob): string {

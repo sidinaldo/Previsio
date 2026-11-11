@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Contratos;
 using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
@@ -39,8 +40,12 @@ public class SincronizacaoContasJob
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecutarAsync(CancellationToken cancelamento)
     {
+        List<int> redes = await _db.Clientes
+            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
+            .Select(c => c.Id)
+            .ToListAsync(cancelamento);
         List<Empresa> empresas = await _db.Empresas
-            .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null)
+            .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null && redes.Contains(e.ClienteId))
             .ToListAsync(cancelamento);
 
         foreach (Empresa empresa in empresas)

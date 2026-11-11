@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Contratos;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
 
@@ -12,11 +13,34 @@ public class ClientesController : PrevisioControllerBase
 {
     private readonly ClientesService _clientes;
     private readonly EmpresasService _empresas;
+    private readonly ContratosService _contratos;
 
-    public ClientesController(ClientesService clientes, EmpresasService empresas)
+    public ClientesController(ClientesService clientes, EmpresasService empresas, ContratosService contratos)
     {
         _clientes = clientes;
         _empresas = empresas;
+        _contratos = contratos;
+    }
+
+    /// <summary>
+    /// A rede contratou: sai do teste grátis e volta a ser processada sem prazo.
+    /// </summary>
+    [HttpPost("{clienteId:int}/contratar")]
+    [Authorize(Roles = Perfis.Admin)]
+    public async Task<ActionResult<ClienteDto>> Contratar(int clienteId, CancellationToken cancelamento)
+    {
+        return Responder(await _contratos.ContratarAsync(clienteId, cancelamento));
+    }
+
+    /// <summary>
+    /// Mais dias de teste grátis (do fim atual, ou de hoje se já acabou).
+    /// </summary>
+    [HttpPost("{clienteId:int}/prorrogar-teste")]
+    [Authorize(Roles = Perfis.Admin)]
+    public async Task<ActionResult<ClienteDto>> ProrrogarTeste(
+        int clienteId, ProrrogacaoTesteDto dados, CancellationToken cancelamento)
+    {
+        return Responder(await _contratos.ProrrogarAsync(clienteId, dados.Dias, cancelamento));
     }
 
     [HttpGet]

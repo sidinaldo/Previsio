@@ -7,6 +7,7 @@ import PerfectScrollbar from 'perfect-scrollbar';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { FooterComponent } from '../../shared/footer/footer.component';
+import { FaixaTesteComponent } from '../../shared/faixa-teste/faixa-teste.component';
 import { ClientesService } from '../../core/clientes.service';
 import { SessaoService } from '../../core/sessao.service';
 
@@ -17,7 +18,7 @@ import { SessaoService } from '../../core/sessao.service';
  */
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, SidebarComponent, NavbarComponent, FooterComponent],
+  imports: [RouterOutlet, RouterLink, SidebarComponent, NavbarComponent, FooterComponent, FaixaTesteComponent],
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {

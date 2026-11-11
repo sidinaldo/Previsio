@@ -14,6 +14,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
+import { ContratoClienteComponent } from './contrato-cliente.component';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -21,7 +22,7 @@ import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-seman
  */
 @Component({
   selector: 'app-cliente-detalhe',
-  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent],
+  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent, ContratoClienteComponent],
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {
@@ -71,6 +72,12 @@ export class ClienteDetalheComponent {
   readonly acao = signal<'salvar' | 'situacao' | null>(null);
   readonly mensagem = signal('');
   readonly erro = signal('');
+
+  /** Contratou ou prorrogou: atualiza esta tela, a lista de clientes e a faixa do topo. */
+  aoAlterarContrato(cliente: Cliente): void {
+    this.cliente.set(cliente);
+    this.clientes.atualizar(cliente);
+  }
 
   constructor() {
     this.previsio.obterCliente(this.clienteId).subscribe({

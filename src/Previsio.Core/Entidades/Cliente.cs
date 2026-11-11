@@ -35,6 +35,14 @@ public class Cliente : ICaixaEmail
     public int ResumoSemanalHora { get; set; } = 7;
     public DateTime? ResumoSemanalEnviadoEm { get; set; }
 
+    // Teste grátis: termina no início do dia seguinte ao último dia (UTC). Acabado o teste sem contratar,
+    // o Previsio para de ler e-mails e lançar no Bling; os usuários continuam vendo os dados.
+    public SituacaoContrato Contrato { get; set; } = SituacaoContrato.Contratado;
+    public DateTime? TesteTerminaEm { get; set; }
+    public DateTime? TesteAvisoFinalEnviadoEm { get; set; }
+    public DateTime? TesteAvisoEncerradoEnviadoEm { get; set; }
+    public DateTime? ContratadoEm { get; set; }
+
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 

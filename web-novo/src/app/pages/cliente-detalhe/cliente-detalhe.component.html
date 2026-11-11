@@ -142,6 +142,8 @@
         </form>
       </div>
 
+      <app-contrato-cliente [cliente]="atual" (alterado)="aoAlterarContrato($event)" />
+
       <app-resumo-semanal [clienteId]="atual.id" />
 
       <div class="card">

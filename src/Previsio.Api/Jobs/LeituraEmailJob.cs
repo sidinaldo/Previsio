@@ -8,6 +8,7 @@ using MailKit.Security;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using Previsio.Api.Contratos;
 using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
@@ -62,7 +63,7 @@ public class LeituraEmailJob
     {
         List<Cliente> clientes = await _db.Clientes
             .Include(c => c.Empresas)
-            .Where(c => c.Ativo)
+            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
             .ToListAsync(cancelamento);
 
         foreach (Cliente cliente in clientes)

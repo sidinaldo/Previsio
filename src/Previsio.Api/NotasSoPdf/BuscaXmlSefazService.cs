@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Contratos;
 using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
@@ -62,9 +63,10 @@ public class BuscaXmlSefazService
     public async Task ProcessarPendentesAsync(CancellationToken cancelamento)
     {
         DateTime agora = Agora();
+        List<int> redes = await _db.Clientes.Where(PeriodoTeste.Processa(agora)).Select(c => c.Id).ToListAsync(cancelamento);
         List<int> ids = await _db.NotasSoPdf
             .Where(n => n.Situacao == SituacaoNotaSoPdf.BuscandoNaSefaz
-                && n.Cliente!.Ativo
+                && redes.Contains(n.ClienteId)
                 && (n.ProximaTentativaEm == null || n.ProximaTentativaEm <= agora))
             .OrderBy(n => n.ProximaTentativaEm)
             .ThenBy(n => n.Id)

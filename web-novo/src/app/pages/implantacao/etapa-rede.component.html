@@ -89,6 +89,15 @@
             <span class="form-check-sign"><span class="check"></span></span>
           </label>
         </div>
+        @if (!cliente()) {
+          <div class="form-check pv-teste-gratis">
+            <label class="form-check-label">
+              <input class="form-check-input" type="checkbox" name="emTeste" [(ngModel)]="emTeste">
+              Começar com o teste grátis de 15 dias
+              <span class="form-check-sign"><span class="check"></span></span>
+            </label>
+          </div>
+        }
         <p class="pv-formulario__ajuda mt-3">
           No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app. O Previsio só lê a caixa:
           não marca e-mails como lidos nem apaga nada.

@@ -21,7 +21,8 @@ public class SaudeService
         new string[] { "avisos", "Avisos" },
         new string[] { "sincronizacao", "Sincronização das contas do Bling" },
         new string[] { "busca-xml-sefaz", "XML na SEFAZ (notas só em PDF)" },
-        new string[] { "resumo-semanal", "Resumo por e-mail" }
+        new string[] { "resumo-semanal", "Resumo por e-mail" },
+        new string[] { "avisos-teste", "Avisos do teste grátis" }
     };
 
     private readonly PrevisioDbContext _db;
@@ -67,6 +68,11 @@ public class SaudeService
             var rede = new SaudeRedeDto();
             rede.ClienteId = cliente.Id;
             rede.Nome = cliente.Nome;
+            rede.Contrato = Contratos.PeriodoTeste.Situacao(cliente, saude.GeradoEm);
+            if (cliente.Contrato == SituacaoContrato.EmTeste && cliente.TesteTerminaEm.HasValue)
+            {
+                rede.DiasRestantesTeste = Contratos.PeriodoTeste.DiasRestantes(cliente.TesteTerminaEm.Value, saude.GeradoEm);
+            }
             rede.AvisosAbertos = avisos.Count(a => a.ClienteId == cliente.Id);
             rede.Atencao = rede.AvisosAbertos > 0;
             rede.Caixa = Caixa(cliente);
