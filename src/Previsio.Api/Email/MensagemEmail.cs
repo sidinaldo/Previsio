@@ -10,4 +10,7 @@ public class MensagemEmail
     public string Assunto { get; set; } = "";
     public string Html { get; set; } = "";
     public string Texto { get; set; } = "";
+
+    // Para onde vai a resposta (ex.: a caixa que recebe as notas); vazio = o remetente
+    public string ResponderPara { get; set; } = "";
 }

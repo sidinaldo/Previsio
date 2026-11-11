@@ -261,6 +261,20 @@ public class AvisosService
             problemas.Add(ProblemaDaNota(nota));
         }
 
+        // Notas que chegaram só em PDF e precisam de alguém (a busca automática na SEFAZ não resolveu)
+        List<NotaSoPdf> soPdf = await _db.NotasSoPdf
+            .AsNoTracking()
+            .Where(n => n.ClienteId == cliente.Id
+                && (n.Situacao == SituacaoNotaSoPdf.SemChave
+                    || n.Situacao == SituacaoNotaSoPdf.SemCertificado
+                    || n.Situacao == SituacaoNotaSoPdf.NaoResolvida))
+            .Select(n => new NotaSoPdf { Id = n.Id, ChaveAcesso = n.ChaveAcesso, Assunto = n.Assunto, Remetente = n.Remetente, NomeRemetente = n.NomeRemetente, Motivo = n.Motivo, EmpresaCaixaId = n.EmpresaCaixaId })
+            .ToListAsync(cancelamento);
+        foreach (NotaSoPdf nota in soPdf)
+        {
+            problemas.Add(ProblemaDaNotaSoPdf(nota));
+        }
+
         foreach (Empresa empresa in cliente.Empresas)
         {
             if (!empresa.Ativo)
@@ -315,6 +329,28 @@ public class AvisosService
             "O Previsio não consegue ler as notas desta caixa. " + (caixa.ImapUltimoErroConexao ?? ""), 500);
         problema.Link = "/pages/falhas";
         problema.EmpresaId = empresaId;
+        return problema;
+    }
+
+    private static ProblemaAtual ProblemaDaNotaSoPdf(NotaSoPdf nota)
+    {
+        string fornecedor = nota.NomeRemetente != "" ? nota.NomeRemetente : nota.Remetente;
+        string titulo = "Nota só em PDF";
+        if (nota.ChaveAcesso != null && nota.ChaveAcesso.Length == 44)
+        {
+            titulo = titulo + ": NF " + Previsio.Api.Sefaz.ChaveAcesso.Numero(nota.ChaveAcesso);
+        }
+        if (fornecedor != "")
+        {
+            titulo = titulo + " de " + fornecedor;
+        }
+        var problema = new ProblemaAtual();
+        problema.Tipo = TipoAviso.NotaComProblema;
+        problema.Chave = "pdf:" + nota.Id;
+        problema.Titulo = Limitar(titulo, 200);
+        problema.Mensagem = Limitar(nota.Motivo ?? "Chegou o PDF sem o XML. Anexe o XML ou peça ao fornecedor.", 500);
+        problema.Link = "/pages/notas-pendentes";
+        problema.EmpresaId = nota.EmpresaCaixaId;
         return problema;
     }
 

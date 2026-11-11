@@ -226,6 +226,19 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime?>("BlingTokenExpiraEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CertificadoPfxProtegido")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CertificadoSenhaProtegida")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CertificadoTitular")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("CertificadoValidoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
@@ -274,6 +287,10 @@ namespace Previsio.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Uf")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<DateTime?>("UltimaSincronizacaoEm")
                         .HasColumnType("timestamp with time zone");
@@ -484,6 +501,112 @@ namespace Previsio.Data.Migrations
                     b.ToTable("notas_fiscais", (string)null);
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.NotaSoPdf", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Assunto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ChaveAcesso")
+                        .HasMaxLength(44)
+                        .HasColumnType("character varying(44)");
+
+                    b.Property<DateTime?>("CienciaEnviadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EmpresaCaixaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EmpresaDestinoId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MensagemId")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("NomeRemetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("NotaFiscalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OrigemChave")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("OrigemEmail")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<byte[]>("Pdf")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PdfNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ProximaTentativaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RecebidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ResolvidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvidaPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TentativasSefaz")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("XmlPedidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaCaixaId");
+
+                    b.HasIndex("ClienteId", "MensagemId");
+
+                    b.HasIndex("ClienteId", "Situacao");
+
+                    b.ToTable("notas_so_pdf", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.ParcelaNota", b =>
                 {
                     b.Property<int>("Id")
@@ -648,6 +771,24 @@ namespace Previsio.Data.Migrations
                         .HasForeignKey("EmpresaId");
 
                     b.Navigation("Empresa");
+
+                    b.Navigation("EmpresaCaixa");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.NotaSoPdf", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "EmpresaCaixa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaCaixaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Cliente");
 
                     b.Navigation("EmpresaCaixa");
                 });

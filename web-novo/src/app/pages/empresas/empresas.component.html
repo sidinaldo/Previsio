@@ -137,6 +137,17 @@
               </div>
             </div>
           </details>
+
+          @if (editando(); as e) {
+            <details class="pv-opcional" [open]="!!e.certificadoCadastrado">
+              <summary>Certificado digital A1 (para notas que chegam só em PDF)</summary>
+              <p class="pv-formulario__ajuda">
+                Quando o fornecedor manda só o PDF da nota, o Previsio usa o certificado para baixar o XML na SEFAZ
+                (registra a Ciência da Operação da nota). O certificado da matriz serve para as filiais do mesmo CNPJ raiz.
+              </p>
+              <app-certificado-empresa [empresa]="e" (alterada)="aoAlterarCertificado($event)" />
+            </details>
+          }
         </div>
         <div class="pv-formulario__acoes">
           @if (editando(); as e) {

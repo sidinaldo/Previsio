@@ -15,4 +15,10 @@
     <ProjectReference Include="..\..\src\Previsio.Api\Previsio.Api.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Exemplos\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

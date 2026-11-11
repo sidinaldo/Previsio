@@ -19,6 +19,7 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
+import { CertificadoEmpresaComponent } from './certificado-empresa.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -29,7 +30,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, CertificadoEmpresaComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -396,6 +397,12 @@ export class EmpresasComponent {
   estaEditando(empresa: Empresa): boolean {
     const editando = this.editando();
     return editando !== null && editando.id === empresa.id;
+  }
+
+  /** O certificado é enviado na hora (fora do "Salvar alterações"): atualiza a empresa na lista e no formulário. */
+  aoAlterarCertificado(empresa: Empresa): void {
+    this.empresas.update(lista => lista.map(item => (item.id === empresa.id ? empresa : item)));
+    this.editando.set(empresa);
   }
 
   cancelarEdicao(): void {

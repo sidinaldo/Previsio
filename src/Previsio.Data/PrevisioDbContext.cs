@@ -17,6 +17,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
+    public DbSet<NotaSoPdf> NotasSoPdf => Set<NotaSoPdf>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,10 +43,34 @@ public class PrevisioDbContext : DbContext
             entidade.HasIndex(e => new { e.ClienteId, e.Cnpj }).IsUnique();
             entidade.Ignore(e => e.BlingConectado);
             entidade.Ignore(e => e.TemEmailProprio);
+            entidade.Ignore(e => e.TemCertificado);
+            entidade.Property(e => e.CertificadoTitular).HasMaxLength(300);
+            entidade.Property(e => e.Uf).HasMaxLength(2);
 
             entidade.HasOne(e => e.Cliente)
                 .WithMany(c => c.Empresas)
                 .HasForeignKey(e => e.ClienteId);
+        });
+
+        modelBuilder.Entity<NotaSoPdf>(entidade =>
+        {
+            entidade.ToTable("notas_so_pdf");
+            entidade.Property(n => n.MensagemId).HasMaxLength(300);
+            entidade.Property(n => n.Remetente).HasMaxLength(200);
+            entidade.Property(n => n.NomeRemetente).HasMaxLength(200);
+            entidade.Property(n => n.Assunto).HasMaxLength(300);
+            entidade.Property(n => n.OrigemEmail).HasMaxLength(300);
+            entidade.Property(n => n.PdfNome).HasMaxLength(200);
+            entidade.Property(n => n.ChaveAcesso).HasMaxLength(44);
+            entidade.Property(n => n.OrigemChave).HasMaxLength(30);
+            entidade.Property(n => n.Motivo).HasMaxLength(500);
+            entidade.Property(n => n.ResolvidaPor).HasMaxLength(200);
+            entidade.Property(n => n.Observacao).HasMaxLength(500);
+            entidade.HasIndex(n => new { n.ClienteId, n.Situacao });
+            entidade.HasIndex(n => new { n.ClienteId, n.MensagemId });
+
+            entidade.HasOne(n => n.Cliente).WithMany().HasForeignKey(n => n.ClienteId);
+            entidade.HasOne(n => n.EmpresaCaixa).WithMany().HasForeignKey(n => n.EmpresaCaixaId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<NotaFiscal>(entidade =>

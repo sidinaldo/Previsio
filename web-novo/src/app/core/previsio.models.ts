@@ -83,6 +83,11 @@ export interface Empresa {
   /** A senha nunca volta da API, só se está cadastrada. */
   imapSenhaCadastrada: boolean;
   ultimaSincronizacaoEm: string | null;
+  /** Certificado digital A1, para buscar na SEFAZ o XML das notas que chegam só em PDF. */
+  certificadoCadastrado?: boolean;
+  certificadoTitular?: string | null;
+  certificadoValidoAte?: string | null;
+  uf?: string | null;
   ativo: boolean;
 }
 
@@ -446,3 +451,39 @@ export interface Saude {
   jobs: SaudeJob[];
   redes: SaudeRede[];
 }
+
+// ---------- Notas que chegaram só em PDF ----------
+
+export type SituacaoNotaSoPdf = 'BuscandoNaSefaz' | 'SemChave' | 'SemCertificado' | 'NaoResolvida';
+
+export const DESCRICAO_SITUACAO_SO_PDF: Record<SituacaoNotaSoPdf, string> = {
+  BuscandoNaSefaz: 'Buscando o XML na SEFAZ',
+  SemChave: 'Sem chave de acesso',
+  SemCertificado: 'Falta o certificado A1',
+  NaoResolvida: 'SEFAZ não devolveu o XML'
+};
+
+/** E-mail que trouxe a nota só em PDF, sem o XML. */
+export interface NotaSoPdf {
+  id: number;
+  recebidaEm: string;
+  remetente: string;
+  nomeRemetente: string;
+  assunto: string;
+  pdfNome: string;
+  empresaCaixaNome: string | null;
+  chaveAcesso: string | null;
+  // "nome do arquivo", "PDF", "assunto", "corpo do e-mail" ou "informada"
+  origemChave: string | null;
+  numeroNota: string | null;
+  cnpjFornecedor: string | null;
+  situacao: SituacaoNotaSoPdf;
+  motivo: string | null;
+  tentativasSefaz: number;
+  proximaTentativaEm: string | null;
+  cienciaEnviadaEm: string | null;
+  xmlPedidoEm: string | null;
+}
+
+export const UFS = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR',
+  'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'];

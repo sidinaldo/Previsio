@@ -36,11 +36,26 @@ public class Empresa : ICaixaEmail
     public DateTime? BlingTokenExpiraEm { get; set; }
 
     public DateTime? UltimaSincronizacaoEm { get; set; }
+
+    // Certificado digital A1 (.pfx) da empresa, para buscar na SEFAZ o XML das notas que chegam só em PDF.
+    // O arquivo e a senha ficam criptografados com Data Protection.
+    public string? CertificadoPfxProtegido { get; set; }
+    public string? CertificadoSenhaProtegida { get; set; }
+    public string? CertificadoTitular { get; set; }
+    public DateTime? CertificadoValidoAte { get; set; }
+    // Sigla da UF da empresa (SP, RN...), exigida pela SEFAZ na consulta
+    public string? Uf { get; set; }
+
     public bool Ativo { get; set; } = true;
 
     public bool BlingConectado
     {
         get { return !string.IsNullOrEmpty(BlingRefreshTokenProtegido); }
+    }
+
+    public bool TemCertificado
+    {
+        get { return !string.IsNullOrEmpty(CertificadoPfxProtegido) && !string.IsNullOrEmpty(CertificadoSenhaProtegida); }
     }
 
     public bool TemEmailProprio

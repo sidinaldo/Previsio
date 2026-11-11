@@ -33,6 +33,10 @@ public class EnvioEmailSmtp : IEnvioEmail
         email.From.Add(new MailboxAddress(_opcoes.NomeRemetente, _opcoes.Remetente));
         email.To.Add(new MailboxAddress(mensagem.NomePara, mensagem.Para));
         email.Subject = mensagem.Assunto;
+        if (mensagem.ResponderPara != "")
+        {
+            email.ReplyTo.Add(MailboxAddress.Parse(mensagem.ResponderPara));
+        }
 
         var corpo = new BodyBuilder();
         corpo.HtmlBody = mensagem.Html;

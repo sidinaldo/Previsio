@@ -12,8 +12,10 @@ using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Avisos;
 using Previsio.Api.Exportacao;
+using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Resumos;
 using Previsio.Api.Saude;
+using Previsio.Api.Sefaz;
 using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
@@ -92,6 +94,15 @@ builder.Services.AddScoped<ResumoSemanalService>();
 builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddScoped<SaudeService>();
 builder.Services.AddScoped<ExportacaoService>();
+
+// Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
+builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));
+builder.Services.AddScoped<ISefaz, SefazSoap>();
+builder.Services.AddScoped<CertificadosService>();
+builder.Services.AddScoped<RegistroNotaSoPdf>();
+builder.Services.AddScoped<NotasSoPdfService>();
+builder.Services.AddScoped<BuscaXmlSefazService>();
+builder.Services.AddScoped<BuscaXmlSefazJob>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
 builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
@@ -260,6 +271,9 @@ agenda.AddOrUpdate<AvisosJob>(
     "avisos", j => j.ExecutarAsync(CancellationToken.None), "5-59/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<SincronizacaoContasJob>(
     "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), "*/30 * * * *", opcoesAgenda);
+// De 5 em 5 minutos: o XML das notas que chegaram só em PDF, na SEFAZ
+agenda.AddOrUpdate<BuscaXmlSefazJob>(
+    "busca-xml-sefaz", j => j.ExecutarAsync(CancellationToken.None), "2-59/5 * * * *", opcoesAgenda);
 // De hora em hora: o resumo semanal das redes cujo dia e hora chegaram (cada rede escolhe os seus)
 agenda.AddOrUpdate<ResumoSemanalJob>(
     "resumo-semanal", j => j.ExecutarAsync(CancellationToken.None), "2 * * * *", opcoesAgenda);

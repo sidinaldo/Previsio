@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -15,12 +15,13 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
+import { NotasSoPdfComponent } from './notas-so-pdf.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista, parametroOrdem } from '../../core/ordenacao';
 import { classeDaSituacao } from '../../core/filtro-notas';
 
 @Component({
   selector: 'app-notas-pendentes',
-  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent],
+  imports: [CurrencyPipe, DatePipe, SlicePipe, RouterLink, MenuAcoesComponent, ResolucaoManualComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent, NotasSoPdfComponent],
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
@@ -95,8 +96,15 @@ export class NotasPendentesComponent {
     });
   }
 
+  // Notas que chegaram só em PDF (card acima da lista); atualiza junto
+  private readonly soPdf = viewChild(NotasSoPdfComponent);
+
   carregar(): void {
     this.buscar(this.empresaId());
+    const soPdf = this.soPdf();
+    if (soPdf) {
+      soPdf.atualizar();
+    }
   }
 
   descricao(status: string): string {

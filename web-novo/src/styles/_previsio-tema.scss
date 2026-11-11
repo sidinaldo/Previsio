@@ -598,6 +598,13 @@ summary:focus-visible,
   }
 }
 
+// O mesmo campo para digitar (sem a seta do select)
+.pv-campo--texto {
+  padding-right: 12px;
+  background-image: none;
+  cursor: text;
+}
+
 .pv-rotulo {
   margin: 0;
   font-size: 12px;
@@ -2765,4 +2772,87 @@ app-paginacao.pv-paginacao {
   .pv-busca {
     flex: 0 1 320px;
   }
+}
+
+// -----------------------------------------------------------------------------
+// Notas que chegaram só em PDF (Notas pendentes)
+// -----------------------------------------------------------------------------
+.pv-so-pdf__acao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 560px;
+  padding: 4px 0;
+}
+
+.pv-so-pdf__chave {
+  width: 100%;
+  padding-right: 12px;
+}
+
+.pv-so-pdf__botoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+// -----------------------------------------------------------------------------
+// Certificado digital A1 (formulário da empresa)
+// -----------------------------------------------------------------------------
+.pv-certificado__atual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 12px;
+  font-size: 14px;
+
+  > .material-icons {
+    color: var(--pv-sucesso);
+  }
+
+  > span {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.pv-certificado__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+
+  input[type='file'] {
+    max-width: 260px;
+    font-size: 13px;
+  }
+
+  .pv-campo {
+    width: 220px;
+    padding-right: 12px;
+  }
+
+  .pv-certificado__uf {
+    width: 110px;
+    padding-right: 32px;
+  }
+}
+
+.pv-certificado__enviar {
+  align-self: flex-end;
+  margin-bottom: 12px;
+}
+
+.pv-certificado__ok,
+.pv-certificado__erro {
+  margin: 0;
+  font-size: 13px;
+}
+
+.pv-certificado__ok {
+  color: var(--pv-sucesso-texto);
+}
+
+.pv-certificado__erro {
+  color: var(--pv-erro);
 }

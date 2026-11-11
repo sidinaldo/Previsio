@@ -20,6 +20,7 @@ public class SaudeService
         new string[] { "lancamento", "Lançamento no Bling" },
         new string[] { "avisos", "Avisos" },
         new string[] { "sincronizacao", "Sincronização das contas do Bling" },
+        new string[] { "busca-xml-sefaz", "XML na SEFAZ (notas só em PDF)" },
         new string[] { "resumo-semanal", "Resumo por e-mail" }
     };
 

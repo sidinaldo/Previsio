@@ -18,6 +18,7 @@ import {
   NovaEmpresa,
   NovoCliente,
   NovoUsuario,
+  NotaSoPdf,
   PaginaFalhas,
   PaginaNotas,
   PainelAvisos,
@@ -117,6 +118,48 @@ export class PrevisioService {
   /** Manda o resumo agora, só para o usuário logado. Não conta como o envio da semana. */
   enviarResumoSemanalTeste(clienteId: number): Observable<void> {
     return this.http.post<void>(`${this.api}/clientes/${clienteId}/resumo-semanal/teste`, {});
+  }
+
+  /** Notas que chegaram por e-mail só em PDF e ainda precisam do XML. */
+  obterNotasSoPdf(empresaId?: number): Observable<NotaSoPdf[]> {
+    let params = new HttpParams();
+    if (empresaId) {
+      params = params.set('empresaId', String(empresaId));
+    }
+    return this.doCliente(url => this.http.get<NotaSoPdf[]>(`${url}/notas-so-pdf`, { params }));
+  }
+
+  baixarPdfNotaSoPdf(id: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.api}/notas-so-pdf/${id}/pdf`, { observe: 'response', responseType: 'blob' });
+  }
+
+  anexarXmlNotaSoPdf(id: number, xml: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/notas-so-pdf/${id}/xml`, { xml: xml });
+  }
+
+  informarChaveNotaSoPdf(id: number, chave: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/notas-so-pdf/${id}/chave`, { chave: chave });
+  }
+
+  pedirXmlNotaSoPdf(id: number): Observable<void> {
+    return this.http.post<void>(`${this.api}/notas-so-pdf/${id}/pedir-xml`, {});
+  }
+
+  marcarNotaSoPdfLancada(id: number, observacao: string): Observable<void> {
+    return this.http.post<void>(`${this.api}/notas-so-pdf/${id}/lancada-manualmente`, { observacao: observacao });
+  }
+
+  /** Envia o certificado A1 (.pfx) da empresa, com a senha e a UF. */
+  salvarCertificado(empresaId: number, arquivo: File, senha: string, uf: string): Observable<Empresa> {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo, arquivo.name);
+    dados.append('senha', senha);
+    dados.append('uf', uf);
+    return this.http.post<Empresa>(`${this.api}/empresas/${empresaId}/certificado`, dados);
+  }
+
+  removerCertificado(empresaId: number): Observable<Empresa> {
+    return this.http.delete<Empresa>(`${this.api}/empresas/${empresaId}/certificado`);
   }
 
   /** Marca a nota com problema como resolvida e lançada manualmente no Bling. */
