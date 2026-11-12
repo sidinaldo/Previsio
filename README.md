@@ -11,15 +11,21 @@ E-mail dedicado (IMAP) ──→ Leitura do XML ──→ Conta a pagar no Bling
 
 ## Estrutura
 
+Camadas, da mais interna para a mais externa (nenhuma depende de uma que vem depois dela):
+
 | Pasta | Conteúdo |
 |---|---|
-| `src/Previsio.Core` | Entidades, leitura de NF-e (`LeitorNFe`) e cálculo do painel (`CalculadoraPainel`) |
+| `src/Previsio.Core` | Entidades e regras puras: leitura de NF-e (`LeitorNFe`), painel (`CalculadoraPainel`), chave de acesso, período de teste, conferência com o Bling. Interface `IRepositorio<T>`. Não depende de nada |
 | `src/Previsio.Bling` | Cliente da API v3 do Bling: OAuth, contatos, contas a pagar, limite de 3 req/s por conta |
-| `src/Previsio.Data` | EF Core + PostgreSQL |
-| `src/Previsio.Api` | API REST + jobs Hangfire (leitura de e-mail, lançamento, sincronização) |
-| `tests/Previsio.Core.Tests` | Testes do leitor de NF-e e do painel |
-| `tests/Previsio.Api.Tests` | Testes da API (alteração de cliente, login de cliente inativo), com EF Core em memória |
+| `src/Previsio.Aplicacao` | Serviços por assunto (Notas, Empresas, LeituraEmail, Sincronizacao, Avisos...), DTOs e mapeamentos. As interfaces do que é externo (IMAP, SMTP, SEFAZ, Hangfire, criptografia) ficam em `Abstracoes` |
+| `src/Previsio.Infra` | Implementações dessas interfaces: MailKit (IMAP e SMTP), SEFAZ (SOAP), Hangfire, Data Protection, hash de senha |
+| `src/Previsio.Data` | EF Core + PostgreSQL: `PrevisioDbContext`, migrations e `Repositorio<T>` |
+| `src/Previsio.Api` | Controllers, JWT e os jobs do Hangfire (só chamam o serviço da Aplicacao) |
+| `tests/Previsio.Tests` | Todos os testes, com EF Core em memória; as pastas espelham as camadas (`Core/`, `Aplicacao/`, `Infra/`, `Data/`, `Bling/`, `Api/`) e `Apoio/` tem os dublês (Bling, IMAP, SMTP, SEFAZ, relógio) |
 | `web-novo` | Painel Angular 21 (visual do Material Dashboard Pro), com login JWT |
+
+Regra de onde pôr cada coisa: regra de negócio no serviço da `Aplicacao`; acesso ao banco só por `IRepositorio<T>`;
+algo que fala com o mundo de fora vira uma interface em `Aplicacao/Abstracoes` implementada na `Infra`.
 
 ## Jobs (Hangfire)
 
