@@ -99,6 +99,7 @@
               Em branco, as notas desta empresa chegam pela caixa da rede. Com caixa própria, o Previsio lê as duas
               e separa as notas pelo CNPJ do destinatário.
             </p>
+            <app-provedor-email [(host)]="imapHost" [(porta)]="imapPorta" [(ssl)]="imapSsl" [destino]="emailRede()" prefixo="empresa" />
             <div class="pv-formulario__linha">
               <div class="form-group pv-formulario__campo">
                 <label for="previsio-imap-host" class="bmd-label-floating">Servidor IMAP</label>

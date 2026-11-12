@@ -251,7 +251,7 @@ describe('EmpresasComponent: formulário fechado por padrão', () => {
     const { fixture, tela } = await montar();
     fixture.componentInstance.editar({ ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'c@r.com' });
     await fixture.whenStable();
-    const abertos = tela.querySelectorAll('.pv-opcional[open] summary');
+    const abertos = tela.querySelectorAll('.pv-opcional[open] > summary');
     expect(abertos.length).toBe(1);
     expect(abertos[0].textContent).toContain('Caixa de e-mail própria');
   });

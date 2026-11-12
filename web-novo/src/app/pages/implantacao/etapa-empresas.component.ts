@@ -13,9 +13,10 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
  * Etapa 2: as empresas (CNPJs) da rede. Cada uma pode ter o próprio aplicativo do Bling
  * e a própria caixa de e-mail; sem eles, usa os da rede (mesmas regras da tela Empresas).
  */
+import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-etapa-empresas',
-  imports: [FormsModule, CarregandoDirective, PaginacaoComponent],
+  imports: [FormsModule, CarregandoDirective, PaginacaoComponent, ProvedorEmailComponent],
   templateUrl: './etapa-empresas.component.html'
 })
 export class EtapaEmpresasComponent {

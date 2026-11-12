@@ -53,6 +53,7 @@
         </div>
 
         <h3 class="pv-formulario__secao">Caixa de e-mail dedicada</h3>
+        <app-provedor-email [(host)]="imapHost" [(porta)]="imapPorta" [(ssl)]="imapSsl" prefixo="implantacao" />
         <div class="row">
           <div class="col-md-4">
             <div class="form-group bmd-form-group">

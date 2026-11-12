@@ -13,9 +13,10 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
  * A rede só é cadastrada depois que o teste da caixa passar com os dados digitados.
  * Com a rede já cadastrada, mostra o resumo e permite testar a caixa com a senha gravada.
  */
+import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-etapa-rede',
-  imports: [FormsModule, RouterLink, CarregandoDirective],
+  imports: [FormsModule, RouterLink, CarregandoDirective, ProvedorEmailComponent],
   templateUrl: './etapa-rede.component.html'
 })
 export class EtapaRedeComponent {

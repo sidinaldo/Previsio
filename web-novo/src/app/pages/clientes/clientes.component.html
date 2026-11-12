@@ -50,6 +50,7 @@
           </div>
 
           <h3 class="pv-formulario__secao">Caixa de e-mail dedicada (onde chegam as notas)</h3>
+          <app-provedor-email [(host)]="imapHost" [(porta)]="imapPorta" [(ssl)]="imapSsl" prefixo="cliente" />
           <div class="pv-formulario__linha">
             <div class="form-group pv-formulario__campo">
               <label for="cliente-host" class="bmd-label-floating">Servidor IMAP</label>
@@ -86,9 +87,6 @@
                      [(ngModel)]="imapSenha">
             </div>
           </div>
-          <p class="pv-formulario__ajuda">
-            No Gmail: ative o IMAP e a verificação em duas etapas e gere uma senha de app.
-          </p>
           @if (!editando()) {
           <div class="form-check pv-teste-gratis">
             <label class="form-check-label">

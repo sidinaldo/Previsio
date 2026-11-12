@@ -30,9 +30,10 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  * Empresas (CNPJs) do cliente exibido e a conexão de cada uma com o Bling.
  * O mesmo formulário do topo cadastra uma empresa nova ou, depois de "Editar", altera a escolhida.
  */
+import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, ProvedorEmailComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {

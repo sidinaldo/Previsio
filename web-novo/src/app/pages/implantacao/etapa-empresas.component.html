@@ -100,6 +100,7 @@
         <p class="pv-formulario__ajuda">
           Se esta loja recebe notas num e-mail só dela. O Previsio lê as duas caixas: a da rede e esta.
         </p>
+        <app-provedor-email [(host)]="imapHost" [(porta)]="imapPorta" [(ssl)]="imapSsl" [destino]="cliente().imapUsuario" prefixo="implantacao-empresa" />
         <div class="row">
           <div class="col-md-4">
             <div class="form-group bmd-form-group">

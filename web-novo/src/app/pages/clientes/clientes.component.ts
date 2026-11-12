@@ -20,9 +20,10 @@ import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../
  * onde chegam os XMLs, e as suas empresas (CNPJs), cadastradas depois na tela Empresas.
  * O mesmo formulário do topo cadastra um cliente novo ou, depois de "Editar", altera o escolhido.
  */
+import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-clientes',
-  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
+  imports: [FormsModule, RouterLink, ProvedorEmailComponent, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {

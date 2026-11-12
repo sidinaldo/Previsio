@@ -2927,3 +2927,34 @@ app-paginacao.pv-paginacao {
 .pv-conferencia__criterio.pv-campo {
   width: 380px;
 }
+
+// Escolha do provedor de e-mail e passo a passo do encaminhamento
+.pv-provedor {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.pv-provedor__escolha {
+  max-width: 360px;
+  margin-bottom: 4px;
+
+  .pv-campo-grupo,
+  .pv-campo {
+    width: 100%;
+  }
+}
+
+.pv-provedor__aviso {
+  margin: 8px 0;
+}
+
+.pv-provedor__passos {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--pv-texto-secundario);
+
+  > li {
+    margin-bottom: 6px;
+  }
+}
