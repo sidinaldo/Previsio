@@ -13,6 +13,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.NotasSoPdf;
 

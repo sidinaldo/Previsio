@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Comum;
 
 /// <summary>
 /// Ordenação pedida pela tela no parâmetro "ordem": o nome da coluna, com "-" na frente

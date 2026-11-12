@@ -1,4 +1,4 @@
-namespace Previsio.Api.Conferencia;
+namespace Previsio.Core.Conferencia;
 
 /// <summary>
 /// Conta a pagar que já existe no Bling, candidata a ser a parcela lançada à mão.

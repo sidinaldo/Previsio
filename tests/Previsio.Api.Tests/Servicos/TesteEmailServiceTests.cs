@@ -8,6 +8,7 @@ using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
 using Xunit;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Servicos;
 

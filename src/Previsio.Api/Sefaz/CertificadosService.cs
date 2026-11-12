@@ -6,6 +6,8 @@ using Previsio.Api.Mapeamentos;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Sefaz;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Sefaz;
 

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Core.Sefaz;
 
 /// <summary>
 /// Chave de acesso da NF-e: 44 dígitos, com dígito verificador (módulo 11) no fim.

@@ -1,6 +1,6 @@
 using Previsio.Core.Entidades;
 
-namespace Previsio.Api.Conferencia;
+namespace Previsio.Core.Conferencia;
 
 /// <summary>
 /// Parcela da nota e a conta do Bling que corresponde a ela. Parcela nula: nota sem parcelas (valor total).

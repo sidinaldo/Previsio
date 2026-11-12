@@ -1,6 +1,7 @@
 using Previsio.Api.Contratos;
 using Previsio.Api.Dtos;
 using Previsio.Core.Entidades;
+using Previsio.Core.Contratos;
 
 namespace Previsio.Api.Mapeamentos;
 

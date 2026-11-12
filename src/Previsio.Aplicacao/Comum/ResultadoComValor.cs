@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Comum;
 
 /// <summary>
 /// Resultado de uma operação de serviço que devolve um valor quando dá certo.

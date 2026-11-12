@@ -3,6 +3,7 @@ using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Conferencia;
 

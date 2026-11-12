@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Core.Comum;
 
 /// <summary>
 /// "Hoje" no horário de Brasília, para que o painel não vire o dia às 21h.

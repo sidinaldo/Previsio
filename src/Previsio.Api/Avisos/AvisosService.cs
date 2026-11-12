@@ -5,6 +5,7 @@ using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Contratos;
 
 namespace Previsio.Api.Avisos;
 
@@ -320,7 +321,7 @@ public class AvisosService
         {
             return problemas;
         }
-        DateTime hoje = Contratos.PeriodoTeste.HojeBrasil(_relogio.GetUtcNow().UtcDateTime);
+        DateTime hoje = PeriodoTeste.HojeBrasil(_relogio.GetUtcNow().UtcDateTime);
         List<int> ids = empresas.Select(e => e.Id).ToList();
         List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto
             .Vencidas(_db, ids, hoje, cliente.AvisoVencidasDias)
@@ -385,7 +386,7 @@ public class AvisosService
         string titulo = "Nota só em PDF";
         if (nota.ChaveAcesso != null && nota.ChaveAcesso.Length == 44)
         {
-            titulo = titulo + ": NF " + Previsio.Api.Sefaz.ChaveAcesso.Numero(nota.ChaveAcesso);
+            titulo = titulo + ": NF " + Previsio.Core.Sefaz.ChaveAcesso.Numero(nota.ChaveAcesso);
         }
         if (fornecedor != "")
         {

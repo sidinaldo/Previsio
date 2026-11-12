@@ -3,6 +3,8 @@ using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Sefaz;
+using Previsio.Core.Comum;
 
 namespace Previsio.Api.NotasSoPdf;
 

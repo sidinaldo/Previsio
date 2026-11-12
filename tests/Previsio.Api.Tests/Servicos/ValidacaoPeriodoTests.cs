@@ -1,5 +1,6 @@
 using Previsio.Api.Servicos;
 using Xunit;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Servicos;
 

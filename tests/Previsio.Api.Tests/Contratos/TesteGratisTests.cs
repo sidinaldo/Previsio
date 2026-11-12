@@ -8,6 +8,9 @@ using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Core.Contratos;
+using Previsio.Core.Comum;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Contratos;
 

@@ -6,6 +6,7 @@ using Previsio.Api.Dtos;
 using Previsio.Api.Mapeamentos;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Controllers;
 

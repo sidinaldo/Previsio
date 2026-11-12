@@ -4,6 +4,7 @@ using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Servicos;
 

@@ -6,6 +6,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Servicos;
 

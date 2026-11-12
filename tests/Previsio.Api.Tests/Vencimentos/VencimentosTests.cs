@@ -10,6 +10,7 @@ using Previsio.Api.Vencimentos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Vencimentos;
 

@@ -66,7 +66,7 @@ public class AutenticacaoServiceTests
         await CadastrarUsuarioDeCliente(true);
         Usuario usuario = _db.Usuarios.Single();
 
-        Previsio.Api.Servicos.Resultado resultado = await _servico.TrocarSenhaAsync(
+        Previsio.Aplicacao.Comum.Resultado resultado = await _servico.TrocarSenhaAsync(
             usuario, "senha-errada", "nova-senha-456", CancellationToken.None);
 
         Assert.False(resultado.Sucesso);
@@ -80,7 +80,7 @@ public class AutenticacaoServiceTests
         Usuario usuario = _db.Usuarios.Single();
         string carimboAntes = usuario.CarimboSeguranca;
 
-        Previsio.Api.Servicos.Resultado resultado = await _servico.TrocarSenhaAsync(
+        Previsio.Aplicacao.Comum.Resultado resultado = await _servico.TrocarSenhaAsync(
             usuario, Senha, "nova-senha-456", CancellationToken.None);
 
         Assert.True(resultado.Sucesso);

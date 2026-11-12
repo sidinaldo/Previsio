@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text;
 using Previsio.Api.Sefaz;
 using Xunit;
+using Previsio.Core.Sefaz;
 
 namespace Previsio.Api.Tests.Sefaz;
 

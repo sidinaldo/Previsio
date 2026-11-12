@@ -1,6 +1,6 @@
 using Previsio.Core.Entidades;
 
-namespace Previsio.Api.Conferencia;
+namespace Previsio.Core.Conferencia;
 
 /// <summary>
 /// Como reconhecer que a conta do Bling é a parcela da nota (configurado por rede).

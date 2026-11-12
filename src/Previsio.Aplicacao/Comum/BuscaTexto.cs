@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Comum;
 
 /// <summary>
 /// Termo da caixa de busca das listas: o texto (para nomes e número da nota) e só os dígitos

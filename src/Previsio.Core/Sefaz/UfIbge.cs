@@ -1,4 +1,4 @@
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Core.Sefaz;
 
 /// <summary>
 /// Código IBGE de cada UF, usado pela SEFAZ (cUFAutor).

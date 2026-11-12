@@ -5,6 +5,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.Painel.Modelos;
 using Previsio.Data;
 using Xunit;
+using Previsio.Core.Comum;
 
 namespace Previsio.Api.Tests.Servicos;
 

@@ -4,6 +4,9 @@ using Previsio.Api.Mapeamentos;
 using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
+using Previsio.Core.Contratos;
+using Previsio.Core.Comum;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Servicos;
 
@@ -78,7 +81,7 @@ public class ClientesService
         if (dados.EmTeste)
         {
             cliente.Contrato = SituacaoContrato.EmTeste;
-            cliente.TesteTerminaEm = Contratos.PeriodoTeste.Termino(RelogioBrasil.Hoje(), Contratos.PeriodoTeste.DiasPadrao);
+            cliente.TesteTerminaEm = PeriodoTeste.Termino(RelogioBrasil.Hoje(), PeriodoTeste.DiasPadrao);
         }
 
         _clientes.Adicionar(cliente);

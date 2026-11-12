@@ -9,6 +9,9 @@ using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data;
+using Previsio.Core.Sefaz;
+using Previsio.Core.Comum;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.NotasSoPdf;
 

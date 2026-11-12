@@ -5,6 +5,7 @@ using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.EmailsIgnorados;
 

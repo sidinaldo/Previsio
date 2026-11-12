@@ -5,6 +5,7 @@ using Previsio.Core.Painel;
 using Previsio.Core.Painel.Modelos;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
+using Previsio.Core.Comum;
 
 namespace Previsio.Api.Servicos;
 

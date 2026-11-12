@@ -4,6 +4,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Previsio.Api.Servicos;
+using Previsio.Core.Sefaz;
+using Previsio.Core.Comum;
 
 namespace Previsio.Api.Sefaz;
 

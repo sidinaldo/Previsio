@@ -3,6 +3,7 @@ using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
 using Previsio.Api.Resumos;
 using Previsio.Api.Servicos;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Controllers;
 

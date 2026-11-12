@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Previsio.Core.Entidades;
 
-namespace Previsio.Api.Conferencia;
+namespace Previsio.Core.Conferencia;
 
 /// <summary>
 /// Compara as parcelas da nota com as contas do mesmo fornecedor no Bling. Cada conta serve

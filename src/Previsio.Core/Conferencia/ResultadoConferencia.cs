@@ -1,4 +1,4 @@
-namespace Previsio.Api.Conferencia;
+namespace Previsio.Core.Conferencia;
 
 public class ResultadoConferencia
 {

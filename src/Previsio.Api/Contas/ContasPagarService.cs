@@ -5,6 +5,8 @@ using Previsio.Api.Servicos;
 using Previsio.Api.Sincronizacao;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Comum;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Contas;
 

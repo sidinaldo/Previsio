@@ -10,6 +10,8 @@ using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Contratos;
+using Previsio.Core.Comum;
 
 namespace Previsio.Api.Jobs;
 

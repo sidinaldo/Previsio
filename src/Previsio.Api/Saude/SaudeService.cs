@@ -4,6 +4,7 @@ using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Core.Contratos;
 
 namespace Previsio.Api.Saude;
 
@@ -69,10 +70,10 @@ public class SaudeService
             var rede = new SaudeRedeDto();
             rede.ClienteId = cliente.Id;
             rede.Nome = cliente.Nome;
-            rede.Contrato = Contratos.PeriodoTeste.Situacao(cliente, saude.GeradoEm);
+            rede.Contrato = PeriodoTeste.Situacao(cliente, saude.GeradoEm);
             if (cliente.Contrato == SituacaoContrato.EmTeste && cliente.TesteTerminaEm.HasValue)
             {
-                rede.DiasRestantesTeste = Contratos.PeriodoTeste.DiasRestantes(cliente.TesteTerminaEm.Value, saude.GeradoEm);
+                rede.DiasRestantesTeste = PeriodoTeste.DiasRestantes(cliente.TesteTerminaEm.Value, saude.GeradoEm);
             }
             rede.AvisosAbertos = avisos.Count(a => a.ClienteId == cliente.Id);
             rede.Atencao = rede.AvisosAbertos > 0;

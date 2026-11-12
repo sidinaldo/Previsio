@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
-using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
+using Previsio.Core.Comum;
 
-namespace Previsio.Api.Contratos;
+namespace Previsio.Core.Contratos;
 
 /// <summary>
 /// Regras do teste grátis: 15 dias contando o dia de hoje (horário de Brasília).

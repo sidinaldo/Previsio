@@ -15,6 +15,7 @@ using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data;
+using Previsio.Core.Contratos;
 
 namespace Previsio.Api.Jobs;
 

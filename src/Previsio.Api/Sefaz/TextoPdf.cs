@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
+using Previsio.Core.Sefaz;
 
 namespace Previsio.Api.Sefaz;
 
