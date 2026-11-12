@@ -1,10 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
@@ -13,6 +10,9 @@ using Xunit;
 using Previsio.Core.Conferencia;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Conferencia;
 

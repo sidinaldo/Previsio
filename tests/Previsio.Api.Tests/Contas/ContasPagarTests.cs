@@ -1,15 +1,14 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Previsio.Api.Contas;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
-using Previsio.Api.Sincronizacao;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Contas;
+using Previsio.Aplicacao.Sincronizacao;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Contas;
 

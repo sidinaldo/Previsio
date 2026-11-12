@@ -2,13 +2,13 @@ using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Api.Jobs;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Bling;
 
 namespace Previsio.Api.Tests.Jobs;
 

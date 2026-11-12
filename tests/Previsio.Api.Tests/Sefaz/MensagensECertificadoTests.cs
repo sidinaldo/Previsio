@@ -4,9 +4,6 @@ using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
 using Microsoft.AspNetCore.DataProtection;
-using Previsio.Api.Dtos;
-using Previsio.Api.Sefaz;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
@@ -16,6 +13,8 @@ using Previsio.Aplicacao.Abstracoes;
 using Previsio.Infra.Sefaz;
 using Previsio.Infra.Seguranca;
 using Previsio.Core.Sefaz;
+using Previsio.Aplicacao.Certificados;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Sefaz;
 

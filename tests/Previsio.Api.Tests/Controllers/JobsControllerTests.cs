@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Previsio.Api.Controllers;
-using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Xunit;
 using Previsio.Aplicacao.Abstracoes;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Controllers;
 

@@ -1,11 +1,11 @@
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Usuarios;
+using Previsio.Aplicacao.Autenticacao;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Servicos;
 

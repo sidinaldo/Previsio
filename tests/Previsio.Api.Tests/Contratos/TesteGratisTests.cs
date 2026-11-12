@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Contratos;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
@@ -12,6 +9,9 @@ using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Clientes;
+using Previsio.Aplicacao.Contratos;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Contratos;
 

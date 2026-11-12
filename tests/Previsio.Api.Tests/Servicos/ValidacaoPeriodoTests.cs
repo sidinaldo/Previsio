@@ -1,4 +1,3 @@
-using Previsio.Api.Servicos;
 using Xunit;
 using Previsio.Aplicacao.Comum;
 

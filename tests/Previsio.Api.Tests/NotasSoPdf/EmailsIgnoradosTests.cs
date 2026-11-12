@@ -1,14 +1,13 @@
 using Microsoft.Extensions.Options;
-using Previsio.Api.Dtos;
-using Previsio.Api.EmailsIgnorados;
-using Previsio.Api.NotasSoPdf;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Api.Tests.Sefaz;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.EmailsIgnorados;
+using Previsio.Aplicacao.NotasSoPdf;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.NotasSoPdf;
 

@@ -1,5 +1,6 @@
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Autenticacao;
 

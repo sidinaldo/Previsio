@@ -1,11 +1,11 @@
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Core.Painel.Modelos;
 using Previsio.Data;
 using Xunit;
 using Previsio.Core.Comum;
+using Previsio.Aplicacao.Painel;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Servicos;
 

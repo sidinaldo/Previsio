@@ -1,9 +1,5 @@
-using Hangfire;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Sefaz;
-using Previsio.Api.Servicos;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
 using Previsio.Core.Painel;
@@ -12,20 +8,29 @@ using Previsio.Data.Repositorios;
 using Previsio.Infra.Seguranca;
 using Previsio.Aplicacao.Abstracoes;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Previsio.Api.Avisos;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Contas;
-using Previsio.Api.Contratos;
-using Previsio.Api.EmailsIgnorados;
-using Previsio.Api.NotasSoPdf;
-using Previsio.Api.Resumos;
-using Previsio.Api.Saude;
-using Previsio.Api.Sincronizacao;
-using Previsio.Api.Vencimentos;
 using Previsio.Core.NFe;
+using Previsio.Aplicacao.Empresas;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Clientes;
+using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.Notas;
+using Previsio.Aplicacao.Painel;
+using Previsio.Aplicacao.Usuarios;
+using Previsio.Aplicacao.Certificados;
+using Previsio.Aplicacao.Saude;
+using Previsio.Aplicacao.Autenticacao;
+using Previsio.Aplicacao.Avisos;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Contas;
+using Previsio.Aplicacao.Contratos;
+using Previsio.Aplicacao.EmailsIgnorados;
+using Previsio.Aplicacao.NotasSoPdf;
+using Previsio.Aplicacao.Resumos;
+using Previsio.Aplicacao.Sincronizacao;
+using Previsio.Aplicacao.Vencimentos;
+using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Tests.Apoio;
 
@@ -140,7 +145,7 @@ public static class ServicosDeTeste
         AutenticacaoService autenticacao,
         IEnvioEmail email,
         IConfiguration configuracao,
-        IHostEnvironment ambiente,
+        AmbienteAplicacao ambiente,
         TimeProvider relogio,
         ILogger<RedefinicaoSenhaService> logger)
     {

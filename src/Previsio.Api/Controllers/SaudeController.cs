@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Dtos;
-using Previsio.Api.EmailsIgnorados;
-using Previsio.Api.Saude;
 using Previsio.Core.Entidades;
+using Previsio.Aplicacao.Saude;
+using Previsio.Aplicacao.Autenticacao;
+using Previsio.Aplicacao.EmailsIgnorados;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Controllers;
 

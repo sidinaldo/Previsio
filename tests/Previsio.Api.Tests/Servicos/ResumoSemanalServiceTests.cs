@@ -1,15 +1,14 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Avisos;
-using Previsio.Api.Dtos;
-using Previsio.Api.Resumos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Abstracoes;
+using Previsio.Aplicacao.Avisos;
+using Previsio.Aplicacao.Resumos;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Servicos;
 

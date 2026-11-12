@@ -2,14 +2,14 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Api.Controllers;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Controllers;
 

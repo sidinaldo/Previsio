@@ -1,15 +1,15 @@
 using System.IO.Compression;
 using System.Xml.Linq;
 using Microsoft.Extensions.Options;
-using Previsio.Api.Contas;
-using Previsio.Api.Exportacao;
-using Previsio.Api.Sincronizacao;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Notas;
+using Previsio.Aplicacao.Contas;
+using Previsio.Aplicacao.Exportacao;
+using Previsio.Aplicacao.Sincronizacao;
 
 namespace Previsio.Api.Tests.Servicos;
 

@@ -1,11 +1,10 @@
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
-using Previsio.Api.Servicos;
 using Previsio.Aplicacao.Abstracoes;
+using Previsio.Aplicacao.Autenticacao;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Controllers;
 

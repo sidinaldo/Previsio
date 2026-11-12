@@ -5,28 +5,12 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
-using Previsio.Api.Avisos;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Contratos;
-using Previsio.Api.Exportacao;
-using Previsio.Api.NotasSoPdf;
-using Previsio.Api.Resumos;
-using Previsio.Api.Saude;
-using Previsio.Api.Sefaz;
-using Previsio.Api.Sincronizacao;
-using Previsio.Api.Contas;
-using Previsio.Api.EmailsIgnorados;
-using Previsio.Api.Vencimentos;
 using Previsio.Api.Jobs;
-using Previsio.Api.Servicos;
 using Previsio.Bling;
-using Previsio.Core.Entidades;
-using Previsio.Core.NFe;
 using Previsio.Core.Painel;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
@@ -34,6 +18,25 @@ using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
 using Previsio.Infra;
 using Previsio.Aplicacao.Abstracoes;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Clientes;
+using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.Notas;
+using Previsio.Aplicacao.Painel;
+using Previsio.Aplicacao.Email;
+using Previsio.Aplicacao.Usuarios;
+using Previsio.Aplicacao.Certificados;
+using Previsio.Aplicacao.Saude;
+using Previsio.Aplicacao.Autenticacao;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Contas;
+using Previsio.Aplicacao.Contratos;
+using Previsio.Aplicacao.EmailsIgnorados;
+using Previsio.Aplicacao.NotasSoPdf;
+using Previsio.Aplicacao.Resumos;
+using Previsio.Aplicacao.Sincronizacao;
+using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,23 +65,23 @@ builder.Services.AddHttpClient<BlingClient>(cliente =>
 // Implementações técnicas (IMAP, SMTP, SEFAZ, Hangfire, criptografia): Previsio.Infra
 builder.Services.AddPrevisioInfra(builder.Configuration);
 
-// Serviços do Previsio
-builder.Services.AddSingleton<LeitorNFe>();
-builder.Services.AddSingleton<CalculadoraPainel>();
-builder.Services.AddScoped<TokenBlingService>();
-builder.Services.AddScoped<RegistroNotaService>();
-builder.Services.AddScoped<AcessoEmpresaService>();
-builder.Services.AddScoped<ClientesService>();
-builder.Services.AddScoped<EmpresasService>();
-builder.Services.AddScoped<UsuariosService>();
-builder.Services.AddScoped<PainelService>();
-builder.Services.AddScoped<NotasService>();
-builder.Services.AddScoped<FalhasService>();
-builder.Services.AddScoped<BlingConexaoService>();
-builder.Services.AddScoped<TesteEmailService>();
+// Serviços de aplicação (um por assunto): Previsio.Aplicacao
+builder.Services.AddPrevisioAplicacao();
+builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
+builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
+builder.Services.AddSingleton(new AmbienteAplicacao(builder.Environment.IsDevelopment()));
+builder.Services.AddSingleton(TimeProvider.System);
+
+// Jobs em segundo plano (Hangfire) e a fila que os serviços usam para pedir um job
+builder.Services.AddScoped<IFilaJobs, FilaJobsHangfire>();
 builder.Services.AddScoped<LeituraEmailJob>();
 builder.Services.AddScoped<LancamentoNotaJob>();
 builder.Services.AddScoped<SincronizacaoContasJob>();
+builder.Services.AddScoped<BuscaXmlSefazJob>();
+builder.Services.AddScoped<AvisosJob>();
+builder.Services.AddScoped<ResumoSemanalJob>();
+builder.Services.AddScoped<AvisosTesteJob>();
+builder.Services.AddScoped<AlertaVencimentosJob>();
 
 // Autenticação: token JWT no header "Authorization: Bearer {token}"
 IConfigurationSection secaoJwt = builder.Configuration.GetSection(JwtOptions.Secao);
@@ -95,36 +98,6 @@ if (opcoesJwt.ValidadeMinutos <= 0)
 
 builder.Services.Configure<JwtOptions>(secaoJwt);
 builder.Services.AddSingleton<GeradorTokenJwt>();
-builder.Services.AddScoped<IFilaJobs, FilaJobsHangfire>();
-builder.Services.AddScoped<AutenticacaoService>();
-builder.Services.AddScoped<RedefinicaoSenhaService>();
-builder.Services.AddScoped<AvisosService>();
-builder.Services.AddScoped<AvisosJob>();
-builder.Services.AddScoped<ResumoSemanalService>();
-builder.Services.AddScoped<ResumoSemanalJob>();
-builder.Services.AddScoped<SaudeService>();
-builder.Services.AddScoped<ContasPagarService>();
-builder.Services.AddScoped<EmailsIgnoradosService>();
-builder.Services.AddScoped<ExportacaoService>();
-builder.Services.AddScoped<ContratosService>();
-builder.Services.AddScoped<AvisosTesteService>();
-builder.Services.AddScoped<AvisosTesteJob>();
-builder.Services.AddScoped<AlertaVencimentosService>();
-builder.Services.AddScoped<AlertaVencimentosJob>();
-builder.Services.AddScoped<ConfiguracaoConferenciaService>();
-builder.Services.AddScoped<ConferenciaBlingService>();
-builder.Services.AddScoped<FornecedoresBlingService>();
-builder.Services.AddScoped<ContasAntigasEmAberto>();
-
-// Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ (ISefaz em AddPrevisioInfra)
-builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
-builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
-builder.Services.AddScoped<CertificadosService>();
-builder.Services.AddScoped<RegistroNotaSoPdf>();
-builder.Services.AddScoped<NotasSoPdfService>();
-builder.Services.AddScoped<BuscaXmlSefazService>();
-builder.Services.AddScoped<BuscaXmlSefazJob>();
-builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>

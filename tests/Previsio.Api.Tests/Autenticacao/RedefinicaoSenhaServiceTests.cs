@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Tests.Autenticacao;
 
@@ -22,7 +21,7 @@ public class RedefinicaoSenhaServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?> { { "Front:Url", "https://app.previsio.com.br/#" } })
             .Build();
         return ServicosDeTeste.RedefinicaoSenhaService(
-            _db, ServicosDeTeste.Autenticacao(_db), _email, configuracao, new AmbienteDeTeste(), _relogio,
+            _db, ServicosDeTeste.Autenticacao(_db), _email, configuracao, new AmbienteAplicacao(false), _relogio,
             NullLogger<RedefinicaoSenhaService>.Instance);
     }
 

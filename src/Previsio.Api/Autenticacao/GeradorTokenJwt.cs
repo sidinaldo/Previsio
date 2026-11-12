@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Previsio.Core.Entidades;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Autenticacao;
 

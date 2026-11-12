@@ -8,15 +8,15 @@ using MailKit.Security;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
-using Previsio.Api.Contratos;
-using Previsio.Api.EmailsIgnorados;
-using Previsio.Api.NotasSoPdf;
-using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Aplicacao.Abstracoes;
+using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.Notas;
+using Previsio.Aplicacao.EmailsIgnorados;
+using Previsio.Aplicacao.NotasSoPdf;
 
 namespace Previsio.Api.Jobs;
 

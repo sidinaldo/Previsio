@@ -1,9 +1,9 @@
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Notas;
 
 namespace Previsio.Api.Tests.Servicos;
 
@@ -97,7 +97,7 @@ public class NotasServiceTests
     {
         System.Security.Claims.ClaimsPrincipal usuario = UsuarioDeTeste.DoCliente(clienteId).HttpContext.User;
         var identidade = (System.Security.Claims.ClaimsIdentity)usuario.Identity!;
-        identidade.AddClaim(new System.Security.Claims.Claim(Previsio.Api.Autenticacao.ClaimsPrevisio.Nome, nome));
+        identidade.AddClaim(new System.Security.Claims.Claim(Previsio.Aplicacao.Autenticacao.ClaimsPrevisio.Nome, nome));
         return usuario;
     }
 

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Servicos;
 using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Controllers;

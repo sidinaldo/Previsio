@@ -1,17 +1,16 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Contratos;
-using Previsio.Api.Excecoes;
-using Previsio.Api.Servicos;
-using Previsio.Api.Sincronizacao;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
+using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Sincronizacao;
 
 namespace Previsio.Api.Jobs;
 

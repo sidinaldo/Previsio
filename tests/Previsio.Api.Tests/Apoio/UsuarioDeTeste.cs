@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Autenticacao;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Tests.Apoio;
 

@@ -1,11 +1,11 @@
 using System.Net;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Bling;
 
 namespace Previsio.Api.Tests.Servicos;
 

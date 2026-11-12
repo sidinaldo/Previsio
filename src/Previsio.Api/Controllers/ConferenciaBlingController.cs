@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Autenticacao;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
+using Previsio.Aplicacao.Clientes;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Dtos;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Controllers;
 

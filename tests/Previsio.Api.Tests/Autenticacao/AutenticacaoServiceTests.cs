@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Autenticacao;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Tests.Autenticacao;
 

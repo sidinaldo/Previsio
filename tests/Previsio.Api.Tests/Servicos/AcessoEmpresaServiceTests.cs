@@ -1,8 +1,8 @@
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Empresas;
 
 namespace Previsio.Api.Tests.Servicos;
 

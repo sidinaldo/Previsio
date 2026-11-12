@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.DataProtection;
-using Previsio.Api.Dtos;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Empresas;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Servicos;
 

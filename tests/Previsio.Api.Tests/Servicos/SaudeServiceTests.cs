@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Avisos;
-using Previsio.Api.Dtos;
-using Previsio.Api.Saude;
-using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Abstracoes;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Saude;
+using Previsio.Aplicacao.Avisos;
+using Previsio.Aplicacao.Dtos;
 
 namespace Previsio.Api.Tests.Servicos;
 

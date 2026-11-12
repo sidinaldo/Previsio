@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Data;
+using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Autenticacao;
 

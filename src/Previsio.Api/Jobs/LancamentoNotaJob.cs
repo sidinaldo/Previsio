@@ -1,15 +1,15 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Api.Conferencia;
-using Previsio.Api.Contratos;
-using Previsio.Api.Excecoes;
-using Previsio.Api.Servicos;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Conferencia;
+using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Conferencia;
+using Previsio.Aplicacao.Notas;
 
 namespace Previsio.Api.Jobs;
 
@@ -20,7 +20,7 @@ namespace Previsio.Api.Jobs;
 public class LancamentoNotaJob
 {
     // Depois disso a nota com erro para de ser tentada e vira aviso para alguém resolver
-    public const int MaximoTentativas = 5;
+    public const int MaximoTentativas = RegrasLancamento.MaximoTentativas;
     private const int LoteMaximo = 100;
 
     private readonly PrevisioDbContext _db;

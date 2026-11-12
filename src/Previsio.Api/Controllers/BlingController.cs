@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Previsio.Api.Servicos;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Bling;
 
 namespace Previsio.Api.Controllers;
 
