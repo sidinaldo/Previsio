@@ -36,6 +36,15 @@ public class NotasService
     }
 
     /// <summary>
+    /// Quantas notas ainda não viraram conta a pagar no Bling (o número ao lado de "Notas pendentes" no menu).
+    /// </summary>
+    public Task<int> ContarPendentesAsync(int clienteId, CancellationToken cancelamento)
+    {
+        return _notas.ConsultarSomenteLeitura()
+            .CountAsync(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status), cancelamento);
+    }
+
+    /// <summary>
     /// Notas que chegaram no e-mail e ainda não viraram conta a pagar no Bling.
     /// </summary>
     public async Task<List<NotaDto>> ListarPendentesAsync(int clienteId, int? empresaId, CancellationToken cancelamento)

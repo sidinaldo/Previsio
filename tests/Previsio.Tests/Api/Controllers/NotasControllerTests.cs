@@ -178,4 +178,22 @@ public class NotasControllerTests
 
         Assert.IsType<ForbidResult>(resposta.Result);
     }
+
+    [Fact]
+    public async Task TotalPendentes_ContaSoAsNotasForaDoBlingDaRede()
+    {
+        int alfa = await CadastrarCliente("Rede Alfa");
+        int beta = await CadastrarCliente("Rede Beta");
+        _db.NotasFiscais.Add(Nota(alfa, null, "1", StatusNota.Erro, DateTime.UtcNow));
+        _db.NotasFiscais.Add(Nota(alfa, null, "2", StatusNota.SemParcelas, DateTime.UtcNow));
+        _db.NotasFiscais.Add(Nota(alfa, null, "3", StatusNota.Lancada, DateTime.UtcNow));
+        _db.NotasFiscais.Add(Nota(beta, null, "4", StatusNota.Erro, DateTime.UtcNow));
+        await _db.SaveChangesAsync();
+
+        ActionResult<int> total = await CriarController(UsuarioDeTeste.DoCliente(alfa)).TotalPendentes(alfa, CancellationToken.None);
+        ActionResult<int> deOutraRede = await CriarController(UsuarioDeTeste.DoCliente(beta)).TotalPendentes(alfa, CancellationToken.None);
+
+        Assert.Equal(2, total.Value);
+        Assert.IsType<ForbidResult>(deOutraRede.Result);
+    }
 }

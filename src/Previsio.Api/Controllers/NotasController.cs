@@ -36,6 +36,20 @@ public class NotasController : PrevisioControllerBase
     }
 
     /// <summary>
+    /// Quantidade de notas pendentes, para o número do menu lateral.
+    /// </summary>
+    [HttpGet("api/clientes/{clienteId:int}/notas/pendentes/total")]
+    public async Task<ActionResult<int>> TotalPendentes(int clienteId, CancellationToken cancelamento)
+    {
+        if (!User.PodeAcessarCliente(clienteId))
+        {
+            return Forbid();
+        }
+
+        return await _notas.ContarPendentesAsync(clienteId, cancelamento);
+    }
+
+    /// <summary>
     /// Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga, com as parcelas.
     /// Filtros opcionais: empresa, situação (nome da situação ou "Pendentes") e período em que a nota
     /// chegou (datas no formato yyyy-MM-dd, horário de Brasília). "busca" procura por NF, fornecedor,

@@ -889,6 +889,37 @@ app-sidebar {
   transition: opacity .2s;
 }
 
+// Título de cada grupo do menu (Financeiro, Notas...)
+.pv-menu__grupo {
+  margin: 16px 24px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .45);
+  white-space: nowrap;
+  transition: opacity .2s;
+}
+
+.pv-menu__navegacao > .pv-menu__bloco:first-child .pv-menu__grupo {
+  margin-top: 8px;
+}
+
+// Número de notas pendentes ao lado do item
+.pv-menu__contador {
+  margin-left: auto;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  background-color: var(--pv-erro);
+  border-radius: 10px;
+}
+
 // Bloco do usuário no rodapé do menu
 .pv-menu__usuario {
   flex: 0 0 auto;
@@ -986,10 +1017,22 @@ app-sidebar {
     }
 
     .pv-menu__texto,
+    .pv-menu__grupo,
     .pv-menu__dados,
     .pv-menu__sair {
       opacity: 0;
       pointer-events: none;
+    }
+
+    // Recolhido: o número vira uma bolinha em cima do ícone
+    .pv-menu__contador {
+      position: absolute;
+      top: 6px;
+      left: 26px;
+      min-width: 8px;
+      height: 8px;
+      padding: 0;
+      font-size: 0;
     }
 
     .pv-menu__usuario {

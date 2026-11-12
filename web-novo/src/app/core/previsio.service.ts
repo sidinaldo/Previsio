@@ -70,6 +70,12 @@ export class PrevisioService {
     return this.doCliente(url => this.http.get<Nota[]>(`${url}/notas/pendentes`, { params }));
   }
 
+  /** Quantas notas estão pendentes (o número do menu). Chamado de tempos em tempos, sem a barra de carregamento. */
+  obterTotalPendentes(): Observable<number> {
+    const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
+    return this.doCliente(url => this.http.get<number>(`${url}/notas/pendentes/total`, { context }));
+  }
+
   /** Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga. */
   obterNotas(filtro: FiltroNotas): Observable<PaginaNotas> {
     const params = parametrosDasNotas(filtro);

@@ -10,17 +10,27 @@
 
 <!-- sidebar-wrapper: o layout liga a barra de rolagem do template nesta classe -->
 <nav class="sidebar-wrapper pv-menu__navegacao" aria-label="Menu principal">
-  <ul class="pv-menu__lista">
-    @for (item of itens(); track item.path) {
-      <li>
-        <a class="pv-menu__item" [routerLink]="item.path" routerLinkActive="pv-menu__item--ativo"
-           ariaCurrentWhenActive="page" [title]="item.title">
-          <i class="material-icons" aria-hidden="true">{{ item.icone }}</i>
-          <span class="pv-menu__texto">{{ item.title }}</span>
-        </a>
-      </li>
-    }
-  </ul>
+  @for (grupo of grupos(); track grupo.titulo) {
+    <div class="pv-menu__bloco" role="group" [attr.aria-label]="grupo.titulo">
+      <p class="pv-menu__grupo" aria-hidden="true">{{ grupo.titulo }}</p>
+      <ul class="pv-menu__lista">
+        @for (item of grupo.itens; track item.path) {
+          <li>
+            <a class="pv-menu__item" [routerLink]="item.path" routerLinkActive="pv-menu__item--ativo"
+               ariaCurrentWhenActive="page" [title]="item.title">
+              <i class="material-icons" aria-hidden="true">{{ item.icone }}</i>
+              <span class="pv-menu__texto">{{ item.title }}</span>
+              @if (item.contaPendentes && contador()) {
+                <span class="pv-menu__contador">
+                  {{ contador() }}<span class="sr-only"> para resolver</span>
+                </span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
 </nav>
 
 @if (usuario(); as u) {
