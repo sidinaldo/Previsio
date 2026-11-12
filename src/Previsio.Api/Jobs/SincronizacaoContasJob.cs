@@ -158,6 +158,16 @@ public class SincronizacaoContasJob
             }
         }
 
+        // Contas em aberto que venceram antes da janela: conferidas uma a uma até baixarem
+        var antigas = new ContasAntigasEmAberto(_db, _bling, _logger);
+        int antigasConferidas = await antigas.ConferirAsync(
+            empresa, conta, token, filtro.VencimentoInicial, _opcoes.MaximoContasAntigasValido(), agora, cancelamento);
+        if (antigasConferidas > 0)
+        {
+            _logger.LogInformation("Empresa {Empresa}: {Quantidade} contas antigas em aberto conferidas no Bling",
+                empresa.Nome, antigasConferidas);
+        }
+
         // Nome do fornecedor: da nota ligada ou do contato do Bling (guardado)
         var fornecedores = new FornecedoresBlingService(_db, _bling, _logger);
         int contatosBuscados = await fornecedores.PreencherNomesAsync(

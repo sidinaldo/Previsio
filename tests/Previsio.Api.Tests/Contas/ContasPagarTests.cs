@@ -186,6 +186,11 @@ public class ContasPagarTests
         opcoes.DiasFuturos = 180;
         Assert.Equal(60, opcoes.DiasPassadosValidos());
         Assert.Equal(180, opcoes.DiasFuturosValidos());
+        Assert.Equal(100, opcoes.MaximoContasAntigasValido());
+        opcoes.MaximoContasAntigas = 0;
+        Assert.Equal(100, opcoes.MaximoContasAntigasValido());
+        opcoes.MaximoContasAntigas = 300;
+        Assert.Equal(300, opcoes.MaximoContasAntigasValido());
     }
 
     // ---------- Nome do fornecedor ----------
