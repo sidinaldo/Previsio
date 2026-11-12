@@ -12,6 +12,10 @@ using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
+using Previsio.Infra.Sefaz;
+using Previsio.Infra.Seguranca;
+using Previsio.Core.Sefaz;
 
 namespace Previsio.Api.Tests.Sefaz;
 

@@ -3,11 +3,11 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Extensions.Options;
-using Previsio.Api.Servicos;
-using Previsio.Core.Sefaz;
 using Previsio.Core.Comum;
+using Previsio.Aplicacao.Abstracoes;
+using Previsio.Core.Sefaz;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Infra.Sefaz;
 
 /// <summary>
 /// Chamadas SOAP 1.2 ao Ambiente Nacional, com o certificado da empresa na conexão TLS (exigência da SEFAZ).

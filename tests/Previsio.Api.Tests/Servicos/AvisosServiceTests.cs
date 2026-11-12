@@ -9,6 +9,7 @@ using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.Servicos;
 

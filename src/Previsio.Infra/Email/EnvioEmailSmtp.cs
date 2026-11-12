@@ -2,8 +2,9 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using Previsio.Aplicacao.Abstracoes;
 
-namespace Previsio.Api.Email;
+namespace Previsio.Infra.Email;
 
 /// <summary>
 /// Envio pelo servidor SMTP configurado em "Smtp", com o MailKit.

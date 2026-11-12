@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Core.Sefaz;
 
 /// <summary>
 /// Abre o certificado digital A1 (.pfx) e lê o CNPJ do titular (e-CNPJ ICP-Brasil: "RAZAO SOCIAL:CNPJ" no CN).

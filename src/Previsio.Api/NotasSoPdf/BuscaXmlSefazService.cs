@@ -8,6 +8,7 @@ using Previsio.Core.NFe;
 using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Sefaz;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.NotasSoPdf;
 

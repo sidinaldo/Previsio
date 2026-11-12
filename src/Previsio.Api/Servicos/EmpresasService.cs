@@ -7,6 +7,7 @@ using Previsio.Core.NFe;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
@@ -20,13 +21,13 @@ public class EmpresasService
     private readonly IRepositorio<Empresa> _empresas;
     private readonly IRepositorio<Cliente> _clientes;
     private readonly AcessoEmpresaService _acesso;
-    private readonly ProtetorSegredos _protetor;
+    private readonly IProtetorSegredos _protetor;
 
     public EmpresasService(
         IRepositorio<Empresa> empresas,
         IRepositorio<Cliente> clientes,
         AcessoEmpresaService acesso,
-        ProtetorSegredos protetor)
+        IProtetorSegredos protetor)
     {
         _empresas = empresas;
         _clientes = clientes;

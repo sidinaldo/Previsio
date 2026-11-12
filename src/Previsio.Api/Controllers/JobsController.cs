@@ -5,6 +5,7 @@ using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Controllers;
 

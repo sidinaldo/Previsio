@@ -5,6 +5,7 @@ using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Xunit;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Tests.Controllers;
 

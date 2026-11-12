@@ -1,4 +1,5 @@
 using Previsio.Api.Servicos;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Tests.Apoio;
 

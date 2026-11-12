@@ -1,4 +1,4 @@
-namespace Previsio.Api.Email;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Um e-mail a enviar, com a versão HTML e a de texto puro (para leitores que não mostram HTML).

@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Os jobs agendados e como foi a última execução de cada um (tela Saúde).

@@ -5,6 +5,7 @@ using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Core.Contratos;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Saude;
 

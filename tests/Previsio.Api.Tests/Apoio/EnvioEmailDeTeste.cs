@@ -1,4 +1,4 @@
-using Previsio.Api.Email;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Tests.Apoio;
 

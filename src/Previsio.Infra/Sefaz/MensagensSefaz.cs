@@ -4,8 +4,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
+using Previsio.Aplicacao.Abstracoes;
+using Previsio.Core.Sefaz;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Infra.Sefaz;
 
 /// <summary>
 /// Monta e lê as mensagens SOAP do Ambiente Nacional da NF-e:

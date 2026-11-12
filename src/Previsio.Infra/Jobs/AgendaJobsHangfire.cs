@@ -1,8 +1,9 @@
 using Hangfire;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
+using Previsio.Aplicacao.Abstracoes;
 
-namespace Previsio.Api.Servicos;
+namespace Previsio.Infra.Jobs;
 
 /// <summary>
 /// Lê do Hangfire os jobs recorrentes e o resultado da última execução de cada um.

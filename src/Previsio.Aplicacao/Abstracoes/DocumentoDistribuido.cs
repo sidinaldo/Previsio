@@ -1,4 +1,4 @@
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Documento devolvido pela distribuição da SEFAZ: o schema diz o que é

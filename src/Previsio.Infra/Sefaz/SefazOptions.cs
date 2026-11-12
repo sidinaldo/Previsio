@@ -1,4 +1,4 @@
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Infra.Sefaz;
 
 /// <summary>
 /// Seção "Sefaz" do appsettings: ambiente e endereços do Ambiente Nacional da NF-e.

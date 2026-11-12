@@ -2,9 +2,8 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
-using Previsio.Core.Sefaz;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Core.Sefaz;
 
 /// <summary>
 /// Extrai, sem biblioteca externa, os textos de um PDF (DANFE) para procurar a chave de acesso.

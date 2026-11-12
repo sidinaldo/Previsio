@@ -4,6 +4,7 @@ using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
@@ -17,13 +18,13 @@ public class TokenBlingService
 
     private readonly BlingClient _bling;
     private readonly PrevisioDbContext _db;
-    private readonly ProtetorSegredos _protetor;
+    private readonly IProtetorSegredos _protetor;
     private readonly ILogger<TokenBlingService> _logger;
 
     public TokenBlingService(
         BlingClient bling,
         PrevisioDbContext db,
-        ProtetorSegredos protetor,
+        IProtetorSegredos protetor,
         ILogger<TokenBlingService> logger)
     {
         _bling = bling;

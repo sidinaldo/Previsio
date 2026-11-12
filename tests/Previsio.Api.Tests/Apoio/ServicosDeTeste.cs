@@ -10,6 +10,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.Painel;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.Apoio;
 

@@ -4,7 +4,6 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Contratos;
 using Previsio.Api.Dtos;
-using Previsio.Api.Email;
 using Previsio.Api.Resumos;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
@@ -12,6 +11,7 @@ using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Vencimentos;
 

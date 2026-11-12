@@ -1,6 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Conversa com o Ambiente Nacional da NF-e usando o certificado A1 da empresa.

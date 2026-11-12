@@ -1,4 +1,4 @@
-namespace Previsio.Api.Email;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Envia e-mails do Previsio. Lança exceção quando o servidor recusa ou não está configurado.

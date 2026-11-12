@@ -12,6 +12,7 @@ using Previsio.Data;
 using Xunit;
 using Previsio.Core.Conferencia;
 using Previsio.Aplicacao.Comum;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.Conferencia;
 

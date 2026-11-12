@@ -1,5 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using Previsio.Api.Sefaz;
+using Previsio.Aplicacao.Abstracoes;
+using Previsio.Core.Sefaz;
 
 namespace Previsio.Api.Tests.Apoio;
 

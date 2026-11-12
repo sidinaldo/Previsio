@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Abre e fecha uma conexão IMAP só para conferir servidor, porta e login.

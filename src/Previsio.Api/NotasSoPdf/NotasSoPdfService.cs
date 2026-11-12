@@ -3,7 +3,6 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
-using Previsio.Api.Email;
 using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
@@ -12,6 +11,7 @@ using Previsio.Data;
 using Previsio.Core.Sefaz;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.NotasSoPdf;
 

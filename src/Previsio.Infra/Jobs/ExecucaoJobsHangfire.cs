@@ -2,8 +2,9 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
+using Previsio.Aplicacao.Abstracoes;
 
-namespace Previsio.Api.Servicos;
+namespace Previsio.Infra.Jobs;
 
 /// <summary>
 /// Consulta o Hangfire: o job está em execução enquanto aparece numa fila ou na lista dos que estão processando.

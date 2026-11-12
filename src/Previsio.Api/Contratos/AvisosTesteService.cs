@@ -1,9 +1,9 @@
 using System.Net;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Api.Email;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Core.Contratos;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Contratos;
 

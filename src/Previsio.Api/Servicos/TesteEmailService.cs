@@ -6,6 +6,7 @@ using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
@@ -19,9 +20,9 @@ public class TesteEmailService
 
     private readonly IConexaoImap _conexao;
     private readonly IRepositorio<Cliente> _clientes;
-    private readonly ProtetorSegredos _protetor;
+    private readonly IProtetorSegredos _protetor;
 
-    public TesteEmailService(IConexaoImap conexao, IRepositorio<Cliente> clientes, ProtetorSegredos protetor)
+    public TesteEmailService(IConexaoImap conexao, IRepositorio<Cliente> clientes, IProtetorSegredos protetor)
     {
         _conexao = conexao;
         _clientes = clientes;

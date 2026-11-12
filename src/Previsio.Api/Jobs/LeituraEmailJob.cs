@@ -16,6 +16,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
 using Previsio.Data;
 using Previsio.Core.Contratos;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Jobs;
 
@@ -37,7 +38,7 @@ public class LeituraEmailJob
 
 
     private readonly PrevisioDbContext _db;
-    private readonly ProtetorSegredos _protetor;
+    private readonly IProtetorSegredos _protetor;
     private readonly RegistroNotaService _registro;
     private readonly LeitorNFe _leitor;
     private readonly RegistroNotaSoPdf _notasSoPdf;
@@ -46,7 +47,7 @@ public class LeituraEmailJob
 
     public LeituraEmailJob(
         PrevisioDbContext db,
-        ProtetorSegredos protetor,
+        IProtetorSegredos protetor,
         RegistroNotaService registro,
         LeitorNFe leitor,
         RegistroNotaSoPdf notasSoPdf,

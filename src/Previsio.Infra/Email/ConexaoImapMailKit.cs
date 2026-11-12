@@ -1,7 +1,8 @@
 using MailKit.Net.Imap;
 using MailKit.Security;
+using Previsio.Aplicacao.Abstracoes;
 
-namespace Previsio.Api.Servicos;
+namespace Previsio.Infra.Email;
 
 /// <summary>
 /// Teste de conexão com o MailKit: conecta, entra e sai. Não abre pastas nem lê e-mails.

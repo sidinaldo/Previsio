@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.DataProtection;
+using Previsio.Aplicacao.Abstracoes;
 
-namespace Previsio.Api.Servicos;
+namespace Previsio.Infra.Seguranca;
 
 /// <summary>
-/// Criptografa tokens do Bling e senhas de IMAP antes de gravar no banco.
+/// Criptografa tokens do Bling e senhas de IMAP antes de gravar no banco (ASP.NET Data Protection).
 /// </summary>
-public class ProtetorSegredos
+public class ProtetorSegredos : IProtetorSegredos
 {
     private readonly IDataProtector _protetor;
 

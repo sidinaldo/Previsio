@@ -8,6 +8,7 @@ using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Core.Sefaz;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Sefaz;
 
@@ -25,10 +26,10 @@ public class CertificadosService
     public const string MensagemSemCnpj = "Não achei o CNPJ no certificado. Use um e-CNPJ do tipo A1.";
 
     private readonly PrevisioDbContext _db;
-    private readonly ProtetorSegredos _protetor;
+    private readonly IProtetorSegredos _protetor;
     private readonly TimeProvider _relogio;
 
-    public CertificadosService(PrevisioDbContext db, ProtetorSegredos protetor, TimeProvider relogio)
+    public CertificadosService(PrevisioDbContext db, IProtetorSegredos protetor, TimeProvider relogio)
     {
         _db = db;
         _protetor = protetor;

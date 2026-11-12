@@ -1,6 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Implementações técnicas das interfaces da Aplicacao: IMAP, SMTP, SEFAZ, Hangfire, criptografia. -->
+  <!-- Implementações técnicas das interfaces da Aplicacao: IMAP e SMTP (MailKit), SEFAZ (SOAP),
+       Hangfire e criptografia (ASP.NET Data Protection). -->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hangfire.Core" Version="1.8.14" />
+    <PackageReference Include="MailKit" Version="4.8.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Previsio.Core\Previsio.Core.csproj" />

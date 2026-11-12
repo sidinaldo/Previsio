@@ -11,6 +11,7 @@ using Xunit;
 using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.Contratos;
 

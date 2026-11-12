@@ -22,7 +22,6 @@ using Previsio.Api.Sincronizacao;
 using Previsio.Api.Contas;
 using Previsio.Api.EmailsIgnorados;
 using Previsio.Api.Vencimentos;
-using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
@@ -33,6 +32,7 @@ using Previsio.Data;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
+using Previsio.Infra;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,10 +58,12 @@ builder.Services.AddHttpClient<BlingClient>(cliente =>
     cliente.Timeout = TimeSpan.FromSeconds(60);
 });
 
+// Implementações técnicas (IMAP, SMTP, SEFAZ, Hangfire, criptografia): Previsio.Infra
+builder.Services.AddPrevisioInfra(builder.Configuration);
+
 // Serviços do Previsio
 builder.Services.AddSingleton<LeitorNFe>();
 builder.Services.AddSingleton<CalculadoraPainel>();
-builder.Services.AddSingleton<ProtetorSegredos>();
 builder.Services.AddScoped<TokenBlingService>();
 builder.Services.AddScoped<RegistroNotaService>();
 builder.Services.AddScoped<AcessoEmpresaService>();
@@ -72,7 +74,6 @@ builder.Services.AddScoped<PainelService>();
 builder.Services.AddScoped<NotasService>();
 builder.Services.AddScoped<FalhasService>();
 builder.Services.AddScoped<BlingConexaoService>();
-builder.Services.AddScoped<IConexaoImap, ConexaoImapMailKit>();
 builder.Services.AddScoped<TesteEmailService>();
 builder.Services.AddScoped<LeituraEmailJob>();
 builder.Services.AddScoped<LancamentoNotaJob>();
@@ -111,19 +112,15 @@ builder.Services.AddScoped<AlertaVencimentosService>();
 builder.Services.AddScoped<AlertaVencimentosJob>();
 builder.Services.AddScoped<ConfiguracaoConferenciaService>();
 
-// Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
-builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));
+// Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ (ISefaz em AddPrevisioInfra)
 builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
 builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
-builder.Services.AddScoped<ISefaz, SefazSoap>();
 builder.Services.AddScoped<CertificadosService>();
 builder.Services.AddScoped<RegistroNotaSoPdf>();
 builder.Services.AddScoped<NotasSoPdfService>();
 builder.Services.AddScoped<BuscaXmlSefazService>();
 builder.Services.AddScoped<BuscaXmlSefazJob>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
-builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
@@ -195,8 +192,6 @@ builder.Services.AddHangfireServer(opcoes =>
 {
     opcoes.WorkerCount = 2;
 });
-builder.Services.AddSingleton<IExecucaoJobs, ExecucaoJobsHangfire>();
-builder.Services.AddSingleton<IAgendaJobs, AgendaJobsHangfire>();
 
 // Painel Angular
 string urlFront = builder.Configuration["Front:Url"] ?? "http://localhost:4200";

@@ -1,4 +1,4 @@
-namespace Previsio.Api.Servicos;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Situação de um job agendado (recorrente) no Hangfire.

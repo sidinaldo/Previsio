@@ -1,4 +1,4 @@
-namespace Previsio.Api.Sefaz;
+namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Resposta da SEFAZ: código de status (cStat), motivo e, na distribuição, os documentos achados.

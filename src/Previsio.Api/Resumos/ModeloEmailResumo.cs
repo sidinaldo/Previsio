@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Net;
 using System.Text;
-using Previsio.Api.Email;
 using Previsio.Core.Entidades;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Resumos;
 

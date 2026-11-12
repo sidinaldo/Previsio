@@ -1,4 +1,4 @@
-namespace Previsio.Api.Email;
+namespace Previsio.Infra.Email;
 
 /// <summary>
 /// Servidor que envia os e-mails do Previsio (seção "Smtp" do appsettings).

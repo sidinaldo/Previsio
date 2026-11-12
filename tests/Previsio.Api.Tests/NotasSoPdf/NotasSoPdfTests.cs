@@ -14,6 +14,7 @@ using Previsio.Core.NFe;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.NotasSoPdf;
 
@@ -348,7 +349,7 @@ public class NotasSoPdfTests
         Resultado resultado = await Acoes().PedirXmlAsync(pendente.Id, Financeiro(), CancellationToken.None);
 
         Assert.True(resultado.Sucesso);
-        Previsio.Api.Email.MensagemEmail email = Assert.Single(_email.Enviados);
+        Previsio.Aplicacao.Abstracoes.MensagemEmail email = Assert.Single(_email.Enviados);
         Assert.Equal("faturamento@alfa.com.br", email.Para);
         Assert.Equal("notas@autocenter.com.br", email.ResponderPara);
         Assert.Equal("Pedido do XML: NF-e 92001", email.Assunto);
