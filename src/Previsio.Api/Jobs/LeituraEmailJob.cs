@@ -213,7 +213,7 @@ public class LeituraEmailJob
                                 cancelamento);
                         }
                     }
-                    else if (mensagem.Attachments.Any())
+                    else if (AnexosDoEmail.Listar(mensagem).Count > 0)
                     {
                         // Tem anexo, mas nenhum é XML, ZIP com XML ou PDF
                         await _ignorados.RegistrarAsync(
@@ -424,9 +424,9 @@ public class LeituraEmailJob
         {
             email.EnviadoEm = mensagem.Date.UtcDateTime;
         }
-        foreach (MimeEntity anexo in mensagem.Attachments)
+        foreach (MimePart anexo in AnexosDoEmail.Listar(mensagem))
         {
-            MimePart? parte = anexo as MimePart;
+            MimePart? parte = anexo;
             if (parte == null)
             {
                 continue;
@@ -460,9 +460,9 @@ public class LeituraEmailJob
     private static EmailSemXml? EmailComPdf(MimeMessage mensagem, string origem)
     {
         var email = new EmailSemXml();
-        foreach (MimeEntity anexo in mensagem.Attachments)
+        foreach (MimePart anexo in AnexosDoEmail.Listar(mensagem))
         {
-            MimePart? parte = anexo as MimePart;
+            MimePart? parte = anexo;
             if (parte == null || parte.Content == null)
             {
                 continue;
@@ -507,9 +507,9 @@ public class LeituraEmailJob
     {
         var xmls = new List<AnexoXml>();
 
-        foreach (MimeEntity anexo in mensagem.Attachments)
+        foreach (MimePart anexo in AnexosDoEmail.Listar(mensagem))
         {
-            MimePart? parte = anexo as MimePart;
+            MimePart? parte = anexo;
             if (parte == null || parte.Content == null)
             {
                 continue;
@@ -521,11 +521,13 @@ public class LeituraEmailJob
             parte.Content.DecodeTo(memoria);
             byte[] bytes = memoria.ToArray();
 
-            if (nomeArquivo.EndsWith(".xml"))
+            bool tipoXml = parte.ContentType.IsMimeType("application", "xml") || parte.ContentType.IsMimeType("text", "xml");
+            bool tipoZip = parte.ContentType.IsMimeType("application", "zip") || parte.ContentType.IsMimeType("application", "x-zip-compressed");
+            if (nomeArquivo.EndsWith(".xml") || (nomeArquivo == "" && tipoXml))
             {
                 xmls.Add(NovoAnexo(parte.FileName ?? "", bytes));
             }
-            else if (nomeArquivo.EndsWith(".zip"))
+            else if (nomeArquivo.EndsWith(".zip") || (nomeArquivo == "" && tipoZip))
             {
                 xmls.AddRange(ExtrairXmlsDoZip(parte.FileName ?? "", bytes));
             }
