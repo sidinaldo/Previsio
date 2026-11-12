@@ -2470,14 +2470,15 @@ app-paginacao.pv-paginacao {
 
 .pv-sininho__contador {
   position: absolute;
-  top: 4px;
-  right: 2px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  font-size: 11px;
+  top: -3px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 16px;
+  pointer-events: none;
   color: #FFFFFF;
   text-align: center;
   font-variant-numeric: tabular-nums;

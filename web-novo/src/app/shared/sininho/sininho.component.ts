@@ -36,10 +36,11 @@ const ICONES: Record<TipoAviso, string> = {
     <button #gatilho type="button" class="pv-sininho__gatilho" [attr.aria-label]="rotulo()" [title]="rotulo()"
             aria-haspopup="dialog" [attr.aria-expanded]="aberto()" (click)="alternar()">
       <i class="material-icons" aria-hidden="true">notifications</i>
-      @if (novos() > 0) {
-        <span class="pv-sininho__contador" aria-hidden="true">{{ novos() > 9 ? '9+' : novos() }}</span>
-      }
     </button>
+    <!-- Fora do botão: no canto, sem cobrir o sino (o botão corta o que passa da borda) -->
+    @if (novos() > 0) {
+      <span class="pv-sininho__contador" aria-hidden="true">{{ novos() > 9 ? '9+' : novos() }}</span>
+    }
     @if (aberto()) {
       <div class="pv-sininho__painel" role="dialog" aria-label="Avisos" [style.top.px]="topo()" [style.right.px]="direita()">
         <div class="pv-sininho__cabecalho">
