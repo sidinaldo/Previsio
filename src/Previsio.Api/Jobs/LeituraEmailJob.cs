@@ -212,6 +212,15 @@ public class LeituraEmailJob
                                 ParaRegistrar(mensagem, cliente.Id, caixaParaLer.EmpresaId, uid, analise.MotivoIgnorado, analise.Pdf),
                                 cancelamento);
                         }
+                        else if (analise.MotivoJaExiste != null)
+                        {
+                            // A nota já estava no Previsio: nada é criado, mas o e-mail fica visível com o porquê
+                            EmailParaRegistrar jaExiste = ParaRegistrar(
+                                mensagem, cliente.Id, caixaParaLer.EmpresaId, uid, analise.MotivoJaExiste, analise.Pdf);
+                            jaExiste.NotaFiscalId = analise.NotaFiscalExistenteId;
+                            jaExiste.NumeroNota = analise.NumeroNotaExistente;
+                            await _ignorados.RegistrarAsync(jaExiste, cancelamento);
+                        }
                     }
                     else if (AnexosDoEmail.Listar(mensagem).Count > 0)
                     {

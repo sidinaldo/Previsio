@@ -296,6 +296,13 @@ namespace Previsio.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<int?>("NotaFiscalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NumeroNota")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<byte[]>("Pdf")
                         .HasColumnType("bytea");
 

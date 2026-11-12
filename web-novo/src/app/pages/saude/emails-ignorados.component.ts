@@ -1,5 +1,6 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 import { mensagemDoDownload, salvarArquivo } from '../../core/download';
 import { mensagemDaApi } from '../../core/mensagem-erro';
@@ -19,7 +20,7 @@ export interface RedeDoFiltro {
  */
 @Component({
   selector: 'app-emails-ignorados',
-  imports: [DatePipe, CarregandoDirective],
+  imports: [DatePipe, RouterLink, CarregandoDirective],
   template: `
     <div class="card">
       <div class="pv-card__cabecalho">
@@ -85,6 +86,9 @@ export interface RedeDoFiltro {
                     <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">Anexos: {{ email.anexos }}</span>
                   </td>
                   <td>
+                    @if (email.numeroNota) {
+                      <span class="badge badge-info">Nota já existe</span>
+                    }
                     {{ email.motivo }}
                     @if (email.tratadoEm) {
                       <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">
@@ -94,10 +98,15 @@ export interface RedeDoFiltro {
                     }
                   </td>
                   <td class="text-right">
-                    @if (email.temPdf) {
+                    @if (email.temPdf || email.numeroNota) {
                       <div class="pv-acoes-linha">
-                        <button type="button" class="btn btn-sm btn-link" (click)="verPdf(email)">Ver o PDF</button>
-                        @if (!email.tratadoEm) {
+                        @if (email.temPdf) {
+                          <button type="button" class="btn btn-sm btn-link" (click)="verPdf(email)">Ver o PDF</button>
+                        }
+                        @if (email.numeroNota) {
+                          <a class="btn btn-sm btn-secundario" [routerLink]="['/pages/notas-recebidas']"
+                             [queryParams]="{ busca: email.numeroNota }">Ver a nota</a>
+                        } @else if (email.podeTratar) {
                           <button type="button" class="btn btn-sm btn-info" [pvCarregando]="tratandoId() === email.id"
                                   [disabled]="tratandoId() !== null" (click)="tratar(email)">Tratar como nota em PDF</button>
                         }

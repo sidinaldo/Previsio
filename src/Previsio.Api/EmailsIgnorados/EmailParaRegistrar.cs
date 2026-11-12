@@ -18,4 +18,6 @@ public class EmailParaRegistrar
     public string Motivo { get; set; } = "";
     public string? PdfNome { get; set; }
     public byte[]? Pdf { get; set; }
+    public int? NotaFiscalId { get; set; }
+    public string? NumeroNota { get; set; }
 }

@@ -17,6 +17,13 @@ public class EmailIgnoradoDto
     public string Anexos { get; set; } = "";
     public string Motivo { get; set; } = "";
     public bool TemPdf { get; set; }
+
+    // A nota do PDF já estava no Previsio: número para o link "Ver a nota"
+    public int? NotaFiscalId { get; set; }
+    public string? NumeroNota { get; set; }
+
+    // Tem PDF, a nota ainda não existe e ninguém tratou
+    public bool PodeTratar { get; set; }
     public DateTime? TratadoEm { get; set; }
     public string? TratadoPor { get; set; }
     public string? ResultadoTratamento { get; set; }

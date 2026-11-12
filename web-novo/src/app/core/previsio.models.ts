@@ -288,6 +288,10 @@ export interface EmailIgnorado {
   anexos: string;
   motivo: string;
   temPdf: boolean;
+  // A nota do PDF já estava no Previsio (chegou por outro e-mail)
+  notaFiscalId: number | null;
+  numeroNota: string | null;
+  podeTratar: boolean;
   tratadoEm: string | null;
   tratadoPor: string | null;
   resultadoTratamento: string | null;

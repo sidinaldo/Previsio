@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Sefaz;
+using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 
@@ -122,11 +123,33 @@ public class RegistroNotaSoPdf
         {
             string chave = item.Key;
             // O XML desta nota já chegou (em outro e-mail) ou ela já está pendente
-            bool jaTemNota = await _db.NotasFiscais.AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == chave, cancelamento);
+            var notaExistente = await _db.NotasFiscais.AsNoTracking()
+                .Where(n => n.ClienteId == clienteId && n.ChaveAcesso == chave)
+                .Select(n => new { n.Id, n.Numero, n.RecebidaEm })
+                .FirstOrDefaultAsync(cancelamento);
             bool jaPendente = await _db.NotasSoPdf.AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == chave, cancelamento);
-            if (jaTemNota || jaPendente)
+            if (notaExistente != null || jaPendente)
             {
                 conhecidas++;
+                if (resultado.MotivoJaExiste == null)
+                {
+                    resultado.Pdf = item.Value;
+                    if (notaExistente != null)
+                    {
+                        resultado.NotaFiscalExistenteId = notaExistente.Id;
+                        resultado.NumeroNotaExistente = notaExistente.Numero;
+                        DateTime recebida = TimeZoneInfo.ConvertTimeFromUtc(
+                            DateTime.SpecifyKind(notaExistente.RecebidaEm, DateTimeKind.Utc), RelogioBrasil.Fuso);
+                        resultado.MotivoJaExiste = "A nota deste PDF já está no Previsio (NF " + notaExistente.Numero
+                            + ", recebida em " + recebida.ToString("dd/MM/yyyy HH:mm") + "). Nada foi criado.";
+                    }
+                    else
+                    {
+                        resultado.NumeroNotaExistente = ChaveAcesso.Numero(chave);
+                        resultado.MotivoJaExiste = "Este PDF já está pendente em Notas pendentes (NF "
+                            + ChaveAcesso.Numero(chave) + "), recebido em outro e-mail. Nada foi criado.";
+                    }
+                }
                 continue;
             }
             NotaSoPdf nota = Nova(clienteId, empresaDaCaixaId, email, item.Value);

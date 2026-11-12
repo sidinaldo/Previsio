@@ -145,6 +145,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(e => e.PdfNome).HasMaxLength(200);
             entidade.Property(e => e.TratadoPor).HasMaxLength(200);
             entidade.Property(e => e.ResultadoTratamento).HasMaxLength(300);
+            entidade.Property(e => e.NumeroNota).HasMaxLength(20);
             entidade.HasIndex(e => new { e.ClienteId, e.LidoEm });
             entidade.HasIndex(e => new { e.ClienteId, e.MensagemId });
 

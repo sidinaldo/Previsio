@@ -2,7 +2,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { classeDaSituacao, descricaoDaSituacao } from '../../core/filtro-notas';
@@ -40,6 +40,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
 export class NotasRecebidasComponent {
   private readonly previsio = inject(PrevisioService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly rota = inject(ActivatedRoute);
 
   // Rodar a leitura de e-mails na hora é só do admin (o job passa por todos os clientes)
   readonly ehAdmin = inject(SessaoService).ehAdmin;
@@ -95,6 +96,11 @@ export class NotasRecebidasComponent {
   readonly exportar = () => this.previsio.exportarNotas(this.filtroAplicado);
 
   constructor() {
+    // Link de outra tela já com a busca (ex.: "Ver a nota" em E-mails ignorados)
+    const buscaDoLink = this.rota.snapshot.queryParamMap.get('busca');
+    if (buscaDoLink) {
+      this.busca.set(buscaDoLink);
+    }
     this.previsio.listarEmpresas().subscribe({
       next: empresas => this.empresas.set(empresas),
       error: () => this.empresas.set([])

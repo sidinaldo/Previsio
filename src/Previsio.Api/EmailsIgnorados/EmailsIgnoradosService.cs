@@ -70,6 +70,11 @@ public class EmailsIgnoradosService
             registro.PdfNome = Limitar(email.PdfNome ?? "", 200);
             registro.Pdf = email.Pdf;
         }
+        registro.NotaFiscalId = email.NotaFiscalId;
+        if (email.NumeroNota != null)
+        {
+            registro.NumeroNota = Limitar(email.NumeroNota, 20);
+        }
         _db.EmailsIgnorados.Add(registro);
     }
 
@@ -148,6 +153,10 @@ public class EmailsIgnoradosService
         {
             return Resultado<TratamentoEmailIgnoradoDto>.Invalido("Este e-mail não tem PDF para tratar como nota.");
         }
+        if (email.NumeroNota != null)
+        {
+            return Resultado<TratamentoEmailIgnoradoDto>.Invalido("A nota deste PDF já está no Previsio (NF " + email.NumeroNota + ").");
+        }
 
         var semXml = new EmailSemXml();
         semXml.MensagemId = email.MensagemId;
@@ -213,6 +222,9 @@ public class EmailsIgnoradosService
         dto.Anexos = email.Anexos;
         dto.Motivo = email.Motivo;
         dto.TemPdf = email.Pdf != null && email.Pdf.Length > 0;
+        dto.NotaFiscalId = email.NotaFiscalId;
+        dto.NumeroNota = email.NumeroNota;
+        dto.PodeTratar = dto.TemPdf && email.NumeroNota == null && email.TratadoEm == null;
         dto.TratadoEm = email.TratadoEm;
         dto.TratadoPor = email.TratadoPor;
         dto.ResultadoTratamento = email.ResultadoTratamento;

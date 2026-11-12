@@ -21,4 +21,10 @@ public class ResultadoNotaSoPdf
 
     // Primeiro PDF utilizável do e-mail ignorado (para o admin conferir ou tratar como nota)
     public PdfDoEmail? Pdf { get; set; }
+
+    // Quando a nota do PDF já estava no Previsio (outro e-mail): o porquê, a nota e o PDF,
+    // para o e-mail aparecer em "E-mails ignorados" em vez de sumir sem rastro
+    public string? MotivoJaExiste { get; set; }
+    public int? NotaFiscalExistenteId { get; set; }
+    public string? NumeroNotaExistente { get; set; }
 }

@@ -165,4 +165,51 @@ public class EmailsIgnoradosTests
         Assert.Contains("SEFAZ", tratado.Valor!.Mensagem);
         Assert.Equal(SituacaoNotaSoPdf.BuscandoNaSefaz, _db.NotasSoPdf.Single().Situacao);
     }
+
+    // ---------- Nota que já estava no Previsio ----------
+
+    [Fact]
+    public async Task Pdf_de_nota_que_ja_existe_diz_qual_e_nao_deixa_tratar()
+    {
+        await CadastrarRede();
+        byte[] danfe = File.ReadAllBytes(ChaveETextoPdfTests.Exemplo("danfe-chromium.pdf"));
+        var registro = new RegistroNotaSoPdf(_db);
+
+        // Primeiro só a pendência de outro e-mail
+        await registro.AnalisarAsync(_rede.Id, null, Email("NF-e 92001", "danfe.pdf", danfe), false, CancellationToken.None);
+        ResultadoNotaSoPdf pendente = await registro.AnalisarAsync(_rede.Id, null, Email("NF-e 92001 de novo", "danfe.pdf", danfe), false, CancellationToken.None);
+        Assert.True(pendente.JaConhecido);
+        Assert.Contains("já está pendente", pendente.MotivoJaExiste);
+        Assert.Equal("92001", pendente.NumeroNotaExistente);
+        Assert.Null(pendente.NotaFiscalExistenteId);
+
+        // Depois o XML chega: o PDF de um terceiro e-mail aponta para a nota
+        var nota = new NotaFiscal
+        {
+            ClienteId = _rede.Id, Numero = "92001", ChaveAcesso = "31261171295348000100550040000920011289748350",
+            NomeFornecedor = "Fornecedor", RecebidaEm = new DateTime(2026, 11, 10, 13, 30, 0, DateTimeKind.Utc)
+        };
+        _db.NotasFiscais.Add(nota);
+        await _db.SaveChangesAsync();
+        ResultadoNotaSoPdf existente = await registro.AnalisarAsync(_rede.Id, null, Email("Segunda via", "danfe.pdf", danfe), false, CancellationToken.None);
+        Assert.Equal(0, existente.Registradas);
+        Assert.Null(existente.MotivoIgnorado);
+        Assert.Equal(nota.Id, existente.NotaFiscalExistenteId);
+        Assert.Equal("A nota deste PDF já está no Previsio (NF 92001, recebida em 10/11/2026 10:30). Nada foi criado.", existente.MotivoJaExiste);
+        Assert.NotNull(existente.Pdf);
+
+        // Na lista: mostra a nota e não oferece "Tratar como nota"
+        EmailsIgnoradosService servico = Servico();
+        EmailParaRegistrar email = ParaRegistrar(_rede.Id, "e@x", existente.MotivoJaExiste!, danfe);
+        email.NotaFiscalId = existente.NotaFiscalExistenteId;
+        email.NumeroNota = existente.NumeroNotaExistente;
+        await servico.RegistrarAsync(email, CancellationToken.None);
+        await _db.SaveChangesAsync();
+        EmailIgnoradoDto item = (await servico.ListarAsync(_rede.Id, 7, CancellationToken.None)).Single();
+        Assert.Equal("92001", item.NumeroNota);
+        Assert.Equal(nota.Id, item.NotaFiscalId);
+        Assert.True(item.TemPdf);
+        Assert.False(item.PodeTratar);
+        Assert.Equal(TipoResultado.Invalido, (await servico.TratarComoNotaAsync(item.Id, "admin", CancellationToken.None)).Tipo);
+    }
 }

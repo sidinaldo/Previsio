@@ -32,6 +32,10 @@ public class EmailIgnorado
     public string? PdfNome { get; set; }
     public byte[]? Pdf { get; set; }
 
+    // A nota do PDF já estava no Previsio (chegou por outro e-mail): qual é. Nulo nos outros motivos
+    public int? NotaFiscalId { get; set; }
+    public string? NumeroNota { get; set; }
+
     // "Tratar como nota em PDF"
     public DateTime? TratadoEm { get; set; }
     public string? TratadoPor { get; set; }
