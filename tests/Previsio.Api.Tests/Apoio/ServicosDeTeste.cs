@@ -1,6 +1,5 @@
 using Hangfire;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Sefaz;
@@ -11,6 +10,7 @@ using Previsio.Core.Painel;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Tests.Apoio;
 
@@ -41,7 +41,7 @@ public static class ServicosDeTeste
 
     public static AutenticacaoService Autenticacao(PrevisioDbContext db)
     {
-        return new AutenticacaoService(db, new PasswordHasher<Usuario>(), NullLogger<AutenticacaoService>.Instance);
+        return new AutenticacaoService(db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
     }
 
     public static UsuariosService Usuarios(PrevisioDbContext db)
@@ -58,7 +58,7 @@ public static class ServicosDeTeste
             new CalculadoraPainel());
     }
 
-    public static NotasService Notas(PrevisioDbContext db, IBackgroundJobClient fila)
+    public static NotasService Notas(PrevisioDbContext db, IFilaJobs fila)
     {
         return new NotasService(new Repositorio<NotaFiscal>(db), fila);
     }
@@ -69,7 +69,7 @@ public static class ServicosDeTeste
     }
 
     public static BlingConexaoService ConexaoBling(
-        PrevisioDbContext db, ProtetorSegredos protetor, BlingClient bling, IBackgroundJobClient fila)
+        PrevisioDbContext db, ProtetorSegredos protetor, BlingClient bling, IFilaJobs fila)
     {
         var tokens = new TokenBlingService(bling, db, protetor, NullLogger<TokenBlingService>.Instance);
         return new BlingConexaoService(
@@ -78,7 +78,7 @@ public static class ServicosDeTeste
             bling,
             tokens,
             fila,
-            new EphemeralDataProtectionProvider(),
+            new ProtetorTemporario(new EphemeralDataProtectionProvider()),
             NullLogger<BlingConexaoService>.Instance);
     }
 }

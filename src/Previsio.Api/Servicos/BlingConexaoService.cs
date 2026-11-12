@@ -1,6 +1,4 @@
 using System.Security.Claims;
-using Hangfire;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Jobs;
 using Previsio.Bling;
@@ -9,6 +7,7 @@ using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
@@ -24,8 +23,8 @@ public class BlingConexaoService
     private readonly AcessoEmpresaService _acesso;
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
-    private readonly IBackgroundJobClient _jobs;
-    private readonly ITimeLimitedDataProtector _protetorEstado;
+    private readonly IFilaJobs _jobs;
+    private readonly IProtetorTemporario _protetorEstado;
     private readonly ILogger<BlingConexaoService> _logger;
 
     public BlingConexaoService(
@@ -33,8 +32,8 @@ public class BlingConexaoService
         AcessoEmpresaService acesso,
         BlingClient bling,
         TokenBlingService tokens,
-        IBackgroundJobClient jobs,
-        IDataProtectionProvider provedor,
+        IFilaJobs jobs,
+        IProtetorTemporario protetorEstado,
         ILogger<BlingConexaoService> logger)
     {
         _empresas = empresas;
@@ -42,7 +41,7 @@ public class BlingConexaoService
         _bling = bling;
         _tokens = tokens;
         _jobs = jobs;
-        _protetorEstado = provedor.CreateProtector("Previsio.OAuthState").ToTimeLimitedDataProtector();
+        _protetorEstado = protetorEstado;
         _logger = logger;
     }
 
@@ -64,7 +63,7 @@ public class BlingConexaoService
             return Resultado<string>.Invalido("Cadastre o Client ID e o Client Secret do aplicativo do Bling desta empresa antes de conectar.");
         }
 
-        string estado = _protetorEstado.Protect(empresaId.ToString(), ValidadeEstado);
+        string estado = _protetorEstado.Proteger(empresaId.ToString(), ValidadeEstado);
         return Resultado<string>.Ok(_bling.MontarUrlAutorizacao(credenciais, estado));
     }
 
@@ -102,7 +101,7 @@ public class BlingConexaoService
         int empresaId;
         try
         {
-            empresaId = int.Parse(_protetorEstado.Unprotect(estado));
+            empresaId = int.Parse(_protetorEstado.Revelar(estado));
         }
         catch (Exception)
         {
@@ -129,8 +128,8 @@ public class BlingConexaoService
         }
 
         // Já busca as contas a pagar e lança notas que estavam esperando a conexão
-        _jobs.Enqueue<SincronizacaoContasJob>(j => j.ExecutarAsync(CancellationToken.None));
-        _jobs.Enqueue<LancamentoNotaJob>(j => j.LancarPendentesAsync(CancellationToken.None));
+        _jobs.SincronizarContas();
+        _jobs.LancarPendentes();
 
         return RetornoConexaoBling.Conectado;
     }

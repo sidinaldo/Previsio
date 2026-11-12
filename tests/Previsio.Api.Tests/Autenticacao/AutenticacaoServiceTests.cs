@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Infra.Seguranca;
 
 namespace Previsio.Api.Tests.Autenticacao;
 
@@ -18,7 +18,7 @@ public class AutenticacaoServiceTests
 
     public AutenticacaoServiceTests()
     {
-        _servico = new AutenticacaoService(_db, new PasswordHasher<Usuario>(), NullLogger<AutenticacaoService>.Instance);
+        _servico = new AutenticacaoService(_db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
     }
 
     private async Task CadastrarUsuarioDeCliente(bool clienteAtivo)

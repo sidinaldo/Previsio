@@ -33,6 +33,7 @@ using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
 using Previsio.Infra;
+using Previsio.Aplicacao.Abstracoes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,7 +95,7 @@ if (opcoesJwt.ValidadeMinutos <= 0)
 
 builder.Services.Configure<JwtOptions>(secaoJwt);
 builder.Services.AddSingleton<GeradorTokenJwt>();
-builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+builder.Services.AddScoped<IFilaJobs, FilaJobsHangfire>();
 builder.Services.AddScoped<AutenticacaoService>();
 builder.Services.AddScoped<RedefinicaoSenhaService>();
 builder.Services.AddScoped<AvisosService>();

@@ -1,13 +1,16 @@
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Previsio.Aplicacao.Abstracoes;
+using Previsio.Api.Jobs;
 
 namespace Previsio.Api.Tests.Apoio;
 
 /// <summary>
-/// Fila do Hangfire que só guarda os jobs enfileirados, sem executar nada.
+/// Fila de jobs que só guarda o que foi enfileirado, sem executar nada. Serve tanto para os serviços
+/// (IFilaJobs) quanto para os controllers que falam direto com o Hangfire (IBackgroundJobClient).
 /// </summary>
-public class FilaDeJobsDeTeste : IBackgroundJobClient
+public class FilaDeJobsDeTeste : IBackgroundJobClient, IFilaJobs
 {
     public List<Job> Enfileirados { get; } = new List<Job>();
 
@@ -20,5 +23,20 @@ public class FilaDeJobsDeTeste : IBackgroundJobClient
     public bool ChangeState(string jobId, IState state, string expectedState)
     {
         return true;
+    }
+
+    public void LancarNota(int notaId)
+    {
+        Enfileirados.Add(Job.FromExpression<LancamentoNotaJob>(j => j.LancarAsync(notaId, CancellationToken.None)));
+    }
+
+    public void LancarPendentes()
+    {
+        Enfileirados.Add(Job.FromExpression<LancamentoNotaJob>(j => j.LancarPendentesAsync(CancellationToken.None)));
+    }
+
+    public void SincronizarContas()
+    {
+        Enfileirados.Add(Job.FromExpression<SincronizacaoContasJob>(j => j.ExecutarAsync(CancellationToken.None)));
     }
 }

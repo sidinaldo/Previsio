@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
@@ -10,6 +9,7 @@ using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
@@ -29,9 +29,9 @@ public class NotasService
     public const int TamanhoMaximoObservacao = 500;
 
     private readonly IRepositorio<NotaFiscal> _notas;
-    private readonly IBackgroundJobClient _jobs;
+    private readonly IFilaJobs _jobs;
 
-    public NotasService(IRepositorio<NotaFiscal> notas, IBackgroundJobClient jobs)
+    public NotasService(IRepositorio<NotaFiscal> notas, IFilaJobs jobs)
     {
         _notas = notas;
         _jobs = jobs;
@@ -325,7 +325,7 @@ public class NotasService
         nota.MensagemErro = null;
         await _notas.SalvarAsync(cancelamento);
 
-        _jobs.Enqueue<LancamentoNotaJob>(j => j.LancarAsync(notaId, CancellationToken.None));
+        _jobs.LancarNota(notaId);
         return Resultado.Ok();
     }
 

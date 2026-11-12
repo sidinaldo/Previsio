@@ -18,6 +18,8 @@ public static class RegistroInfra
     {
         // Criptografia dos segredos gravados no banco
         servicos.AddSingleton<IProtetorSegredos, ProtetorSegredos>();
+        servicos.AddSingleton<IProtetorTemporario, ProtetorTemporario>();
+        servicos.AddSingleton<IHashSenha, HashSenhaIdentity>();
 
         // E-mail: teste de conexão IMAP e envio SMTP
         servicos.AddScoped<IConexaoImap, ConexaoImapMailKit>();

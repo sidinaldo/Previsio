@@ -1,33 +1,33 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Previsio.Aplicacao.Comum;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Autenticacao;
 
 /// <summary>
-/// Confere e-mail e senha e cuida do hash das senhas (PBKDF2 do ASP.NET Core Identity).
+/// Confere e-mail e senha e cuida do hash das senhas (IHashSenha).
 /// </summary>
 public class AutenticacaoService
 {
+    private readonly PrevisioDbContext _db;
+    private readonly IHashSenha _hasher;
+
     // Hash de uma senha aleatória, conferido quando o e-mail não existe: assim a resposta
     // demora o mesmo tempo e não revela quais e-mails estão cadastrados.
-    private static readonly string HashFicticio =
-        new PasswordHasher<Usuario>().HashPassword(new Usuario(), Guid.NewGuid().ToString());
-
-    private readonly PrevisioDbContext _db;
-    private readonly IPasswordHasher<Usuario> _hasher;
+    private readonly string _hashFicticio;
     private readonly ILogger<AutenticacaoService> _logger;
 
     public AutenticacaoService(
         PrevisioDbContext db,
-        IPasswordHasher<Usuario> hasher,
+        IHashSenha hasher,
         ILogger<AutenticacaoService> logger)
     {
         _db = db;
         _hasher = hasher;
+        _hashFicticio = hasher.Gerar(new Usuario(), Guid.NewGuid().ToString());
         _logger = logger;
     }
 
@@ -51,13 +51,13 @@ public class AutenticacaoService
 
         if (usuario == null)
         {
-            _hasher.VerifyHashedPassword(new Usuario(), HashFicticio, senhaInformada);
+            _hasher.Conferir(new Usuario(), _hashFicticio, senhaInformada);
             _logger.LogWarning("Login recusado: e-mail {Email} não cadastrado", emailNormalizado);
             return null;
         }
 
-        PasswordVerificationResult resultado = _hasher.VerifyHashedPassword(usuario, usuario.SenhaHash, senhaInformada);
-        if (resultado == PasswordVerificationResult.Failed)
+        ConferenciaSenha resultado = _hasher.Conferir(usuario, usuario.SenhaHash, senhaInformada);
+        if (resultado == ConferenciaSenha.Incorreta)
         {
             _logger.LogWarning("Login recusado: senha incorreta para o usuário {UsuarioId}", usuario.Id);
             return null;
@@ -70,9 +70,9 @@ public class AutenticacaoService
         }
 
         // Hash gerado com parâmetros antigos: aproveita a senha em mãos para atualizar
-        if (resultado == PasswordVerificationResult.SuccessRehashNeeded)
+        if (resultado == ConferenciaSenha.CorretaPrecisaRenovar)
         {
-            usuario.SenhaHash = _hasher.HashPassword(usuario, senhaInformada);
+            usuario.SenhaHash = _hasher.Gerar(usuario, senhaInformada);
         }
 
         usuario.UltimoAcessoEm = DateTime.UtcNow;
@@ -115,8 +115,8 @@ public class AutenticacaoService
         {
             return false;
         }
-        PasswordVerificationResult resultado = _hasher.VerifyHashedPassword(usuario, usuario.SenhaHash, senha);
-        return resultado != PasswordVerificationResult.Failed;
+        ConferenciaSenha resultado = _hasher.Conferir(usuario, usuario.SenhaHash, senha);
+        return resultado != ConferenciaSenha.Incorreta;
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class AutenticacaoService
     /// </summary>
     public void DefinirSenha(Usuario usuario, string senha)
     {
-        usuario.SenhaHash = _hasher.HashPassword(usuario, senha);
+        usuario.SenhaHash = _hasher.Gerar(usuario, senha);
         RevogarTokens(usuario);
     }
 
