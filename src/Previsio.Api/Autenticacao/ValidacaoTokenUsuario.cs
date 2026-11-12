@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Data;
+using Previsio.Core.Abstracoes;
+using Previsio.Core.Entidades;
 using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Autenticacao;
@@ -29,10 +30,9 @@ public static class ValidacaoTokenUsuario
             return;
         }
 
-        PrevisioDbContext db = contexto.HttpContext.RequestServices.GetRequiredService<PrevisioDbContext>();
+        IRepositorio<Usuario> usuarios = contexto.HttpContext.RequestServices.GetRequiredService<IRepositorio<Usuario>>();
 
-        var situacao = await db.Usuarios
-            .AsNoTracking()
+        var situacao = await usuarios.ConsultarSomenteLeitura()
             .Where(u => u.Id == usuarioId.Value)
             .Select(u => new
             {

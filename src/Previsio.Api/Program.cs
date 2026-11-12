@@ -11,15 +11,13 @@ using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Jobs;
 using Previsio.Bling;
-using Previsio.Core.Painel;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
+using Previsio.Core.Entidades;
 using Previsio.Infra;
 using Previsio.Aplicacao.Abstracoes;
-using Previsio.Aplicacao.Bling;
-using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Notas;
 using Previsio.Aplicacao.Painel;
@@ -28,12 +26,8 @@ using Previsio.Aplicacao.Usuarios;
 using Previsio.Aplicacao.Certificados;
 using Previsio.Aplicacao.Saude;
 using Previsio.Aplicacao.Autenticacao;
-using Previsio.Aplicacao.Conferencia;
-using Previsio.Aplicacao.Contas;
 using Previsio.Aplicacao.Contratos;
 using Previsio.Aplicacao.EmailsIgnorados;
-using Previsio.Aplicacao.NotasSoPdf;
-using Previsio.Aplicacao.Resumos;
 using Previsio.Aplicacao.Sincronizacao;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao;
@@ -223,11 +217,12 @@ using (IServiceScope escopo = app.Services.CreateScope())
     db.Database.Migrate();
 
     // Primeiro administrador, a partir da seção AdminInicial (só se ainda não houver nenhum)
-    AdminInicial.Garantir(
-        db,
+    await AdminInicial.GarantirAsync(
+        escopo.ServiceProvider.GetRequiredService<IRepositorio<Usuario>>(),
         escopo.ServiceProvider.GetRequiredService<AutenticacaoService>(),
         app.Configuration,
-        app.Logger);
+        app.Logger,
+        CancellationToken.None);
 }
 
 if (app.Environment.IsDevelopment())

@@ -1,5 +1,6 @@
 using Previsio.Core.Entidades;
-using Previsio.Data;
+using Microsoft.EntityFrameworkCore;
+using Previsio.Core.Abstracoes;
 using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Api.Autenticacao;
@@ -13,11 +14,12 @@ public static class AdminInicial
 {
     public const string Secao = "AdminInicial";
 
-    public static void Garantir(
-        PrevisioDbContext db,
+    public static async Task GarantirAsync(
+        IRepositorio<Usuario> usuarios,
         AutenticacaoService autenticacao,
         IConfiguration configuracao,
-        ILogger logger)
+        ILogger logger,
+        CancellationToken cancelamento)
     {
         string email = RegrasUsuario.NormalizarEmail(configuracao[Secao + ":Email"]);
         string senha = configuracao[Secao + ":Senha"] ?? "";
@@ -28,7 +30,7 @@ public static class AdminInicial
             return;
         }
 
-        bool existeAdmin = db.Usuarios.Any(u => u.Perfil == PerfilUsuario.Admin);
+        bool existeAdmin = await usuarios.ConsultarSomenteLeitura().AnyAsync(u => u.Perfil == PerfilUsuario.Admin, cancelamento);
         if (existeAdmin)
         {
             return;
@@ -45,7 +47,7 @@ public static class AdminInicial
             throw new InvalidOperationException("AdminInicial:Senha inválida. " + erroSenha);
         }
 
-        bool emailEmUso = db.Usuarios.Any(u => u.Email == email);
+        bool emailEmUso = await usuarios.ConsultarSomenteLeitura().AnyAsync(u => u.Email == email, cancelamento);
         if (emailEmUso)
         {
             throw new InvalidOperationException("AdminInicial:Email já pertence a um usuário que não é administrador.");
@@ -61,8 +63,8 @@ public static class AdminInicial
         admin.Perfil = PerfilUsuario.Admin;
         autenticacao.DefinirSenha(admin, senha);
 
-        db.Usuarios.Add(admin);
-        db.SaveChanges();
+        usuarios.Adicionar(admin);
+        await usuarios.SalvarAsync(cancelamento);
 
         logger.LogWarning("Administrador inicial {Email} criado. Remova AdminInicial:Senha da configuração.", email);
     }

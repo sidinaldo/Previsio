@@ -1,12 +1,12 @@
 using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Jobs;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Notas;
 using Previsio.Core.Conferencia;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
@@ -164,11 +164,11 @@ public class ConferenciaBlingTests
         });
     }
 
-    private LancamentoNotaJob Job(RespostasFixas respostas)
+    private LancamentoNotaService Job(RespostasFixas respostas)
     {
         BlingClient bling = BlingDeTeste.Criar(respostas);
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        return new LancamentoNotaJob(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling), NullLogger<LancamentoNotaJob>.Instance);
+        return ServicosDeTeste.LancamentoNotaService(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling));
     }
 
     private const string Lancadas = "{\"id\":71,\"situacao\":1,\"vencimento\":\"2026-11-12\",\"valor\":3240,\"contato\":{\"id\":555}},"
@@ -201,7 +201,7 @@ public class ConferenciaBlingTests
 
         NotaFiscal depois = _db.NotasFiscais.Single();
         Assert.Equal(StatusNota.Erro, depois.Status);
-        Assert.Equal(LancamentoNotaJob.MaximoTentativas, depois.Tentativas);
+        Assert.Equal(RegrasLancamento.MaximoTentativas, depois.Tentativas);
         Assert.StartsWith("Achei 1 de 2 parcelas já lançadas no Bling (conta 71).", depois.MensagemErro);
         Assert.DoesNotContain(respostas.Chamadas, c => c.StartsWith("POST") && c.Contains("contas/pagar"));
     }
@@ -226,7 +226,7 @@ public class ConferenciaBlingTests
     {
         NotaFiscal nota = await CadastrarNota(true);
         nota.Status = StatusNota.Erro;
-        nota.Tentativas = LancamentoNotaJob.MaximoTentativas;
+        nota.Tentativas = RegrasLancamento.MaximoTentativas;
         _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, BlingId = 71, BlingContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 12), Situacao = 1 });
         _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, BlingId = 72, BlingContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 26), Situacao = 1 });
         await _db.SaveChangesAsync();

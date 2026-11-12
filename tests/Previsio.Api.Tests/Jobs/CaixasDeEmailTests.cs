@@ -1,4 +1,3 @@
-using Previsio.Api.Jobs;
 using Previsio.Core.Entidades;
 using Xunit;
 using Previsio.Aplicacao.LeituraEmail;

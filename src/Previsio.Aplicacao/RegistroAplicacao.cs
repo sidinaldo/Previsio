@@ -53,6 +53,7 @@ public static class RegistroAplicacao
         servicos.AddScoped<ConfiguracaoConferenciaService>();
         servicos.AddScoped<FornecedoresBlingService>();
         servicos.AddScoped<ContasAntigasEmAberto>();
+        servicos.AddScoped<SincronizacaoContasService>();
 
         // Leitura das caixas de e-mail
         servicos.AddScoped<LeituraEmailService>();
@@ -60,6 +61,7 @@ public static class RegistroAplicacao
         // Notas e falhas
         servicos.AddScoped<RegistroNotaService>();
         servicos.AddScoped<NotasService>();
+        servicos.AddScoped<LancamentoNotaService>();
         servicos.AddScoped<FalhasService>();
 
         // Notas só em PDF e certificado A1

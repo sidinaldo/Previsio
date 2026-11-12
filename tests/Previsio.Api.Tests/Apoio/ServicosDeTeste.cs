@@ -193,6 +193,42 @@ public static class ServicosDeTeste
             logger);
     }
 
+    public static LancamentoNotaService LancamentoNotaService(
+        PrevisioDbContext db,
+        BlingClient bling,
+        TokenBlingService tokens,
+        ConferenciaBlingService conferencia)
+    {
+        return new LancamentoNotaService(
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<Cliente>(db),
+            new Repositorio<FalhaProcessamento>(db),
+            bling,
+            tokens,
+            conferencia,
+            NullLogger<LancamentoNotaService>.Instance);
+    }
+
+    public static SincronizacaoContasService SincronizacaoContasService(
+        PrevisioDbContext db,
+        BlingClient bling,
+        TokenBlingService tokens,
+        IOptions<SincronizacaoOptions> opcoes)
+    {
+        return new SincronizacaoContasService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<FalhaProcessamento>(db),
+            bling,
+            tokens,
+            opcoes,
+            ContasAntigasEmAberto(db, bling, NullLogger<ContasAntigasEmAberto>.Instance),
+            FornecedoresBlingService(db, bling, NullLogger<FornecedoresBlingService>.Instance),
+            ConferenciaBlingService(db, bling),
+            NullLogger<SincronizacaoContasService>.Instance);
+    }
+
     public static ContasAntigasEmAberto ContasAntigasEmAberto(
         PrevisioDbContext db,
         BlingClient bling,

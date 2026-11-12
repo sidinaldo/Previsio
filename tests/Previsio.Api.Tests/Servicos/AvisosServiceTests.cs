@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Jobs;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Notas;
 using Previsio.Infra.Seguranca;
 using Previsio.Aplicacao.Avisos;
 using Previsio.Aplicacao.Dtos;
@@ -123,8 +123,8 @@ public class AvisosServiceTests
     public async Task Atualizar_NotaComErroAindaSendoTentada_NaoGeraAviso()
     {
         await CadastrarRede();
-        Nota("100", StatusNota.Erro, tentativas: LancamentoNotaJob.MaximoTentativas - 1);
-        Nota("101", StatusNota.Erro, tentativas: LancamentoNotaJob.MaximoTentativas);
+        Nota("100", StatusNota.Erro, tentativas: RegrasLancamento.MaximoTentativas - 1);
+        Nota("101", StatusNota.Erro, tentativas: RegrasLancamento.MaximoTentativas);
         Nota("102", StatusNota.Lancada);
         await _db.SaveChangesAsync();
 

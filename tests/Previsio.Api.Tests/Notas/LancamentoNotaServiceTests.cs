@@ -1,27 +1,27 @@
 using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Previsio.Api.Jobs;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
 using Previsio.Data;
 using Xunit;
+using Previsio.Aplicacao.Notas;
 using Previsio.Infra.Seguranca;
 using Previsio.Aplicacao.Bling;
 
-namespace Previsio.Api.Tests.Jobs;
+namespace Previsio.Api.Tests.Notas;
 
-public class LancamentoNotaJobTests
+public class LancamentoNotaServiceTests
 {
     private readonly PrevisioDbContext _db = BancoEmMemoria.Criar();
     private readonly ProtetorSegredos _protetor = new ProtetorSegredos(new EphemeralDataProtectionProvider());
 
-    private LancamentoNotaJob CriarJob(RespostasFixas respostas)
+    private LancamentoNotaService CriarServico(RespostasFixas respostas)
     {
         BlingClient bling = BlingDeTeste.Criar(respostas);
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        return new LancamentoNotaJob(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling), NullLogger<LancamentoNotaJob>.Instance);
+        return ServicosDeTeste.LancamentoNotaService(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling));
     }
 
     private async Task<NotaFiscal> CadastrarNota()
@@ -77,7 +77,7 @@ public class LancamentoNotaJobTests
             return RespostasFixas.Json(HttpStatusCode.BadRequest, "{\"error\":{\"message\":\"Vencimento inválido\"}}");
         });
 
-        bool blingRespondeu = await CriarJob(respostas).LancarAsync(nota.Id, CancellationToken.None);
+        bool blingRespondeu = await CriarServico(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.True(blingRespondeu);
         FalhaProcessamento falha = Assert.Single(_db.Falhas.ToList());
@@ -106,7 +106,7 @@ public class LancamentoNotaJobTests
         NotaFiscal nota = await CadastrarNota();
         var respostas = new RespostasFixas(_ => throw new HttpRequestException("Tempo de conexão esgotado"));
 
-        bool blingRespondeu = await CriarJob(respostas).LancarAsync(nota.Id, CancellationToken.None);
+        bool blingRespondeu = await CriarServico(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.False(blingRespondeu);
         FalhaProcessamento falha = Assert.Single(_db.Falhas.ToList());
@@ -130,7 +130,7 @@ public class LancamentoNotaJobTests
         var respostas = new RespostasFixas(_ => RespostasFixas.Json(
             HttpStatusCode.BadRequest, "{\"error\":\"invalid_grant\"}"));
 
-        bool blingRespondeu = await CriarJob(respostas).LancarAsync(nota.Id, CancellationToken.None);
+        bool blingRespondeu = await CriarServico(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.True(blingRespondeu);
         FalhaProcessamento falha = Assert.Single(_db.Falhas.ToList());
@@ -152,7 +152,7 @@ public class LancamentoNotaJobTests
 
         var respostas = new RespostasFixas(_ => throw new HttpRequestException("Sem rede"));
 
-        bool blingRespondeu = await CriarJob(respostas).LancarAsync(nota.Id, CancellationToken.None);
+        bool blingRespondeu = await CriarServico(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.False(blingRespondeu);
         Assert.True(empresa.BlingConectado);
