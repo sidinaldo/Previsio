@@ -31,6 +31,7 @@ using Previsio.Core.NFe;
 using Previsio.Core.Painel;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
+using Previsio.Core.Abstracoes;
 
 var builder = WebApplication.CreateBuilder(args);
 

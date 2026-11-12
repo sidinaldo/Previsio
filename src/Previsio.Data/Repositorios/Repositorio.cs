@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Core.Abstracoes;
 
 namespace Previsio.Data.Repositorios;
 

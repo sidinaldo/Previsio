@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Implementações técnicas das interfaces da Aplicacao: IMAP, SMTP, SEFAZ, Hangfire, criptografia. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Previsio.Core\Previsio.Core.csproj" />
+    <ProjectReference Include="..\Previsio.Aplicacao\Previsio.Aplicacao.csproj" />
+  </ItemGroup>
+
+</Project>

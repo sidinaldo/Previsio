@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
 
-namespace Previsio.Data.Repositorios;
+namespace Previsio.Core.Abstracoes;
 
 /// <summary>
-/// Operações básicas de leitura e gravação de uma entidade.
+/// Operações básicas de leitura e gravação de uma entidade (implementado em Previsio.Data).
 /// Filtros, ordenação e includes ficam em quem consulta, a partir de Consultar().
 /// Todos os repositórios de uma requisição compartilham o mesmo PrevisioDbContext:
 /// SalvarAsync grava tudo o que foi alterado na requisição de uma vez.
