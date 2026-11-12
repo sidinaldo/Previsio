@@ -18,7 +18,7 @@ import { CarregandoDirective } from '../carregando.directive';
       <div class="pv-card__cabecalho">
         <div>
           <h2 class="pv-card__titulo">Conferência com o Bling</h2>
-          <p class="pv-card__descricao">Para não lançar de novo a nota que alguém já lançou à mão no Bling.</p>
+          <p class="pv-card__descricao">Evita lançar de novo uma nota que alguém já lançou à mão no Bling.</p>
         </div>
       </div>
       @if (dados(); as d) {
@@ -37,17 +37,17 @@ import { CarregandoDirective } from '../carregando.directive';
             </label>
           </div>
           <p class="pv-formulario__ajuda">
-            Achou todas as parcelas: a nota fica "Lançada manualmente" e não é lançada de novo.
-            Achou só parte: não lança e avisa para conferir.
+            Antes de lançar, o Previsio procura as parcelas da nota no Bling. Achou todas: marca a nota como
+            "Lançada manualmente". Achou só algumas: não lança nada e avisa para você conferir.
           </p>
 
           <div class="pv-resumo__linha">
             <div class="pv-resumo__campo">
-              <label class="pv-rotulo" for="conferencia-criterio">Como reconhecer a mesma conta</label>
+              <label class="pv-rotulo" for="conferencia-criterio">Considerar a mesma conta quando bater</label>
               <span class="pv-campo-grupo bmd-form-group">
                 <select id="conferencia-criterio" class="pv-campo pv-conferencia__criterio" (change)="mudarCriterio($event)">
-                  <option value="simples" [selected]="!d.exigeNumeroNota">Fornecedor + vencimento + valor</option>
-                  <option value="numero" [selected]="d.exigeNumeroNota">Também o número da NF no documento ou histórico</option>
+                  <option value="simples" [selected]="!d.exigeNumeroNota">Fornecedor, vencimento e valor</option>
+                  <option value="numero" [selected]="d.exigeNumeroNota">Fornecedor, vencimento, valor e nº da NF</option>
                 </select>
               </span>
             </div>
@@ -57,7 +57,7 @@ import { CarregandoDirective } from '../carregando.directive';
                      [value]="d.toleranciaValor.toFixed(2)" (input)="mudarNumero('toleranciaValor', $event)">
             </div>
             <div class="pv-resumo__campo">
-              <label class="pv-rotulo" for="conferencia-dias">Diferença de vencimento (dias)</label>
+              <label class="pv-rotulo" for="conferencia-dias">Diferença de vencimento aceita (dias)</label>
               <input id="conferencia-dias" type="number" min="0" max="5" step="1" class="pv-campo pv-campo--texto pv-alerta__numero"
                      [value]="d.toleranciaDias" (input)="mudarNumero('toleranciaDias', $event)">
             </div>
@@ -66,11 +66,11 @@ import { CarregandoDirective } from '../carregando.directive';
           <div class="form-check">
             <label class="form-check-label">
               <input class="form-check-input" type="checkbox" [checked]="d.fecharPendentes" (change)="marcar('fecharPendentes', $event)">
-              Fechar sozinhas as notas pendentes encontradas no Bling
+              Fechar sozinhas as notas pendentes que já estão no Bling
               <span class="form-check-sign"><span class="check"></span></span>
             </label>
           </div>
-          <p class="pv-formulario__ajuda">A cada sincronização (30 em 30 minutos). Desligado, a nota espera alguém clicar em "Já lancei no Bling".</p>
+          <p class="pv-formulario__ajuda">Confere a cada sincronização com o Bling. Desligado, a nota fica pendente até alguém clicar em "Já lancei no Bling".</p>
         </div>
         <div class="pv-formulario__acoes">
           <button type="button" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando()" (click)="salvar()">Salvar</button>

@@ -31,7 +31,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
     <div class="pv-formulario__linha">
       <div class="pv-certificado__campo">
         <label class="pv-rotulo" [for]="'certificado-arquivo-' + empresa().id">
-          @if (empresa().certificadoCadastrado) { Trocar pelo arquivo .pfx } @else { Arquivo .pfx }
+          @if (empresa().certificadoCadastrado) { Novo arquivo .pfx (substitui o atual) } @else { Arquivo .pfx }
         </label>
         <input [id]="'certificado-arquivo-' + empresa().id" type="file" accept=".pfx,.p12,application/x-pkcs12"
                (change)="escolher($event)">
@@ -116,12 +116,12 @@ export class CertificadoEmpresaComponent implements OnInit {
       next: empresa => {
         this.acao.set(null);
         this.senha.set('');
-        this.mensagem.set('Certificado cadastrado. As notas que chegarem só em PDF terão o XML buscado na SEFAZ.');
+        this.mensagem.set('Certificado cadastrado. Das notas que chegarem só em PDF, o XML será buscado na SEFAZ.');
         this.alterada.emit(empresa);
       },
       error: erro => {
         this.acao.set(null);
-        this.erro.set(mensagemDaApi(erro, 'Não consegui cadastrar o certificado.'));
+        this.erro.set(mensagemDaApi(erro, 'Não foi possível cadastrar o certificado.'));
       }
     });
   }
@@ -138,7 +138,7 @@ export class CertificadoEmpresaComponent implements OnInit {
       },
       error: erro => {
         this.acao.set(null);
-        this.erro.set(mensagemDaApi(erro, 'Não consegui remover o certificado.'));
+        this.erro.set(mensagemDaApi(erro, 'Não foi possível remover o certificado.'));
       }
     });
   }

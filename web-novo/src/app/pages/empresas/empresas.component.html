@@ -4,7 +4,7 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Empresas</h1>
-        <p class="pv-pagina__subtitulo">Cada CNPJ se conecta à sua própria conta Bling</p>
+        <p class="pv-pagina__subtitulo">Cada CNPJ tem a sua conta Bling: cadastre a empresa e conecte o Bling dela</p>
       </div>
       <div class="pv-pagina__acoes">
         @if (ehAdmin()) {
@@ -38,7 +38,7 @@
         <div>
           @if (editando(); as e) {
             <h2 class="pv-card__titulo">Editar empresa</h2>
-            <p class="pv-card__descricao">Alterando {{ e.nome }}. O CNPJ não pode ser alterado.</p>
+            <p class="pv-card__descricao">{{ e.nome }} · o CNPJ não pode ser alterado.</p>
           } @else {
             <h2 class="pv-card__titulo">Nova empresa</h2>
           }
@@ -59,27 +59,27 @@
           </div>
 
           <details class="pv-opcional" [open]="!!editando()?.blingClientId">
-            <summary>Aplicativo Bling próprio desta empresa (opcional)</summary>
+            <summary>Aplicativo Bling próprio (opcional)</summary>
             <p class="pv-formulario__ajuda">
-              Quando a conta Bling desta empresa tem um <strong>aplicativo privado</strong> próprio.
-              Vazio, usa o aplicativo da rede (cadastrado em Clientes) ou, sem ele, o padrão do Previsio.
+              Preencha só se a conta Bling desta empresa usa um <strong>aplicativo privado</strong> próprio.
+              Em branco, vale o aplicativo da rede (cadastrado em Clientes) ou o padrão do Previsio.
             </p>
             <div class="pv-formulario__linha">
               <div class="form-group pv-formulario__campo">
                 <label for="previsio-client-id" class="bmd-label-floating">Client ID</label>
                 <input id="previsio-client-id" type="text" class="form-control pv-entrada-codigo" name="clientId" autocomplete="off"
-                       [placeholder]="editando() !== null ? 'Vazio: aplicativo da rede' : ''"
+                       [placeholder]="editando() !== null ? 'Em branco: aplicativo da rede' : ''"
                        [(ngModel)]="clientId">
               </div>
               <div class="form-group pv-formulario__campo">
                 <label for="previsio-client-secret" class="bmd-label-floating">Client Secret</label>
                 <input id="previsio-client-secret" type="password" class="form-control" name="clientSecret" autocomplete="new-password"
-                       [placeholder]="editando()?.blingClientSecretCadastrado ? 'Cadastrado. Deixe vazio para manter' : ''"
+                       [placeholder]="editando()?.blingClientSecretCadastrado ? 'Já cadastrado. Em branco mantém o atual' : ''"
                        [(ngModel)]="clientSecret">
               </div>
             </div>
             <div class="pv-link-copiar">
-              <span class="pv-formulario__ajuda">Link de redirecionamento para o cadastro do aplicativo:</span>
+              <span class="pv-formulario__ajuda">Link de redirecionamento (cole no cadastro do aplicativo no Bling):</span>
               <code>{{ linkRedirecionamento }}</code>
               <button type="button" class="btn btn-link btn-sm" (click)="copiarLink()">
                 <i class="material-icons" aria-hidden="true">{{ linkCopiado() ? 'check' : 'content_copy' }}</i>
@@ -89,15 +89,15 @@
           </details>
           @if (vaiDesconectar()) {
             <div class="alert alert-warning" role="status">
-              <span>Trocar o aplicativo desconecta a empresa do Bling. Depois de salvar, clique em "Conectar Bling".</span>
+              <span>Trocar o aplicativo desconecta a empresa do Bling. Depois de salvar, clique em "Conectar Bling" na lista.</span>
             </div>
           }
 
           <details class="pv-opcional" [open]="!!editando()?.emailProprio">
-            <summary>Caixa de e-mail própria desta empresa (opcional)</summary>
+            <summary>Caixa de e-mail própria (opcional)</summary>
             <p class="pv-formulario__ajuda">
-              Vazio, as notas desta empresa chegam só pela caixa da rede. Com caixa própria, as duas são lidas
-              e a nota vai para a empresa pelo CNPJ do destinatário.
+              Em branco, as notas desta empresa chegam pela caixa da rede. Com caixa própria, o Previsio lê as duas
+              e separa as notas pelo CNPJ do destinatário.
             </p>
             <div class="pv-formulario__linha">
               <div class="form-group pv-formulario__campo">
@@ -127,7 +127,7 @@
               <div class="form-group pv-formulario__campo">
                 <label for="previsio-imap-senha" class="bmd-label-floating">
                   @if (editando()?.imapSenhaCadastrada) {
-                    Senha de app (em branco mantém)
+                    Senha de app (em branco mantém a atual)
                   } @else {
                     Senha de app
                   }
@@ -140,10 +140,10 @@
 
           @if (editando(); as e) {
             <details class="pv-opcional" [open]="!!e.certificadoCadastrado">
-              <summary>Certificado digital A1 (para notas que chegam só em PDF)</summary>
+              <summary>Certificado digital A1 (notas que chegam só em PDF)</summary>
               <p class="pv-formulario__ajuda">
-                Quando o fornecedor manda só o PDF da nota, o Previsio usa o certificado para baixar o XML na SEFAZ
-                (registra a Ciência da Operação da nota). O certificado da matriz serve para as filiais do mesmo CNPJ raiz.
+                Quando o fornecedor manda só o PDF, o Previsio usa este certificado para baixar o XML na SEFAZ
+                (registrando a Ciência da Operação). O certificado da matriz vale para as filiais com o mesmo CNPJ raiz.
               </p>
               <app-certificado-empresa [empresa]="e" (alterada)="aoAlterarCertificado($event)" />
             </details>
@@ -167,16 +167,16 @@
     <div class="card">
       <div class="pv-card__cabecalho">
         <div>
-          <h2 class="pv-card__titulo">Empresas e conexões com o Bling</h2>
-          <p class="pv-card__descricao">{{ empresas().length }} empresas cadastradas</p>
+          <h2 class="pv-card__titulo">Empresas cadastradas</h2>
+          <p class="pv-card__descricao">{{ empresas().length }} {{ empresas().length === 1 ? 'empresa' : 'empresas' }} · conexão com o Bling e caixa de e-mail de cada uma</p>
         </div>
         <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por nome, CNPJ ou e-mail" />
       </div>
       @if (carregada() && empresas().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
           <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">store</i></span>
-          <p class="pv-vazio__titulo">Nenhuma empresa cadastrada ainda.</p>
-          <p class="pv-vazio__texto">Cadastre a primeira no formulário acima e depois conecte o Bling dela.</p>
+          <p class="pv-vazio__titulo">Nenhuma empresa cadastrada.</p>
+          <p class="pv-vazio__texto">Cadastre a primeira e depois clique em "Conectar Bling" para ligar a conta dela.</p>
         </div>
       } @else if (empresas().length > 0) {
         <div class="table-responsive">
@@ -207,7 +207,7 @@
                   <td>
                     @if (empresa.emailProprio) {
                       {{ empresa.imapUsuario }}
-                      <span class="pv-tabela__auxiliar">Caixa própria (também recebe pela da rede)</span>
+                      <span class="pv-tabela__auxiliar">Caixa própria e caixa da rede</span>
                     } @else {
                       @if (emailRede()) {
                         {{ emailRede() }}
@@ -239,7 +239,7 @@
                           <span class="pv-spinner" aria-hidden="true"></span> Processando...
                         </span>
                       } @else if (aguardandoConfirmacao(empresa)) {
-                        <span class="pv-acoes-linha__pergunta">Confirmar?</span>
+                        <span class="pv-acoes-linha__pergunta">{{ perguntaConfirmacao() }}</span>
                         <button type="button" class="btn btn-sm btn-danger" (click)="confirmar(empresa)">Sim</button>
                         <button type="button" class="btn btn-sm btn-secundario" (click)="cancelarConfirmacao()">Não</button>
                       } @else {

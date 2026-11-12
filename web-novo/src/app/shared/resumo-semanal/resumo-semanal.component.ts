@@ -26,7 +26,7 @@ export const TODO_DIA_UTIL = 7;
         <div>
           <h2 class="pv-card__titulo">Resumo por e-mail</h2>
           <p class="pv-card__descricao">
-            Vencimentos dos próximos 7 dias, total dos 30, notas desde o último resumo e problemas em aberto.
+            O que vence nos próximos 7 dias, o total dos próximos 30, as notas recebidas desde o último resumo e o que está pendente.
           </p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export const TODO_DIA_UTIL = 7;
               <div class="form-check">
                 <label class="form-check-label">
                   <input class="form-check-input" type="checkbox" name="ativo" [(ngModel)]="ativo">
-                  Enviar o resumo
+                  Enviar o resumo por e-mail
                   <span class="form-check-sign"><span class="check"></span></span>
                 </label>
               </div>
@@ -71,7 +71,7 @@ export const TODO_DIA_UTIL = 7;
             </div>
             <p class="pv-formulario__ajuda">
               @if (atual.destinatarios === 0) {
-                Ainda não há usuários ativos nesta rede: cadastre um em Usuários para alguém receber.
+                Nenhum usuário ativo nesta rede ainda. Cadastre um em Usuários para o resumo ter quem receba.
               } @else if (atual.destinatarios === 1) {
                 Vai para 1 usuário da rede, no horário de Brasília.
               } @else {

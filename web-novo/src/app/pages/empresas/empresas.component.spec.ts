@@ -84,7 +84,7 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
     // Depois de salvar o formulário fecha e a tela volta para a lista
     expect(tela.querySelector('#previsio-nome')).toBeNull();
     expect(tela.textContent).toContain('Loja Norte Shopping');
-    expect(tela.textContent).toContain('Empresa alterada.');
+    expect(tela.textContent).toContain('Empresa salva.');
   });
 
   it('Cancelar volta para o cadastro sem chamar a API', async () => {
@@ -181,7 +181,7 @@ describe('EmpresasComponent: conectar o Bling numa janela separada', () => {
     await fixture.whenStable();
 
     expect(janela.location.href).toBe('https://www.bling.com.br/Api/v3/oauth/authorize?x=1');
-    expect(tela.textContent).toContain('Conclua o login e a autorização na janela do Bling');
+    expect(tela.textContent).toContain('Entre no Bling e autorize o acesso na janela que abriu');
   });
 
   it('se a API recusar, fecha a janela e mostra o motivo', async () => {
@@ -209,7 +209,7 @@ describe('EmpresasComponent: conectar o Bling numa janela separada', () => {
 
     api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
     await fixture.whenStable();
-    expect(tela.textContent).toContain('Conta Bling conectada');
+    expect(tela.textContent).toContain('Bling conectado');
   });
 });
 

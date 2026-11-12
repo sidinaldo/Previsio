@@ -18,7 +18,7 @@ import { CarregandoDirective } from '../carregando.directive';
       <div class="pv-card__cabecalho">
         <div>
           <h2 class="pv-card__titulo">Avisos de vencimento</h2>
-          <p class="pv-card__descricao">Contas a pagar em aberto no Bling: as vencidas no sininho e as de hoje e amanhã por e-mail.</p>
+          <p class="pv-card__descricao">Contas em aberto no Bling: as vencidas aparecem no sininho; as de hoje e amanhã vão por e-mail.</p>
         </div>
       </div>
       @if (carregado()) {
@@ -40,7 +40,7 @@ import { CarregandoDirective } from '../carregando.directive';
             </div>
           </div>
           <p class="pv-formulario__ajuda">
-            Com 1, a conta vira aviso no dia seguinte ao vencimento. Some sozinha quando é paga (ou baixada) no Bling.
+            Com 1, o aviso aparece no dia seguinte ao vencimento e some quando a conta é paga ou baixada no Bling.
           </p>
           <div class="pv-resumo__linha">
             <div class="form-check">
@@ -61,7 +61,7 @@ import { CarregandoDirective } from '../carregando.directive';
               </span>
             </div>
           </div>
-          <p class="pv-formulario__ajuda">Todo dia, no horário de Brasília, para os usuários da rede. Sem nada vencendo nem vencido, não envia.</p>
+          <p class="pv-formulario__ajuda">Vai para os usuários da rede, no horário de Brasília. Se não houver nada vencido nem vencendo, o e-mail não sai.</p>
         </div>
         <div class="pv-formulario__acoes">
           <button type="button" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando()" (click)="salvar()">Salvar</button>

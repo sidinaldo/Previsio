@@ -144,7 +144,7 @@ export class EmpresasComponent {
 
     // Vindo da tela Clientes, logo depois de cadastrar a rede
     if (this.rota.snapshot.queryParamMap.get('cliente') === 'novo') {
-      this.mensagem.set('Cliente cadastrado. Agora cadastre as empresas (CNPJs) dele no formulário abaixo e conecte o Bling de cada uma.');
+      this.mensagem.set('Cliente cadastrado. Agora cadastre cada empresa (CNPJ) e conecte o Bling dela.');
       this.formularioAberto.set(true);
     }
 
@@ -195,7 +195,7 @@ export class EmpresasComponent {
     const clientId = this.clientId().trim();
     const clientSecret = this.clientSecret().trim();
     if ((clientId === '') !== (clientSecret === '')) {
-      this.erro.set('Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.');
+      this.erro.set('Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois em branco.');
       return;
     }
 
@@ -222,7 +222,7 @@ export class EmpresasComponent {
       next: () => {
         this.cadastrando.set(false);
         this.limparFormulario();
-        this.mensagem.set('Empresa cadastrada. Agora conecte a conta Bling dela.');
+        this.mensagem.set('Empresa cadastrada. Agora clique em "Conectar Bling" na lista para ligar a conta dela.');
         this.carregar();
       },
       error: resposta => {
@@ -246,7 +246,7 @@ export class EmpresasComponent {
         if (janela !== null && !janela.closed) {
           janela.location.href = resposta.url;
           janela.focus();
-          this.mensagem.set('Conclua o login e a autorização na janela do Bling. Esta tela atualiza sozinha quando terminar.');
+          this.mensagem.set('Entre no Bling e autorize o acesso na janela que abriu. Esta tela atualiza sozinha no fim.');
         } else {
           window.location.href = resposta.url;
         }
@@ -263,9 +263,9 @@ export class EmpresasComponent {
 
   private mostrarRetornoBling(retorno: string): void {
     if (retorno === 'conectado') {
-      this.mensagem.set('Conta Bling conectada. As contas a pagar serão sincronizadas em instantes.');
+      this.mensagem.set('Bling conectado. As contas a pagar aparecem em alguns instantes.');
     } else if (retorno === 'expirado') {
-      this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" novamente.');
+      this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" de novo.');
     } else if (retorno === 'erro') {
       this.erro.set('Não foi possível conectar ao Bling. Tente novamente.');
     }
@@ -275,7 +275,7 @@ export class EmpresasComponent {
   sincronizarAgora(): void {
     this.limparAvisos();
     this.sincronizando.set(true);
-    this.mensagem.set('Sincronizando as contas com o Bling... a lista atualiza sozinha quando terminar.');
+    this.mensagem.set('Buscando as contas no Bling... a tela atualiza sozinha no fim.');
     this.previsio.executarJob('sincronizacao').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.esperarSincronizacao(),
       error: () => {
@@ -292,12 +292,12 @@ export class EmpresasComponent {
       .subscribe({
         next: () => {
           this.sincronizando.set(false);
-          this.mensagem.set('Sincronização concluída. As contas do Bling já aparecem no painel.');
+          this.mensagem.set('Contas atualizadas. Já aparecem no Painel e em Contas a pagar.');
           this.carregar();
         },
         error: () => {
           this.sincronizando.set(false);
-          this.mensagem.set('A sincronização ainda não terminou. Confira o painel em alguns instantes.');
+          this.mensagem.set('A busca no Bling ainda não terminou. Confira o Painel em alguns minutos.');
           this.carregar();
         }
       });
@@ -377,7 +377,7 @@ export class EmpresasComponent {
     const usuario = this.imapUsuario().trim();
     const porta = Number(this.imapPorta());
     if (usuario === '') {
-      this.erro.set('Informe o e-mail da caixa própria da empresa (ou deixe o servidor vazio).');
+      this.erro.set('Informe o e-mail da caixa própria (ou deixe o servidor em branco).');
       return false;
     }
     if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
@@ -390,7 +390,7 @@ export class EmpresasComponent {
       && host.toLowerCase() === empresa.imapHost.toLowerCase()
       && usuario.toLowerCase() === empresa.imapUsuario.toLowerCase();
     if (this.imapSenha().trim() === '' && !mesmaCaixa) {
-      this.erro.set('Informe a senha de app do e-mail próprio da empresa.');
+      this.erro.set('Informe a senha de app da caixa própria.');
       return false;
     }
     return true;
@@ -457,9 +457,9 @@ export class EmpresasComponent {
         this.limparFormulario();
         this.processandoId.set(null);
         if (empresa.blingConectado && !alterada.blingConectado) {
-          this.mensagem.set('Empresa alterada. O aplicativo do Bling mudou: clique em "Conectar Bling" para autorizar de novo.');
+          this.mensagem.set('Empresa salva. Como o aplicativo do Bling mudou, clique em "Conectar Bling" para autorizar de novo.');
         } else {
-          this.mensagem.set('Empresa alterada.');
+          this.mensagem.set('Empresa salva.');
         }
       },
       error: resposta => {
@@ -478,6 +478,15 @@ export class EmpresasComponent {
   aguardandoConfirmacao(empresa: Empresa): boolean {
     const confirmacao = this.confirmacao();
     return confirmacao !== null && confirmacao.empresaId === empresa.id;
+  }
+
+  /** Pergunta ao lado dos botões Sim/Não, com a ação que vai ser feita. */
+  perguntaConfirmacao(): string {
+    const confirmacao = this.confirmacao();
+    if (confirmacao !== null && confirmacao.acao === 'desconectar') {
+      return 'Desconectar do Bling?';
+    }
+    return 'Desativar a empresa?';
   }
 
   cancelarConfirmacao(): void {
