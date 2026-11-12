@@ -68,6 +68,7 @@ public class PainelService
             .ToListAsync(cancelamento);
 
         List<NotaFiscal> pendentes = await _notas.ConsultarSomenteLeitura()
+            .Include(n => n.Parcelas)
             .Where(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status))
             .ToListAsync(cancelamento);
 

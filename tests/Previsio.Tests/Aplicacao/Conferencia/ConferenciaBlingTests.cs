@@ -189,6 +189,8 @@ public class ConferenciaBlingTests
         Assert.Equal("Encontrada no Bling, lançada à mão (conta 71, 72).", depois.ObservacaoResolucao);
         Assert.Equal(new List<long?> { 71, 72 }, depois.Parcelas.OrderBy(p => p.Vencimento).Select(p => p.BlingContaPagarId).ToList());
         Assert.DoesNotContain(respostas.Chamadas, c => c.StartsWith("POST") && c.Contains("contas/pagar"));
+        // As contas achadas já entram no painel, sem esperar a sincronização
+        Assert.Equal(new long[] { 71, 72 }, _db.ContasPagar.OrderBy(c => c.BlingId).Select(c => c.BlingId).ToArray());
     }
 
     [Fact]
@@ -217,6 +219,41 @@ public class ConferenciaBlingTests
         Assert.Equal(StatusNota.Lancada, _db.NotasFiscais.Single().Status);
         Assert.Equal(2, respostas.Chamadas.Count(c => c.StartsWith("POST") && c.Contains("contas/pagar")));
         Assert.DoesNotContain(respostas.Chamadas, c => c.StartsWith("GET") && c.Contains("contas/pagar"));
+    }
+
+    [Fact]
+    public async Task Ao_lancar_grava_a_conta_no_Previsio_na_hora()
+    {
+        NotaFiscal nota = await CadastrarNota(false);
+        // A sincronização já tinha trazido a 9002 (não duplica)
+        _db.ContasPagar.Add(new ContaPagarSincronizada
+        {
+            EmpresaId = nota.EmpresaId!.Value, BlingId = 9002, Vencimento = new DateTime(2026, 11, 26), Valor = 3240m, Situacao = SituacaoContaBling.Pago
+        });
+        await _db.SaveChangesAsync();
+        int proximoId = 9000;
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (requisicao.Method == HttpMethod.Get && url.Contains("contatos"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
+            }
+            proximoId = proximoId + 1;
+            return RespostasFixas.Json(HttpStatusCode.Created, "{\"data\":{\"id\":" + proximoId + "}}");
+        });
+
+        await Job(respostas).LancarAsync(nota.Id, CancellationToken.None);
+
+        List<ContaPagarSincronizada> contas = _db.ContasPagar.OrderBy(c => c.BlingId).ToList();
+        Assert.Equal(new long[] { 9001, 9002 }, contas.Select(c => c.BlingId).ToArray());
+        Assert.Equal(new DateTime(2026, 11, 12), contas[0].Vencimento);
+        Assert.Equal(3240m, contas[0].Valor);
+        Assert.Equal(SituacaoContaBling.EmAberto, contas[0].Situacao);
+        Assert.Equal(555, contas[0].BlingContatoId);
+        Assert.Equal("ROTA SUL PECAS LTDA", contas[0].FornecedorNome);
+        // A que já existia fica como a sincronização trouxe
+        Assert.Equal(SituacaoContaBling.Pago, contas[1].Situacao);
     }
 
     // ---------- Pendentes depois da sincronização ----------

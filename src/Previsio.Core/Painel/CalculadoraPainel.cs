@@ -9,6 +9,9 @@ namespace Previsio.Core.Painel;
 /// </summary>
 public class CalculadoraPainel
 {
+    // Quantas notas pendentes o painel lista; as outras ficam em Notas pendentes
+    public const int MaximoNotasParaResolver = 5;
+
     public ResumoPainel Calcular(
         DateTime hoje,
         int dias,
@@ -91,6 +94,44 @@ public class CalculadoraPainel
             resumo.Empresas.Add(total);
         }
 
+        resumo.NotasParaResolver = MaisUrgentes(notasPendentes, empresas);
         return resumo;
+    }
+
+    /// <summary>
+    /// As notas pendentes que vencem primeiro (pela primeira parcela). Nota sem parcelas vai
+    /// para o fim; empate fica na ordem de chegada.
+    /// </summary>
+    public static List<NotaParaResolver> MaisUrgentes(IList<NotaFiscal> notasPendentes, IList<Empresa> empresas)
+    {
+        var lista = new List<NotaParaResolver>();
+        foreach (NotaFiscal nota in notasPendentes)
+        {
+            var item = new NotaParaResolver();
+            item.NotaId = nota.Id;
+            item.Numero = nota.Numero;
+            item.FornecedorNome = nota.NomeFornecedor;
+            item.Valor = nota.ValorTotal;
+            item.Status = nota.Status.ToString();
+            item.MensagemErro = nota.MensagemErro;
+            if (nota.Parcelas.Count > 0)
+            {
+                item.PrimeiroVencimento = nota.Parcelas.Min(p => p.Vencimento).Date;
+            }
+
+            Empresa? empresa = empresas.FirstOrDefault(e => e.Id == nota.EmpresaId);
+            if (empresa != null)
+            {
+                item.EmpresaNome = empresa.Nome;
+            }
+            lista.Add(item);
+        }
+
+        return lista
+            .OrderBy(n => n.PrimeiroVencimento.HasValue ? 0 : 1)
+            .ThenBy(n => n.PrimeiroVencimento)
+            .ThenBy(n => n.NotaId)
+            .Take(MaximoNotasParaResolver)
+            .ToList();
     }
 }

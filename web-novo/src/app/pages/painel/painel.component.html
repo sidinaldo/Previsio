@@ -116,6 +116,74 @@
           </div>
         </div>
 
+        <!-- Notas que ainda não estão no Bling: ficam fora da previsão até serem lançadas -->
+        @if (notasParaResolver().length > 0) {
+          <div class="card">
+            <div class="pv-card__cabecalho">
+              <div>
+                <h2 class="pv-card__titulo">Notas para resolver</h2>
+                <p class="pv-card__descricao">
+                  Ainda não estão no Bling, por isso não entram na previsão abaixo. As que vencem primeiro:
+                </p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Nota</th>
+                    <th scope="col">Empresa</th>
+                    <th scope="col" class="text-right">Valor</th>
+                    <th scope="col">1º vencimento</th>
+                    <th scope="col">Motivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (nota of notasParaResolver(); track nota.notaId) {
+                    <tr>
+                      <td>
+                        <strong>{{ nota.fornecedorNome }}</strong>
+                        <span class="pv-tabela__auxiliar">NF {{ nota.numero }}</span>
+                      </td>
+                      <td>{{ nota.empresaNome ?? 'Empresa não cadastrada' }}</td>
+                      <td class="text-right pv-numero">{{ nota.valor | currency:'BRL' }}</td>
+                      @switch (urgencia(nota)) {
+                        @case ('vencida') {
+                          <td class="pv-numero text-danger"><strong>{{ nota.primeiroVencimento | date:'dd/MM' }} · venceu</strong></td>
+                        }
+                        @case ('no-periodo') {
+                          <td class="pv-numero text-danger"><strong>{{ nota.primeiroVencimento | date:'dd/MM' }}</strong></td>
+                        }
+                        @case ('depois') {
+                          <td class="pv-numero">{{ nota.primeiroVencimento | date:'dd/MM' }}</td>
+                        }
+                        @default {
+                          <td>Sem parcelas</td>
+                        }
+                      }
+                      <td>
+                        {{ descricaoSituacao(nota.status) }}
+                        @if (nota.mensagemErro) {
+                          <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ nota.mensagemErro | slice:0:120 }}</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="pv-card__rodape">
+              <a routerLink="/pages/notas-pendentes">
+                @if (r.notasPendentes > notasParaResolver().length) {
+                  Ver todas as {{ r.notasPendentes }} notas pendentes
+                } @else {
+                  Resolver em Notas pendentes
+                }
+              </a>
+            </div>
+          </div>
+        }
+
         <!-- Saídas por semana: gráfico de barras (Chartist) com o resumo embaixo -->
         <div class="card">
           <div class="pv-card__cabecalho">

@@ -30,6 +30,20 @@ export interface ResumoPainel {
   quantidadeVencidas?: number;
   semanas: TotalSemana[];
   empresas: TotalEmpresa[];
+  /** As notas pendentes que vencem primeiro (até 5); as demais ficam em Notas pendentes. */
+  notasParaResolver?: NotaParaResolver[];
+}
+
+/** Nota fora do Bling na lista do painel: ainda não entra na previsão. */
+export interface NotaParaResolver {
+  notaId: number;
+  numero: string;
+  empresaNome: string | null;
+  fornecedorNome: string;
+  valor: number;
+  primeiroVencimento: string | null;
+  status: string;
+  mensagemErro: string | null;
 }
 
 export interface VencimentoDia {

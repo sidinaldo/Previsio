@@ -203,6 +203,7 @@ public static class ServicosDeTeste
             new Repositorio<NotaFiscal>(db),
             new Repositorio<Cliente>(db),
             new Repositorio<FalhaProcessamento>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
             bling,
             tokens,
             conferencia,

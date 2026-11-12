@@ -85,4 +85,26 @@ public class PainelServiceTests
         Assert.Single(resumo.Empresas);
         Assert.Equal(100m, resumo.TotalPeriodo);
     }
+
+    [Fact]
+    public async Task Resumo_ListaAsNotasParaResolverComAPrimeiraParcela()
+    {
+        Empresa matriz = await CadastrarEmpresa(1, "Matriz", true);
+        DateTime hoje = RelogioBrasil.Hoje();
+        var nota = new NotaFiscal { ClienteId = 1, EmpresaId = matriz.Id, Numero = "48213", NomeFornecedor = "ROTA SUL", ValorTotal = 900m, Status = StatusNota.Erro, MensagemErro = "Bling recusou" };
+        nota.Parcelas.Add(new ParcelaNota { NumeroParcela = "002", Vencimento = hoje.AddDays(30), Valor = 450m });
+        nota.Parcelas.Add(new ParcelaNota { NumeroParcela = "001", Vencimento = hoje.AddDays(5), Valor = 450m });
+        _db.NotasFiscais.Add(nota);
+        _db.NotasFiscais.Add(new NotaFiscal { ClienteId = 1, EmpresaId = matriz.Id, Numero = "1", Status = StatusNota.Lancada });
+        _db.NotasFiscais.Add(new NotaFiscal { ClienteId = 2, Numero = "2", Status = StatusNota.Erro });
+        await _db.SaveChangesAsync();
+
+        ResumoPainel resumo = await ServicosDeTeste.Painel(_db).ResumoAsync(1, 30, CancellationToken.None);
+
+        NotaParaResolver item = Assert.Single(resumo.NotasParaResolver);
+        Assert.Equal("48213", item.Numero);
+        Assert.Equal("Matriz", item.EmpresaNome);
+        Assert.Equal(hoje.AddDays(5), item.PrimeiroVencimento);
+        Assert.Equal("Bling recusou", item.MensagemErro);
+    }
 }

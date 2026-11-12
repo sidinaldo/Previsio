@@ -84,4 +84,51 @@ public class CalculadoraPainelTests
         Assert.Equal(2, resumo.Empresas[0].NotasPendentes);
         Assert.Equal(1500m, resumo.Empresas[0].ValorNotasPendentes);
     }
+
+    private static NotaFiscal Pendente(int id, int? empresaId, params int[] diasDasParcelas)
+    {
+        var nota = new NotaFiscal { Id = id, EmpresaId = empresaId, Numero = id.ToString(), NomeFornecedor = "Fornecedor " + id, ValorTotal = 100m * id, Status = StatusNota.Erro };
+        foreach (int dias in diasDasParcelas)
+        {
+            nota.Parcelas.Add(new ParcelaNota { Vencimento = Hoje.AddDays(dias), Valor = 10m });
+        }
+        return nota;
+    }
+
+    [Fact]
+    public void Notas_para_resolver_vem_pela_primeira_parcela_e_param_em_cinco()
+    {
+        var empresas = new List<Empresa> { new Empresa { Id = 1, Nome = "Matriz" } };
+        var pendentes = new List<NotaFiscal>
+        {
+            Pendente(1, 1, 20),
+            Pendente(2, 1),              // sem parcelas: vai para o fim
+            Pendente(3, null, 5, -2),    // já venceu uma parcela: primeira da lista
+            Pendente(4, 1, 7),
+            Pendente(5, 1, 7),           // mesmo dia da 4: ordem de chegada
+            Pendente(6, 1, 30),
+            Pendente(7, 1, 40)
+        };
+
+        ResumoPainel resumo = new CalculadoraPainel().Calcular(Hoje, 30, empresas, new List<ContaPagarSincronizada>(), pendentes);
+
+        Assert.Equal(7, resumo.NotasPendentes);
+        Assert.Equal(new[] { 3, 4, 5, 1, 6 }, resumo.NotasParaResolver.Select(n => n.NotaId).ToArray());
+        NotaParaResolver primeira = resumo.NotasParaResolver[0];
+        Assert.Equal(Hoje.AddDays(-2), primeira.PrimeiroVencimento);
+        Assert.Null(primeira.EmpresaNome);
+        Assert.Equal("Erro", primeira.Status);
+        Assert.Equal("Matriz", resumo.NotasParaResolver[1].EmpresaNome);
+    }
+
+    [Fact]
+    public void Nota_sem_parcelas_aparece_sem_vencimento_quando_cabe_na_lista()
+    {
+        var pendentes = new List<NotaFiscal> { Pendente(2, 1), Pendente(1, 1, 3) };
+
+        ResumoPainel resumo = new CalculadoraPainel().Calcular(Hoje, 30, new List<Empresa>(), new List<ContaPagarSincronizada>(), pendentes);
+
+        Assert.Equal(new[] { 1, 2 }, resumo.NotasParaResolver.Select(n => n.NotaId).ToArray());
+        Assert.Null(resumo.NotasParaResolver[1].PrimeiroVencimento);
+    }
 }

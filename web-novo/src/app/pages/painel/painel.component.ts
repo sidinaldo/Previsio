@@ -1,10 +1,12 @@
 import { Component, Injector, afterNextRender, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { PrevisioService } from '../../core/previsio.service';
-import { ResumoPainel, TotalSemana } from '../../core/previsio.models';
+import { NotaParaResolver, ResumoPainel, TotalSemana } from '../../core/previsio.models';
+import { descricaoDaSituacao } from '../../core/filtro-notas';
+import { UrgenciaNota, urgenciaDaNota } from './notas-para-resolver';
 
 // Chartist 0.11 é carregado como script global (angular.json), como no template
 declare const Chartist: any;
@@ -15,7 +17,7 @@ import { ExportarComponent } from '../../shared/exportar/exportar.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective, PaginacaoComponent, ExportarComponent],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, SlicePipe, CarregandoDirective, PaginacaoComponent, ExportarComponent],
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {
@@ -69,6 +71,16 @@ export class PainelComponent {
 
   // Todas as semanas zeradas: no lugar do gráfico (que mostraria uma escala sem sentido) vai o aviso
   readonly graficoVazio = computed(() => this.maiorSemana() === null);
+  readonly notasParaResolver = computed<NotaParaResolver[]>(() => this.resumo()?.notasParaResolver ?? []);
+  readonly descricaoSituacao = descricaoDaSituacao;
+
+  urgencia(nota: NotaParaResolver): UrgenciaNota {
+    const resumo = this.resumo();
+    if (resumo === null) {
+      return 'depois';
+    }
+    return urgenciaDaNota(nota.primeiroVencimento, resumo.inicio, resumo.fim);
+  }
 
   constructor() {
     this.carregar();

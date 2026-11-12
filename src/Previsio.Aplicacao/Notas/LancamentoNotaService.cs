@@ -23,6 +23,7 @@ public class LancamentoNotaService
     private readonly IRepositorio<NotaFiscal> _notas;
     private readonly IRepositorio<Cliente> _clientes;
     private readonly IRepositorio<FalhaProcessamento> _falhas;
+    private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
     private readonly ConferenciaBlingService _conferencia;
@@ -32,6 +33,7 @@ public class LancamentoNotaService
         IRepositorio<NotaFiscal> notas,
         IRepositorio<Cliente> clientes,
         IRepositorio<FalhaProcessamento> falhas,
+        IRepositorio<ContaPagarSincronizada> contas,
         BlingClient bling,
         TokenBlingService tokens,
         ConferenciaBlingService conferencia,
@@ -40,6 +42,7 @@ public class LancamentoNotaService
         _notas = notas;
         _clientes = clientes;
         _falhas = falhas;
+        _contas = contas;
         _bling = bling;
         _tokens = tokens;
         _conferencia = conferencia;
@@ -143,6 +146,10 @@ public class LancamentoNotaService
                     if (resultado.Completa)
                     {
                         ConferenciaBlingService.MarcarEncontrada(nota, resultado);
+                        foreach (ParcelaNota encontrada in nota.Parcelas)
+                        {
+                            await GravarContaNoPrevisioAsync(nota, empresa.Id, encontrada, contatoId, cancelamento);
+                        }
                         await _notas.SalvarAsync(cancelamento);
                         _logger.LogInformation("NF {Numero} já estava lançada no Bling (contas {Contas}): não lançada de novo",
                             nota.Numero, resultado.Contas());
@@ -173,6 +180,7 @@ public class LancamentoNotaService
                 parcelaAtual = parcela;
                 NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId);
                 parcela.BlingContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
+                await GravarContaNoPrevisioAsync(nota, empresa.Id, parcela, contatoId, cancelamento);
 
                 // Salva parcela a parcela: se cair no meio, a próxima tentativa continua de onde parou
                 await _notas.SalvarAsync(cancelamento);
@@ -242,6 +250,38 @@ public class LancamentoNotaService
             novo.Tipo = "J";
         }
         return novo;
+    }
+
+    /// <summary>
+    /// Grava na hora a conta a pagar que acabou de ir para o Bling, com os dados da parcela.
+    /// Sem isso a nota sumia do painel até a sincronização seguinte (saía de "fora do Bling"
+    /// e ainda não estava na previsão). A sincronização depois confere com o Bling e corrige.
+    /// </summary>
+    private async Task GravarContaNoPrevisioAsync(
+        NotaFiscal nota, int empresaId, ParcelaNota parcela, long contatoId, CancellationToken cancelamento)
+    {
+        if (!parcela.BlingContaPagarId.HasValue)
+        {
+            return;
+        }
+
+        long blingId = parcela.BlingContaPagarId.Value;
+        // Conta já trazida pela sincronização (por exemplo, a lançada à mão que a conferência achou)
+        bool jaExiste = await _contas.ExisteAsync(c => c.EmpresaId == empresaId && c.BlingId == blingId, cancelamento);
+        if (jaExiste)
+        {
+            return;
+        }
+
+        var contaLocal = new ContaPagarSincronizada();
+        contaLocal.EmpresaId = empresaId;
+        contaLocal.BlingId = blingId;
+        contaLocal.Vencimento = parcela.Vencimento;
+        contaLocal.Valor = parcela.Valor;
+        contaLocal.Situacao = SituacaoContaBling.EmAberto;
+        contaLocal.BlingContatoId = contatoId;
+        contaLocal.FornecedorNome = nota.NomeFornecedor;
+        _contas.Adicionar(contaLocal);
     }
 
     private static NovaContaPagarBling MontarContaPagar(
