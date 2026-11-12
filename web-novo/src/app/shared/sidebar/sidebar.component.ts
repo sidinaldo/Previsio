@@ -4,7 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { Subscription, filter, timer } from 'rxjs';
 
 import { MENU, gruposVisiveis, textoContador } from './menu';
-import { PERFIL_ADMIN } from '../../core/previsio.models';
+import { rotuloPerfil } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { SimboloComponent } from '../simbolo/simbolo.component';
@@ -31,7 +31,7 @@ export class SidebarComponent implements OnInit {
   private readonly totalPendentes = signal<number | null>(null);
 
   readonly usuario = this.sessao.usuario;
-  readonly grupos = computed(() => gruposVisiveis(MENU, this.sessao.ehAdmin()));
+  readonly grupos = computed(() => gruposVisiveis(MENU, this.sessao.ehAdmin(), this.sessao.gereUsuarios()));
   readonly contador = computed(() => textoContador(this.totalPendentes()));
 
   constructor() {
@@ -56,10 +56,7 @@ export class SidebarComponent implements OnInit {
   }
 
   descricaoPerfil(perfil: string): string {
-    if (perfil === PERFIL_ADMIN) {
-      return 'Administrador';
-    }
-    return 'Cliente';
+    return rotuloPerfil(perfil);
   }
 
   sair(): void {

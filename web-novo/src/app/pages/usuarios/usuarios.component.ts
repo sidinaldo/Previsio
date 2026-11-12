@@ -5,7 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { avisarCamposPreenchidos } from '../../core/campos-preenchidos';
 import { ClientesService } from '../../core/clientes.service';
 import { mensagemDaApi } from '../../core/mensagem-erro';
-import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } from '../../core/previsio.models';
+import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, PERFIL_GESTOR, Usuario, rotuloPerfil } from '../../core/previsio.models';
+import { SessaoService } from '../../core/sessao.service';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
@@ -16,9 +17,10 @@ import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-o
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 /**
- * Cadastro de usuários (só admin): quem entra no painel e de qual cliente.
- * O mesmo formulário do topo cadastra um usuário novo ou, depois de "Editar", altera o nome
- * e redefine a senha do escolhido (e-mail, perfil e cliente não mudam depois do cadastro).
+ * Cadastro de usuários. O admin vê todos e escolhe o cliente; o gestor vê e cadastra só os da
+ * própria rede (Usuário ou Gestor). O mesmo formulário do topo cadastra um usuário novo ou,
+ * depois de "Editar", altera nome, e-mail, perfil (entre Usuário e Gestor) e redefine a senha.
+ * O cliente não muda depois do cadastro, e ninguém muda o próprio perfil.
  */
 @Component({
   selector: 'app-usuarios',
@@ -30,8 +32,14 @@ export class UsuariosComponent {
   private readonly elemento = inject(ElementRef<HTMLElement>);
   private readonly injector = inject(Injector);
 
+  private readonly sessao = inject(SessaoService);
+
   readonly perfilAdmin = PERFIL_ADMIN;
   readonly perfilCliente = PERFIL_CLIENTE;
+  readonly perfilGestor = PERFIL_GESTOR;
+  readonly rotuloPerfil = rotuloPerfil;
+  // Admin vê todas as redes, a coluna Cliente e o perfil Administrador; o gestor, só a rede dele
+  readonly ehAdmin = this.sessao.ehAdmin;
   readonly clientes = inject(ClientesService).lista;
 
   readonly usuarios = signal<Usuario[]>([]);
@@ -49,7 +57,7 @@ export class UsuariosComponent {
   readonly usuariosOrdenados = computed(() => ordenarLista(this.usuariosFiltrados(), this.ordenacao(), {
     nome: item => item.nome,
     email: item => item.email,
-    perfil: item => item.perfil,
+    perfil: item => rotuloPerfil(item.perfil),
     cliente: item => this.nomeDoCliente(item),
     situacao: item => item.ativo ? 0 : 1,
     acesso: item => item.ultimoAcessoEm
@@ -133,11 +141,16 @@ export class UsuariosComponent {
       return;
     }
     let clienteId: number | null = null;
-    if (perfil === PERFIL_CLIENTE) {
-      clienteId = this.clienteId();
-      if (clienteId === null) {
-        this.erro.set('Escolha o cliente do usuário.');
-        return;
+    if (perfil !== PERFIL_ADMIN) {
+      if (this.ehAdmin()) {
+        clienteId = this.clienteId();
+        if (clienteId === null) {
+          this.erro.set('Escolha o cliente do usuário.');
+          return;
+        }
+      } else {
+        // O gestor cadastra sempre na própria rede
+        clienteId = this.sessao.clienteId();
       }
     }
 
@@ -206,6 +219,21 @@ export class UsuariosComponent {
     this.focarFormulario();
   }
 
+  /** O próprio usuário logado: não muda o próprio perfil nem se desativa. */
+  ehOProprio(usuario: Usuario): boolean {
+    const logado = this.sessao.usuario();
+    return logado !== null && logado.id === usuario.id;
+  }
+
+  /** Na edição, o perfil só troca entre Usuário e Gestor, e nunca o próprio. */
+  readonly perfilTravado = computed(() => {
+    const usuario = this.editando();
+    if (usuario === null) {
+      return false;
+    }
+    return usuario.perfil === PERFIL_ADMIN || this.ehOProprio(usuario);
+  });
+
   estaEditando(usuario: Usuario): boolean {
     const editando = this.editando();
     return editando !== null && editando.id === usuario.id;
@@ -217,12 +245,19 @@ export class UsuariosComponent {
 
   private salvarEdicao(usuario: Usuario): void {
     const nome = this.nome().trim();
-    if (nome === '') {
-      this.erro.set('Informe o nome do usuário.');
+    const email = this.email().trim();
+    if (nome === '' || email === '') {
+      this.erro.set('Informe o nome e o e-mail do usuário.');
       return;
     }
 
     const dados: AlteracaoUsuario = { nome: nome };
+    if (email.toLowerCase() !== usuario.email.toLowerCase()) {
+      dados.email = email;
+    }
+    if (!this.perfilTravado() && this.perfil() !== usuario.perfil) {
+      dados.perfil = this.perfil();
+    }
     let sucesso = 'Usuário alterado.';
     // Senha em branco mantém a atual
     if (this.senha() !== '') {

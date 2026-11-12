@@ -211,8 +211,21 @@ export interface Usuario {
 }
 
 export const PERFIL_CLIENTE = 'Cliente';
+// Responsável pela rede: cadastra e altera os usuários dela
+export const PERFIL_GESTOR = 'Gestor';
 
-/** POST /api/usuarios. O cliente é obrigatório para o perfil Cliente e fica vazio para Admin. */
+/** Nome do perfil como aparece na tela. */
+export function rotuloPerfil(perfil: string): string {
+  if (perfil === PERFIL_ADMIN) {
+    return 'Administrador';
+  }
+  if (perfil === PERFIL_GESTOR) {
+    return 'Gestor';
+  }
+  return 'Usuário';
+}
+
+/** POST /api/usuarios. O cliente é obrigatório para Cliente e Gestor e fica vazio para Admin (o gestor sempre cadastra na própria rede). */
 export interface NovoUsuario {
   nome: string;
   email: string;
@@ -224,6 +237,9 @@ export interface NovoUsuario {
 /** PUT /api/usuarios/{id}: só os campos enviados mudam. */
 export interface AlteracaoUsuario {
   nome?: string;
+  email?: string;
+  // Só entre Cliente e Gestor
+  perfil?: string;
   ativo?: boolean;
   novaSenha?: string;
 }

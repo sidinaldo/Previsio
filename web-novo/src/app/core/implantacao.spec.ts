@@ -53,10 +53,15 @@ describe('implantacao', () => {
     expect(etapaConcluida(situacao({ empresas: [empresa(1, true), empresa(2, false, false)] }), 'bling')).toBe(true);
   });
 
-  it('usuário: só conta perfil Cliente desta rede', () => {
+  it('usuário: só conta usuários desta rede (não o admin nem os de outra rede)', () => {
     const s = situacao({ empresas: [empresa(1, true)], usuarios: [usuario(null, 'Admin'), usuario(8, 'Cliente')] });
     expect(usuariosDoCliente(s).length).toBe(0);
     expect(primeiraEtapaPendente(s)).toBe('usuario');
+  });
+
+  it('usuário: o gestor da rede conta como usuário cadastrado', () => {
+    const s = situacao({ empresas: [empresa(1, true)], usuarios: [usuario(7, 'Gestor')] });
+    expect(usuariosDoCliente(s).length).toBe(1);
   });
 
   it('tudo feito menos notas: primeira leitura; com notas, continua na leitura para ver o resultado', () => {

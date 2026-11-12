@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 import { AdminLayoutComponent } from '../layouts/admin/admin-layout.component';
 import { AuthLayoutComponent } from '../layouts/auth/auth-layout.component';
-import { exigirLogin, somenteAdmin, somenteSemLogin } from '../core/autenticacao.guards';
+import { exigirLogin, somenteAdmin, somenteGestao, somenteSemLogin } from '../core/autenticacao.guards';
 
 /**
  * Todas as telas ficam em /pages/...
@@ -67,7 +67,7 @@ export const PAGES_ROUTES: Routes = [
       },
       {
         path: 'usuarios',
-        canActivate: [somenteAdmin],
+        canActivate: [somenteGestao],
         loadComponent: () => import('./usuarios/usuarios.component').then(m => m.UsuariosComponent)
       },
       {

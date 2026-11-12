@@ -7,6 +7,8 @@ export interface ItemMenu {
   icone: string;
   // Escondido de quem não é admin
   somenteAdmin?: boolean;
+  // Só para o admin e o gestor da rede
+  somenteGestao?: boolean;
   // Mostra ao lado o número de notas pendentes
   contaPendentes?: boolean;
 }
@@ -34,14 +36,15 @@ export const MENU: GrupoMenu[] = [
   {
     titulo: 'Configuração',
     itens: [
-      { path: '/pages/empresas', title: 'Empresas', icone: 'store' }
+      { path: '/pages/empresas', title: 'Empresas', icone: 'store' },
+      { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteGestao: true }
     ]
   },
   {
-    titulo: 'Soft.IO',
+    // Telas da equipe Soft.IO
+    titulo: 'Administração',
     itens: [
       { path: '/pages/clientes', title: 'Clientes', icone: 'groups', somenteAdmin: true },
-      { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true },
       { path: '/pages/saude', title: 'Saúde', icone: 'monitor_heart', somenteAdmin: true },
       // Fora do menu do cliente, mas a tela continua aberta: o histórico da nota e o aviso de caixa com erro levam até ela
       { path: '/pages/falhas', title: 'Falhas', icone: 'error_outline', somenteAdmin: true }
@@ -50,10 +53,10 @@ export const MENU: GrupoMenu[] = [
 ];
 
 /**
- * Grupos que o usuário pode ver: quem não é admin não vê os itens somenteAdmin,
- * e um grupo sem nenhum item visível não aparece.
+ * Grupos que o usuário pode ver: os itens somenteAdmin só para o admin, os somenteGestao
+ * para o admin e o gestor da rede; um grupo sem nenhum item visível não aparece.
  */
-export function gruposVisiveis(grupos: GrupoMenu[] | undefined, ehAdmin: boolean): GrupoMenu[] {
+export function gruposVisiveis(grupos: GrupoMenu[] | undefined, ehAdmin: boolean, gereUsuarios: boolean): GrupoMenu[] {
   if (!grupos) {
     return [];
   }
@@ -62,6 +65,9 @@ export function gruposVisiveis(grupos: GrupoMenu[] | undefined, ehAdmin: boolean
     let itens = grupo.itens;
     if (!ehAdmin) {
       itens = itens.filter(item => !item.somenteAdmin);
+    }
+    if (!gereUsuarios) {
+      itens = itens.filter(item => !item.somenteGestao);
     }
     if (itens.length > 0) {
       visiveis.push({ titulo: grupo.titulo, itens: itens });

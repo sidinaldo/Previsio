@@ -116,7 +116,7 @@ public class AlertaVencimentosService
             if (modelo != null && _email.Configurado)
             {
                 List<Usuario> usuarios = await _usuarios.ConsultarSomenteLeitura()
-                    .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == cliente.Id)
+                    .Where(u => u.Ativo && u.Perfil != PerfilUsuario.Admin && u.ClienteId == cliente.Id)
                     .ToListAsync(cancelamento);
                 foreach (Usuario usuario in usuarios)
                 {

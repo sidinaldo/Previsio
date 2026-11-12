@@ -1,4 +1,4 @@
-import { Cliente, Empresa, PERFIL_CLIENTE, Usuario } from './previsio.models';
+import { Cliente, Empresa, PERFIL_ADMIN, Usuario } from './previsio.models';
 
 /** As cinco etapas da implantação de um cliente novo, na ordem em que são feitas. */
 export type EtapaImplantacao = 'rede' | 'empresas' | 'bling' | 'usuario' | 'leitura';
@@ -28,13 +28,13 @@ export function empresasAtivas(situacao: SituacaoImplantacao): Empresa[] {
   return situacao.empresas.filter(empresa => empresa.ativo);
 }
 
-/** Usuários de perfil Cliente desta rede (o admin não conta). */
+/** Usuários desta rede, gestores e usuários comuns (o admin não conta). */
 export function usuariosDoCliente(situacao: SituacaoImplantacao): Usuario[] {
   const cliente = situacao.cliente;
   if (cliente === null) {
     return [];
   }
-  return situacao.usuarios.filter(usuario => usuario.clienteId === cliente.id && usuario.perfil === PERFIL_CLIENTE);
+  return situacao.usuarios.filter(usuario => usuario.clienteId === cliente.id && usuario.perfil !== PERFIL_ADMIN);
 }
 
 export function etapaConcluida(situacao: SituacaoImplantacao, etapa: EtapaImplantacao): boolean {

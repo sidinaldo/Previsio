@@ -49,7 +49,7 @@ public class ResumoSemanalServiceTests
         _zonaNorte = Empresa("Auto Center Zona Norte", "11222333000181");
 
         _ana = Usuario("ana@autocenter.com.br", PerfilUsuario.Cliente, _rede.Id);
-        Usuario("bruno@autocenter.com.br", PerfilUsuario.Cliente, _rede.Id);
+        Usuario("bruno@autocenter.com.br", PerfilUsuario.Gestor, _rede.Id);
         Usuario("admin@softio.com.br", PerfilUsuario.Admin, null);
         Usuario("joao@outra.com.br", PerfilUsuario.Cliente, outraRede.Id);
         Usuario inativo = Usuario("saiu@autocenter.com.br", PerfilUsuario.Cliente, _rede.Id);

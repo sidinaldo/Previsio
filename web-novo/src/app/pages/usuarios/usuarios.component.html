@@ -4,7 +4,11 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Usuários</h1>
-        <p class="pv-pagina__subtitulo">Quem entra no painel e de qual cliente</p>
+        @if (ehAdmin()) {
+          <p class="pv-pagina__subtitulo">Quem entra no painel e de qual cliente</p>
+        } @else {
+          <p class="pv-pagina__subtitulo">Quem da sua rede entra no Previsio. O gestor também cadastra e altera os usuários</p>
+        }
       </div>
       @if (!formularioAberto()) {
         <div class="pv-pagina__acoes">
@@ -29,7 +33,11 @@
         <div>
           @if (editando(); as u) {
             <h2 class="pv-card__titulo">Editar usuário</h2>
-            <p class="pv-card__descricao">Alterando {{ u.nome }}. E-mail, perfil e cliente não mudam depois do cadastro.</p>
+            <p class="pv-card__descricao">Alterando {{ u.nome }}.
+              @if (perfilTravado()) {
+                O perfil não muda: ninguém altera o próprio perfil.
+              }
+            </p>
           } @else {
             <h2 class="pv-card__titulo">Novo usuário</h2>
           }
@@ -44,20 +52,22 @@
             </div>
             <div class="form-group pv-formulario__campo">
               <label for="usuario-email" class="bmd-label-floating">E-mail</label>
-              <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email"
-                     [readonly]="editando() !== null">
+              <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email">
             </div>
           </div>
           <div class="pv-formulario__linha">
             <div class="form-group pv-formulario__campo pv-formulario__campo--perfil">
               <label for="usuario-perfil" class="bmd-label-floating">Perfil</label>
               <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)"
-                      [disabled]="editando() !== null">
-                <option [value]="perfilCliente">Cliente</option>
-                <option [value]="perfilAdmin">Admin</option>
+                      [disabled]="perfilTravado()">
+                <option [value]="perfilCliente">Usuário</option>
+                <option [value]="perfilGestor">Gestor</option>
+                @if (ehAdmin() && (editando() === null || perfil() === perfilAdmin)) {
+                  <option [value]="perfilAdmin">Administrador</option>
+                }
               </select>
             </div>
-            @if (perfil() === perfilCliente) {
+            @if (ehAdmin() && perfil() !== perfilAdmin) {
               <div class="form-group pv-formulario__campo">
                 <label for="usuario-cliente" class="bmd-label-floating">Cliente</label>
                 <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId"
@@ -106,7 +116,7 @@
           <h2 class="pv-card__titulo">Usuários</h2>
           <p class="pv-card__descricao">{{ usuarios().length }} usuários cadastrados</p>
         </div>
-        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por nome, e-mail ou cliente" />
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" [placeholder]="ehAdmin() ? 'Buscar por nome, e-mail ou cliente' : 'Buscar por nome ou e-mail'" />
       </div>
       @if (usuarios().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
@@ -121,7 +131,9 @@
                 <th pvColuna="nome" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Nome</th>
                 <th pvColuna="email" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">E-mail</th>
                 <th pvColuna="perfil" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Perfil</th>
-                <th pvColuna="cliente" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Cliente</th>
+                @if (ehAdmin()) {
+                  <th pvColuna="cliente" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Cliente</th>
+                }
                 <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th pvColuna="acesso" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Último acesso</th>
                 <th class="text-right">Ações</th>
@@ -137,8 +149,10 @@
                     }
                   </td>
                   <td>{{ usuario.email }}</td>
-                  <td>{{ usuario.perfil }}</td>
-                  <td>{{ nomeDoCliente(usuario) }}</td>
+                  <td>{{ rotuloPerfil(usuario.perfil) }}</td>
+                  @if (ehAdmin()) {
+                    <td>{{ nomeDoCliente(usuario) }}</td>
+                  }
                   <td>
                     @if (usuario.ativo) {
                       <span class="badge badge-success">Ativo</span>
@@ -165,12 +179,12 @@
                                 (click)="editar(usuario)">
                           <i class="material-icons" aria-hidden="true">edit</i> Editar
                         </button>
-                        @if (usuario.ativo) {
+                        @if (usuario.ativo && !ehOProprio(usuario)) {
                           <button type="button" class="pv-acoes__item pv-acoes__item--perigo" [disabled]="processandoId() === usuario.id"
                                   (click)="alternarAtivo(usuario)">
                             <i class="material-icons" aria-hidden="true">block</i> Desativar
                           </button>
-                        } @else {
+                        } @else if (!usuario.ativo) {
                           <button type="button" class="pv-acoes__item" [disabled]="processandoId() === usuario.id"
                                   (click)="alternarAtivo(usuario)">
                             <i class="material-icons" aria-hidden="true">check_circle_outline</i> Ativar

@@ -310,7 +310,7 @@ public class ResumoSemanalService
     private Task<List<Usuario>> DestinatariosAsync(int clienteId, CancellationToken cancelamento)
     {
         return _usuarios.ConsultarSomenteLeitura()
-            .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == clienteId)
+            .Where(u => u.Ativo && u.Perfil != PerfilUsuario.Admin && u.ClienteId == clienteId)
             .OrderBy(u => u.Id)
             .ToListAsync(cancelamento);
     }

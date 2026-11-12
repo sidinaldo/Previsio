@@ -2,7 +2,11 @@
   <div class="pv-card__cabecalho">
     <div>
       <h2 class="pv-card__titulo">4. Usuário do cliente</h2>
-      <p class="pv-card__descricao">Quem do financeiro vai entrar no Previsio. Ele só vê as empresas de {{ cliente().nome }}</p>
+      <p class="pv-card__descricao">Quem do financeiro vai entrar no Previsio. Ele só vê as empresas de {{ cliente().nome }}.
+        @if (proximoEhGestor()) {
+          O primeiro usuário é o gestor: ele mesmo cadastra os outros usuários da rede.
+        }
+      </p>
     </div>
   </div>
 
@@ -13,6 +17,7 @@
           <tr>
             <th scope="col">Nome</th>
             <th scope="col">E-mail</th>
+            <th scope="col">Perfil</th>
           </tr>
         </thead>
         <tbody>
@@ -20,6 +25,7 @@
             <tr>
               <td>{{ usuario.nome }}</td>
               <td>{{ usuario.email }}</td>
+              <td>{{ rotuloPerfil(usuario.perfil) }}</td>
             </tr>
           }
         </tbody>

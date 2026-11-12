@@ -18,7 +18,6 @@ using Previsio.Core.Comum;
 using Previsio.Core.Entidades;
 using Previsio.Infra;
 using Previsio.Aplicacao.Abstracoes;
-using Previsio.Aplicacao.Notas;
 using Previsio.Aplicacao.Painel;
 using Previsio.Aplicacao.Email;
 using Previsio.Aplicacao.Usuarios;

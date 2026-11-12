@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 import { PREVISIO_CONFIG } from './previsio.config';
-import { PERFIL_ADMIN, RespostaLogin, Usuario } from './previsio.models';
+import { PERFIL_ADMIN, PERFIL_GESTOR, RespostaLogin, Usuario } from './previsio.models';
 
 const CHAVE_SESSAO = 'previsio.sessao';
 const CHAVE_CLIENTE = 'previsio.cliente';
@@ -34,6 +34,12 @@ export class SessaoService {
   readonly ehAdmin = computed(() => {
     const usuario = this.usuario();
     return usuario !== null && usuario.perfil === PERFIL_ADMIN;
+  });
+
+  /** Admin (todas as redes) ou gestor (a própria rede): pode cadastrar e alterar usuários. */
+  readonly gereUsuarios = computed(() => {
+    const usuario = this.usuario();
+    return usuario !== null && (usuario.perfil === PERFIL_ADMIN || usuario.perfil === PERFIL_GESTOR);
   });
 
   /**

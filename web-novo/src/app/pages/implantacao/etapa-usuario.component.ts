@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { SituacaoImplantacao, usuariosDoCliente } from '../../core/implantacao';
 import { mensagemDaApi } from '../../core/mensagem-erro';
-import { Cliente, PERFIL_CLIENTE } from '../../core/previsio.models';
+import { Cliente, PERFIL_CLIENTE, PERFIL_GESTOR, rotuloPerfil } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
@@ -13,7 +13,8 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 const TAMANHO_MINIMO_SENHA = 8;
 
 /**
- * Etapa 4: o acesso do financeiro do cliente (perfil Cliente), que só enxerga esta rede.
+ * Etapa 4: o acesso do financeiro do cliente, que só enxerga esta rede.
+ * O primeiro usuário vira gestor (cadastra os outros usuários da rede); os seguintes, usuários comuns.
  */
 @Component({
   selector: 'app-etapa-usuario',
@@ -38,6 +39,8 @@ export class EtapaUsuarioComponent {
   readonly mensagem = signal('');
 
   readonly usuarios = computed(() => usuariosDoCliente(this.situacao()));
+  readonly proximoEhGestor = computed(() => this.usuarios().length === 0);
+  readonly rotuloPerfil = rotuloPerfil;
 
   // Paginação da tabela (a lista inteira vem da API)
   readonly pagina = signal(1);
@@ -64,7 +67,7 @@ export class EtapaUsuarioComponent {
       nome: nome,
       email: email,
       senha: senha,
-      perfil: PERFIL_CLIENTE,
+      perfil: this.proximoEhGestor() ? PERFIL_GESTOR : PERFIL_CLIENTE,
       clienteId: this.cliente().id
     }).subscribe({
       next: () => {

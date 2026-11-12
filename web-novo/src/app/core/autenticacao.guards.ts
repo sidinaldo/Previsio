@@ -22,6 +22,14 @@ export const somenteAdmin: CanActivateFn = () => {
   return inject(Router).createUrlTree(['/pages/painel']);
 };
 
+/** Telas do admin e do gestor da rede (Usuários). */
+export const somenteGestao: CanActivateFn = () => {
+  if (inject(SessaoService).gereUsuarios()) {
+    return true;
+  }
+  return inject(Router).createUrlTree(['/pages/painel']);
+};
+
 /** Tela de login: quem já entrou vai direto para o painel. */
 export const somenteSemLogin: CanActivateFn = () => {
   if (inject(SessaoService).estaLogado()) {

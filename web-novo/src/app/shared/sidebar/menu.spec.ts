@@ -7,10 +7,10 @@ describe('menu lateral', () => {
       itens: [{ path: '/pages/painel', title: 'Painel', icone: 'dashboard' }]
     },
     {
-      titulo: 'Soft.IO',
+      titulo: 'Administração',
       itens: [
         { path: '/pages/clientes', title: 'Clientes', icone: 'groups', somenteAdmin: true },
-        { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteAdmin: true }
+        { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteGestao: true }
       ]
     }
   ];
@@ -20,22 +20,32 @@ describe('menu lateral', () => {
   }
 
   it('admin vê todos os grupos e itens', () => {
-    expect(gruposVisiveis(grupos, true).map(g => g.titulo)).toEqual(['Financeiro', 'Soft.IO']);
-    expect(caminhos(gruposVisiveis(grupos, true))).toEqual(['/pages/painel', '/pages/clientes', '/pages/usuarios']);
+    expect(gruposVisiveis(grupos, true, true).map(g => g.titulo)).toEqual(['Financeiro', 'Administração']);
+    expect(caminhos(gruposVisiveis(grupos, true, true))).toEqual(['/pages/painel', '/pages/clientes', '/pages/usuarios']);
   });
 
-  it('usuário de cliente não vê os itens somenteAdmin nem o grupo que ficou vazio', () => {
-    const visiveis = gruposVisiveis(grupos, false);
+  it('gestor vê os itens somenteGestao, mas não os somenteAdmin', () => {
+    expect(caminhos(gruposVisiveis(grupos, false, true))).toEqual(['/pages/painel', '/pages/usuarios']);
+  });
+
+  it('usuário comum não vê os itens somenteAdmin nem somenteGestao, nem o grupo que ficou vazio', () => {
+    const visiveis = gruposVisiveis(grupos, false, false);
     expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro']);
     expect(caminhos(visiveis)).toEqual(['/pages/painel']);
   });
 
   it('lista vazia não quebra', () => {
-    expect(gruposVisiveis(undefined, false)).toEqual([]);
+    expect(gruposVisiveis(undefined, false, false)).toEqual([]);
   });
 
-  it('menu real do cliente: Financeiro, Notas e Configuração, sem Falhas', () => {
-    const visiveis = gruposVisiveis(MENU, false);
+  it('menu real do gestor: Usuários em Configuração, sem o grupo Administração', () => {
+    const visiveis = gruposVisiveis(MENU, false, true);
+    expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro', 'Notas', 'Configuração']);
+    expect(visiveis[2].itens.map(i => i.path)).toEqual(['/pages/empresas', '/pages/usuarios']);
+  });
+
+  it('menu real do usuário comum: Financeiro, Notas e Configuração, sem Usuários nem Falhas', () => {
+    const visiveis = gruposVisiveis(MENU, false, false);
     expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro', 'Notas', 'Configuração']);
     expect(caminhos(visiveis)).toEqual([
       '/pages/painel',
@@ -46,10 +56,10 @@ describe('menu lateral', () => {
     ]);
   });
 
-  it('menu real do admin termina com o grupo Soft.IO', () => {
-    const visiveis = gruposVisiveis(MENU, true);
-    expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro', 'Notas', 'Configuração', 'Soft.IO']);
-    expect(visiveis[3].itens.map(i => i.path)).toEqual(['/pages/clientes', '/pages/usuarios', '/pages/saude', '/pages/falhas']);
+  it('menu real do admin termina com o grupo Administração', () => {
+    const visiveis = gruposVisiveis(MENU, true, true);
+    expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro', 'Notas', 'Configuração', 'Administração']);
+    expect(visiveis[3].itens.map(i => i.path)).toEqual(['/pages/clientes', '/pages/saude', '/pages/falhas']);
   });
 
   it('só Notas pendentes mostra o número', () => {

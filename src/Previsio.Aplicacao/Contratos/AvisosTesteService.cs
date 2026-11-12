@@ -88,7 +88,7 @@ public class AvisosTesteService
         string urlFront = (_configuracao["Front:Url"] ?? "http://localhost:4200/#").TrimEnd('/');
 
         List<Usuario> daRede = await _usuarios.ConsultarSomenteLeitura()
-            .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == rede.Id)
+            .Where(u => u.Ativo && u.Perfil != PerfilUsuario.Admin && u.ClienteId == rede.Id)
             .ToListAsync(cancelamento);
 
         foreach (Usuario usuario in daRede)
