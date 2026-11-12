@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
+using Previsio.Core.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 

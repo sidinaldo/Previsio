@@ -7,6 +7,7 @@ using Previsio.Api.Jobs;
 using Previsio.Api.Mapeamentos;
 using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
+using Previsio.Core.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 

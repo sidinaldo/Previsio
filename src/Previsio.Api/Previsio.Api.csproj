@@ -16,6 +16,8 @@
     <ProjectReference Include="..\Previsio.Core\Previsio.Core.csproj" />
     <ProjectReference Include="..\Previsio.Bling\Previsio.Bling.csproj" />
     <ProjectReference Include="..\Previsio.Data\Previsio.Data.csproj" />
+    <ProjectReference Include="..\Previsio.Aplicacao\Previsio.Aplicacao.csproj" />
+    <ProjectReference Include="..\Previsio.Infra\Previsio.Infra.csproj" />
   </ItemGroup>
 
 </Project>

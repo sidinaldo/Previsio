@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Regras de aplicação: serviços por assunto, DTOs e as interfaces do que é externo (Abstracoes).
+       Não conhece ASP.NET, MailKit, Hangfire nem o banco: só o Core, o cliente do Bling e o EF (para consultar). -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Previsio.Core\Previsio.Core.csproj" />
+    <ProjectReference Include="..\Previsio.Bling\Previsio.Bling.csproj" />
+  </ItemGroup>
+
+</Project>

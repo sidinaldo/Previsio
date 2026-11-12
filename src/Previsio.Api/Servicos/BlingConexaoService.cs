@@ -7,6 +7,7 @@ using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Data.Repositorios;
+using Previsio.Core.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 

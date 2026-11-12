@@ -4,6 +4,7 @@ using Previsio.Core.Entidades;
 using Previsio.Core.Painel;
 using Previsio.Core.Painel.Modelos;
 using Previsio.Data.Repositorios;
+using Previsio.Core.Abstracoes;
 
 namespace Previsio.Api.Servicos;
 
