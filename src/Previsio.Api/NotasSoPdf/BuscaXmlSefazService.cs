@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Contratos;
 using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Sefaz;
 using Previsio.Aplicacao.Abstracoes;
@@ -34,7 +34,10 @@ public class BuscaXmlSefazService
     // "Consumo indevido" (656): a SEFAZ bloqueia o CNPJ por 1 hora
     private static readonly TimeSpan EsperaConsumoIndevido = TimeSpan.FromMinutes(65);
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<NotaSoPdf> _notasSoPdf;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<Empresa> _empresas;
     private readonly ISefaz _sefaz;
     private readonly CertificadosService _certificados;
     private readonly RegistroNotaService _registro;
@@ -43,7 +46,10 @@ public class BuscaXmlSefazService
     private readonly ILogger<BuscaXmlSefazService> _logger;
 
     public BuscaXmlSefazService(
-        PrevisioDbContext db,
+        IRepositorio<Cliente> clientes,
+        IRepositorio<NotaSoPdf> notasSoPdf,
+        IRepositorio<NotaFiscal> notas,
+        IRepositorio<Empresa> empresas,
         ISefaz sefaz,
         CertificadosService certificados,
         RegistroNotaService registro,
@@ -51,7 +57,10 @@ public class BuscaXmlSefazService
         TimeProvider relogio,
         ILogger<BuscaXmlSefazService> logger)
     {
-        _db = db;
+        _clientes = clientes;
+        _notasSoPdf = notasSoPdf;
+        _notas = notas;
+        _empresas = empresas;
         _sefaz = sefaz;
         _certificados = certificados;
         _registro = registro;
@@ -66,8 +75,8 @@ public class BuscaXmlSefazService
     public async Task ProcessarPendentesAsync(CancellationToken cancelamento)
     {
         DateTime agora = Agora();
-        List<int> redes = await _db.Clientes.Where(PeriodoTeste.Processa(agora)).Select(c => c.Id).ToListAsync(cancelamento);
-        List<int> ids = await _db.NotasSoPdf
+        List<int> redes = await _clientes.Consultar().Where(PeriodoTeste.Processa(agora)).Select(c => c.Id).ToListAsync(cancelamento);
+        List<int> ids = await _notasSoPdf.Consultar()
             .Where(n => n.Situacao == SituacaoNotaSoPdf.BuscandoNaSefaz
                 && redes.Contains(n.ClienteId)
                 && (n.ProximaTentativaEm == null || n.ProximaTentativaEm <= agora))
@@ -110,8 +119,8 @@ public class BuscaXmlSefazService
 
     private async Task ProcessarAsync(int id, Dictionary<int, X509Certificate2?> certificados, CancellationToken cancelamento)
     {
-        _db.ChangeTracker.Clear();
-        NotaSoPdf? item = await _db.NotasSoPdf.FirstOrDefaultAsync(n => n.Id == id, cancelamento);
+        _clientes.DescartarAlteracoes();
+        NotaSoPdf? item = await _notasSoPdf.Consultar().FirstOrDefaultAsync(n => n.Id == id, cancelamento);
         if (item == null || item.ChaveAcesso == null)
         {
             return;
@@ -119,16 +128,16 @@ public class BuscaXmlSefazService
         string chave = item.ChaveAcesso;
 
         // O XML pode ter chegado por outro e-mail enquanto isso
-        NotaFiscal? existente = await _db.NotasFiscais.FirstOrDefaultAsync(
+        NotaFiscal? existente = await _notas.Consultar().FirstOrDefaultAsync(
             n => n.ClienteId == item.ClienteId && n.ChaveAcesso == chave, cancelamento);
         if (existente != null)
         {
             Resolver(item, existente.Id, "XML recebido em outro e-mail");
-            await _db.SaveChangesAsync(cancelamento);
+            await _clientes.SalvarAsync(cancelamento);
             return;
         }
 
-        List<Empresa> empresas = await _db.Empresas
+        List<Empresa> empresas = await _empresas.Consultar()
             .Where(e => e.ClienteId == item.ClienteId && e.Ativo)
             .OrderBy(e => e.Id)
             .ToListAsync(cancelamento);
@@ -138,7 +147,7 @@ public class BuscaXmlSefazService
             item.Situacao = SituacaoNotaSoPdf.SemCertificado;
             item.Motivo = "Nenhuma loja da rede tem certificado digital A1 cadastrado (com a UF) para buscar o XML na SEFAZ. "
                 + "Cadastre em Empresas ou anexe o XML.";
-            await _db.SaveChangesAsync(cancelamento);
+            await _clientes.SalvarAsync(cancelamento);
             return;
         }
 
@@ -177,7 +186,7 @@ public class BuscaXmlSefazService
             {
                 item.ProximaTentativaEm = Agora().Add(EsperaConsumoIndevido);
                 item.Motivo = "A SEFAZ pediu para esperar 1 hora antes de consultar de novo (" + retorno.Descricao + ").";
-                await _db.SaveChangesAsync(cancelamento);
+                await _clientes.SalvarAsync(cancelamento);
                 return;
             }
 
@@ -231,7 +240,7 @@ public class BuscaXmlSefazService
         item.CienciaEnviadaEm = Agora();
         item.ProximaTentativaEm = Agora().Add(EsperaDepoisDaCiencia);
         item.Motivo = "Ciência da operação registrada por " + empresa.Nome + "; buscando o XML completo em alguns minutos.";
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     private async Task RegistrarXmlAsync(NotaSoPdf item, string xml, CancellationToken cancelamento)
@@ -243,12 +252,12 @@ public class BuscaXmlSefazService
             return;
         }
         await _registro.RegistrarAsync(item.ClienteId, nota, item.OrigemEmail, item.EmpresaCaixaId, cancelamento);
-        int? notaId = await _db.NotasFiscais
+        int? notaId = await _notas.Consultar()
             .Where(n => n.ClienteId == item.ClienteId && n.ChaveAcesso == nota.ChaveAcesso)
             .Select(n => (int?)n.Id)
             .FirstOrDefaultAsync(cancelamento);
         Resolver(item, notaId, "XML baixado da SEFAZ");
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     /// <summary>
@@ -272,7 +281,7 @@ public class BuscaXmlSefazService
             item.ProximaTentativaEm = Agora().Add(Esperas[indice]);
             item.Motivo = Limitar(motivo, 500);
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     private void Resolver(NotaSoPdf item, int? notaFiscalId, string como)

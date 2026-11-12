@@ -33,7 +33,7 @@ public class EmailsIgnoradosTests
     private EmailsIgnoradosService Servico(int diasGuardar = 30)
     {
         var opcoes = new LeituraEmailOptions { DiasGuardarIgnorados = diasGuardar };
-        return new EmailsIgnoradosService(_db, new RegistroNotaSoPdf(_db), _relogio, Options.Create(opcoes));
+        return ServicosDeTeste.EmailsIgnoradosService(_db, ServicosDeTeste.RegistroNotaSoPdf(_db), _relogio, Options.Create(opcoes));
     }
 
     private static EmailSemXml Email(string assunto, string nomePdf, byte[] pdf)
@@ -62,7 +62,7 @@ public class EmailsIgnoradosTests
     public async Task Analise_diz_por_que_o_pdf_foi_ignorado_e_reconhece_o_que_ja_existe()
     {
         await CadastrarRede();
-        var registro = new RegistroNotaSoPdf(_db);
+        var registro = ServicosDeTeste.RegistroNotaSoPdf(_db);
         byte[] semTexto = new byte[] { 1, 2, 3 };
 
         ResultadoNotaSoPdf boleto = await registro.AnalisarAsync(_rede.Id, null, Email("Boleto de novembro", "boleto.pdf", semTexto), false, CancellationToken.None);
@@ -174,7 +174,7 @@ public class EmailsIgnoradosTests
     {
         await CadastrarRede();
         byte[] danfe = File.ReadAllBytes(ChaveETextoPdfTests.Exemplo("danfe-chromium.pdf"));
-        var registro = new RegistroNotaSoPdf(_db);
+        var registro = ServicosDeTeste.RegistroNotaSoPdf(_db);
 
         // Primeiro só a pendência de outro e-mail
         await registro.AnalisarAsync(_rede.Id, null, Email("NF-e 92001", "danfe.pdf", danfe), false, CancellationToken.None);

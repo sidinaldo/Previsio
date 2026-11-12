@@ -30,8 +30,8 @@ public class ResumoSemanalServiceTests
         IConfiguration configuracao = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { { "Front:Url", "https://app.previsio.com.br/#" } })
             .Build();
-        var avisos = new AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
-        return new ResumoSemanalService(_db, avisos, _email, configuracao, _relogio, NullLogger<ResumoSemanalService>.Instance);
+        var avisos = ServicosDeTeste.AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
+        return ServicosDeTeste.ResumoSemanalService(_db, avisos, _email, configuracao, _relogio, NullLogger<ResumoSemanalService>.Instance);
     }
 
     private async Task CadastrarRede()

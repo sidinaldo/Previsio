@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Api.Mapeamentos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Sefaz;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Abstracoes;
@@ -25,13 +25,19 @@ public class CertificadosService
     public const string MensagemArquivoGrande = "O arquivo é grande demais para um certificado A1 (máximo 100 KB).";
     public const string MensagemSemCnpj = "Não achei o CNPJ no certificado. Use um e-CNPJ do tipo A1.";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Empresa> _empresas;
+    private readonly IRepositorio<NotaSoPdf> _notasSoPdf;
     private readonly IProtetorSegredos _protetor;
     private readonly TimeProvider _relogio;
 
-    public CertificadosService(PrevisioDbContext db, IProtetorSegredos protetor, TimeProvider relogio)
+    public CertificadosService(
+        IRepositorio<Empresa> empresas,
+        IRepositorio<NotaSoPdf> notasSoPdf,
+        IProtetorSegredos protetor,
+        TimeProvider relogio)
     {
-        _db = db;
+        _empresas = empresas;
+        _notasSoPdf = notasSoPdf;
         _protetor = protetor;
         _relogio = relogio;
     }
@@ -39,7 +45,7 @@ public class CertificadosService
     public async Task<Resultado<EmpresaDto>> SalvarAsync(
         int empresaId, byte[] pfx, string senha, string uf, CancellationToken cancelamento)
     {
-        Empresa? empresa = await _db.Empresas.Include(e => e.Cliente).FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        Empresa? empresa = await _empresas.Consultar().Include(e => e.Cliente).FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
         if (empresa == null)
         {
             return Resultado<EmpresaDto>.NaoEncontrado(MensagemEmpresaNaoEncontrada);
@@ -97,14 +103,14 @@ public class CertificadosService
             empresa.Uf = uf.Trim().ToUpperInvariant();
         }
 
-        await _db.SaveChangesAsync(cancelamento);
+        await _empresas.SalvarAsync(cancelamento);
         await RetomarSemCertificadoAsync(empresa.ClienteId, cancelamento);
         return Resultado<EmpresaDto>.Ok(EmpresaMapeamento.ParaDto(empresa));
     }
 
     public async Task<Resultado<EmpresaDto>> RemoverAsync(int empresaId, CancellationToken cancelamento)
     {
-        Empresa? empresa = await _db.Empresas.Include(e => e.Cliente).FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        Empresa? empresa = await _empresas.Consultar().Include(e => e.Cliente).FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
         if (empresa == null)
         {
             return Resultado<EmpresaDto>.NaoEncontrado(MensagemEmpresaNaoEncontrada);
@@ -113,7 +119,7 @@ public class CertificadosService
         empresa.CertificadoSenhaProtegida = null;
         empresa.CertificadoTitular = null;
         empresa.CertificadoValidoAte = null;
-        await _db.SaveChangesAsync(cancelamento);
+        await _empresas.SalvarAsync(cancelamento);
         return Resultado<EmpresaDto>.Ok(EmpresaMapeamento.ParaDto(empresa));
     }
 
@@ -145,7 +151,7 @@ public class CertificadosService
     // Notas que pararam por falta de certificado voltam para a fila da SEFAZ
     private async Task RetomarSemCertificadoAsync(int clienteId, CancellationToken cancelamento)
     {
-        List<NotaSoPdf> paradas = await _db.NotasSoPdf
+        List<NotaSoPdf> paradas = await _notasSoPdf.Consultar()
             .Where(n => n.ClienteId == clienteId && n.Situacao == SituacaoNotaSoPdf.SemCertificado)
             .ToListAsync(cancelamento);
         foreach (NotaSoPdf nota in paradas)
@@ -156,7 +162,7 @@ public class CertificadosService
         }
         if (paradas.Count > 0)
         {
-            await _db.SaveChangesAsync(cancelamento);
+            await _empresas.SalvarAsync(cancelamento);
         }
     }
 

@@ -57,7 +57,7 @@ public class CaixaDeOrigemNotaTests
 
     private async Task<NotaDto> Registrar(string chave, string cnpjDestinatario, int? empresaDaCaixaId)
     {
-        var registro = new RegistroNotaService(_db);
+        var registro = ServicosDeTeste.RegistroNotaService(_db);
         await registro.RegistrarAsync(1, Xml(chave, cnpjDestinatario), "fornecedor@alfa.com.br", empresaDaCaixaId, CancellationToken.None);
         _db.ChangeTracker.Clear();
 

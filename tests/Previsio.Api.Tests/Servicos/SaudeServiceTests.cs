@@ -34,8 +34,8 @@ public class SaudeServiceTests
     private SaudeService CriarServico()
     {
         IConfiguration configuracao = new ConfigurationBuilder().Build();
-        var avisos = new AvisosService(_db, new EnvioEmailDeTeste(), configuracao, _relogio, NullLogger<AvisosService>.Instance);
-        return new SaudeService(_db, avisos, _agenda, _relogio);
+        var avisos = ServicosDeTeste.AvisosService(_db, new EnvioEmailDeTeste(), configuracao, _relogio, NullLogger<AvisosService>.Instance);
+        return ServicosDeTeste.SaudeService(_db, avisos, _agenda, _relogio);
     }
 
     private Cliente Rede(string nome)

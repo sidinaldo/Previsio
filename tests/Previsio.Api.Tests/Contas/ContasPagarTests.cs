@@ -73,7 +73,7 @@ public class ContasPagarTests
 
     private ContasPagarService Servico(SincronizacaoOptions? opcoes = null)
     {
-        return new ContasPagarService(_db, _relogio, Options.Create(opcoes ?? new SincronizacaoOptions()));
+        return ServicosDeTeste.ContasPagarService(_db, _relogio, Options.Create(opcoes ?? new SincronizacaoOptions()));
     }
 
     private async Task<PaginaContasPagarDto> Listar(FiltroContas filtro)
@@ -225,7 +225,7 @@ public class ContasPagarTests
             }
             return RespostasFixas.Json(HttpStatusCode.NotFound, "{\"error\":{\"type\":\"RESOURCE_NOT_FOUND\"}}");
         });
-        var servico = new FornecedoresBlingService(_db, BlingDeTeste.Criar(respostas), NullLogger.Instance);
+        var servico = ServicosDeTeste.FornecedoresBlingService(_db, BlingDeTeste.Criar(respostas), NullLogger<FornecedoresBlingService>.Instance);
         var contas = new List<ContaPagarSincronizada> { daNota, manual, outraManual, guardada, velha, sumiu };
 
         int buscados = await servico.PreencherNomesAsync(_centro, "conta", "token", contas, 30, agora, CancellationToken.None);

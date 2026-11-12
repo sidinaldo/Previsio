@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 
 namespace Previsio.Api.Vencimentos;
 
@@ -10,9 +8,9 @@ namespace Previsio.Api.Vencimentos;
 /// </summary>
 public static class ContasEmAberto
 {
-    public static IQueryable<ContaPagarSincronizada> Das(PrevisioDbContext db, List<int> empresas)
+    public static IQueryable<ContaPagarSincronizada> Das(IQueryable<ContaPagarSincronizada> contas, List<int> empresas)
     {
-        return db.ContasPagar.AsNoTracking()
+        return contas
             .Where(c => empresas.Contains(c.EmpresaId)
                 && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago));
     }
@@ -20,9 +18,9 @@ public static class ContasEmAberto
     /// <summary>
     /// Vencidas há pelo menos N dias (1 = venceu ontem ou antes).
     /// </summary>
-    public static IQueryable<ContaPagarSincronizada> Vencidas(PrevisioDbContext db, List<int> empresas, DateTime hoje, int diasDeAtraso)
+    public static IQueryable<ContaPagarSincronizada> Vencidas(IQueryable<ContaPagarSincronizada> contas, List<int> empresas, DateTime hoje, int diasDeAtraso)
     {
         DateTime limite = hoje.Date.AddDays(-Math.Max(diasDeAtraso, 1));
-        return Das(db, empresas).Where(c => c.Vencimento <= limite);
+        return Das(contas, empresas).Where(c => c.Vencimento <= limite);
     }
 }

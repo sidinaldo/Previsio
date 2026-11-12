@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using Previsio.Api.Dtos;
 using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.EmailsIgnorados;
@@ -18,15 +18,18 @@ public class EmailsIgnoradosService
     public const int MaximoNaLista = 200;
     public const string MensagemNaoEncontrado = "E-mail ignorado não encontrado (pode ter passado do prazo e sido apagado).";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<EmailIgnorado> _emailsIgnorados;
     private readonly RegistroNotaSoPdf _notasSoPdf;
     private readonly TimeProvider _relogio;
     private readonly LeituraEmailOptions _opcoes;
 
     public EmailsIgnoradosService(
-        PrevisioDbContext db, RegistroNotaSoPdf notasSoPdf, TimeProvider relogio, IOptions<LeituraEmailOptions> opcoes)
+        IRepositorio<EmailIgnorado> emailsIgnorados,
+        RegistroNotaSoPdf notasSoPdf,
+        TimeProvider relogio,
+        IOptions<LeituraEmailOptions> opcoes)
     {
-        _db = db;
+        _emailsIgnorados = emailsIgnorados;
         _notasSoPdf = notasSoPdf;
         _relogio = relogio;
         _opcoes = opcoes.Value;
@@ -40,12 +43,12 @@ public class EmailsIgnoradosService
         bool jaExiste;
         if (email.MensagemId != "")
         {
-            jaExiste = await _db.EmailsIgnorados.AnyAsync(
+            jaExiste = await _emailsIgnorados.Consultar().AnyAsync(
                 e => e.ClienteId == email.ClienteId && e.MensagemId == email.MensagemId, cancelamento);
         }
         else
         {
-            jaExiste = await _db.EmailsIgnorados.AnyAsync(
+            jaExiste = await _emailsIgnorados.Consultar().AnyAsync(
                 e => e.ClienteId == email.ClienteId && e.EmpresaCaixaId == email.EmpresaCaixaId && e.Uid == email.Uid, cancelamento);
         }
         if (jaExiste)
@@ -76,7 +79,7 @@ public class EmailsIgnoradosService
         {
             registro.NumeroNota = Limitar(email.NumeroNota, 20);
         }
-        _db.EmailsIgnorados.Add(registro);
+        _emailsIgnorados.Adicionar(registro);
     }
 
     /// <summary>
@@ -85,13 +88,16 @@ public class EmailsIgnoradosService
     public async Task<int> LimparAntigosAsync(CancellationToken cancelamento)
     {
         DateTime limite = Agora().AddDays(-_opcoes.DiasGuardarIgnoradosValidos());
-        List<EmailIgnorado> antigos = await _db.EmailsIgnorados.Where(e => e.LidoEm < limite).ToListAsync(cancelamento);
+        List<EmailIgnorado> antigos = await _emailsIgnorados.Consultar().Where(e => e.LidoEm < limite).ToListAsync(cancelamento);
         if (antigos.Count == 0)
         {
             return 0;
         }
-        _db.EmailsIgnorados.RemoveRange(antigos);
-        await _db.SaveChangesAsync(cancelamento);
+        foreach (EmailIgnorado antigo in antigos)
+        {
+            _emailsIgnorados.Remover(antigo);
+        }
+        await _emailsIgnorados.SalvarAsync(cancelamento);
         return antigos.Count;
     }
 
@@ -105,7 +111,7 @@ public class EmailsIgnoradosService
             dias = 7;
         }
         DateTime desde = Agora().AddDays(-dias);
-        IQueryable<EmailIgnorado> consulta = _db.EmailsIgnorados.AsNoTracking()
+        IQueryable<EmailIgnorado> consulta = _emailsIgnorados.ConsultarSomenteLeitura()
             .Include(e => e.Cliente)
             .Include(e => e.EmpresaCaixa)
             .Where(e => e.LidoEm >= desde);
@@ -130,7 +136,7 @@ public class EmailsIgnoradosService
 
     public async Task<EmailIgnorado?> ObterAsync(int id, CancellationToken cancelamento)
     {
-        return await _db.EmailsIgnorados.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, cancelamento);
+        return await _emailsIgnorados.ConsultarSomenteLeitura().FirstOrDefaultAsync(e => e.Id == id, cancelamento);
     }
 
     /// <summary>
@@ -138,7 +144,7 @@ public class EmailsIgnoradosService
     /// </summary>
     public async Task<Resultado<TratamentoEmailIgnoradoDto>> TratarComoNotaAsync(int id, string usuario, CancellationToken cancelamento)
     {
-        EmailIgnorado? email = await _db.EmailsIgnorados
+        EmailIgnorado? email = await _emailsIgnorados.Consultar()
             .Include(e => e.Cliente)
             .Include(e => e.EmpresaCaixa)
             .FirstOrDefaultAsync(e => e.Id == id, cancelamento);
@@ -194,7 +200,7 @@ public class EmailsIgnoradosService
         email.TratadoEm = Agora();
         email.TratadoPor = Limitar(usuario, 200);
         email.ResultadoTratamento = Limitar(mensagem, 300);
-        await _db.SaveChangesAsync(cancelamento);
+        await _emailsIgnorados.SalvarAsync(cancelamento);
 
         var resposta = new TratamentoEmailIgnoradoDto();
         resposta.Mensagem = mensagem;

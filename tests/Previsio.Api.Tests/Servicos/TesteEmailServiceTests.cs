@@ -1,5 +1,3 @@
-using System.Net.Sockets;
-using MailKit.Security;
 using Microsoft.AspNetCore.DataProtection;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
@@ -10,6 +8,7 @@ using Previsio.Data.Repositorios;
 using Xunit;
 using Previsio.Aplicacao.Comum;
 using Previsio.Infra.Seguranca;
+using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Tests.Servicos;
 
@@ -49,7 +48,7 @@ public class TesteEmailServiceTests
     [Fact]
     public async Task Testar_SenhaRecusada_ExplicaASenhaDeApp()
     {
-        _conexao.ErroParaLancar = new AuthenticationException("Invalid credentials");
+        _conexao.ErroParaLancar = new FalhaImapException(MotivoFalhaImap.Autenticacao, "Invalid credentials", null);
 
         Resultado<ResultadoTesteEmailDto> resultado = await CriarServico().TestarAsync(DadosValidos(), CancellationToken.None);
 
@@ -61,7 +60,7 @@ public class TesteEmailServiceTests
     [Fact]
     public async Task Testar_ServidorInexistente_PedeParaConferirServidorEPorta()
     {
-        _conexao.ErroParaLancar = new SocketException((int)SocketError.HostNotFound);
+        _conexao.ErroParaLancar = new FalhaImapException(MotivoFalhaImap.Rede, "Host not found", null);
 
         Resultado<ResultadoTesteEmailDto> resultado = await CriarServico().TestarAsync(DadosValidos(), CancellationToken.None);
 

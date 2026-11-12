@@ -3,8 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Abstracoes;
 
@@ -20,7 +20,7 @@ public class RedefinicaoSenhaService
 
     public const string MensagemLinkInvalido = "Este link de redefinição é inválido ou expirou. Peça um novo em \"Esqueci minha senha\".";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Usuario> _usuarios;
     private readonly AutenticacaoService _autenticacao;
     private readonly IEnvioEmail _email;
     private readonly IConfiguration _configuracao;
@@ -29,7 +29,7 @@ public class RedefinicaoSenhaService
     private readonly ILogger<RedefinicaoSenhaService> _logger;
 
     public RedefinicaoSenhaService(
-        PrevisioDbContext db,
+        IRepositorio<Usuario> usuarios,
         AutenticacaoService autenticacao,
         IEnvioEmail email,
         IConfiguration configuracao,
@@ -37,7 +37,7 @@ public class RedefinicaoSenhaService
         TimeProvider relogio,
         ILogger<RedefinicaoSenhaService> logger)
     {
-        _db = db;
+        _usuarios = usuarios;
         _autenticacao = autenticacao;
         _email = email;
         _configuracao = configuracao;
@@ -58,7 +58,7 @@ public class RedefinicaoSenhaService
             return;
         }
 
-        Usuario? usuario = await _db.Usuarios
+        Usuario? usuario = await _usuarios.Consultar()
             .Include(u => u.Cliente)
             .FirstOrDefaultAsync(u => u.Email == emailNormalizado, cancelamento);
         if (usuario == null || !usuario.Ativo || (usuario.Cliente != null && !usuario.Cliente.Ativo))
@@ -70,7 +70,7 @@ public class RedefinicaoSenhaService
         string token = GerarToken();
         usuario.RedefinicaoSenhaHash = Hash(token);
         usuario.RedefinicaoSenhaExpiraEm = _relogio.GetUtcNow().UtcDateTime.Add(Validade);
-        await _db.SaveChangesAsync(cancelamento);
+        await _usuarios.SalvarAsync(cancelamento);
 
         string link = MontarLink(token);
         if (!_email.Configurado)
@@ -125,7 +125,7 @@ public class RedefinicaoSenhaService
         }
 
         string hash = Hash(tokenInformado);
-        Usuario? usuario = await _db.Usuarios
+        Usuario? usuario = await _usuarios.Consultar()
             .Include(u => u.Cliente)
             .FirstOrDefaultAsync(u => u.RedefinicaoSenhaHash == hash, cancelamento);
 
@@ -142,7 +142,7 @@ public class RedefinicaoSenhaService
         _autenticacao.DefinirSenha(usuario, novaSenha!);
         usuario.RedefinicaoSenhaHash = null;
         usuario.RedefinicaoSenhaExpiraEm = null;
-        await _db.SaveChangesAsync(cancelamento);
+        await _usuarios.SalvarAsync(cancelamento);
 
         _logger.LogInformation("Senha redefinida pelo link de e-mail para o usuário {UsuarioId}", usuario.Id);
         return Resultado.Ok();

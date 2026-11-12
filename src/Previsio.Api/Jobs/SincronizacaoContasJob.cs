@@ -26,6 +26,9 @@ public class SincronizacaoContasJob
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
     private readonly SincronizacaoOptions _opcoes;
+    private readonly ContasAntigasEmAberto _antigas;
+    private readonly FornecedoresBlingService _fornecedores;
+    private readonly ConferenciaBlingService _conferencia;
     private readonly ILogger<SincronizacaoContasJob> _logger;
 
     public SincronizacaoContasJob(
@@ -33,12 +36,18 @@ public class SincronizacaoContasJob
         BlingClient bling,
         TokenBlingService tokens,
         IOptions<SincronizacaoOptions> opcoes,
+        ContasAntigasEmAberto antigas,
+        FornecedoresBlingService fornecedores,
+        ConferenciaBlingService conferencia,
         ILogger<SincronizacaoContasJob> logger)
     {
         _db = db;
         _bling = bling;
         _tokens = tokens;
         _opcoes = opcoes.Value;
+        _antigas = antigas;
+        _fornecedores = fornecedores;
+        _conferencia = conferencia;
         _logger = logger;
     }
 
@@ -161,8 +170,7 @@ public class SincronizacaoContasJob
         }
 
         // Contas em aberto que venceram antes da janela: conferidas uma a uma até baixarem
-        var antigas = new ContasAntigasEmAberto(_db, _bling, _logger);
-        int antigasConferidas = await antigas.ConferirAsync(
+        int antigasConferidas = await _antigas.ConferirAsync(
             empresa, conta, token, filtro.VencimentoInicial, _opcoes.MaximoContasAntigasValido(), agora, cancelamento);
         if (antigasConferidas > 0)
         {
@@ -171,8 +179,7 @@ public class SincronizacaoContasJob
         }
 
         // Nome do fornecedor: da nota ligada ou do contato do Bling (guardado)
-        var fornecedores = new FornecedoresBlingService(_db, _bling, _logger);
-        int contatosBuscados = await fornecedores.PreencherNomesAsync(
+        int contatosBuscados = await _fornecedores.PreencherNomesAsync(
             empresa, conta, token, atuais, _opcoes.DiasRenovarFornecedorValidos(), agora, cancelamento);
         if (contatosBuscados > 0)
         {
@@ -187,7 +194,6 @@ public class SincronizacaoContasJob
             empresa.Nome, remotas.Count);
 
         // Com as contas em dia: as notas pendentes que alguém já lançou à mão fecham sozinhas
-        var conferencia = new ConferenciaBlingService(_db, _bling);
-        await conferencia.FecharPendentesAsync(empresa, conta, token, cancelamento);
+        await _conferencia.FecharPendentesAsync(empresa, conta, token, cancelamento);
     }
 }

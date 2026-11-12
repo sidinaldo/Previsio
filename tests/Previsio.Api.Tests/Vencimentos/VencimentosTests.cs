@@ -70,12 +70,12 @@ public class VencimentosTests
 
     private AvisosService Avisos()
     {
-        return new AvisosService(_db, _email, _configuracao, _relogio, NullLogger<AvisosService>.Instance);
+        return ServicosDeTeste.AvisosService(_db, _email, _configuracao, _relogio, NullLogger<AvisosService>.Instance);
     }
 
     private AlertaVencimentosService Alertas()
     {
-        return new AlertaVencimentosService(_db, _email, _configuracao, _relogio, NullLogger<AlertaVencimentosService>.Instance);
+        return ServicosDeTeste.AlertaVencimentosService(_db, _email, _configuracao, _relogio, NullLogger<AlertaVencimentosService>.Instance);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class VencimentosTests
         Conta(_centro, -10, 50.50m);
         await _db.SaveChangesAsync();
 
-        var resumoService = new ResumoSemanalService(_db, Avisos(), _email, _configuracao, _relogio, NullLogger<ResumoSemanalService>.Instance);
+        var resumoService = ServicosDeTeste.ResumoSemanalService(_db, Avisos(), _email, _configuracao, _relogio, NullLogger<ResumoSemanalService>.Instance);
         ResumoSemanal resumo = await resumoService.MontarAsync(_db.Clientes.Single(c => c.Id == _rede.Id), CancellationToken.None);
         Assert.Equal(2, resumo.Vencidas);
         Assert.Equal(150.50m, resumo.TotalVencidas);

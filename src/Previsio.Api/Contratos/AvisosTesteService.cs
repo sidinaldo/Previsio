@@ -1,7 +1,7 @@
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Aplicacao.Abstracoes;
 
@@ -13,16 +13,23 @@ namespace Previsio.Api.Contratos;
 /// </summary>
 public class AvisosTesteService
 {
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Usuario> _usuarios;
     private readonly IEnvioEmail _email;
     private readonly IConfiguration _configuracao;
     private readonly TimeProvider _relogio;
     private readonly ILogger<AvisosTesteService> _logger;
 
     public AvisosTesteService(
-        PrevisioDbContext db, IEnvioEmail email, IConfiguration configuracao, TimeProvider relogio, ILogger<AvisosTesteService> logger)
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Usuario> usuarios,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AvisosTesteService> logger)
     {
-        _db = db;
+        _clientes = clientes;
+        _usuarios = usuarios;
         _email = email;
         _configuracao = configuracao;
         _relogio = relogio;
@@ -32,7 +39,7 @@ public class AvisosTesteService
     public async Task EnviarAsync(CancellationToken cancelamento)
     {
         DateTime agora = _relogio.GetUtcNow().UtcDateTime;
-        List<Cliente> emTeste = await _db.Clientes
+        List<Cliente> emTeste = await _clientes.Consultar()
             .Where(c => c.Ativo && c.Contrato == SituacaoContrato.EmTeste && c.TesteTerminaEm != null)
             .ToListAsync(cancelamento);
         if (emTeste.Count == 0)
@@ -40,7 +47,7 @@ public class AvisosTesteService
             return;
         }
 
-        List<Usuario> admins = await _db.Usuarios.AsNoTracking()
+        List<Usuario> admins = await _usuarios.ConsultarSomenteLeitura()
             .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Admin)
             .ToListAsync(cancelamento);
 
@@ -66,7 +73,7 @@ public class AvisosTesteService
                 rede.TesteAvisoFinalEnviadoEm = agora;
             }
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     private async Task AvisarAsync(Cliente rede, List<Usuario> admins, bool encerrado, int diasRestantes, CancellationToken cancelamento)
@@ -80,7 +87,7 @@ public class AvisosTesteService
         string ultimoDia = PeriodoTeste.UltimoDia(rede.TesteTerminaEm!.Value).ToString("dd/MM/yyyy");
         string urlFront = (_configuracao["Front:Url"] ?? "http://localhost:4200/#").TrimEnd('/');
 
-        List<Usuario> daRede = await _db.Usuarios.AsNoTracking()
+        List<Usuario> daRede = await _usuarios.ConsultarSomenteLeitura()
             .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == rede.Id)
             .ToListAsync(cancelamento);
 

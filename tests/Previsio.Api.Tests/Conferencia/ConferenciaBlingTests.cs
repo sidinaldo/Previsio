@@ -167,8 +167,8 @@ public class ConferenciaBlingTests
     private LancamentoNotaJob Job(RespostasFixas respostas)
     {
         BlingClient bling = BlingDeTeste.Criar(respostas);
-        var tokens = new TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        return new LancamentoNotaJob(_db, bling, tokens, NullLogger<LancamentoNotaJob>.Instance);
+        var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
+        return new LancamentoNotaJob(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling), NullLogger<LancamentoNotaJob>.Instance);
     }
 
     private const string Lancadas = "{\"id\":71,\"situacao\":1,\"vencimento\":\"2026-11-12\",\"valor\":3240,\"contato\":{\"id\":555}},"
@@ -232,7 +232,7 @@ public class ConferenciaBlingTests
         await _db.SaveChangesAsync();
         Empresa empresa = _db.Empresas.Single();
 
-        var servico = new ConferenciaBlingService(_db, BlingDeTeste.Criar(Bling("")));
+        var servico = ServicosDeTeste.ConferenciaBlingService(_db, BlingDeTeste.Criar(Bling("")));
         await servico.FecharPendentesAsync(empresa, "conta", "token", CancellationToken.None);
 
         Assert.Equal(StatusNota.LancadaManualmente, _db.NotasFiscais.Single().Status);
@@ -251,7 +251,7 @@ public class ConferenciaBlingTests
     public async Task Configuracao_valida_os_limites()
     {
         NotaFiscal nota = await CadastrarNota(true);
-        var configuracao = new ConfiguracaoConferenciaService(_db);
+        var configuracao = ServicosDeTeste.ConfiguracaoConferenciaService(_db);
 
         var dados = new ConferenciaBlingDto { ConferirAntesDeLancar = true, ToleranciaValor = 6m, ToleranciaDias = 0, FecharPendentes = true };
         Assert.Equal(TipoResultado.Invalido, (await configuracao.AlterarAsync(nota.ClienteId, dados, CancellationToken.None)).Tipo);

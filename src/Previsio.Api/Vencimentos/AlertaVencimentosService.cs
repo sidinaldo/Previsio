@@ -6,8 +6,8 @@ using Previsio.Api.Contratos;
 using Previsio.Api.Dtos;
 using Previsio.Api.Resumos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
@@ -26,16 +26,29 @@ public class AlertaVencimentosService
 
     private static readonly CultureInfo Brasil = new CultureInfo("pt-BR");
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Usuario> _usuarios;
+    private readonly IRepositorio<Empresa> _empresas;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
     private readonly IEnvioEmail _email;
     private readonly IConfiguration _configuracao;
     private readonly TimeProvider _relogio;
     private readonly ILogger<AlertaVencimentosService> _logger;
 
     public AlertaVencimentosService(
-        PrevisioDbContext db, IEnvioEmail email, IConfiguration configuracao, TimeProvider relogio, ILogger<AlertaVencimentosService> logger)
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Usuario> usuarios,
+        IRepositorio<Empresa> empresas,
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AlertaVencimentosService> logger)
     {
-        _db = db;
+        _clientes = clientes;
+        _usuarios = usuarios;
+        _empresas = empresas;
+        _contasPagar = contasPagar;
         _email = email;
         _configuracao = configuracao;
         _relogio = relogio;
@@ -44,7 +57,7 @@ public class AlertaVencimentosService
 
     public async Task<Resultado<AlertasVencimentoDto>> ObterAsync(int clienteId, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<AlertasVencimentoDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -62,7 +75,7 @@ public class AlertaVencimentosService
         {
             return Resultado<AlertasVencimentoDto>.Invalido("Escolha uma hora entre 0 e 23.");
         }
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<AlertasVencimentoDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -70,7 +83,7 @@ public class AlertaVencimentosService
         cliente.AvisoVencidasDias = dados.AvisoVencidasDias;
         cliente.AlertaVencimentosAtivo = dados.AlertaDiarioAtivo;
         cliente.AlertaVencimentosHora = dados.AlertaDiarioHora;
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return Resultado<AlertasVencimentoDto>.Ok(ParaDto(cliente));
     }
 
@@ -83,8 +96,8 @@ public class AlertaVencimentosService
         DateTime agoraLocal = TimeZoneInfo.ConvertTimeFromUtc(agoraUtc, RelogioBrasil.Fuso);
         DateTime hoje = agoraLocal.Date;
 
-        List<int> redes = await _db.Clientes.Where(PeriodoTeste.Processa(agoraUtc)).Select(c => c.Id).ToListAsync(cancelamento);
-        List<Cliente> clientes = await _db.Clientes
+        List<int> redes = await _clientes.Consultar().Where(PeriodoTeste.Processa(agoraUtc)).Select(c => c.Id).ToListAsync(cancelamento);
+        List<Cliente> clientes = await _clientes.Consultar()
             .Where(c => redes.Contains(c.Id) && c.AlertaVencimentosAtivo && c.AlertaVencimentosHora <= agoraLocal.Hour)
             .ToListAsync(cancelamento);
 
@@ -103,7 +116,7 @@ public class AlertaVencimentosService
             MensagemEmail? modelo = await MontarAsync(cliente, hoje, cancelamento);
             if (modelo != null && _email.Configurado)
             {
-                List<Usuario> usuarios = await _db.Usuarios.AsNoTracking()
+                List<Usuario> usuarios = await _usuarios.ConsultarSomenteLeitura()
                     .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == cliente.Id)
                     .ToListAsync(cancelamento);
                 foreach (Usuario usuario in usuarios)
@@ -130,7 +143,7 @@ public class AlertaVencimentosService
             }
             cliente.AlertaVencimentosEnviadoEm = agoraUtc;
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     /// <summary>
@@ -138,17 +151,17 @@ public class AlertaVencimentosService
     /// </summary>
     public async Task<MensagemEmail?> MontarAsync(Cliente cliente, DateTime hoje, CancellationToken cancelamento)
     {
-        var empresas = await _db.Empresas.AsNoTracking()
+        var empresas = await _empresas.ConsultarSomenteLeitura()
             .Where(e => e.ClienteId == cliente.Id && e.Ativo)
             .Select(e => new { e.Id, e.Nome })
             .ToListAsync(cancelamento);
         List<int> ids = empresas.Select(e => e.Id).ToList();
         DateTime amanha = hoje.AddDays(1);
 
-        List<ContaPagarSincronizada> proximas = await ContasEmAberto.Das(_db, ids)
+        List<ContaPagarSincronizada> proximas = await ContasEmAberto.Das(_contasPagar.ConsultarSomenteLeitura(), ids)
             .Where(c => c.Vencimento >= hoje && c.Vencimento <= amanha)
             .ToListAsync(cancelamento);
-        List<ContaPagarSincronizada> vencidas = await ContasEmAberto.Vencidas(_db, ids, hoje, cliente.AvisoVencidasDias)
+        List<ContaPagarSincronizada> vencidas = await ContasEmAberto.Vencidas(_contasPagar.ConsultarSomenteLeitura(), ids, hoje, cliente.AvisoVencidasDias)
             .ToListAsync(cancelamento);
 
         List<ContaPagarSincronizada> deHoje = proximas.Where(c => c.Vencimento.Date == hoje).ToList();

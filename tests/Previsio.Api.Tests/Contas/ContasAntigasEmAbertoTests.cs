@@ -62,7 +62,7 @@ public class ContasAntigasEmAbertoTests
             if (url.EndsWith("contas/pagar/4")) return Detalhe(4, SituacaoContaBling.EmAberto, "2026-09-12");
             return RespostasFixas.Json(HttpStatusCode.NotFound, "{\"error\":{\"type\":\"RESOURCE_NOT_FOUND\"}}");
         });
-        var servico = new ContasAntigasEmAberto(_db, BlingDeTeste.Criar(respostas), NullLogger.Instance);
+        var servico = ServicosDeTeste.ContasAntigasEmAberto(_db, BlingDeTeste.Criar(respostas), NullLogger<ContasAntigasEmAberto>.Instance);
 
         int conferidas = await servico.ConferirAsync(empresa, "conta", "token", _inicioJanela, 100, _agora, CancellationToken.None);
         await _db.SaveChangesAsync();
@@ -86,7 +86,7 @@ public class ContasAntigasEmAbertoTests
         await _db.SaveChangesAsync();
 
         var respostas = new RespostasFixas(requisicao => Detalhe(2, SituacaoContaBling.Pago, "2026-09-02"));
-        var servico = new ContasAntigasEmAberto(_db, BlingDeTeste.Criar(respostas), NullLogger.Instance);
+        var servico = ServicosDeTeste.ContasAntigasEmAberto(_db, BlingDeTeste.Criar(respostas), NullLogger<ContasAntigasEmAberto>.Instance);
         Assert.Equal(1, await servico.ConferirAsync(empresa, "conta", "token", _inicioJanela, 1, _agora, CancellationToken.None));
         Assert.EndsWith("contas/pagar/2", respostas.Chamadas[0]);
         Assert.Equal(SituacaoContaBling.Pago, maisAntiga.Situacao);
@@ -94,7 +94,7 @@ public class ContasAntigasEmAbertoTests
 
         // Erro que não é "não encontrada" (ex.: limite do Bling): para e não mexe na conta
         var comErro = new RespostasFixas(requisicao => RespostasFixas.Json(HttpStatusCode.BadRequest, "{\"error\":{\"type\":\"VALIDATION_ERROR\"}}"));
-        var servicoComErro = new ContasAntigasEmAberto(_db, BlingDeTeste.Criar(comErro), NullLogger.Instance);
+        var servicoComErro = ServicosDeTeste.ContasAntigasEmAberto(_db, BlingDeTeste.Criar(comErro), NullLogger<ContasAntigasEmAberto>.Instance);
         Assert.Equal(0, await servicoComErro.ConferirAsync(empresa, "conta", "token", _inicioJanela, 100, _agora, CancellationToken.None));
         Assert.Single(comErro.Chamadas);
         Assert.Equal(2, _db.ContasPagar.Count(c => c.Situacao == SituacaoContaBling.EmAberto));

@@ -2,8 +2,8 @@ using Previsio.Api.Excecoes;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Aplicacao.Abstracoes;
 
 namespace Previsio.Api.Servicos;
@@ -17,18 +17,18 @@ public class TokenBlingService
     private static readonly TimeSpan MargemRenovacao = TimeSpan.FromMinutes(5);
 
     private readonly BlingClient _bling;
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
     private readonly IProtetorSegredos _protetor;
     private readonly ILogger<TokenBlingService> _logger;
 
     public TokenBlingService(
         BlingClient bling,
-        PrevisioDbContext db,
+        IRepositorio<Cliente> clientes,
         IProtetorSegredos protetor,
         ILogger<TokenBlingService> logger)
     {
         _bling = bling;
-        _db = db;
+        _clientes = clientes;
         _protetor = protetor;
         _logger = logger;
     }
@@ -73,14 +73,14 @@ public class TokenBlingService
             empresa.BlingAccessTokenProtegido = null;
             empresa.BlingRefreshTokenProtegido = null;
             empresa.BlingTokenExpiraEm = null;
-            await _db.SaveChangesAsync(cancelamento);
+            await _clientes.SalvarAsync(cancelamento);
 
             throw new EmpresaDesconectadaException(
                 "A conexão da empresa " + empresa.Nome + " com o Bling expirou. Reconecte.", erro);
         }
 
         SalvarToken(empresa, novoToken);
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
 
         return novoToken.AccessToken;
     }
@@ -99,7 +99,7 @@ public class TokenBlingService
         Cliente? rede = empresa.Cliente;
         if (rede == null)
         {
-            rede = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
+            rede = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
         }
         if (rede != null && !string.IsNullOrWhiteSpace(rede.BlingClientId))
         {

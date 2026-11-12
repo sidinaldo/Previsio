@@ -3,8 +3,8 @@ using Previsio.Api.Contratos;
 using Previsio.Api.Avisos;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
@@ -26,7 +26,12 @@ public class ResumoSemanalService
     public const string MensagemSmtpNaoConfigurado = "O envio de e-mail não está configurado no servidor (seção Smtp).";
     public const string MensagemFalhaEnvio = "Não consegui enviar o e-mail. Confira a configuração do Smtp no servidor.";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Usuario> _usuarios;
+    private readonly IRepositorio<Empresa> _empresas;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<Aviso> _registrosAviso;
     private readonly AvisosService _avisos;
     private readonly IEnvioEmail _email;
     private readonly IConfiguration _configuracao;
@@ -34,14 +39,24 @@ public class ResumoSemanalService
     private readonly ILogger<ResumoSemanalService> _logger;
 
     public ResumoSemanalService(
-        PrevisioDbContext db,
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Usuario> usuarios,
+        IRepositorio<Empresa> empresas,
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        IRepositorio<NotaFiscal> notas,
+        IRepositorio<Aviso> registrosAviso,
         AvisosService avisos,
         IEnvioEmail email,
         IConfiguration configuracao,
         TimeProvider relogio,
         ILogger<ResumoSemanalService> logger)
     {
-        _db = db;
+        _clientes = clientes;
+        _usuarios = usuarios;
+        _empresas = empresas;
+        _contasPagar = contasPagar;
+        _notas = notas;
+        _registrosAviso = registrosAviso;
         _avisos = avisos;
         _email = email;
         _configuracao = configuracao;
@@ -51,7 +66,7 @@ public class ResumoSemanalService
 
     public async Task<Resultado<ResumoSemanalDto>> ObterAsync(int clienteId, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ResumoSemanalDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -71,7 +86,7 @@ public class ResumoSemanalService
             return Resultado<ResumoSemanalDto>.Invalido(MensagemHoraInvalida);
         }
 
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ResumoSemanalDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -80,7 +95,7 @@ public class ResumoSemanalService
         cliente.ResumoSemanalAtivo = dados.Ativo;
         cliente.ResumoSemanalDia = dados.Dia;
         cliente.ResumoSemanalHora = dados.Hora;
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return Resultado<ResumoSemanalDto>.Ok(await ParaDtoAsync(cliente, cancelamento));
     }
 
@@ -93,12 +108,12 @@ public class ResumoSemanalService
         {
             return Resultado.Invalido(MensagemSmtpNaoConfigurado);
         }
-        Cliente? cliente = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
         }
-        Usuario? usuario = await _db.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+        Usuario? usuario = await _usuarios.ConsultarSomenteLeitura().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
         if (usuario == null)
         {
             return Resultado.NaoEncontrado(null);
@@ -132,8 +147,8 @@ public class ResumoSemanalService
 
         int diaDaSemana = (int)agoraLocal.DayOfWeek;
         bool diaUtil = agoraLocal.DayOfWeek != DayOfWeek.Saturday && agoraLocal.DayOfWeek != DayOfWeek.Sunday;
-        List<int> redes = await _db.Clientes.Where(PeriodoTeste.Processa(agoraUtc)).Select(c => c.Id).ToListAsync(cancelamento);
-        List<Cliente> clientes = await _db.Clientes
+        List<int> redes = await _clientes.Consultar().Where(PeriodoTeste.Processa(agoraUtc)).Select(c => c.Id).ToListAsync(cancelamento);
+        List<Cliente> clientes = await _clientes.Consultar()
             .Where(c => redes.Contains(c.Id)
                 && c.ResumoSemanalAtivo
                 && (c.ResumoSemanalDia == diaDaSemana || (diaUtil && c.ResumoSemanalDia == TodoDiaUtil))
@@ -177,7 +192,7 @@ public class ResumoSemanalService
             }
             cliente.ResumoSemanalEnviadoEm = agoraUtc;
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     /// <summary>
@@ -192,7 +207,7 @@ public class ResumoSemanalService
         resumo.ClienteNome = cliente.Nome;
         resumo.Hoje = hoje;
 
-        var empresas = await _db.Empresas.AsNoTracking()
+        var empresas = await _empresas.ConsultarSomenteLeitura()
             .Where(e => e.ClienteId == cliente.Id && e.Ativo)
             .Select(e => new { e.Id, e.Nome })
             .ToListAsync(cancelamento);
@@ -200,14 +215,14 @@ public class ResumoSemanalService
 
         DateTime fim30 = hoje.AddDays(30);
         DateTime fim7 = hoje.AddDays(6);
-        List<ContaPagarSincronizada> contas = await _db.ContasPagar.AsNoTracking()
+        List<ContaPagarSincronizada> contas = await _contasPagar.ConsultarSomenteLeitura()
             .Where(c => idsEmpresas.Contains(c.EmpresaId)
                 && c.Vencimento >= hoje
                 && c.Vencimento <= fim30
                 && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
             .ToListAsync(cancelamento);
 
-        List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto.Vencidas(_db, idsEmpresas, hoje, 1).ToListAsync(cancelamento);
+        List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto.Vencidas(_contasPagar.ConsultarSomenteLeitura(), idsEmpresas, hoje, 1).ToListAsync(cancelamento);
         resumo.Vencidas = vencidas.Count;
         resumo.TotalVencidas = vencidas.Sum(c => c.Valor);
 
@@ -241,7 +256,7 @@ public class ResumoSemanalService
         resumo.Diario = cliente.ResumoSemanalDia == TodoDiaUtil;
         DateTime notasDesdeUtc = InicioDasNotas(cliente, agoraUtc);
         resumo.NotasDesde = TimeZoneInfo.ConvertTimeFromUtc(notasDesdeUtc, RelogioBrasil.Fuso);
-        List<NotaFiscal> notas = await _db.NotasFiscais.AsNoTracking()
+        List<NotaFiscal> notas = await _notas.ConsultarSomenteLeitura()
             .Where(n => n.ClienteId == cliente.Id && n.RecebidaEm >= notasDesdeUtc && n.RecebidaEm < agoraUtc)
             .ToListAsync(cancelamento);
         resumo.NotasRecebidas = notas.Count;
@@ -250,7 +265,7 @@ public class ResumoSemanalService
         resumo.NotasComProblema = notas.Count(n => StatusComProblema.Todos.Contains(n.Status));
 
         await _avisos.AtualizarAsync(cliente.Id, cancelamento);
-        resumo.Problemas = await _db.Avisos.AsNoTracking()
+        resumo.Problemas = await _registrosAviso.ConsultarSomenteLeitura()
             .Where(a => a.ClienteId == cliente.Id && a.ResolvidoEm == null)
             .OrderByDescending(a => a.CriadoEm)
             .ThenByDescending(a => a.Id)
@@ -294,7 +309,7 @@ public class ResumoSemanalService
 
     private Task<List<Usuario>> DestinatariosAsync(int clienteId, CancellationToken cancelamento)
     {
-        return _db.Usuarios.AsNoTracking()
+        return _usuarios.ConsultarSomenteLeitura()
             .Where(u => u.Ativo && u.Perfil == PerfilUsuario.Cliente && u.ClienteId == clienteId)
             .OrderBy(u => u.Id)
             .ToListAsync(cancelamento);

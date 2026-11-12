@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Aplicacao.Comum;
 
 namespace Previsio.Api.Conferencia;
@@ -15,16 +15,16 @@ public class ConfiguracaoConferenciaService
     public const decimal MaximoToleranciaValor = 5m;
     public const int MaximoToleranciaDias = 5;
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
 
-    public ConfiguracaoConferenciaService(PrevisioDbContext db)
+    public ConfiguracaoConferenciaService(IRepositorio<Cliente> clientes)
     {
-        _db = db;
+        _clientes = clientes;
     }
 
     public async Task<Resultado<ConferenciaBlingDto>> ObterAsync(int clienteId, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ConferenciaBlingDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -42,7 +42,7 @@ public class ConfiguracaoConferenciaService
         {
             return Resultado<ConferenciaBlingDto>.Invalido("A diferença de vencimento vai de 0 a 5 dias.");
         }
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ConferenciaBlingDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -52,7 +52,7 @@ public class ConfiguracaoConferenciaService
         cliente.ConferenciaToleranciaValor = Math.Round(dados.ToleranciaValor, 2);
         cliente.ConferenciaToleranciaDias = dados.ToleranciaDias;
         cliente.ConferenciaFecharPendentes = dados.FecharPendentes;
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return Resultado<ConferenciaBlingDto>.Ok(ParaDto(cliente));
     }
 

@@ -73,18 +73,18 @@ public class NotasSoPdfTests
 
     private RegistroNotaSoPdf Registro()
     {
-        return new RegistroNotaSoPdf(_db);
+        return ServicosDeTeste.RegistroNotaSoPdf(_db);
     }
 
     private BuscaXmlSefazService Busca()
     {
-        return new BuscaXmlSefazService(_db, _sefaz, ServicosDeTeste.Certificados(_db, _protetor), new RegistroNotaService(_db),
+        return ServicosDeTeste.BuscaXmlSefazService(_db, _sefaz, ServicosDeTeste.Certificados(_db, _protetor), ServicosDeTeste.RegistroNotaService(_db),
             new LeitorNFe(), _relogio, NullLogger<BuscaXmlSefazService>.Instance);
     }
 
     private NotasSoPdfService Acoes()
     {
-        return new NotasSoPdfService(_db, new RegistroNotaService(_db), new LeitorNFe(), _email, _relogio, NullLogger<NotasSoPdfService>.Instance);
+        return ServicosDeTeste.NotasSoPdfService(_db, ServicosDeTeste.RegistroNotaService(_db), new LeitorNFe(), _email, _relogio, NullLogger<NotasSoPdfService>.Instance);
     }
 
     private static EmailSemXml Email(string assunto, params PdfDoEmail[] pdfs)
@@ -164,7 +164,7 @@ public class NotasSoPdfTests
     public async Task Pdf_de_nota_que_ja_chegou_em_xml_nao_vira_pendencia()
     {
         await CadastrarRede(true);
-        await new RegistroNotaService(_db).RegistrarAsync(_rede.Id, new LeitorNFe().Ler(XmlExemplo())!, "xml", null, CancellationToken.None);
+        await ServicosDeTeste.RegistroNotaService(_db).RegistrarAsync(_rede.Id, new LeitorNFe().Ler(XmlExemplo())!, "xml", null, CancellationToken.None);
 
         int registradas = await Registro().RegistrarAsync(_rede.Id, null, Email("NF-e 92001", Pdf("danfe.pdf", PdfExemplo())), CancellationToken.None);
 
@@ -385,7 +385,7 @@ public class NotasSoPdfTests
         await CadastrarRede(false);
         await Registro().RegistrarAsync(_rede.Id, null, Email("Nota fiscal 5521", Pdf("documento.pdf", new byte[] { 1 })), CancellationToken.None);
         IConfiguration configuracao = new ConfigurationBuilder().Build();
-        var avisos = new AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
+        var avisos = ServicosDeTeste.AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
 
         await avisos.AtualizarAsync(_rede.Id, CancellationToken.None);
         Aviso aviso = _db.Avisos.Single(a => a.Chave.StartsWith("pdf:"));

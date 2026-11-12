@@ -1,5 +1,3 @@
-using System.Net.Sockets;
-using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Core.Entidades;
@@ -81,17 +79,9 @@ public class TesteEmailService
             }
             resposta.Mensagem = "O servidor " + host + " não respondeu em " + SegundosLimite + " segundos. Confira o servidor e a porta.";
         }
-        catch (AuthenticationException)
+        catch (FalhaImapException erro)
         {
-            resposta.Mensagem = "O servidor recusou o usuário ou a senha. No Gmail e no Outlook, use uma senha de app, não a senha normal da conta.";
-        }
-        catch (SslHandshakeException)
-        {
-            resposta.Mensagem = "Falhou a conexão segura (SSL) com " + host + ":" + dados.ImapPorta + ". A porta 993 usa SSL; a 143 normalmente não.";
-        }
-        catch (SocketException)
-        {
-            resposta.Mensagem = "Não foi possível conectar a " + host + ":" + dados.ImapPorta + ". Confira o servidor e a porta.";
+            resposta.Mensagem = MensagemDaFalha(erro, host, dados.ImapPorta);
         }
         catch (Exception erro)
         {
@@ -99,5 +89,22 @@ public class TesteEmailService
         }
 
         return Resultado<ResultadoTesteEmailDto>.Ok(resposta);
+    }
+
+    private static string MensagemDaFalha(FalhaImapException erro, string host, int porta)
+    {
+        if (erro.Motivo == MotivoFalhaImap.Autenticacao)
+        {
+            return "O servidor recusou o usuário ou a senha. No Gmail e no Outlook, use uma senha de app, não a senha normal da conta.";
+        }
+        if (erro.Motivo == MotivoFalhaImap.Ssl)
+        {
+            return "Falhou a conexão segura (SSL) com " + host + ":" + porta + ". A porta 993 usa SSL; a 143 normalmente não.";
+        }
+        if (erro.Motivo == MotivoFalhaImap.Rede)
+        {
+            return "Não foi possível conectar a " + host + ":" + porta + ". Confira o servidor e a porta.";
+        }
+        return "Não foi possível entrar na caixa: " + erro.Message;
     }
 }

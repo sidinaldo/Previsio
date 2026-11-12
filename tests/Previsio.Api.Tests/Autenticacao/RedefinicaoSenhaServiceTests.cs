@@ -21,7 +21,7 @@ public class RedefinicaoSenhaServiceTests
         IConfiguration configuracao = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { { "Front:Url", "https://app.previsio.com.br/#" } })
             .Build();
-        return new RedefinicaoSenhaService(
+        return ServicosDeTeste.RedefinicaoSenhaService(
             _db, ServicosDeTeste.Autenticacao(_db), _email, configuracao, new AmbienteDeTeste(), _relogio,
             NullLogger<RedefinicaoSenhaService>.Instance);
     }

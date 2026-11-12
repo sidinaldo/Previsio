@@ -18,7 +18,7 @@ public class AutenticacaoServiceTests
 
     public AutenticacaoServiceTests()
     {
-        _servico = new AutenticacaoService(_db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
+        _servico = ServicosDeTeste.AutenticacaoService(_db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
     }
 
     private async Task CadastrarUsuarioDeCliente(bool clienteAtivo)

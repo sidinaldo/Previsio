@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Conferencia;
 
 namespace Previsio.Api.Conferencia;
@@ -16,12 +16,23 @@ public class ConferenciaBlingService
 {
     public const string ResolvidaPor = "Conferência com o Bling";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
+    private readonly IRepositorio<ParcelaNota> _parcelas;
     private readonly BlingClient _bling;
 
-    public ConferenciaBlingService(PrevisioDbContext db, BlingClient bling)
+    public ConferenciaBlingService(
+        IRepositorio<Cliente> clientes,
+        IRepositorio<NotaFiscal> notas,
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        IRepositorio<ParcelaNota> parcelas,
+        BlingClient bling)
     {
-        _db = db;
+        _clientes = clientes;
+        _notas = notas;
+        _contasPagar = contasPagar;
+        _parcelas = parcelas;
         _bling = bling;
     }
 
@@ -77,14 +88,14 @@ public class ConferenciaBlingService
     /// </summary>
     public async Task FecharPendentesAsync(Empresa empresa, string conta, string token, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
         if (cliente == null || !cliente.ConferenciaFecharPendentes)
         {
             return;
         }
         RegrasConferencia regras = RegrasConferencia.Da(cliente);
 
-        List<NotaFiscal> pendentes = await _db.NotasFiscais
+        List<NotaFiscal> pendentes = await _notas.Consultar()
             .Include(n => n.Parcelas)
             .Where(n => n.EmpresaId == empresa.Id && (n.Status == StatusNota.SemParcelas || n.Status == StatusNota.Erro))
             .ToListAsync(cancelamento);
@@ -109,7 +120,7 @@ public class ConferenciaBlingService
             }
 
             long id = contatoId.Value;
-            List<ContaNoBling> candidatas = await _db.ContasPagar.AsNoTracking()
+            List<ContaNoBling> candidatas = await _contasPagar.ConsultarSomenteLeitura()
                 .Where(c => c.EmpresaId == empresa.Id && c.BlingContatoId == id)
                 .Select(c => new ContaNoBling { Id = c.BlingId, ContatoId = c.BlingContatoId, Vencimento = c.Vencimento, Valor = c.Valor, Situacao = c.Situacao })
                 .ToListAsync(cancelamento);
@@ -126,7 +137,7 @@ public class ConferenciaBlingService
                 nota.MensagemErro = MensagemParcial(resultado);
             }
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     /// <summary>
@@ -162,7 +173,7 @@ public class ConferenciaBlingService
             return candidatas;
         }
         List<long> ids = candidatas.Select(c => c.Id).ToList();
-        List<long> vinculadas = await _db.ParcelasNota.AsNoTracking()
+        List<long> vinculadas = await _parcelas.ConsultarSomenteLeitura()
             .Where(p => p.NotaFiscalId != notaId && p.BlingContaPagarId.HasValue && ids.Contains(p.BlingContaPagarId.Value))
             .Select(p => p.BlingContaPagarId!.Value)
             .ToListAsync(cancelamento);

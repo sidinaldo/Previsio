@@ -3,8 +3,8 @@ using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 
 namespace Previsio.Api.Sincronizacao;
 
@@ -15,13 +15,16 @@ namespace Previsio.Api.Sincronizacao;
 /// </summary>
 public class ContasAntigasEmAberto
 {
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
     private readonly BlingClient _bling;
-    private readonly ILogger _logger;
+    private readonly ILogger<ContasAntigasEmAberto> _logger;
 
-    public ContasAntigasEmAberto(PrevisioDbContext db, BlingClient bling, ILogger logger)
+    public ContasAntigasEmAberto(
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        BlingClient bling,
+        ILogger<ContasAntigasEmAberto> logger)
     {
-        _db = db;
+        _contasPagar = contasPagar;
         _bling = bling;
         _logger = logger;
     }
@@ -39,7 +42,7 @@ public class ContasAntigasEmAberto
         DateTime agoraUtc,
         CancellationToken cancelamento)
     {
-        List<ContaPagarSincronizada> antigas = await _db.ContasPagar
+        List<ContaPagarSincronizada> antigas = await _contasPagar.Consultar()
             .Where(c => c.EmpresaId == empresa.Id
                 && c.Vencimento < inicioJanela
                 && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
@@ -62,7 +65,7 @@ public class ContasAntigasEmAberto
                 {
                     // Excluída no Bling: sai do Previsio, como acontece dentro da janela
                     conferidas++;
-                    _db.ContasPagar.Remove(local);
+                    _contasPagar.Remover(local);
                     continue;
                 }
                 // Outro erro (token, limite, rede): para aqui e tenta de novo na próxima sincronização

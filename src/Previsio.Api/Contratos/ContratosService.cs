@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Api.Mapeamentos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Aplicacao.Comum;
 
@@ -16,12 +16,12 @@ public class ContratosService
 {
     public const int MaximoDiasProrrogacao = 60;
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
     private readonly TimeProvider _relogio;
 
-    public ContratosService(PrevisioDbContext db, TimeProvider relogio)
+    public ContratosService(IRepositorio<Cliente> clientes, TimeProvider relogio)
     {
-        _db = db;
+        _clientes = clientes;
         _relogio = relogio;
     }
 
@@ -30,14 +30,14 @@ public class ContratosService
     /// </summary>
     public async Task<Resultado<ClienteDto>> ContratarAsync(int clienteId, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ClienteDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
         }
         cliente.Contrato = SituacaoContrato.Contratado;
         cliente.ContratadoEm = Agora();
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, Agora()));
     }
 
@@ -51,7 +51,7 @@ public class ContratosService
         {
             return Resultado<ClienteDto>.Invalido("Informe de 1 a " + MaximoDiasProrrogacao + " dias.");
         }
-        Cliente? cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ClienteDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -69,7 +69,7 @@ public class ContratosService
         // Os avisos de fim valem para o novo prazo
         cliente.TesteAvisoFinalEnviadoEm = null;
         cliente.TesteAvisoEncerradoEnviadoEm = null;
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, agora));
     }
 

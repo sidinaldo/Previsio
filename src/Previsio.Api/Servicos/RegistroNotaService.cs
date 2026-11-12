@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
-using Previsio.Data;
 
 namespace Previsio.Api.Servicos;
 
@@ -11,18 +11,20 @@ namespace Previsio.Api.Servicos;
 /// </summary>
 public class RegistroNotaService
 {
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<Empresa> _empresas;
 
-    public RegistroNotaService(PrevisioDbContext db)
+    public RegistroNotaService(IRepositorio<NotaFiscal> notas, IRepositorio<Empresa> empresas)
     {
-        _db = db;
+        _notas = notas;
+        _empresas = empresas;
     }
 
     /// <param name="empresaDaCaixaId">Empresa dona da caixa em que a nota chegou; nula para a caixa da rede.</param>
     public async Task<ResultadoRegistro> RegistrarAsync(
         int clienteId, NotaFiscalXml xml, string origemEmail, int? empresaDaCaixaId, CancellationToken cancelamento)
     {
-        bool jaExiste = await _db.NotasFiscais
+        bool jaExiste = await _notas.Consultar()
             .AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == xml.ChaveAcesso, cancelamento);
 
         if (jaExiste)
@@ -30,7 +32,7 @@ public class RegistroNotaService
             return ResultadoRegistro.Duplicada;
         }
 
-        Empresa? empresa = await _db.Empresas
+        Empresa? empresa = await _empresas.Consultar()
             .FirstOrDefaultAsync(e => e.ClienteId == clienteId && e.Cnpj == xml.CnpjDestinatario && e.Ativo, cancelamento);
 
         var nota = new NotaFiscal();
@@ -73,17 +75,17 @@ public class RegistroNotaService
             nota.Parcelas.Add(parcela);
         }
 
-        _db.NotasFiscais.Add(nota);
+        _notas.Adicionar(nota);
 
         try
         {
-            await _db.SaveChangesAsync(cancelamento);
+            await _notas.SalvarAsync(cancelamento);
         }
         catch (DbUpdateException)
         {
             // Outra execução gravou a mesma chave ao mesmo tempo (índice único).
             // Limpa o rastreamento para a nota e as parcelas não serem reenviadas no próximo SaveChanges.
-            _db.ChangeTracker.Clear();
+            _notas.DescartarAlteracoes();
             return ResultadoRegistro.Duplicada;
         }
 

@@ -51,7 +51,7 @@ public class TesteGratisTests
     private AvisosTesteService Avisos()
     {
         IConfiguration configuracao = new ConfigurationBuilder().Build();
-        return new AvisosTesteService(_db, _email, configuracao, _relogio, NullLogger<AvisosTesteService>.Instance);
+        return ServicosDeTeste.AvisosTesteService(_db, _email, configuracao, _relogio, NullLogger<AvisosTesteService>.Instance);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class TesteGratisTests
         Cliente vencido = Rede("Vencido", SituacaoContrato.EmTeste, Agora.AddDays(-3));
         vencido.TesteAvisoEncerradoEnviadoEm = Agora.AddDays(-3);
         await _db.SaveChangesAsync();
-        var contratos = new ContratosService(_db, _relogio);
+        var contratos = ServicosDeTeste.ContratosService(_db, _relogio);
 
         // No prazo (último dia 15/11): +7 dias vai até 22/11
         Resultado<ClienteDto> prorrogado = await contratos.ProrrogarAsync(noPrazo.Id, 7, CancellationToken.None);

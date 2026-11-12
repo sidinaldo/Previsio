@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Avisos;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Aplicacao.Abstracoes;
 
@@ -28,14 +28,24 @@ public class SaudeService
         new string[] { "avisos-teste", "Avisos do teste grátis" }
     };
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Aviso> _registrosAviso;
+    private readonly IRepositorio<NotaFiscal> _notas;
     private readonly AvisosService _avisos;
     private readonly IAgendaJobs _agenda;
     private readonly TimeProvider _relogio;
 
-    public SaudeService(PrevisioDbContext db, AvisosService avisos, IAgendaJobs agenda, TimeProvider relogio)
+    public SaudeService(
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Aviso> registrosAviso,
+        IRepositorio<NotaFiscal> notas,
+        AvisosService avisos,
+        IAgendaJobs agenda,
+        TimeProvider relogio)
     {
-        _db = db;
+        _clientes = clientes;
+        _registrosAviso = registrosAviso;
+        _notas = notas;
         _avisos = avisos;
         _agenda = agenda;
         _relogio = relogio;
@@ -50,18 +60,18 @@ public class SaudeService
         saude.GeradoEm = _relogio.GetUtcNow().UtcDateTime;
         saude.Jobs = Jobs();
 
-        List<Cliente> clientes = await _db.Clientes.AsNoTracking()
+        List<Cliente> clientes = await _clientes.ConsultarSomenteLeitura()
             .Include(c => c.Empresas)
             .Where(c => c.Ativo)
             .OrderBy(c => c.Nome)
             .ToListAsync(cancelamento);
 
-        List<Aviso> avisos = await _db.Avisos.AsNoTracking()
+        List<Aviso> avisos = await _registrosAviso.ConsultarSomenteLeitura()
             .Where(a => a.ResolvidoEm == null)
             .ToListAsync(cancelamento);
 
         // Contagem das notas por rede, empresa e situação, sem trazer as notas
-        var contagens = await _db.NotasFiscais.AsNoTracking()
+        var contagens = await _notas.ConsultarSomenteLeitura()
             .GroupBy(n => new { n.ClienteId, n.EmpresaId, n.Status })
             .Select(g => new { g.Key.ClienteId, g.Key.EmpresaId, g.Key.Status, Quantidade = g.Count(), UltimaEm = g.Max(n => n.RecebidaEm) })
             .ToListAsync(cancelamento);

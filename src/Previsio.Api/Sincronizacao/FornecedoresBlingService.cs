@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 
 namespace Previsio.Api.Sincronizacao;
 
@@ -17,13 +17,19 @@ public class FornecedoresBlingService
     // o resto fica para a próxima, sem atrasar as outras empresas.
     public const int MaximoBuscasPorExecucao = 100;
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<ParcelaNota> _parcelas;
+    private readonly IRepositorio<FornecedorBling> _fornecedores;
     private readonly BlingClient _bling;
-    private readonly ILogger _logger;
+    private readonly ILogger<FornecedoresBlingService> _logger;
 
-    public FornecedoresBlingService(PrevisioDbContext db, BlingClient bling, ILogger logger)
+    public FornecedoresBlingService(
+        IRepositorio<ParcelaNota> parcelas,
+        IRepositorio<FornecedorBling> fornecedores,
+        BlingClient bling,
+        ILogger<FornecedoresBlingService> logger)
     {
-        _db = db;
+        _parcelas = parcelas;
+        _fornecedores = fornecedores;
         _bling = bling;
         _logger = logger;
     }
@@ -48,7 +54,7 @@ public class FornecedoresBlingService
 
         // 1) Contas que vieram de nota lida pelo Previsio: nome do emitente do XML
         List<long> idsContas = contas.Select(c => c.BlingId).ToList();
-        var nomesDasNotas = await _db.ParcelasNota.AsNoTracking()
+        var nomesDasNotas = await _parcelas.ConsultarSomenteLeitura()
             .Where(p => p.BlingContaPagarId.HasValue
                 && idsContas.Contains(p.BlingContaPagarId.Value)
                 && p.NotaFiscal!.EmpresaId == empresa.Id)
@@ -85,7 +91,7 @@ public class FornecedoresBlingService
 
         // 2) Lançadas direto no Bling: contato guardado ou buscado agora
         List<long> idsContatos = semNota.Select(c => c.BlingContatoId!.Value).Distinct().ToList();
-        List<FornecedorBling> guardados = await _db.FornecedoresBling
+        List<FornecedorBling> guardados = await _fornecedores.Consultar()
             .Where(f => f.EmpresaId == empresa.Id && idsContatos.Contains(f.BlingContatoId))
             .ToListAsync(cancelamento);
 
@@ -120,7 +126,7 @@ public class FornecedoresBlingService
                 fornecedor = new FornecedorBling();
                 fornecedor.EmpresaId = empresa.Id;
                 fornecedor.BlingContatoId = idContato;
-                _db.FornecedoresBling.Add(fornecedor);
+                _fornecedores.Adicionar(fornecedor);
                 porContato[idContato] = fornecedor;
             }
             fornecedor.Nome = Limitar(contato.Nome)!;

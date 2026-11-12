@@ -27,8 +27,8 @@ public class ExportacaoServiceTests
 
     private ExportacaoService CriarServico()
     {
-        var contas = new ContasPagarService(_db, _relogio, Options.Create(new SincronizacaoOptions()));
-        return new ExportacaoService(_db, ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), contas, _relogio);
+        var contas = ServicosDeTeste.ContasPagarService(_db, _relogio, Options.Create(new SincronizacaoOptions()));
+        return new ExportacaoService(ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), contas, _relogio);
     }
 
     private async Task CadastrarRede()

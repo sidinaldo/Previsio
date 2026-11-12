@@ -2,8 +2,8 @@ using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Dtos;
 using Previsio.Api.Jobs;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Contratos;
 using Previsio.Aplicacao.Abstracoes;
 
@@ -30,16 +30,35 @@ public class AvisosService
 
     public const int MaximoItensNoEmail = 20;
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Aviso> _avisos;
+    private readonly IRepositorio<Usuario> _usuarios;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<NotaSoPdf> _notasSoPdf;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
     private readonly IEnvioEmail _email;
     private readonly IConfiguration _configuracao;
     private readonly TimeProvider _relogio;
     private readonly ILogger<AvisosService> _logger;
 
     public AvisosService(
-        PrevisioDbContext db, IEnvioEmail email, IConfiguration configuracao, TimeProvider relogio, ILogger<AvisosService> logger)
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Aviso> avisos,
+        IRepositorio<Usuario> usuarios,
+        IRepositorio<NotaFiscal> notas,
+        IRepositorio<NotaSoPdf> notasSoPdf,
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AvisosService> logger)
     {
-        _db = db;
+        _clientes = clientes;
+        _avisos = avisos;
+        _usuarios = usuarios;
+        _notas = notas;
+        _notasSoPdf = notasSoPdf;
+        _contasPagar = contasPagar;
         _email = email;
         _configuracao = configuracao;
         _relogio = relogio;
@@ -54,7 +73,7 @@ public class AvisosService
         await UmPorVez.WaitAsync(cancelamento);
         try
         {
-            IQueryable<Cliente> consulta = _db.Clientes.Include(c => c.Empresas).Where(c => c.Ativo);
+            IQueryable<Cliente> consulta = _clientes.Consultar().Include(c => c.Empresas).Where(c => c.Ativo);
             if (clienteId.HasValue)
             {
                 consulta = consulta.Where(c => c.Id == clienteId.Value);
@@ -80,7 +99,7 @@ public class AvisosService
     /// </summary>
     public async Task EnviarNovosAsync(CancellationToken cancelamento)
     {
-        List<Aviso> novos = await _db.Avisos
+        List<Aviso> novos = await _avisos.Consultar()
             .Include(a => a.Cliente)
             .Where(a => a.ResolvidoEm == null && a.EmailEnviadoEm == null)
             .OrderBy(a => a.ClienteId)
@@ -97,7 +116,7 @@ public class AvisosService
         }
         else
         {
-            List<Usuario> usuarios = await _db.Usuarios
+            List<Usuario> usuarios = await _usuarios.Consultar()
                 .Include(u => u.Cliente)
                 .Where(u => u.Ativo)
                 .ToListAsync(cancelamento);
@@ -131,7 +150,7 @@ public class AvisosService
         {
             aviso.EmailEnviadoEm = agora;
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     /// <summary>
@@ -139,8 +158,7 @@ public class AvisosService
     /// </summary>
     public async Task<List<Aviso>> ListarAbertosAsync(Usuario usuario, int limite, CancellationToken cancelamento)
     {
-        IQueryable<Aviso> consulta = _db.Avisos
-            .AsNoTracking()
+        IQueryable<Aviso> consulta = _avisos.ConsultarSomenteLeitura()
             .Include(a => a.Cliente)
             .Where(a => a.ResolvidoEm == null && a.Cliente!.Ativo);
         if (usuario.Perfil != PerfilUsuario.Admin)
@@ -163,7 +181,7 @@ public class AvisosService
     /// </summary>
     public async Task<PainelAvisosDto?> PainelAsync(int usuarioId, CancellationToken cancelamento)
     {
-        Usuario? usuario = await _db.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+        Usuario? usuario = await _usuarios.ConsultarSomenteLeitura().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
         if (usuario == null)
         {
             return null;
@@ -201,13 +219,13 @@ public class AvisosService
     /// </summary>
     public async Task<bool> MarcarVistosAsync(int usuarioId, CancellationToken cancelamento)
     {
-        Usuario? usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+        Usuario? usuario = await _usuarios.Consultar().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
         if (usuario == null)
         {
             return false;
         }
         usuario.AvisosVistosEm = _relogio.GetUtcNow().UtcDateTime;
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
         return true;
     }
 
@@ -247,8 +265,7 @@ public class AvisosService
     {
         var problemas = new List<ProblemaAtual>();
 
-        List<NotaFiscal> notas = await _db.NotasFiscais
-            .AsNoTracking()
+        List<NotaFiscal> notas = await _notas.ConsultarSomenteLeitura()
             .Include(n => n.Empresa)
             .Where(n => n.ClienteId == cliente.Id && StatusComAviso.Contains(n.Status))
             .ToListAsync(cancelamento);
@@ -263,8 +280,7 @@ public class AvisosService
         }
 
         // Notas que chegaram só em PDF e precisam de alguém (a busca automática na SEFAZ não resolveu)
-        List<NotaSoPdf> soPdf = await _db.NotasSoPdf
-            .AsNoTracking()
+        List<NotaSoPdf> soPdf = await _notasSoPdf.ConsultarSomenteLeitura()
             .Where(n => n.ClienteId == cliente.Id
                 && (n.Situacao == SituacaoNotaSoPdf.SemChave
                     || n.Situacao == SituacaoNotaSoPdf.SemCertificado
@@ -324,7 +340,7 @@ public class AvisosService
         DateTime hoje = PeriodoTeste.HojeBrasil(_relogio.GetUtcNow().UtcDateTime);
         List<int> ids = empresas.Select(e => e.Id).ToList();
         List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto
-            .Vencidas(_db, ids, hoje, cliente.AvisoVencidasDias)
+            .Vencidas(_contasPagar.ConsultarSomenteLeitura(), ids, hoje, cliente.AvisoVencidasDias)
             .ToListAsync(cancelamento);
 
         foreach (var grupo in vencidas.GroupBy(c => c.EmpresaId))
@@ -437,7 +453,7 @@ public class AvisosService
 
     private async Task SincronizarAsync(int clienteId, List<ProblemaAtual> problemas, DateTime agora, CancellationToken cancelamento)
     {
-        List<Aviso> abertos = await _db.Avisos
+        List<Aviso> abertos = await _avisos.Consultar()
             .Where(a => a.ClienteId == clienteId && a.ResolvidoEm == null)
             .ToListAsync(cancelamento);
 
@@ -471,10 +487,10 @@ public class AvisosService
             aviso.EmpresaId = problema.EmpresaId;
             aviso.NotaFiscalId = problema.NotaFiscalId;
             aviso.CriadoEm = agora;
-            _db.Avisos.Add(aviso);
+            _avisos.Adicionar(aviso);
         }
 
-        await _db.SaveChangesAsync(cancelamento);
+        await _clientes.SalvarAsync(cancelamento);
     }
 
     private MensagemEmail MontarEmail(Usuario usuario, List<Aviso> avisos)

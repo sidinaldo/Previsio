@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Abstracoes;
 
@@ -12,7 +12,7 @@ namespace Previsio.Api.Autenticacao;
 /// </summary>
 public class AutenticacaoService
 {
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<Usuario> _usuarios;
     private readonly IHashSenha _hasher;
 
     // Hash de uma senha aleatória, conferido quando o e-mail não existe: assim a resposta
@@ -21,11 +21,11 @@ public class AutenticacaoService
     private readonly ILogger<AutenticacaoService> _logger;
 
     public AutenticacaoService(
-        PrevisioDbContext db,
+        IRepositorio<Usuario> usuarios,
         IHashSenha hasher,
         ILogger<AutenticacaoService> logger)
     {
-        _db = db;
+        _usuarios = usuarios;
         _hasher = hasher;
         _hashFicticio = hasher.Gerar(new Usuario(), Guid.NewGuid().ToString());
         _logger = logger;
@@ -45,7 +45,7 @@ public class AutenticacaoService
             return null;
         }
 
-        Usuario? usuario = await _db.Usuarios
+        Usuario? usuario = await _usuarios.Consultar()
             .Include(u => u.Cliente)
             .FirstOrDefaultAsync(u => u.Email == emailNormalizado, cancelamento);
 
@@ -76,14 +76,14 @@ public class AutenticacaoService
         }
 
         usuario.UltimoAcessoEm = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancelamento);
+        await _usuarios.SalvarAsync(cancelamento);
 
         return usuario;
     }
 
     public async Task<Usuario?> ObterUsuarioAsync(int usuarioId, CancellationToken cancelamento)
     {
-        return await _db.Usuarios.FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+        return await _usuarios.Consultar().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
     }
 
     /// <summary>
@@ -105,7 +105,7 @@ public class AutenticacaoService
         }
 
         DefinirSenha(usuario, novaSenha!);
-        await _db.SaveChangesAsync(cancelamento);
+        await _usuarios.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 

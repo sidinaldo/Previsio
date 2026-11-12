@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Sefaz;
 using Previsio.Core.Comum;
 
@@ -25,11 +25,13 @@ public class RegistroNotaSoPdf
         "DANFE", "DOCUMENTO AUXILIAR DA NOTA FISCAL", "NOTA FISCAL ELETR", "NF-E", "NFE"
     };
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<NotaSoPdf> _notasSoPdf;
+    private readonly IRepositorio<NotaFiscal> _notas;
 
-    public RegistroNotaSoPdf(PrevisioDbContext db)
+    public RegistroNotaSoPdf(IRepositorio<NotaSoPdf> notasSoPdf, IRepositorio<NotaFiscal> notas)
     {
-        _db = db;
+        _notasSoPdf = notasSoPdf;
+        _notas = notas;
     }
 
     /// <returns>Quantas notas em PDF ficaram registradas.</returns>
@@ -56,7 +58,7 @@ public class RegistroNotaSoPdf
         // A mesma mensagem lida de novo (falha no meio da leitura) não duplica
         if (email.MensagemId != "")
         {
-            bool jaRegistrado = await _db.NotasSoPdf.AnyAsync(
+            bool jaRegistrado = await _notasSoPdf.Consultar().AnyAsync(
                 n => n.ClienteId == clienteId && n.MensagemId == email.MensagemId, cancelamento);
             if (jaRegistrado)
             {
@@ -125,11 +127,11 @@ public class RegistroNotaSoPdf
         {
             string chave = item.Key;
             // O XML desta nota já chegou (em outro e-mail) ou ela já está pendente
-            var notaExistente = await _db.NotasFiscais.AsNoTracking()
+            var notaExistente = await _notas.ConsultarSomenteLeitura()
                 .Where(n => n.ClienteId == clienteId && n.ChaveAcesso == chave)
                 .Select(n => new { n.Id, n.Numero, n.RecebidaEm })
                 .FirstOrDefaultAsync(cancelamento);
-            bool jaPendente = await _db.NotasSoPdf.AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == chave, cancelamento);
+            bool jaPendente = await _notasSoPdf.Consultar().AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == chave, cancelamento);
             if (notaExistente != null || jaPendente)
             {
                 conhecidas++;
@@ -158,7 +160,7 @@ public class RegistroNotaSoPdf
             nota.ChaveAcesso = chave;
             nota.OrigemChave = origemDaChave[chave];
             nota.Situacao = SituacaoNotaSoPdf.BuscandoNaSefaz;
-            _db.NotasSoPdf.Add(nota);
+            _notasSoPdf.Adicionar(nota);
             registradas++;
             if (resultado.Situacao == null)
             {
@@ -171,7 +173,7 @@ public class RegistroNotaSoPdf
             NotaSoPdf nota = Nova(clienteId, empresaDaCaixaId, email, semChave);
             nota.Situacao = SituacaoNotaSoPdf.SemChave;
             nota.Motivo = MotivoSemChave;
-            _db.NotasSoPdf.Add(nota);
+            _notasSoPdf.Adicionar(nota);
             registradas++;
             if (resultado.Situacao == null)
             {
@@ -181,7 +183,7 @@ public class RegistroNotaSoPdf
 
         if (registradas > 0)
         {
-            await _db.SaveChangesAsync(cancelamento);
+            await _notasSoPdf.SalvarAsync(cancelamento);
         }
 
         resultado.Registradas = registradas;

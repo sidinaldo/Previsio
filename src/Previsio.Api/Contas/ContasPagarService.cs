@@ -3,8 +3,8 @@ using Microsoft.Extensions.Options;
 using Previsio.Api.Dtos;
 using Previsio.Api.Servicos;
 using Previsio.Api.Sincronizacao;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
 
@@ -25,13 +25,22 @@ public class ContasPagarService
     public const string MensagemOrdemInvalida =
         "Ordenação inválida. Use vencimento, valor, fornecedor ou empresa.";
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
+    private readonly IRepositorio<ParcelaNota> _parcelas;
+    private readonly IRepositorio<Empresa> _empresas;
     private readonly TimeProvider _relogio;
     private readonly SincronizacaoOptions _opcoes;
 
-    public ContasPagarService(PrevisioDbContext db, TimeProvider relogio, IOptions<SincronizacaoOptions> opcoes)
+    public ContasPagarService(
+        IRepositorio<ContaPagarSincronizada> contasPagar,
+        IRepositorio<ParcelaNota> parcelas,
+        IRepositorio<Empresa> empresas,
+        TimeProvider relogio,
+        IOptions<SincronizacaoOptions> opcoes)
     {
-        _db = db;
+        _contasPagar = contasPagar;
+        _parcelas = parcelas;
+        _empresas = empresas;
         _relogio = relogio;
         _opcoes = opcoes.Value;
     }
@@ -117,7 +126,7 @@ public class ContasPagarService
 
     private Resultado<IQueryable<ContaPagarSincronizada>> Filtrar(int clienteId, FiltroContas filtro)
     {
-        IQueryable<ContaPagarSincronizada> consulta = _db.ContasPagar.AsNoTracking()
+        IQueryable<ContaPagarSincronizada> consulta = _contasPagar.ConsultarSomenteLeitura()
             .Where(c => c.Empresa!.ClienteId == clienteId && c.Empresa.Ativo);
 
         if (filtro.EmpresaId.HasValue)
@@ -178,11 +187,11 @@ public class ContasPagarService
         }
         else if (Igual(origem, OrigemConta.Previsio))
         {
-            consulta = consulta.Where(c => _db.ParcelasNota.Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
+            consulta = consulta.Where(c => _parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
         else if (Igual(origem, OrigemConta.Bling))
         {
-            consulta = consulta.Where(c => !_db.ParcelasNota.Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
+            consulta = consulta.Where(c => !_parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
         else
         {
@@ -196,7 +205,7 @@ public class ContasPagarService
             consulta = consulta.Where(c =>
                 (c.FornecedorNome != null && c.FornecedorNome.ToLower().Contains(texto))
                 || c.Empresa!.Nome.ToLower().Contains(texto)
-                || _db.ParcelasNota.Any(p => p.BlingContaPagarId == c.BlingId
+                || _parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId
                     && p.NotaFiscal!.EmpresaId == c.EmpresaId
                     && (p.NotaFiscal.Numero.Contains(texto) || p.NotaFiscal.NomeFornecedor.ToLower().Contains(texto))));
         }
@@ -214,7 +223,7 @@ public class ContasPagarService
             Conta = c,
             EmpresaNome = c.Empresa!.Nome,
             EmpresaCnpj = c.Empresa.Cnpj,
-            Parcela = _db.ParcelasNota
+            Parcela = _parcelas.Consultar()
                 .Where(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId)
                 .Select(p => new ParcelaDaConta
                 {
@@ -260,7 +269,7 @@ public class ContasPagarService
 
     private async Task<DateTime?> SincronizadaEmAsync(int clienteId, int? empresaId, CancellationToken cancelamento)
     {
-        IQueryable<Empresa> empresas = _db.Empresas.AsNoTracking()
+        IQueryable<Empresa> empresas = _empresas.ConsultarSomenteLeitura()
             .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null);
         if (empresaId.HasValue)
         {

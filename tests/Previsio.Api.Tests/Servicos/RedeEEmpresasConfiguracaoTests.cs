@@ -57,7 +57,7 @@ public class RedeEEmpresasConfiguracaoTests
     private TokenBlingService Tokens()
     {
         BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{}")));
-        return new TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
+        return ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
     }
 
     // ---------- aplicativo do Bling: empresa -> rede -> global ----------

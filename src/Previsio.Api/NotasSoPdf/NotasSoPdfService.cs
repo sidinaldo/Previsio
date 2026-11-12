@@ -5,9 +5,9 @@ using Previsio.Api.Autenticacao;
 using Previsio.Api.Dtos;
 using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
+using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
-using Previsio.Data;
 using Previsio.Core.Sefaz;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
@@ -37,7 +37,10 @@ public class NotasSoPdfService
         SituacaoNotaSoPdf.NaoResolvida
     };
 
-    private readonly PrevisioDbContext _db;
+    private readonly IRepositorio<NotaSoPdf> _notasSoPdf;
+    private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<Empresa> _empresas;
     private readonly RegistroNotaService _registro;
     private readonly LeitorNFe _leitor;
     private readonly IEnvioEmail _email;
@@ -45,14 +48,20 @@ public class NotasSoPdfService
     private readonly ILogger<NotasSoPdfService> _logger;
 
     public NotasSoPdfService(
-        PrevisioDbContext db,
+        IRepositorio<NotaSoPdf> notasSoPdf,
+        IRepositorio<NotaFiscal> notas,
+        IRepositorio<Cliente> clientes,
+        IRepositorio<Empresa> empresas,
         RegistroNotaService registro,
         LeitorNFe leitor,
         IEnvioEmail email,
         TimeProvider relogio,
         ILogger<NotasSoPdfService> logger)
     {
-        _db = db;
+        _notasSoPdf = notasSoPdf;
+        _notas = notas;
+        _clientes = clientes;
+        _empresas = empresas;
         _registro = registro;
         _leitor = leitor;
         _email = email;
@@ -71,8 +80,7 @@ public class NotasSoPdfService
     /// </summary>
     public async Task<List<NotaSoPdfDto>> ListarAsync(int clienteId, int? empresaId, CancellationToken cancelamento)
     {
-        IQueryable<NotaSoPdf> consulta = _db.NotasSoPdf
-            .AsNoTracking()
+        IQueryable<NotaSoPdf> consulta = _notasSoPdf.ConsultarSomenteLeitura()
             .Include(n => n.EmpresaCaixa)
             .Where(n => n.ClienteId == clienteId && Abertas.Contains(n.Situacao));
         if (empresaId.HasValue)
@@ -95,7 +103,7 @@ public class NotasSoPdfService
     /// </summary>
     public async Task<NotaSoPdf?> ObterAsync(int id, ClaimsPrincipal usuario, CancellationToken cancelamento)
     {
-        NotaSoPdf? nota = await _db.NotasSoPdf.FirstOrDefaultAsync(n => n.Id == id, cancelamento);
+        NotaSoPdf? nota = await _notasSoPdf.Consultar().FirstOrDefaultAsync(n => n.Id == id, cancelamento);
         if (nota == null || !usuario.PodeAcessarCliente(nota.ClienteId))
         {
             return null;
@@ -124,7 +132,7 @@ public class NotasSoPdfService
         }
 
         await _registro.RegistrarAsync(item.ClienteId, nota, item.OrigemEmail, item.EmpresaCaixaId, cancelamento);
-        int? notaId = await _db.NotasFiscais
+        int? notaId = await _notas.Consultar()
             .Where(n => n.ClienteId == item.ClienteId && n.ChaveAcesso == nota.ChaveAcesso)
             .Select(n => (int?)n.Id)
             .FirstOrDefaultAsync(cancelamento);
@@ -136,7 +144,7 @@ public class NotasSoPdfService
         item.ResolvidaPor = Limitar("XML anexado por " + (usuario.Identity?.Name ?? "usuário"), 200);
         item.ProximaTentativaEm = null;
         item.Motivo = null;
-        await _db.SaveChangesAsync(cancelamento);
+        await _notasSoPdf.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 
@@ -155,7 +163,7 @@ public class NotasSoPdfService
             return Resultado.Invalido(MensagemChaveInvalida);
         }
 
-        bool outraComAMesmaChave = await _db.NotasSoPdf.AnyAsync(
+        bool outraComAMesmaChave = await _notasSoPdf.Consultar().AnyAsync(
             n => n.ClienteId == item.ClienteId && n.Id != item.Id && n.ChaveAcesso == digitos && Abertas.Contains(n.Situacao), cancelamento);
         if (outraComAMesmaChave)
         {
@@ -171,7 +179,7 @@ public class NotasSoPdfService
         item.Motivo = null;
 
         // A nota pode já existir (o XML chegou por outro e-mail)
-        NotaFiscal? existente = await _db.NotasFiscais.FirstOrDefaultAsync(
+        NotaFiscal? existente = await _notas.Consultar().FirstOrDefaultAsync(
             n => n.ClienteId == item.ClienteId && n.ChaveAcesso == digitos, cancelamento);
         if (existente != null)
         {
@@ -180,7 +188,7 @@ public class NotasSoPdfService
             item.ResolvidaEm = Agora();
             item.ResolvidaPor = "XML recebido em outro e-mail";
         }
-        await _db.SaveChangesAsync(cancelamento);
+        await _notasSoPdf.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 
@@ -204,11 +212,11 @@ public class NotasSoPdfService
             return Resultado.Invalido(MensagemSmtpNaoConfigurado);
         }
 
-        Cliente? rede = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.Id == item.ClienteId, cancelamento);
+        Cliente? rede = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == item.ClienteId, cancelamento);
         string caixa = "";
         if (item.EmpresaCaixaId.HasValue)
         {
-            Empresa? empresa = await _db.Empresas.AsNoTracking().FirstOrDefaultAsync(e => e.Id == item.EmpresaCaixaId.Value, cancelamento);
+            Empresa? empresa = await _empresas.ConsultarSomenteLeitura().FirstOrDefaultAsync(e => e.Id == item.EmpresaCaixaId.Value, cancelamento);
             if (empresa != null)
             {
                 caixa = empresa.ImapUsuario;
@@ -234,7 +242,7 @@ public class NotasSoPdfService
         }
 
         item.XmlPedidoEm = Agora();
-        await _db.SaveChangesAsync(cancelamento);
+        await _notasSoPdf.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 
@@ -256,7 +264,7 @@ public class NotasSoPdfService
         item.ResolvidaPor = Limitar(usuario.Identity?.Name ?? "usuário", 200);
         item.Observacao = texto == "" ? null : texto;
         item.ProximaTentativaEm = null;
-        await _db.SaveChangesAsync(cancelamento);
+        await _notasSoPdf.SalvarAsync(cancelamento);
         return Resultado.Ok();
     }
 

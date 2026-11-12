@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Previsio.Api.Contas;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
-using Previsio.Data;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
 
@@ -14,14 +13,12 @@ namespace Previsio.Api.Exportacao;
 /// </summary>
 public class ExportacaoService
 {
-    private readonly PrevisioDbContext _db;
     private readonly NotasService _notas;
     private readonly ContasPagarService _contas;
     private readonly TimeProvider _relogio;
 
-    public ExportacaoService(PrevisioDbContext db, NotasService notas, ContasPagarService contas, TimeProvider relogio)
+    public ExportacaoService(NotasService notas, ContasPagarService contas, TimeProvider relogio)
     {
-        _db = db;
         _notas = notas;
         _contas = contas;
         _relogio = relogio;

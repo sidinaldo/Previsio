@@ -26,17 +26,20 @@ public class LancamentoNotaJob
     private readonly PrevisioDbContext _db;
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
+    private readonly ConferenciaBlingService _conferencia;
     private readonly ILogger<LancamentoNotaJob> _logger;
 
     public LancamentoNotaJob(
         PrevisioDbContext db,
         BlingClient bling,
         TokenBlingService tokens,
+        ConferenciaBlingService conferencia,
         ILogger<LancamentoNotaJob> logger)
     {
         _db = db;
         _bling = bling;
         _tokens = tokens;
+        _conferencia = conferencia;
         _logger = logger;
     }
 
@@ -135,8 +138,7 @@ public class LancamentoNotaJob
                 if (rede != null && rede.ConferirBlingAntesDeLancar)
                 {
                     etapa = EtapaFalha.ConferenciaBling;
-                    var conferencia = new ConferenciaBlingService(_db, _bling);
-                    ResultadoConferencia resultado = await conferencia.ConferirNoBlingAsync(nota, rede, conta, token, contatoId, cancelamento);
+                    ResultadoConferencia resultado = await _conferencia.ConferirNoBlingAsync(nota, rede, conta, token, contatoId, cancelamento);
                     if (resultado.Completa)
                     {
                         ConferenciaBlingService.MarcarEncontrada(nota, resultado);

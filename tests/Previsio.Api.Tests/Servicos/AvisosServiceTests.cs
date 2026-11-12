@@ -30,7 +30,7 @@ public class AvisosServiceTests
         IConfiguration configuracao = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { { "Front:Url", "https://app.previsio.com.br/#" } })
             .Build();
-        return new AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
+        return ServicosDeTeste.AvisosService(_db, _email, configuracao, _relogio, NullLogger<AvisosService>.Instance);
     }
 
     private async Task CadastrarRede()

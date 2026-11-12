@@ -112,6 +112,9 @@ builder.Services.AddScoped<AvisosTesteJob>();
 builder.Services.AddScoped<AlertaVencimentosService>();
 builder.Services.AddScoped<AlertaVencimentosJob>();
 builder.Services.AddScoped<ConfiguracaoConferenciaService>();
+builder.Services.AddScoped<ConferenciaBlingService>();
+builder.Services.AddScoped<FornecedoresBlingService>();
+builder.Services.AddScoped<ContasAntigasEmAberto>();
 
 // Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ (ISefaz em AddPrevisioInfra)
 builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));

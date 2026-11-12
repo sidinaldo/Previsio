@@ -20,8 +20,8 @@ public class LancamentoNotaJobTests
     private LancamentoNotaJob CriarJob(RespostasFixas respostas)
     {
         BlingClient bling = BlingDeTeste.Criar(respostas);
-        var tokens = new TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        return new LancamentoNotaJob(_db, bling, tokens, NullLogger<LancamentoNotaJob>.Instance);
+        var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
+        return new LancamentoNotaJob(_db, bling, tokens, ServicosDeTeste.ConferenciaBlingService(_db, bling), NullLogger<LancamentoNotaJob>.Instance);
     }
 
     private async Task<NotaFiscal> CadastrarNota()

@@ -11,6 +11,21 @@ using Previsio.Data;
 using Previsio.Data.Repositorios;
 using Previsio.Infra.Seguranca;
 using Previsio.Aplicacao.Abstracoes;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Previsio.Api.Avisos;
+using Previsio.Api.Conferencia;
+using Previsio.Api.Contas;
+using Previsio.Api.Contratos;
+using Previsio.Api.EmailsIgnorados;
+using Previsio.Api.NotasSoPdf;
+using Previsio.Api.Resumos;
+using Previsio.Api.Saude;
+using Previsio.Api.Sincronizacao;
+using Previsio.Api.Vencimentos;
+using Previsio.Core.NFe;
 
 namespace Previsio.Api.Tests.Apoio;
 
@@ -36,12 +51,12 @@ public static class ServicosDeTeste
 
     public static CertificadosService Certificados(PrevisioDbContext db, ProtetorSegredos protetor)
     {
-        return new CertificadosService(db, protetor, TimeProvider.System);
+        return CertificadosService(db, protetor, TimeProvider.System);
     }
 
     public static AutenticacaoService Autenticacao(PrevisioDbContext db)
     {
-        return new AutenticacaoService(db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
+        return AutenticacaoService(db, new HashSenhaIdentity(), NullLogger<AutenticacaoService>.Instance);
     }
 
     public static UsuariosService Usuarios(PrevisioDbContext db)
@@ -71,7 +86,7 @@ public static class ServicosDeTeste
     public static BlingConexaoService ConexaoBling(
         PrevisioDbContext db, ProtetorSegredos protetor, BlingClient bling, IFilaJobs fila)
     {
-        var tokens = new TokenBlingService(bling, db, protetor, NullLogger<TokenBlingService>.Instance);
+        var tokens = TokenBlingService(bling, db, protetor, NullLogger<TokenBlingService>.Instance);
         return new BlingConexaoService(
             new Repositorio<Empresa>(db),
             Acesso(db),
@@ -80,5 +95,281 @@ public static class ServicosDeTeste
             fila,
             new ProtetorTemporario(new EphemeralDataProtectionProvider()),
             NullLogger<BlingConexaoService>.Instance);
+    }
+
+    // Serviços que usam repositórios: montam um Repositorio<T> por tabela sobre o mesmo contexto
+
+    public static CertificadosService CertificadosService(
+        PrevisioDbContext db,
+        IProtetorSegredos protetor,
+        TimeProvider relogio)
+    {
+        return new CertificadosService(
+            new Repositorio<Empresa>(db),
+            new Repositorio<NotaSoPdf>(db),
+            protetor,
+            relogio);
+    }
+
+    public static ContasPagarService ContasPagarService(
+        PrevisioDbContext db,
+        TimeProvider relogio,
+        IOptions<SincronizacaoOptions> opcoes)
+    {
+        return new ContasPagarService(
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<ParcelaNota>(db),
+            new Repositorio<Empresa>(db),
+            relogio,
+            opcoes);
+    }
+
+    public static AutenticacaoService AutenticacaoService(
+        PrevisioDbContext db,
+        IHashSenha hasher,
+        ILogger<AutenticacaoService> logger)
+    {
+        return new AutenticacaoService(
+            new Repositorio<Usuario>(db),
+            hasher,
+            logger);
+    }
+
+    public static RedefinicaoSenhaService RedefinicaoSenhaService(
+        PrevisioDbContext db,
+        AutenticacaoService autenticacao,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        IHostEnvironment ambiente,
+        TimeProvider relogio,
+        ILogger<RedefinicaoSenhaService> logger)
+    {
+        return new RedefinicaoSenhaService(
+            new Repositorio<Usuario>(db),
+            autenticacao,
+            email,
+            configuracao,
+            ambiente,
+            relogio,
+            logger);
+    }
+
+    public static ConfiguracaoConferenciaService ConfiguracaoConferenciaService(PrevisioDbContext db)
+    {
+        return new ConfiguracaoConferenciaService(
+            new Repositorio<Cliente>(db));
+    }
+
+    public static ConferenciaBlingService ConferenciaBlingService(PrevisioDbContext db, BlingClient bling)
+    {
+        return new ConferenciaBlingService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<ParcelaNota>(db),
+            bling);
+    }
+
+    public static AlertaVencimentosService AlertaVencimentosService(
+        PrevisioDbContext db,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AlertaVencimentosService> logger)
+    {
+        return new AlertaVencimentosService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Usuario>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            email,
+            configuracao,
+            relogio,
+            logger);
+    }
+
+    public static ContasAntigasEmAberto ContasAntigasEmAberto(
+        PrevisioDbContext db,
+        BlingClient bling,
+        ILogger<ContasAntigasEmAberto> logger)
+    {
+        return new ContasAntigasEmAberto(
+            new Repositorio<ContaPagarSincronizada>(db),
+            bling,
+            logger);
+    }
+
+    public static FornecedoresBlingService FornecedoresBlingService(
+        PrevisioDbContext db,
+        BlingClient bling,
+        ILogger<FornecedoresBlingService> logger)
+    {
+        return new FornecedoresBlingService(
+            new Repositorio<ParcelaNota>(db),
+            new Repositorio<FornecedorBling>(db),
+            bling,
+            logger);
+    }
+
+    public static TokenBlingService TokenBlingService(
+        BlingClient bling,
+        PrevisioDbContext db,
+        IProtetorSegredos protetor,
+        ILogger<TokenBlingService> logger)
+    {
+        return new TokenBlingService(
+            bling,
+            new Repositorio<Cliente>(db),
+            protetor,
+            logger);
+    }
+
+    public static SaudeService SaudeService(
+        PrevisioDbContext db,
+        AvisosService avisos,
+        IAgendaJobs agenda,
+        TimeProvider relogio)
+    {
+        return new SaudeService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Aviso>(db),
+            new Repositorio<NotaFiscal>(db),
+            avisos,
+            agenda,
+            relogio);
+    }
+
+    public static NotasSoPdfService NotasSoPdfService(
+        PrevisioDbContext db,
+        RegistroNotaService registro,
+        LeitorNFe leitor,
+        IEnvioEmail email,
+        TimeProvider relogio,
+        ILogger<NotasSoPdfService> logger)
+    {
+        return new NotasSoPdfService(
+            new Repositorio<NotaSoPdf>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<Cliente>(db),
+            new Repositorio<Empresa>(db),
+            registro,
+            leitor,
+            email,
+            relogio,
+            logger);
+    }
+
+    public static BuscaXmlSefazService BuscaXmlSefazService(
+        PrevisioDbContext db,
+        ISefaz sefaz,
+        CertificadosService certificados,
+        RegistroNotaService registro,
+        LeitorNFe leitor,
+        TimeProvider relogio,
+        ILogger<BuscaXmlSefazService> logger)
+    {
+        return new BuscaXmlSefazService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<NotaSoPdf>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<Empresa>(db),
+            sefaz,
+            certificados,
+            registro,
+            leitor,
+            relogio,
+            logger);
+    }
+
+    public static AvisosService AvisosService(
+        PrevisioDbContext db,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AvisosService> logger)
+    {
+        return new AvisosService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Aviso>(db),
+            new Repositorio<Usuario>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<NotaSoPdf>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            email,
+            configuracao,
+            relogio,
+            logger);
+    }
+
+    public static ContratosService ContratosService(PrevisioDbContext db, TimeProvider relogio)
+    {
+        return new ContratosService(
+            new Repositorio<Cliente>(db),
+            relogio);
+    }
+
+    public static AvisosTesteService AvisosTesteService(
+        PrevisioDbContext db,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<AvisosTesteService> logger)
+    {
+        return new AvisosTesteService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Usuario>(db),
+            email,
+            configuracao,
+            relogio,
+            logger);
+    }
+
+    public static ResumoSemanalService ResumoSemanalService(
+        PrevisioDbContext db,
+        AvisosService avisos,
+        IEnvioEmail email,
+        IConfiguration configuracao,
+        TimeProvider relogio,
+        ILogger<ResumoSemanalService> logger)
+    {
+        return new ResumoSemanalService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Usuario>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<Aviso>(db),
+            avisos,
+            email,
+            configuracao,
+            relogio,
+            logger);
+    }
+
+    public static RegistroNotaService RegistroNotaService(PrevisioDbContext db)
+    {
+        return new RegistroNotaService(
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<Empresa>(db));
+    }
+
+    public static RegistroNotaSoPdf RegistroNotaSoPdf(PrevisioDbContext db)
+    {
+        return new RegistroNotaSoPdf(
+            new Repositorio<NotaSoPdf>(db),
+            new Repositorio<NotaFiscal>(db));
+    }
+
+    public static EmailsIgnoradosService EmailsIgnoradosService(
+        PrevisioDbContext db,
+        RegistroNotaSoPdf notasSoPdf,
+        TimeProvider relogio,
+        IOptions<LeituraEmailOptions> opcoes)
+    {
+        return new EmailsIgnoradosService(
+            new Repositorio<EmailIgnorado>(db),
+            notasSoPdf,
+            relogio,
+            opcoes);
     }
 }
