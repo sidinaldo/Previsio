@@ -41,8 +41,9 @@ public class EmpresasController : PrevisioControllerBase
     [HttpPost("{empresaId:int}/certificado")]
     [RequestSizeLimit(200 * 1024)]
     public async Task<ActionResult<EmpresaDto>> SalvarCertificado(
-        int empresaId, [FromForm] IFormFile? arquivo, [FromForm] string? senha, [FromForm] string? uf, CancellationToken cancelamento)
+        int empresaId, [FromForm] CertificadoEmpresaDto formulario, CancellationToken cancelamento)
     {
+        IFormFile? arquivo = formulario.Arquivo;
         if (!await _acesso.PodeAcessarAsync(User, empresaId, cancelamento))
         {
             return NotFound(CertificadosService.MensagemEmpresaNaoEncontrada);
@@ -61,7 +62,7 @@ public class EmpresasController : PrevisioControllerBase
             await arquivo.CopyToAsync(memoria, cancelamento);
             pfx = memoria.ToArray();
         }
-        return Responder(await _certificados.SalvarAsync(empresaId, pfx, senha ?? "", uf ?? "", cancelamento));
+        return Responder(await _certificados.SalvarAsync(empresaId, pfx, formulario.Senha ?? "", formulario.Uf ?? "", cancelamento));
     }
 
     [HttpDelete("{empresaId:int}/certificado")]
