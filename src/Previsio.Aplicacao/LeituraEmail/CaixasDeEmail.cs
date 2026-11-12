@@ -1,6 +1,6 @@
 using Previsio.Core.Entidades;
 
-namespace Previsio.Api.Jobs;
+namespace Previsio.Aplicacao.LeituraEmail;
 
 /// <summary>
 /// Quais caixas de e-mail ler de uma rede: a da rede, se configurada, e a própria de cada

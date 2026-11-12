@@ -46,6 +46,14 @@ public class Repositorio<T> : IRepositorio<T> where T : class
         _db.Set<T>().Remove(entidade);
     }
 
+    public void Acompanhar(T entidade)
+    {
+        if (_db.Entry(entidade).State == EntityState.Detached)
+        {
+            _db.Set<T>().Attach(entidade);
+        }
+    }
+
     public Task SalvarAsync(CancellationToken cancelamento)
     {
         return _db.SaveChangesAsync(cancelamento);

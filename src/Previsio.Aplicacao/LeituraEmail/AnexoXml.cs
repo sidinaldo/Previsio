@@ -1,4 +1,4 @@
-namespace Previsio.Api.Jobs;
+namespace Previsio.Aplicacao.LeituraEmail;
 
 /// <summary>
 /// Arquivo .xml encontrado num e-mail (direto ou dentro de um .zip).

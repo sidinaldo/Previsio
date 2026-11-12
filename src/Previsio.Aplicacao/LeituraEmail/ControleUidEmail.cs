@@ -1,6 +1,4 @@
-using MailKit;
-
-namespace Previsio.Api.Jobs;
+namespace Previsio.Aplicacao.LeituraEmail;
 
 /// <summary>
 /// Regras para saber quais e-mails ainda não foram lidos pelo Previsio,
@@ -37,12 +35,12 @@ public static class ControleUidEmail
     /// A busca "UID n:*" do IMAP devolve o último e-mail mesmo quando ele é anterior a n,
     /// por isso o filtro aqui.
     /// </summary>
-    public static List<UniqueId> ProximosParaLer(IList<UniqueId> encontrados, long? ultimoUid, int maximo)
+    public static List<long> ProximosParaLer(IList<long> encontrados, long? ultimoUid, int maximo)
     {
-        var resultado = new List<UniqueId>();
-        foreach (UniqueId uid in encontrados.OrderBy(u => u.Id))
+        var resultado = new List<long>();
+        foreach (long uid in encontrados.OrderBy(u => u))
         {
-            if (ultimoUid.HasValue && uid.Id <= ultimoUid.Value)
+            if (ultimoUid.HasValue && uid <= ultimoUid.Value)
             {
                 continue;
             }

@@ -1,6 +1,6 @@
 using Previsio.Core.Entidades;
 
-namespace Previsio.Api.Jobs;
+namespace Previsio.Aplicacao.LeituraEmail;
 
 /// <summary>
 /// Uma caixa de e-mail a ser lida: a da rede (Empresa nula) ou a própria de uma empresa.

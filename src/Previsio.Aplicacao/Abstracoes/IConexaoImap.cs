@@ -2,7 +2,7 @@ namespace Previsio.Aplicacao.Abstracoes;
 
 /// <summary>
 /// Abre e fecha uma conexão IMAP só para conferir servidor, porta e login.
-/// Lança a exceção do MailKit (ou de rede) quando algo falha.
+/// Lança FalhaImapException com o motivo (usuário ou senha, SSL, rede) quando algo falha.
 /// </summary>
 public interface IConexaoImap
 {

@@ -1,6 +1,6 @@
 using MimeKit;
 
-namespace Previsio.Api.Jobs;
+namespace Previsio.Infra.Email;
 
 /// <summary>
 /// Arquivos que vieram no e-mail. Além das partes marcadas como "anexo", conta as marcadas como

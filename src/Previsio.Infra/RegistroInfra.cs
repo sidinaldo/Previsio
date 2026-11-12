@@ -21,8 +21,9 @@ public static class RegistroInfra
         servicos.AddSingleton<IProtetorTemporario, ProtetorTemporario>();
         servicos.AddSingleton<IHashSenha, HashSenhaIdentity>();
 
-        // E-mail: teste de conexão IMAP e envio SMTP
+        // E-mail: leitura e teste de conexão IMAP, envio SMTP
         servicos.AddScoped<IConexaoImap, ConexaoImapMailKit>();
+        servicos.AddSingleton<ILeitorImap, LeitorImapMailKit>();
         servicos.Configure<SmtpOptions>(configuracao.GetSection(SmtpOptions.Secao));
         servicos.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
 

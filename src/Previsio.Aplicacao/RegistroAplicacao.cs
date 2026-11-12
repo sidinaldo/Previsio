@@ -12,6 +12,7 @@ using Previsio.Aplicacao.EmailsIgnorados;
 using Previsio.Aplicacao.Empresas;
 using Previsio.Aplicacao.Exportacao;
 using Previsio.Aplicacao.Falhas;
+using Previsio.Aplicacao.LeituraEmail;
 using Previsio.Aplicacao.Notas;
 using Previsio.Aplicacao.NotasSoPdf;
 using Previsio.Aplicacao.Painel;
@@ -52,6 +53,9 @@ public static class RegistroAplicacao
         servicos.AddScoped<ConfiguracaoConferenciaService>();
         servicos.AddScoped<FornecedoresBlingService>();
         servicos.AddScoped<ContasAntigasEmAberto>();
+
+        // Leitura das caixas de e-mail
+        servicos.AddScoped<LeituraEmailService>();
 
         // Notas e falhas
         servicos.AddScoped<RegistroNotaService>();

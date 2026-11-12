@@ -1,6 +1,7 @@
 using MimeKit;
 using Previsio.Api.Jobs;
 using Xunit;
+using Previsio.Infra.Email;
 
 namespace Previsio.Api.Tests.Jobs;
 

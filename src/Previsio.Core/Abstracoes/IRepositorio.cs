@@ -28,6 +28,12 @@ public interface IRepositorio<T> where T : class
 
     void Remover(T entidade);
 
+    /// <summary>
+    /// Volta a acompanhar uma entidade já carregada (por exemplo, depois de DescartarAlteracoes),
+    /// para as mudanças nela serem gravadas no próximo SalvarAsync.
+    /// </summary>
+    void Acompanhar(T entidade);
+
     Task SalvarAsync(CancellationToken cancelamento);
 
     /// <summary>
