@@ -18,6 +18,8 @@ using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Resumos;
 using Previsio.Api.Saude;
 using Previsio.Api.Sefaz;
+using Previsio.Api.Sincronizacao;
+using Previsio.Api.Contas;
 using Previsio.Api.Vencimentos;
 using Previsio.Api.Email;
 using Previsio.Api.Jobs;
@@ -96,6 +98,7 @@ builder.Services.AddScoped<AvisosJob>();
 builder.Services.AddScoped<ResumoSemanalService>();
 builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddScoped<SaudeService>();
+builder.Services.AddScoped<ContasPagarService>();
 builder.Services.AddScoped<ExportacaoService>();
 builder.Services.AddScoped<ContratosService>();
 builder.Services.AddScoped<AvisosTesteService>();
@@ -106,6 +109,7 @@ builder.Services.AddScoped<ConfiguracaoConferenciaService>();
 
 // Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
 builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));
+builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
 builder.Services.AddScoped<ISefaz, SefazSoap>();
 builder.Services.AddScoped<CertificadosService>();
 builder.Services.AddScoped<RegistroNotaSoPdf>();
@@ -270,6 +274,8 @@ app.MapControllers();
 // Agenda dos jobs
 IRecurringJobManager agenda = app.Services.GetRequiredService<IRecurringJobManager>();
 var opcoesAgenda = new RecurringJobOptions { TimeZone = RelogioBrasil.Fuso };
+SincronizacaoOptions opcoesSincronizacao = app.Configuration.GetSection(SincronizacaoOptions.Secao).Get<SincronizacaoOptions>()
+    ?? new SincronizacaoOptions();
 
 agenda.AddOrUpdate<LeituraEmailJob>(
     "leitura-email", j => j.ExecutarAsync(CancellationToken.None), "*/10 * * * *", opcoesAgenda);
@@ -279,7 +285,7 @@ agenda.AddOrUpdate<LancamentoNotaJob>(
 agenda.AddOrUpdate<AvisosJob>(
     "avisos", j => j.ExecutarAsync(CancellationToken.None), "5-59/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<SincronizacaoContasJob>(
-    "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), "*/30 * * * *", opcoesAgenda);
+    "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), opcoesSincronizacao.Cron(), opcoesAgenda);
 // De 5 em 5 minutos: o XML das notas que chegaram só em PDF, na SEFAZ
 agenda.AddOrUpdate<BuscaXmlSefazJob>(
     "busca-xml-sefaz", j => j.ExecutarAsync(CancellationToken.None), "2-59/5 * * * *", opcoesAgenda);

@@ -24,6 +24,7 @@ describe('menu lateral', () => {
   it('os itens ficam direto no menu, cada um com ícone, na ordem das telas', () => {
     expect(MENU.map(i => i.path)).toEqual([
       '/pages/painel',
+      '/pages/contas-pagar',
       '/pages/notas-recebidas',
       '/pages/notas-pendentes',
       '/pages/falhas',
@@ -33,7 +34,7 @@ describe('menu lateral', () => {
       '/pages/saude'
     ]);
     expect(MENU.map(i => i.icone)).toEqual([
-      'dashboard', 'receipt_long', 'pending_actions', 'error_outline', 'store', 'groups', 'manage_accounts', 'monitor_heart'
+      'dashboard', 'payments', 'receipt_long', 'pending_actions', 'error_outline', 'store', 'groups', 'manage_accounts', 'monitor_heart'
     ]);
   });
 

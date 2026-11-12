@@ -18,6 +18,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
     public DbSet<NotaSoPdf> NotasSoPdf => Set<NotaSoPdf>();
+    public DbSet<FornecedorBling> FornecedoresBling => Set<FornecedorBling>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -123,10 +124,23 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.Vencimento).HasColumnType("date");
             entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
             entidade.HasIndex(c => c.Vencimento);
+            entidade.Property(c => c.FornecedorNome).HasMaxLength(200);
 
             entidade.HasOne(c => c.Empresa)
                 .WithMany()
                 .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<FornecedorBling>(entidade =>
+        {
+            entidade.ToTable("fornecedores_bling");
+            entidade.Property(f => f.Nome).HasMaxLength(200).IsRequired();
+            entidade.Property(f => f.Documento).HasMaxLength(20);
+            entidade.HasIndex(f => new { f.EmpresaId, f.BlingContatoId }).IsUnique();
+
+            entidade.HasOne(f => f.Empresa)
+                .WithMany()
+                .HasForeignKey(f => f.EmpresaId);
         });
 
         modelBuilder.Entity<Usuario>(entidade =>

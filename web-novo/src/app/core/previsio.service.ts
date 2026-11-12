@@ -13,6 +13,7 @@ import {
   ConferenciaBling,
   Cliente,
   Empresa,
+  FiltroContas,
   FiltroFalhas,
   FiltroNotas,
   NomeJob,
@@ -21,6 +22,7 @@ import {
   NovoCliente,
   NovoUsuario,
   NotaSoPdf,
+  PaginaContasPagar,
   PaginaFalhas,
   PaginaNotas,
   PainelAvisos,
@@ -34,6 +36,7 @@ import {
   VencimentoDia
 } from './previsio.models';
 import { SessaoService } from './sessao.service';
+import { parametrosDasContas } from './filtro-contas';
 import { parametrosDasFalhas } from './filtro-falhas';
 import { parametrosDasNotas } from './filtro-notas';
 
@@ -75,6 +78,18 @@ export class PrevisioService {
   exportarNotas(filtro: FiltroNotas): Observable<HttpResponse<Blob>> {
     const params = parametrosDasNotas({ ...filtro, pagina: 1 });
     return this.doCliente(url => this.http.get(`${url}/notas/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
+  /** Contas a pagar sincronizadas do Bling (lançadas pelo Previsio ou à mão), com os filtros da tela. */
+  obterContasPagar(filtro: FiltroContas): Observable<PaginaContasPagar> {
+    const params = parametrosDasContas(filtro);
+    return this.doCliente(url => this.http.get<PaginaContasPagar>(`${url}/contas-pagar`, { params }));
+  }
+
+  /** Planilha das contas a pagar com os mesmos filtros e ordem da tela Contas a pagar. */
+  exportarContasFiltradas(filtro: FiltroContas): Observable<HttpResponse<Blob>> {
+    const params = parametrosDasContas({ ...filtro, pagina: 1 });
+    return this.doCliente(url => this.http.get(`${url}/contas-pagar/exportar`, { params, observe: 'response', responseType: 'blob' }));
   }
 
   /** Planilha das contas a pagar em aberto no Bling dos próximos N dias (as do painel). */

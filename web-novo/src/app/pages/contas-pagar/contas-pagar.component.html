@@ -1,0 +1,178 @@
+<div class="main-content">
+  <div class="container-fluid">
+
+    <div class="pv-pagina__cabecalho">
+      <div>
+        <h1 class="pv-pagina__titulo">Contas a pagar</h1>
+        <p class="pv-pagina__subtitulo">Tudo o que está no Bling: as contas das notas lidas pelo Previsio e as lançadas à mão</p>
+      </div>
+      <div class="pv-pagina__acoes">
+        <button type="button" class="btn btn-secundario" (click)="acaoLista.set('atualizar'); carregar()"
+                [pvCarregando]="carregando() && acaoLista() === 'atualizar'" [disabled]="carregando()">
+          <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
+        </button>
+      </div>
+    </div>
+
+    @if (erro()) {
+      <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    <!-- Filtros -->
+    <div class="card">
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Filtrar contas</h2>
+          <p class="pv-card__descricao">O último filtro usado fica guardado neste navegador.</p>
+        </div>
+      </div>
+      <form (ngSubmit)="filtrar()">
+        <div class="card-body">
+          <div class="pv-filtros__busca">
+            <app-busca [(valor)]="busca" placeholder="Buscar por fornecedor, NF ou empresa" />
+          </div>
+          <div class="row">
+            <div class="col-md-3 col-sm-6">
+              <label for="contas-empresa" class="col-form-label pt-0">Empresa</label>
+              <div class="form-group">
+                <select id="contas-empresa" class="form-control" name="empresa"
+                        [ngModel]="empresaId()" (ngModelChange)="empresaId.set($event)">
+                  <option [ngValue]="null">Todas</option>
+                  @for (empresa of empresas(); track empresa.id) {
+                    <option [ngValue]="empresa.id">{{ empresa.nome }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <label for="contas-situacao" class="col-form-label pt-0">Situação no Bling</label>
+              <div class="form-group">
+                <select id="contas-situacao" class="form-control" name="situacao"
+                        [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
+                  @for (opcao of situacoes; track opcao.valor) {
+                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-4">
+              <label for="contas-origem" class="col-form-label pt-0">Origem</label>
+              <div class="form-group">
+                <select id="contas-origem" class="form-control" name="origem"
+                        [ngModel]="origem()" (ngModelChange)="origem.set($event)">
+                  @for (opcao of origens; track opcao.valor) {
+                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-4">
+              <label for="contas-de" class="col-form-label pt-0">Vencimento de</label>
+              <div class="form-group">
+                <input id="contas-de" type="date" class="form-control" name="de"
+                       [ngModel]="de()" (ngModelChange)="de.set($event)">
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-4">
+              <label for="contas-ate" class="col-form-label pt-0">Até</label>
+              <div class="form-group">
+                <input id="contas-ate" type="date" class="form-control" name="ate"
+                       [ngModel]="ate()" (ngModelChange)="ate.set($event)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pv-formulario__acoes">
+          <button type="submit" class="btn btn-info" [pvCarregando]="carregando() && acaoLista() === 'filtrar'" [disabled]="carregando()">
+            <i class="material-icons" aria-hidden="true">search</i> Filtrar
+          </button>
+          <button type="button" class="btn btn-secundario" (click)="limpar()"
+                  [pvCarregando]="carregando() && acaoLista() === 'limpar'" [disabled]="carregando()"
+                  title="Voltar para as em aberto que vencem até daqui a 30 dias">
+            Limpar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Lista -->
+    <div class="card">
+      <div class="pv-card__cabecalho">
+        <div>
+          <h2 class="pv-card__titulo">Contas no Bling</h2>
+          <p class="pv-card__descricao">
+            {{ total() }} {{ total() === 1 ? 'conta' : 'contas' }} · <strong>{{ valorTotal() | currency:'BRL' }}</strong>
+            @if (sincronizadaEm()) {
+              · atualizado do Bling em {{ sincronizadaEm() | date:'dd/MM/yyyy HH:mm' }}
+            }
+          </p>
+        </div>
+        <app-exportar [gerar]="exportar" nomePadrao="previsio-contas-a-pagar.xlsx" [desabilitado]="total() === 0"
+                      titulo="Baixar as contas destes filtros no Excel" />
+      </div>
+
+      @if (carregada() && !carregando() && contas().length === 0) {
+        <div class="pv-vazio pv-vazio--compacto">
+          <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">payments</i></span>
+          <p class="pv-vazio__titulo">Nenhuma conta a pagar com esses filtros.</p>
+          <p class="pv-vazio__texto">
+            O Previsio copia do Bling as contas que vencem de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente.
+          </p>
+        </div>
+      }
+
+      @if (contas().length > 0) {
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Vencimento</th>
+                <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
+                <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
+                <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
+                <th>Situação</th>
+                <th>Origem</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (conta of contas(); track conta.id) {
+                <tr>
+                  <td class="pv-numero">{{ conta.vencimento | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    @if (conta.fornecedor) {
+                      {{ conta.fornecedor }}
+                    } @else {
+                      <span class="pv-tabela__auxiliar" title="O nome é buscado no Bling na próxima sincronização">Fornecedor ainda não identificado</span>
+                    }
+                  </td>
+                  <td>{{ conta.empresaNome }}</td>
+                  <td class="text-right"><strong>{{ conta.valor | currency:'BRL' }}</strong></td>
+                  <td><span class="badge" [class]="classe(conta)">{{ texto(conta) }}</span></td>
+                  <td>
+                    @if (conta.origem === 'Previsio') {
+                      NF {{ conta.numeroNota }}
+                      @if (conta.numeroParcela) {
+                        <span class="pv-tabela__auxiliar">parcela {{ conta.numeroParcela }}</span>
+                      }
+                    } @else {
+                      Lançada direto no Bling
+                    }
+                    <span class="pv-tabela__auxiliar">conta nº {{ conta.blingId }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
+                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
+      }
+
+      <p class="pv-card__rodape">
+        Mostra o que vence de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente, copiado do Bling de tempos em tempos.
+      </p>
+    </div>
+
+  </div>
+</div>

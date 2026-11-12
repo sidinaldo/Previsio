@@ -1,6 +1,9 @@
 using System.IO.Compression;
 using System.Xml.Linq;
+using Microsoft.Extensions.Options;
+using Previsio.Api.Contas;
 using Previsio.Api.Exportacao;
+using Previsio.Api.Sincronizacao;
 using Previsio.Api.Servicos;
 using Previsio.Api.Tests.Apoio;
 using Previsio.Core.Entidades;
@@ -23,7 +26,8 @@ public class ExportacaoServiceTests
 
     private ExportacaoService CriarServico()
     {
-        return new ExportacaoService(_db, ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), _relogio);
+        var contas = new ContasPagarService(_db, _relogio, Options.Create(new SincronizacaoOptions()));
+        return new ExportacaoService(_db, ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), contas, _relogio);
     }
 
     private async Task CadastrarRede()
@@ -229,5 +233,28 @@ public class ExportacaoServiceTests
 
         Resultado<ArquivoExportado> soNorte = await CriarServico().ContasPagarAsync(_rede.Id, 30, _norte.Id, CancellationToken.None);
         Assert.Equal(2, Linhas(soNorte.Valor!.Conteudo).Count);
+    }
+
+    [Fact]
+    public async Task Contas_a_pagar_com_os_filtros_da_tela_traz_vencidas_e_o_fornecedor_das_lancadas_a_mao()
+    {
+        await CadastrarRede();
+        Conta(_norte, 7780, -3, 50m);
+        Conta(_norte, 7778, 3, 999m, SituacaoContaBling.Pago);
+        await _db.SaveChangesAsync();
+        _db.ContasPagar.Local.Single(c => c.BlingId == 7780).FornecedorNome = "Energia Elétrica";
+        await _db.SaveChangesAsync();
+
+        var filtro = new FiltroContas { Situacao = SituacaoFiltroContas.Abertas };
+        Resultado<ArquivoExportado> resultado = await CriarServico().ContasPagarAsync(_rede.Id, filtro, CancellationToken.None);
+
+        List<List<string>> linhas = Linhas(resultado.Valor!.Conteudo);
+        Assert.Equal(2, linhas.Count);
+        Assert.Contains("E2=Em aberto (vencida)", linhas[1]);
+        Assert.Contains("F2=Energia Elétrica", linhas[1]);
+        Assert.Contains("I2=Lançada direto no Bling", linhas[1]);
+
+        Resultado<ArquivoExportado> todas = await CriarServico().ContasPagarAsync(_rede.Id, new FiltroContas(), CancellationToken.None);
+        Assert.Equal(3, Linhas(todas.Valor!.Conteudo).Count);
     }
 }

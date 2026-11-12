@@ -274,6 +274,51 @@ export interface PaginaNotas {
   tamanhoPagina: number;
 }
 
+/** Conta a pagar do Bling (lançada pelo Previsio ou à mão), na tela Contas a pagar. */
+export interface ContaPagar {
+  id: number;
+  blingId: number;
+  empresaId: number;
+  empresaNome: string;
+  vencimento: string;
+  valor: number;
+  situacao: number;
+  situacaoTexto: string;
+  vencida: boolean;
+  fornecedor: string | null;
+  // 'Previsio' (veio de nota lida do e-mail) ou 'Bling' (lançada direto no Bling)
+  origem: string;
+  notaFiscalId: number | null;
+  numeroNota: string | null;
+  numeroParcela: string | null;
+}
+
+export interface PaginaContasPagar {
+  itens: ContaPagar[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+  valorTotal: number;
+  sincronizadaEm: string | null;
+  diasPassados: number;
+  diasFuturos: number;
+}
+
+/** Filtros da tela Contas a pagar. Datas de vencimento no formato yyyy-MM-dd. */
+export interface FiltroContas {
+  empresaId?: number | null;
+  // Abertas, Vencidas, Pagas, Canceladas ou Todas
+  situacao?: string;
+  // Previsio, Bling ou vazio (as duas)
+  origem?: string;
+  de?: string;
+  ate?: string;
+  // Fornecedor, NF ou empresa
+  busca?: string;
+  ordem?: string;
+  pagina?: number;
+}
+
 /** Filtros da tela de notas recebidas. Datas (dia em que a nota chegou) no formato yyyy-MM-dd. */
 export interface FiltroNotas {
   empresaId?: number | null;

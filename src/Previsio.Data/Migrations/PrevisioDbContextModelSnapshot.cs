@@ -219,6 +219,10 @@ namespace Previsio.Data.Migrations
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("FornecedorNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime>("SincronizadaEm")
                         .HasColumnType("timestamp with time zone");
 
@@ -440,6 +444,40 @@ namespace Previsio.Data.Migrations
                     b.HasIndex("ClienteId", "UidEmail");
 
                     b.ToTable("falhas_processamento", (string)null);
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("BlingContatoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Documento")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId", "BlingContatoId")
+                        .IsUnique();
+
+                    b.ToTable("fornecedores_bling", (string)null);
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.NotaFiscal", b =>
@@ -798,6 +836,17 @@ namespace Previsio.Data.Migrations
                         .WithMany()
                         .HasForeignKey("NotaFiscalId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Empresa");
                 });

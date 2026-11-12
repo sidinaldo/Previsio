@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Contas;
 using Previsio.Api.Exportacao;
 using Previsio.Api.Servicos;
 
@@ -42,17 +43,36 @@ public class ExportacaoController : PrevisioControllerBase
     }
 
     /// <summary>
-    /// Contas a pagar em aberto no Bling dos próximos N dias (as do painel).
+    /// Contas a pagar. Com "dias": as em aberto dos próximos N dias (as do painel).
+    /// Sem "dias": os mesmos filtros da tela Contas a pagar.
     /// </summary>
     [HttpGet("api/clientes/{clienteId:int}/contas-pagar/exportar")]
     public async Task<IActionResult> ContasPagar(
-        int clienteId, [FromQuery] int dias, [FromQuery] int? empresaId, CancellationToken cancelamento)
+        int clienteId,
+        [FromQuery] int? dias,
+        [FromQuery] int? empresaId,
+        [FromQuery] DateTime? de,
+        [FromQuery] DateTime? ate,
+        [FromQuery] string? situacao,
+        [FromQuery] string? origem,
+        [FromQuery] string? busca,
+        [FromQuery] string? ordem,
+        CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
         {
             return Forbid();
         }
-        Resultado<ArquivoExportado> resultado = await _exportacao.ContasPagarAsync(clienteId, dias, empresaId, cancelamento);
+        Resultado<ArquivoExportado> resultado;
+        if (dias.HasValue)
+        {
+            resultado = await _exportacao.ContasPagarAsync(clienteId, dias.Value, empresaId, cancelamento);
+        }
+        else
+        {
+            FiltroContas filtro = ContasPagarController.Filtro(empresaId, de, ate, situacao, origem, busca, ordem);
+            resultado = await _exportacao.ContasPagarAsync(clienteId, filtro, cancelamento);
+        }
         return Responder(resultado, arquivo => File(arquivo.Conteudo, ArquivoExportado.TipoXlsx, arquivo.Nome));
     }
 }

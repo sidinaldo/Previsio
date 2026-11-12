@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Previsio.Api.Contas;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Data;
@@ -6,19 +7,21 @@ using Previsio.Data;
 namespace Previsio.Api.Exportacao;
 
 /// <summary>
-/// Planilhas Excel das listas: notas (recebidas ou pendentes, uma linha por parcela) e contas a pagar em aberto.
+/// Planilhas Excel das listas: notas (recebidas ou pendentes, uma linha por parcela) e contas a pagar.
 /// Datas no horário de Brasília.
 /// </summary>
 public class ExportacaoService
 {
     private readonly PrevisioDbContext _db;
     private readonly NotasService _notas;
+    private readonly ContasPagarService _contas;
     private readonly TimeProvider _relogio;
 
-    public ExportacaoService(PrevisioDbContext db, NotasService notas, TimeProvider relogio)
+    public ExportacaoService(PrevisioDbContext db, NotasService notas, ContasPagarService contas, TimeProvider relogio)
     {
         _db = db;
         _notas = notas;
+        _contas = contas;
         _relogio = relogio;
     }
 
@@ -117,37 +120,30 @@ public class ExportacaoService
     /// Contas a pagar em aberto no Bling (as mesmas do painel) dos próximos N dias, com a nota de origem
     /// quando a conta foi lançada pelo Previsio.
     /// </summary>
-    public async Task<Resultado<ArquivoExportado>> ContasPagarAsync(
+    public Task<Resultado<ArquivoExportado>> ContasPagarAsync(
         int clienteId, int dias, int? empresaId, CancellationToken cancelamento)
     {
         dias = PainelService.NormalizarDias(dias);
-        DateTime hoje = HoraBrasil(_relogio.GetUtcNow().UtcDateTime).Date;
-        DateTime fim = hoje.AddDays(dias);
+        DateTime hoje = _contas.Hoje();
+        var filtro = new FiltroContas();
+        filtro.EmpresaId = empresaId;
+        filtro.De = hoje;
+        filtro.Ate = hoje.AddDays(dias);
+        filtro.Situacao = SituacaoFiltroContas.Abertas;
+        return ContasPagarAsync(clienteId, filtro, cancelamento);
+    }
 
-        IQueryable<Empresa> consultaEmpresas = _db.Empresas.AsNoTracking().Where(e => e.ClienteId == clienteId && e.Ativo);
-        if (empresaId.HasValue)
+    /// <summary>
+    /// Contas a pagar com os filtros da tela Contas a pagar (lançadas pelo Previsio ou direto no Bling).
+    /// </summary>
+    public async Task<Resultado<ArquivoExportado>> ContasPagarAsync(
+        int clienteId, FiltroContas filtro, CancellationToken cancelamento)
+    {
+        Resultado<List<LinhaContaPagar>> consulta = await _contas.ListarParaExportarAsync(clienteId, filtro, cancelamento);
+        if (!consulta.Sucesso)
         {
-            consultaEmpresas = consultaEmpresas.Where(e => e.Id == empresaId.Value);
+            return Resultado<ArquivoExportado>.Invalido(consulta.Mensagem!);
         }
-        List<Empresa> empresas = await consultaEmpresas.ToListAsync(cancelamento);
-        List<int> idsEmpresas = empresas.Select(e => e.Id).ToList();
-
-        List<ContaPagarSincronizada> contas = await _db.ContasPagar.AsNoTracking()
-            .Where(c => idsEmpresas.Contains(c.EmpresaId)
-                && c.Vencimento >= hoje
-                && c.Vencimento <= fim
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
-            .OrderBy(c => c.Vencimento)
-            .ThenBy(c => c.EmpresaId)
-            .ThenBy(c => c.Id)
-            .ToListAsync(cancelamento);
-
-        // Parcela de nota que gerou a conta no Bling (o id da conta fica gravado na parcela)
-        List<long> idsBling = contas.Select(c => c.BlingId).ToList();
-        List<ParcelaNota> parcelas = await _db.ParcelasNota.AsNoTracking()
-            .Include(p => p.NotaFiscal)
-            .Where(p => p.BlingContaPagarId.HasValue && idsBling.Contains(p.BlingContaPagarId.Value) && p.NotaFiscal!.ClienteId == clienteId)
-            .ToListAsync(cancelamento);
 
         var colunas = new List<ColunaPlanilha>
         {
@@ -163,30 +159,28 @@ public class ExportacaoService
         };
         var planilha = new PlanilhaXlsx("Contas a pagar", colunas);
 
-        foreach (ContaPagarSincronizada conta in contas)
+        DateTime hoje = _contas.Hoje();
+        foreach (LinhaContaPagar linha in consulta.Valor!)
         {
-            Empresa? empresa = empresas.FirstOrDefault(e => e.Id == conta.EmpresaId);
-            ParcelaNota? parcela = parcelas.FirstOrDefault(p => p.BlingContaPagarId == conta.BlingId && p.NotaFiscal != null && p.NotaFiscal.EmpresaId == conta.EmpresaId);
-            string situacao = "Em aberto";
-            if (conta.Situacao == SituacaoContaBling.ParcialmentePago)
+            ContaPagarSincronizada conta = linha.Conta;
+            string situacao = TextoSituacaoConta.De(conta.Situacao);
+            if (TextoSituacaoConta.EmAberto(conta.Situacao) && conta.Vencimento.Date < hoje)
             {
-                situacao = "Parcialmente paga";
+                situacao = situacao + " (vencida)";
             }
 
-            string? fornecedor = null;
             string? numero = null;
             string? numeroParcela = null;
             string origem = "Lançada direto no Bling";
-            if (parcela != null)
+            if (linha.Parcela != null)
             {
-                fornecedor = parcela.NotaFiscal!.NomeFornecedor;
-                numero = parcela.NotaFiscal.Numero;
-                numeroParcela = parcela.NumeroParcela;
+                numero = linha.Parcela.NumeroNota;
+                numeroParcela = linha.Parcela.NumeroParcela;
                 origem = "Nota lida pelo Previsio";
             }
 
-            planilha.AdicionarLinha(conta.Vencimento.Date, empresa == null ? "" : empresa.Nome, empresa == null ? "" : Cnpj(empresa.Cnpj),
-                conta.Valor, situacao, fornecedor, numero, numeroParcela, origem);
+            planilha.AdicionarLinha(conta.Vencimento.Date, linha.EmpresaNome, Cnpj(linha.EmpresaCnpj),
+                conta.Valor, situacao, linha.Fornecedor, numero, numeroParcela, origem);
         }
 
         return Resultado<ArquivoExportado>.Ok(Arquivo("contas-a-pagar", planilha));
