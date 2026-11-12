@@ -26,6 +26,10 @@ public static class EmpresaMapeamento
         dto.ImapUsuario = empresa.ImapUsuario;
         dto.ImapSenhaCadastrada = !string.IsNullOrEmpty(empresa.ImapSenhaProtegida);
         dto.UltimaSincronizacaoEm = empresa.UltimaSincronizacaoEm;
+        dto.CertificadoCadastrado = empresa.TemCertificado;
+        dto.CertificadoTitular = empresa.CertificadoTitular;
+        dto.CertificadoValidoAte = empresa.CertificadoValidoAte;
+        dto.Uf = empresa.Uf;
         dto.Ativo = empresa.Ativo;
         return dto;
     }

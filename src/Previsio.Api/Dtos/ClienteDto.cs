@@ -16,5 +16,11 @@ public class ClienteDto
     public string? BlingClientId { get; set; }
     public bool BlingClientSecretCadastrado { get; set; }
 
+    // "Contratado", "EmTeste" ou "TesteEncerrado"
+    public string Contrato { get; set; } = "Contratado";
+    // Último dia do teste grátis (data de Brasília) e quantos dias faltam contando hoje
+    public DateTime? TesteUltimoDia { get; set; }
+    public int? DiasRestantesTeste { get; set; }
+
     public bool Ativo { get; set; }
 }

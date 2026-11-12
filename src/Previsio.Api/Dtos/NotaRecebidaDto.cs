@@ -22,6 +22,10 @@ public class NotaRecebidaDto
     public DateTime? LancadaEm { get; set; }
     public List<ParcelaNotaDto> Parcelas { get; set; } = new List<ParcelaNotaDto>();
 
+    // Nome da empresa dona da caixa em que a nota chegou, só quando não é a empresa do CNPJ da nota
+    // (o fornecedor mandou para o e-mail de outra loja). Nulo quando chegou na caixa da rede.
+    public string? CaixaDeOutraEmpresa { get; set; }
+
     // Preenchidos quando alguém marcou a nota como lançada manualmente no Bling
     public DateTime? ResolvidaManualmenteEm { get; set; }
     public string? ResolvidaManualmentePor { get; set; }

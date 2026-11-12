@@ -7,6 +7,7 @@ import PerfectScrollbar from 'perfect-scrollbar';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { FooterComponent } from '../../shared/footer/footer.component';
+import { FaixaTesteComponent } from '../../shared/faixa-teste/faixa-teste.component';
 import { ClientesService } from '../../core/clientes.service';
 import { SessaoService } from '../../core/sessao.service';
 
@@ -17,7 +18,7 @@ import { SessaoService } from '../../core/sessao.service';
  */
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, SidebarComponent, NavbarComponent, FooterComponent],
+  imports: [RouterOutlet, RouterLink, SidebarComponent, NavbarComponent, FooterComponent, FaixaTesteComponent],
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
@@ -42,10 +43,10 @@ export class AdminLayoutComponent {
     if (!this.sessao.ehAdmin()) {
       return true;
     }
-    // Clientes e Usuários não dependem do cliente exibido: abrem mesmo sem nenhum escolhido
-    // (é na tela Clientes que se cadastra o primeiro)
+    // Clientes, Usuários e a implantação não dependem do cliente exibido: abrem mesmo sem
+    // nenhum escolhido (é nelas que se cadastra o primeiro)
     const url = this.urlAtual();
-    if (url.startsWith('/pages/clientes') || url.startsWith('/pages/usuarios')) {
+    if (url.startsWith('/pages/clientes') || url.startsWith('/pages/usuarios') || url.startsWith('/pages/implantacao')) {
       return true;
     }
     const clienteId = this.sessao.clienteId();

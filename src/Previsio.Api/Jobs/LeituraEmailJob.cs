@@ -5,8 +5,11 @@ using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MailKit.Security;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using Previsio.Api.Contratos;
+using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
 using Previsio.Core.NFe;
@@ -17,6 +20,7 @@ namespace Previsio.Api.Jobs;
 /// <summary>
 /// Lê a caixa de e-mail de cada rede (cliente) e as caixas próprias das empresas que tiverem,
 /// extrai os XMLs de NF-e (inclusive dentro de .zip) e registra as notas novas.
+/// E-mail sem XML mas com a nota em PDF vira uma "nota só em PDF", para buscar o XML na SEFAZ.
 /// </summary>
 public class LeituraEmailJob
 {
@@ -26,10 +30,15 @@ public class LeituraEmailJob
     // de novo depois desse intervalo, para não encher a tela com o mesmo erro
     private static readonly TimeSpan IntervaloFalhaRepetida = TimeSpan.FromHours(1);
 
+    // Motivo da última falha de conexão guardado na caixa (para o aviso)
+    private const int TamanhoMaximoErroConexao = 500;
+
+
     private readonly PrevisioDbContext _db;
     private readonly ProtetorSegredos _protetor;
     private readonly RegistroNotaService _registro;
     private readonly LeitorNFe _leitor;
+    private readonly RegistroNotaSoPdf _notasSoPdf;
     private readonly ILogger<LeituraEmailJob> _logger;
 
     public LeituraEmailJob(
@@ -37,12 +46,14 @@ public class LeituraEmailJob
         ProtetorSegredos protetor,
         RegistroNotaService registro,
         LeitorNFe leitor,
+        RegistroNotaSoPdf notasSoPdf,
         ILogger<LeituraEmailJob> logger)
     {
         _db = db;
         _protetor = protetor;
         _registro = registro;
         _leitor = leitor;
+        _notasSoPdf = notasSoPdf;
         _logger = logger;
     }
 
@@ -52,7 +63,7 @@ public class LeituraEmailJob
     {
         List<Cliente> clientes = await _db.Clientes
             .Include(c => c.Empresas)
-            .Where(c => c.Ativo)
+            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
             .ToListAsync(cancelamento);
 
         foreach (Cliente cliente in clientes)
@@ -114,6 +125,10 @@ public class LeituraEmailJob
             caixa = imap.Inbox;
             await caixa.OpenAsync(FolderAccess.ReadOnly, cancelamento);
 
+            // Entrou: a caixa deixa de aparecer como "com erro" nos avisos
+            dados.ImapUltimaConexaoEm = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancelamento);
+
             passo = "procurar e-mails novos";
             long validadeAtual = caixa.UidValidity;
             if (ControleUidEmail.PrecisaRecomecar(dados.ImapUidValidity, dados.ImapUltimoUid, validadeAtual))
@@ -157,6 +172,7 @@ public class LeituraEmailJob
         int registradas = 0;
         int duplicadas = 0;
         int processadas = 0;
+        int soPdf = 0;
 
         foreach (UniqueId uid in paraLer)
         {
@@ -166,7 +182,18 @@ public class LeituraEmailJob
                 MimeMessage mensagem = await caixa.GetMessageAsync(uid, cancelamento);
                 origem = DescreverOrigem(mensagem);
 
-                foreach (AnexoXml anexo in ExtrairXmls(mensagem))
+                List<AnexoXml> xmls = ExtrairXmls(mensagem);
+                if (xmls.Count == 0)
+                {
+                    // Sem XML: pode ser a nota só em PDF (DANFE)
+                    EmailSemXml? semXml = EmailComPdf(mensagem, origem);
+                    if (semXml != null)
+                    {
+                        soPdf += await _notasSoPdf.RegistrarAsync(cliente.Id, caixaParaLer.EmpresaId, semXml, cancelamento);
+                    }
+                }
+
+                foreach (AnexoXml anexo in xmls)
                 {
                     NotaFiscalXml? nota = _leitor.Ler(anexo.Conteudo);
                     if (nota == null)
@@ -176,7 +203,7 @@ public class LeituraEmailJob
                         continue;
                     }
 
-                    ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, cancelamento);
+                    ResultadoRegistro resultado = await _registro.RegistrarAsync(cliente.Id, nota, origem, caixaParaLer.EmpresaId, cancelamento);
                     if (resultado == ResultadoRegistro.Registrada)
                     {
                         registradas++;
@@ -216,8 +243,8 @@ public class LeituraEmailJob
         await imap.DisconnectAsync(true, cancelamento);
 
         _logger.LogInformation(
-            "Caixa da {Caixa}: {Processadas} e-mails lidos, {Registradas} notas novas, {Duplicadas} já existentes",
-            caixaParaLer.Descricao, processadas, registradas, duplicadas);
+            "Caixa da {Caixa}: {Processadas} e-mails lidos, {Registradas} notas novas, {Duplicadas} já existentes, {SoPdf} só em PDF",
+            caixaParaLer.Descricao, processadas, registradas, duplicadas, soPdf);
     }
 
     /// <summary>
@@ -294,13 +321,16 @@ public class LeituraEmailJob
                 && f.Mensagem == falha.Mensagem
                 && f.OcorridaEm >= limite, cancelamento);
 
-            if (jaRegistrada)
-            {
-                return;
-            }
-
             _db.ChangeTracker.Clear();
-            _db.Falhas.Add(falha);
+            AcompanharDonoDaCaixa(caixaParaLer);
+
+            // Marca a caixa como "com erro" (para os avisos) mesmo quando a falha repetida não é gravada de novo
+            caixaParaLer.Dados.ImapUltimaFalhaConexaoEm = DateTime.UtcNow;
+            caixaParaLer.Dados.ImapUltimoErroConexao = LimitarErro(mensagem);
+            if (!jaRegistrada)
+            {
+                _db.Falhas.Add(falha);
+            }
             await _db.SaveChangesAsync(cancelamento);
         }
         catch (Exception erro)
@@ -326,11 +356,69 @@ public class LeituraEmailJob
         }
     }
 
+    private static string LimitarErro(string mensagem)
+    {
+        if (mensagem.Length <= TamanhoMaximoErroConexao)
+        {
+            return mensagem;
+        }
+        return mensagem.Substring(0, TamanhoMaximoErroConexao);
+    }
+
     private static string DescreverOrigem(MimeMessage mensagem)
     {
         string remetente = mensagem.From.ToString();
         string assunto = mensagem.Subject ?? "";
         return remetente + " | " + assunto;
+    }
+
+    /// <summary>
+    /// Os PDFs anexados e o que o e-mail diz (remetente, assunto, corpo); nulo se não houver PDF.
+    /// </summary>
+    private static EmailSemXml? EmailComPdf(MimeMessage mensagem, string origem)
+    {
+        var email = new EmailSemXml();
+        foreach (MimeEntity anexo in mensagem.Attachments)
+        {
+            MimePart? parte = anexo as MimePart;
+            if (parte == null || parte.Content == null)
+            {
+                continue;
+            }
+            string nome = parte.FileName ?? "";
+            bool ehPdf = nome.ToLowerInvariant().EndsWith(".pdf") || parte.ContentType.IsMimeType("application", "pdf");
+            if (!ehPdf)
+            {
+                continue;
+            }
+            using var memoria = new MemoryStream();
+            parte.Content.DecodeTo(memoria);
+            var pdf = new PdfDoEmail();
+            pdf.Nome = nome;
+            pdf.Conteudo = memoria.ToArray();
+            email.Pdfs.Add(pdf);
+        }
+        if (email.Pdfs.Count == 0)
+        {
+            return null;
+        }
+
+        MailboxAddress? remetente = mensagem.From.Mailboxes.FirstOrDefault();
+        if (remetente != null)
+        {
+            email.Remetente = remetente.Address ?? "";
+            email.NomeRemetente = remetente.Name ?? "";
+        }
+        email.MensagemId = mensagem.MessageId ?? "";
+        email.Assunto = mensagem.Subject ?? "";
+        email.Origem = origem;
+        string corpo = mensagem.TextBody ?? "";
+        if (corpo == "" && mensagem.HtmlBody != null)
+        {
+            corpo = Regex.Replace(mensagem.HtmlBody, "<[^>]+>", " ");
+        }
+        email.Corpo = corpo;
+        return email;
     }
 
     private static List<AnexoXml> ExtrairXmls(MimeMessage mensagem)

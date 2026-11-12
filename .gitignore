@@ -6,3 +6,6 @@ appsettings.Development.json
 chaves-dataprotection/
 node_modules/
 notas-teste/arquivos/
+# Notas de teste geradas pelos scripts (refaça com python notas-teste/gerar_notas_*.py)
+notas-teste/arquivos*/
+__pycache__/

@@ -1,0 +1,76 @@
+<div class="login">
+  <section class="marca" aria-label="Previsio">
+    <div class="marca__logo">
+      <app-simbolo class="marca__simbolo" versao="negativo" />
+      <span class="marca__nome">Previsio</span>
+      <span class="marca__assinatura">by Soft.IO</span>
+    </div>
+
+    <div class="marca__conteudo">
+      <p class="marca__frase">Contas a pagar dos próximos 30 dias, direto das notas do seu <span class="text-nowrap">e-mail</span></p>
+      <ul class="marca__itens">
+        <li><i class="material-icons" aria-hidden="true">mark_email_read</i> Notas lidas automaticamente</li>
+        <li><i class="material-icons" aria-hidden="true">sync_alt</i> Lançadas no Bling de cada CNPJ</li>
+        <li><i class="material-icons" aria-hidden="true">insights</i> Valor real a pagar por empresa</li>
+      </ul>
+    </div>
+
+    <p class="marca__rodape">&copy; {{ ano }} Previsio · Soft.IO</p>
+  </section>
+
+  <main class="acesso">
+    @if (!token) {
+      <div class="formulario" role="alert">
+        <h1 class="formulario__titulo">Link incompleto</h1>
+        <p class="formulario__subtitulo">Abra o link exatamente como chegou no e-mail, ou peça um novo.</p>
+        <a class="btn btn-info btn-block formulario__botao" routerLink="/pages/esqueci-senha">Pedir novo link</a>
+      </div>
+    } @else {
+      <form class="formulario" (ngSubmit)="salvar()" novalidate>
+        <h1 class="formulario__titulo">Criar nova senha</h1>
+        <p class="formulario__subtitulo">Use pelo menos {{ tamanhoMinimo }} caracteres. Depois de salvar, entre de novo com a senha nova.</p>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="nova-senha">Nova senha</label>
+          <div class="campo__caixa bmd-form-group">
+            <i class="material-icons campo__icone" aria-hidden="true">lock_outline</i>
+            <input #campoSenha id="nova-senha" class="campo__entrada campo__entrada--senha" [type]="tipoSenha()" name="senha"
+                   autocomplete="new-password" [(ngModel)]="senha">
+            <button type="button" class="campo__olho" [attr.aria-label]="senhaVisivel() ? 'Ocultar senha' : 'Mostrar senha'"
+                    [attr.aria-pressed]="senhaVisivel()" (click)="senhaVisivel.set(!senhaVisivel())">
+              <i class="material-icons" aria-hidden="true">{{ senhaVisivel() ? 'visibility_off' : 'visibility' }}</i>
+            </button>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="confirmar-senha">Repita a nova senha</label>
+          <div class="campo__caixa bmd-form-group">
+            <i class="material-icons campo__icone" aria-hidden="true">lock_outline</i>
+            <input id="confirmar-senha" class="campo__entrada" [type]="tipoSenha()" name="confirmacao"
+                   autocomplete="new-password" [(ngModel)]="confirmacao">
+          </div>
+        </div>
+
+        @if (erro()) {
+          <div class="alert alert-danger" role="alert">
+            <span>{{ erro() }}</span>
+            @if (linkInvalido()) {
+              <a class="formulario__link-alerta" routerLink="/pages/esqueci-senha">Pedir novo link</a>
+            }
+          </div>
+        }
+
+        <button type="submit" class="btn btn-info btn-block formulario__botao" [disabled]="enviando()">
+          @if (enviando()) {
+            <span class="formulario__spinner" aria-hidden="true"></span> Salvando...
+          } @else {
+            Salvar nova senha
+          }
+        </button>
+
+        <p class="formulario__ajuda"><a routerLink="/pages/login">Voltar para o login</a></p>
+      </form>
+    }
+  </main>
+</div>

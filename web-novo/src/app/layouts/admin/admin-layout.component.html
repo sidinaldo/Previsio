@@ -4,6 +4,7 @@
   </div>
   <div class="main-panel">
     <app-navbar [clientes]="clientes()" />
+    <app-faixa-teste />
     @if (podeMostrarTelas()) {
       @for (chave of chaveCliente(); track chave) {
         <router-outlet />
@@ -18,11 +19,11 @@
       <div class="main-content">
         <div class="container-fluid">
           <div class="alert alert-warning">
-            <span>Nenhum cliente cadastrado ainda. Cadastre a rede (cliente) primeiro; depois aparecem as telas
-              para cadastrar as empresas dela.</span>
+            <span>Nenhum cliente cadastrado ainda. Comece pela implantação: rede e e-mail, empresas, Bling,
+              usuário e a primeira leitura das notas.</span>
           </div>
-          <a class="btn btn-info" routerLink="/pages/clientes">
-            <i class="material-icons">person_add</i> Cadastrar cliente
+          <a class="btn btn-info" routerLink="/pages/implantacao">
+            <i class="material-icons" aria-hidden="true">rocket_launch</i> Começar implantação
           </a>
         </div>
       </div>

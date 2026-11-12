@@ -1,0 +1,73 @@
+<div class="card">
+  <div class="pv-card__cabecalho">
+    <div>
+      <h2 class="pv-card__titulo">4. Usuário do cliente</h2>
+      <p class="pv-card__descricao">Quem do financeiro vai entrar no Previsio. Ele só vê as empresas de {{ cliente().nome }}</p>
+    </div>
+  </div>
+
+  @if (usuarios().length > 0) {
+    <div class="table-responsive">
+      <table class="table pv-tabela">
+        <thead>
+          <tr>
+            <th scope="col">Nome</th>
+            <th scope="col">E-mail</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (usuario of usuariosDaPagina(); track usuario.id) {
+            <tr>
+              <td>{{ usuario.nome }}</td>
+              <td>{{ usuario.email }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-paginacao [total]="usuarios().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
+  }
+
+  <form (ngSubmit)="cadastrar()">
+    <div class="card-body">
+      @if (mensagem()) {
+        <div class="alert alert-success" role="status"><span>{{ mensagem() }}</span></div>
+      }
+      <div class="row">
+        <div class="col-md-4">
+          <div class="form-group bmd-form-group">
+            <label for="implantacao-usuario-nome" class="bmd-label-floating">Nome</label>
+            <input id="implantacao-usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group bmd-form-group">
+            <label for="implantacao-usuario-email" class="bmd-label-floating">E-mail de acesso</label>
+            <input id="implantacao-usuario-email" type="email" class="form-control" name="email" autocomplete="off"
+                   [(ngModel)]="email">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group bmd-form-group">
+            <label for="implantacao-usuario-senha" class="bmd-label-floating">Senha provisória (mínimo {{ tamanhoMinimo }} caracteres)</label>
+            <input id="implantacao-usuario-senha" type="password" class="form-control" name="senha" autocomplete="new-password"
+                   [(ngModel)]="senha">
+          </div>
+        </div>
+      </div>
+      @if (erro()) {
+        <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+      }
+    </div>
+    <div class="pv-formulario__acoes">
+      <button type="submit" class="btn btn-secundario" [pvCarregando]="cadastrando()" [disabled]="cadastrando()">
+        <i class="material-icons" aria-hidden="true">person_add</i> Cadastrar usuário
+      </button>
+      @if (usuarios().length > 0) {
+        <button type="button" class="btn btn-info" (click)="continuar.emit()">Continuar para a primeira leitura</button>
+      } @else {
+        <button type="button" class="btn btn-link" (click)="continuar.emit()">Pular por enquanto</button>
+      }
+    </div>
+  </form>
+</div>

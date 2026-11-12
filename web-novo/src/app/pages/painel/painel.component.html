@@ -24,6 +24,8 @@
         <button type="button" class="btn btn-secundario" (click)="carregar()" [pvCarregando]="carregando()" [disabled]="carregando()">
           <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
         </button>
+        <app-exportar [gerar]="exportar" nomePadrao="previsio-contas-a-pagar.xlsx"
+                      titulo="Baixar as contas a pagar em aberto deste período no Excel" />
       </div>
     </div>
 
@@ -93,14 +95,22 @@
           <div class="col-lg-3 col-md-6">
             <div class="card pv-kpi">
               <div class="pv-kpi__topo">
-                <p class="pv-kpi__rotulo">Empresas</p>
-                <span class="pv-kpi__icone pv-kpi__icone--neutro" aria-hidden="true">
-                  <i class="material-icons">store</i>
+                <p class="pv-kpi__rotulo">Vencidas em aberto</p>
+                <span class="pv-kpi__icone" aria-hidden="true"
+                      [class.pv-kpi__icone--erro]="(r.quantidadeVencidas ?? 0) > 0"
+                      [class.pv-kpi__icone--neutro]="(r.quantidadeVencidas ?? 0) === 0">
+                  <i class="material-icons">event_busy</i>
                 </span>
               </div>
-              <p class="pv-kpi__valor">{{ r.empresas.length }}</p>
+              <p class="pv-kpi__valor">R$ {{ (r.totalVencidas ?? 0) | number:'1.0-0' }}</p>
               <p class="pv-kpi__auxiliar">
-                <a routerLink="/pages/empresas">Gerenciar conexões</a>
+                @if ((r.quantidadeVencidas ?? 0) === 0) {
+                  Nenhuma conta vencida no Bling
+                } @else if (r.quantidadeVencidas === 1) {
+                  1 conta: pague ou dê baixa no Bling
+                } @else {
+                  {{ r.quantidadeVencidas }} contas: pague ou dê baixa no Bling
+                }
               </p>
             </div>
           </div>
@@ -163,7 +173,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (empresa of r.empresas; track empresa.empresaId) {
+                @for (empresa of empresasDaPagina(); track empresa.empresaId) {
                   <tr>
                     <td>
                       <a [routerLink]="['/pages/empresas', empresa.empresaId]"><strong>{{ empresa.nome }}</strong></a>
@@ -199,6 +209,7 @@
               </tbody>
             </table>
           </div>
+          <app-paginacao [total]="r.empresas.length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
         </div>
 
       }

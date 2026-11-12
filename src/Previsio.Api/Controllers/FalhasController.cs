@@ -23,6 +23,7 @@ public class FalhasController : PrevisioControllerBase
     /// <summary>
     /// Falhas do cliente, da mais recente para a mais antiga.
     /// Filtros opcionais: empresa, nota, etapa e período (datas no formato yyyy-MM-dd, horário de Brasília).
+    /// "busca" procura por NF, fornecedor, empresa ou CNPJ; "ordem" é a coluna, com "-" na frente para decrescente.
     /// </summary>
     [HttpGet("api/clientes/{clienteId:int}/falhas")]
     public async Task<ActionResult<PaginaFalhasDto>> Listar(
@@ -32,6 +33,8 @@ public class FalhasController : PrevisioControllerBase
         [FromQuery] string? etapa,
         [FromQuery] DateTime? de,
         [FromQuery] DateTime? ate,
+        [FromQuery] string? busca,
+        [FromQuery] string? ordem,
         [FromQuery] int pagina,
         CancellationToken cancelamento)
     {
@@ -40,6 +43,6 @@ public class FalhasController : PrevisioControllerBase
             return Forbid();
         }
 
-        return Responder(await _falhas.ListarAsync(clienteId, empresaId, notaId, etapa, de, ate, pagina, cancelamento));
+        return Responder(await _falhas.ListarAsync(clienteId, empresaId, notaId, etapa, de, ate, busca, ordem, pagina, cancelamento));
     }
 }

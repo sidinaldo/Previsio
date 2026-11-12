@@ -22,6 +22,10 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./painel/painel.component').then(m => m.PainelComponent)
       },
       {
+        path: 'contas-pagar',
+        loadComponent: () => import('./contas-pagar/contas-pagar.component').then(m => m.ContasPagarComponent)
+      },
+      {
         path: 'notas-recebidas',
         loadComponent: () => import('./notas-recebidas/notas-recebidas.component').then(m => m.NotasRecebidasComponent)
       },
@@ -52,9 +56,24 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./cliente-detalhe/cliente-detalhe.component').then(m => m.ClienteDetalheComponent)
       },
       {
+        path: 'implantacao',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./implantacao/implantacao.component').then(m => m.ImplantacaoComponent)
+      },
+      {
+        path: 'implantacao/:id',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./implantacao/implantacao.component').then(m => m.ImplantacaoComponent)
+      },
+      {
         path: 'usuarios',
         canActivate: [somenteAdmin],
         loadComponent: () => import('./usuarios/usuarios.component').then(m => m.UsuariosComponent)
+      },
+      {
+        path: 'saude',
+        canActivate: [somenteAdmin],
+        loadComponent: () => import('./saude/saude.component').then(m => m.SaudeComponent)
       }
     ]
   },
@@ -66,6 +85,16 @@ export const PAGES_ROUTES: Routes = [
         path: 'login',
         canActivate: [somenteSemLogin],
         loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
+      },
+      {
+        path: 'esqueci-senha',
+        canActivate: [somenteSemLogin],
+        loadComponent: () => import('./esqueci-senha/esqueci-senha.component').then(m => m.EsqueciSenhaComponent)
+      },
+      {
+        // Sem guarda: o link do e-mail pode ser aberto num navegador que já está logado
+        path: 'redefinir-senha',
+        loadComponent: () => import('./redefinir-senha/redefinir-senha.component').then(m => m.RedefinirSenhaComponent)
       }
     ]
   }

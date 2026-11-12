@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -9,6 +9,11 @@ import { AlteracaoUsuario, NovoUsuario, PERFIL_ADMIN, PERFIL_CLIENTE, Usuario } 
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 /**
  * Cadastro de usuários (só admin): quem entra no painel e de qual cliente.
@@ -17,7 +22,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-usuarios',
-  imports: [FormsModule, DatePipe, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent {
@@ -30,6 +35,26 @@ export class UsuariosComponent {
   readonly clientes = inject(ClientesService).lista;
 
   readonly usuarios = signal<Usuario[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  // Caixa de busca e ordenação por coluna, aplicadas aqui (a API devolve a lista inteira)
+  readonly busca = signal('');
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'nome', decrescente: false });
+  readonly usuariosFiltrados = computed(() => {
+    const termo = this.busca();
+    return this.usuarios().filter(item => combinaComBusca(termo, [item.nome, item.email, this.nomeDoCliente(item)]));
+  });
+  readonly usuariosOrdenados = computed(() => ordenarLista(this.usuariosFiltrados(), this.ordenacao(), {
+    nome: item => item.nome,
+    email: item => item.email,
+    perfil: item => item.perfil,
+    cliente: item => this.nomeDoCliente(item),
+    situacao: item => item.ativo ? 0 : 1,
+    acesso: item => item.ultimoAcessoEm
+  }));
+  readonly usuariosDaPagina = computed(() => paginar(this.usuariosOrdenados(), this.pagina(), this.tamanhoPagina()));
   readonly mensagem = signal('');
   readonly erro = signal('');
 
@@ -43,6 +68,9 @@ export class UsuariosComponent {
 
   // Usuário sendo alterado no formulário; null = cadastro de um novo
   readonly editando = signal<Usuario | null>(null);
+
+  // O formulário fica fechado e abre em "+ Novo usuário" ou "Editar"
+  readonly formularioAberto = signal(false);
 
   // Ações por linha
   readonly processandoId = signal<number | null>(null);
@@ -74,6 +102,11 @@ export class UsuariosComponent {
   }
 
   trocarPerfil(perfil: string): void {
+    // O "change" disparado por avisarCamposPreenchidos chega aqui com o mesmo perfil;
+    // sem esta saída, um chamava o outro sem parar (mais de mil eventos por segundo)
+    if (perfil === this.perfil()) {
+      return;
+    }
     this.perfil.set(perfil);
     // O campo do cliente aparece ou some conforme o perfil
     avisarCamposPreenchidos(this.elemento.nativeElement);
@@ -137,18 +170,17 @@ export class UsuariosComponent {
     this.alterar(usuario, { ativo: !usuario.ativo }, sucesso);
   }
 
-  // ---------- edição no formulário do topo ----------
+  // ---------- formulário do topo: novo usuário ou edição ----------
 
-  /** Preenche o formulário com o usuário e leva a tela até ele. */
-  editar(usuario: Usuario): void {
+  /** "+ Novo usuário": abre o formulário vazio e leva o foco ao nome. */
+  abrirNovo(): void {
     this.limparAvisos();
-    this.editando.set(usuario);
-    this.nome.set(usuario.nome);
-    this.email.set(usuario.email);
-    this.senha.set('');
-    this.perfil.set(usuario.perfil);
-    this.clienteId.set(usuario.clienteId);
+    this.limparFormulario();
+    this.formularioAberto.set(true);
+    this.focarFormulario();
+  }
 
+  private focarFormulario(): void {
     afterNextRender(() => {
       const cartao = this.cartaoFormulario();
       if (cartao) {
@@ -159,6 +191,19 @@ export class UsuariosComponent {
         campo.nativeElement.focus({ preventScroll: true });
       }
     }, { injector: this.injector });
+  }
+
+  /** Preenche o formulário com o usuário e leva a tela até ele. */
+  editar(usuario: Usuario): void {
+    this.limparAvisos();
+    this.editando.set(usuario);
+    this.nome.set(usuario.nome);
+    this.email.set(usuario.email);
+    this.senha.set('');
+    this.perfil.set(usuario.perfil);
+    this.clienteId.set(usuario.clienteId);
+    this.formularioAberto.set(true);
+    this.focarFormulario();
   }
 
   estaEditando(usuario: Usuario): boolean {
@@ -217,7 +262,9 @@ export class UsuariosComponent {
     });
   }
 
+  // Também fecha o formulário: depois de salvar ou cancelar a tela volta para a lista
   private limparFormulario(): void {
+    this.formularioAberto.set(false);
     this.editando.set(null);
     this.nome.set('');
     this.email.set('');
@@ -229,5 +276,17 @@ export class UsuariosComponent {
   private limparAvisos(): void {
     this.erro.set('');
     this.mensagem.set('');
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna e volta para a primeira página. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
+  }
+
+  /** Nova busca volta para a primeira página. */
+  mudarBusca(texto: string): void {
+    this.busca.set(texto);
+    this.pagina.set(1);
   }
 }

@@ -22,6 +22,64 @@ namespace Previsio.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Previsio.Core.Entidades.Aviso", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Chave")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EmailEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("EmpresaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Link")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Mensagem")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("NotaFiscalId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ResolvidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId", "Chave")
+                        .IsUnique()
+                        .HasFilter("\"ResolvidoEm\" IS NULL");
+
+                    b.ToTable("avisos", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -30,8 +88,20 @@ namespace Previsio.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AlertaVencimentosAtivo")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("AlertaVencimentosEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("AlertaVencimentosHora")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("AvisoVencidasDias")
+                        .HasColumnType("integer");
 
                     b.Property<string>("BlingClientId")
                         .HasMaxLength(200)
@@ -39,6 +109,28 @@ namespace Previsio.Data.Migrations
 
                     b.Property<string>("BlingClientSecretProtegido")
                         .HasColumnType("text");
+
+                    b.Property<bool>("ConferenciaExigeNumeroNota")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConferenciaFecharPendentes")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ConferenciaToleranciaDias")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ConferenciaToleranciaValor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("ConferirBlingAntesDeLancar")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ContratadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Contrato")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
@@ -61,6 +153,16 @@ namespace Previsio.Data.Migrations
                     b.Property<long?>("ImapUidValidity")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("ImapUltimaConexaoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ImapUltimaFalhaConexaoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImapUltimoErroConexao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<long?>("ImapUltimoUid")
                         .HasColumnType("bigint");
 
@@ -73,6 +175,27 @@ namespace Previsio.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("ResumoSemanalAtivo")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ResumoSemanalDia")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ResumoSemanalEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ResumoSemanalHora")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TesteAvisoEncerradoEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TesteAvisoFinalEnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TesteTerminaEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -95,6 +218,10 @@ namespace Previsio.Data.Migrations
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("FornecedorNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime>("SincronizadaEm")
                         .HasColumnType("timestamp with time zone");
@@ -146,6 +273,19 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime?>("BlingTokenExpiraEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CertificadoPfxProtegido")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CertificadoSenhaProtegida")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CertificadoTitular")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("CertificadoValidoAte")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("ClienteId")
                         .HasColumnType("integer");
 
@@ -172,6 +312,16 @@ namespace Previsio.Data.Migrations
                     b.Property<long?>("ImapUidValidity")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("ImapUltimaConexaoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ImapUltimaFalhaConexaoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImapUltimoErroConexao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<long?>("ImapUltimoUid")
                         .HasColumnType("bigint");
 
@@ -184,6 +334,10 @@ namespace Previsio.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Uf")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<DateTime?>("UltimaSincronizacaoEm")
                         .HasColumnType("timestamp with time zone");
@@ -292,6 +446,40 @@ namespace Previsio.Data.Migrations
                     b.ToTable("falhas_processamento", (string)null);
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("BlingContatoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Documento")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId", "BlingContatoId")
+                        .IsUnique();
+
+                    b.ToTable("fornecedores_bling", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.NotaFiscal", b =>
                 {
                     b.Property<int>("Id")
@@ -320,6 +508,9 @@ namespace Previsio.Data.Migrations
 
                     b.Property<DateTime>("DataEmissao")
                         .HasColumnType("date");
+
+                    b.Property<int?>("EmpresaCaixaId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("EmpresaId")
                         .HasColumnType("integer");
@@ -379,6 +570,8 @@ namespace Previsio.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("EmpresaCaixaId");
+
                     b.HasIndex("EmpresaId");
 
                     b.HasIndex("Status");
@@ -387,6 +580,112 @@ namespace Previsio.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("notas_fiscais", (string)null);
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.NotaSoPdf", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Assunto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ChaveAcesso")
+                        .HasMaxLength(44)
+                        .HasColumnType("character varying(44)");
+
+                    b.Property<DateTime?>("CienciaEnviadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EmpresaCaixaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("EmpresaDestinoId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MensagemId")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("NomeRemetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("NotaFiscalId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("OrigemChave")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("OrigemEmail")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<byte[]>("Pdf")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PdfNome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ProximaTentativaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("RecebidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Remetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("ResolvidaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvidaPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TentativasSefaz")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("XmlPedidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaCaixaId");
+
+                    b.HasIndex("ClienteId", "MensagemId");
+
+                    b.HasIndex("ClienteId", "Situacao");
+
+                    b.ToTable("notas_so_pdf", (string)null);
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.ParcelaNota", b =>
@@ -433,6 +732,9 @@ namespace Previsio.Data.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("AvisosVistosEm")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CarimboSeguranca")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -457,6 +759,13 @@ namespace Previsio.Data.Migrations
                     b.Property<int>("Perfil")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("RedefinicaoSenhaExpiraEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RedefinicaoSenhaHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -472,7 +781,20 @@ namespace Previsio.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("RedefinicaoSenhaHash");
+
                     b.ToTable("usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.Aviso", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.ContaPagarSincronizada", b =>
@@ -518,13 +840,49 @@ namespace Previsio.Data.Migrations
                     b.Navigation("Empresa");
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.NotaFiscal", b =>
                 {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "EmpresaCaixa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaCaixaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
                         .WithMany()
                         .HasForeignKey("EmpresaId");
 
                     b.Navigation("Empresa");
+
+                    b.Navigation("EmpresaCaixa");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.NotaSoPdf", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "EmpresaCaixa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaCaixaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("EmpresaCaixa");
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.ParcelaNota", b =>

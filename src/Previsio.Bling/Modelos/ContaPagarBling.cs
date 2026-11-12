@@ -18,4 +18,11 @@ public class ContaPagarBling
 
     [JsonPropertyName("contato")]
     public Referencia? Contato { get; set; }
+
+    // Só no detalhe da conta (GET /contas/pagar/{id}); na lista podem vir vazios
+    [JsonPropertyName("numeroDocumento")]
+    public string? NumeroDocumento { get; set; }
+
+    [JsonPropertyName("historico")]
+    public string? Historico { get; set; }
 }

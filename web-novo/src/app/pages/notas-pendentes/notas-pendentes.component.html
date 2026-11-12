@@ -24,11 +24,18 @@
       </div>
     }
 
+    <app-notas-so-pdf [empresaId]="empresaId()" />
+
     <div class="card">
       <div class="pv-card__cabecalho">
         <div>
           <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no Bling</h2>
           <p class="pv-card__descricao pv-numero">{{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</p>
+        </div>
+        <div class="pv-card__ferramentas">
+          <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por NF, fornecedor ou CNPJ" />
+          <app-exportar [gerar]="exportar" nomePadrao="previsio-notas-pendentes.xlsx" [desabilitado]="notasFiltradas().length === 0"
+                        titulo="Baixar as notas pendentes no Excel, uma linha por parcela" />
         </div>
       </div>
 
@@ -55,22 +62,30 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Fornecedor</th>
-                <th>NF</th>
+                <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
+                <th pvColuna="numero" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">NF</th>
                 @if (!empresaId()) {
-                  <th>Empresa</th>
+                  <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
                 }
-                <th>Recebida</th>
-                <th>1º vencimento</th>
-                <th class="text-right">Valor</th>
-                <th>Situação</th>
+                <th pvColuna="recebida" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Recebida</th>
+                <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">1º vencimento</th>
+                <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
+                <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th class="text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              @for (nota of notas(); track nota.id) {
+              @for (nota of notasDaPagina(); track nota.id) {
                 <tr>
-                  <td><strong>{{ nota.fornecedor }}</strong></td>
+                  <td>
+                    <strong>{{ nota.fornecedor }}</strong>
+                    <!-- No fornecedor, e não na empresa, para aparecer também com o filtro por empresa (coluna oculta) -->
+                    @if (nota.caixaDeOutraEmpresa) {
+                      <span class="pv-aviso-caixa" title="A nota é de outro CNPJ: peça ao fornecedor para mandar ao e-mail certo">
+                        <i class="material-icons" aria-hidden="true">mail</i> Chegou na caixa de {{ nota.caixaDeOutraEmpresa }}
+                      </span>
+                    }
+                  </td>
                   <td class="pv-numero">{{ nota.numero }}</td>
                   @if (!empresaId()) {
                     <td>{{ nota.empresaNome || '—' }}</td>
@@ -128,6 +143,10 @@
             </tbody>
           </table>
         </div>
+        @if (notasFiltradas().length === 0) {
+          <p class="pv-sem-resultado">Nenhum resultado para "{{ busca() }}".</p>
+        }
+        <app-paginacao [total]="notasFiltradas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

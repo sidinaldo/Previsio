@@ -9,6 +9,9 @@ public class ResumoPainel
     public decimal TotalSemanaAtual { get; set; }
     public int NotasPendentes { get; set; }
     public decimal ValorNotasPendentes { get; set; }
+    // Contas em aberto no Bling com vencimento antes de hoje (últimos 30 dias sincronizados)
+    public decimal TotalVencidas { get; set; }
+    public int QuantidadeVencidas { get; set; }
     public List<TotalSemana> Semanas { get; set; } = new List<TotalSemana>();
     public List<TotalEmpresa> Empresas { get; set; } = new List<TotalEmpresa>();
 }

@@ -23,5 +23,13 @@ public class EmpresaDto
     public string ImapUsuario { get; set; } = "";
     public bool ImapSenhaCadastrada { get; set; }
     public DateTime? UltimaSincronizacaoEm { get; set; }
+
+    // Certificado digital A1 (para buscar na SEFAZ o XML das notas que chegam só em PDF).
+    // O arquivo e a senha nunca saem da API.
+    public bool CertificadoCadastrado { get; set; }
+    public string? CertificadoTitular { get; set; }
+    public DateTime? CertificadoValidoAte { get; set; }
+    public string? Uf { get; set; }
+
     public bool Ativo { get; set; }
 }

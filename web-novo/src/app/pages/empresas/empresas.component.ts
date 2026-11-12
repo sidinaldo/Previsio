@@ -6,6 +6,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { abrirJanelaBling, avisarRetornoBling, ehJanelaBling, ouvirRetornoBling } from '../../core/janela-bling';
+import { formatarCnpj } from '../../core/implantacao';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PREVISIO_CONFIG } from '../../core/previsio.config';
 import { PrevisioService } from '../../core/previsio.service';
@@ -13,6 +14,15 @@ import { AlteracaoEmpresa, DESCRICAO_ORIGEM_APLICATIVO, Empresa, NovaEmpresa } f
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
+import { CertificadoEmpresaComponent } from './certificado-empresa.component';
+import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
+import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
 
@@ -22,7 +32,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  */
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -32,8 +42,32 @@ export class EmpresasComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   // Rodar os jobs na hora é só do admin (eles passam por todos os clientes)
-  readonly ehAdmin = inject(SessaoService).ehAdmin;
+  private readonly sessao = inject(SessaoService);
+  readonly clienteId = this.sessao.clienteId;
+  readonly ehAdmin = this.sessao.ehAdmin;
+
+  // Caixa da rede, mostrada na coluna E-mail das empresas sem caixa própria
+  readonly emailRede = signal('');
   readonly empresas = signal<Empresa[]>([]);
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  // Caixa de busca e ordenação por coluna, aplicadas aqui (a API devolve a lista inteira)
+  readonly busca = signal('');
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'nome', decrescente: false });
+  readonly empresasFiltradas = computed(() => {
+    const termo = this.busca();
+    return this.empresas().filter(item => combinaComBusca(termo, [item.nome, item.cnpj, item.imapUsuario]));
+  });
+  readonly empresasOrdenadas = computed(() => ordenarLista(this.empresasFiltradas(), this.ordenacao(), {
+    nome: item => item.nome,
+    cnpj: item => item.cnpj,
+    email: item => item.emailProprio ? item.imapUsuario : this.emailRede(),
+    bling: item => item.blingConectado ? 1 : 0,
+    sincronizacao: item => item.ultimaSincronizacaoEm
+  }));
+  readonly empresasDaPagina = computed(() => paginar(this.empresasOrdenadas(), this.pagina(), this.tamanhoPagina()));
   // Só depois de a lista chegar dá para dizer "nenhuma empresa" (com erro, fica só o aviso)
   readonly carregada = signal(false);
 
@@ -52,6 +86,14 @@ export class EmpresasComponent {
 
   // Empresa sendo alterada no formulário; null = cadastro de uma nova
   readonly editando = signal<Empresa | null>(null);
+
+  // O formulário fica fechado e abre em "+ Nova empresa" ou "Editar";
+  // sem nenhuma empresa cadastrada ele já aparece aberto
+  readonly formularioAberto = signal(false);
+  readonly mostrarFormulario = computed(() => {
+    return this.formularioAberto() || (this.carregada() && this.empresas().length === 0);
+  });
+  readonly linkCopiado = signal(false);
 
   // Endereço que deve ser cadastrado como "Link de redirecionamento" no aplicativo do Bling
   readonly linkRedirecionamento = PREVISIO_CONFIG.apiUrl + '/bling/callback';
@@ -103,9 +145,23 @@ export class EmpresasComponent {
     // Vindo da tela Clientes, logo depois de cadastrar a rede
     if (this.rota.snapshot.queryParamMap.get('cliente') === 'novo') {
       this.mensagem.set('Cliente cadastrado. Agora cadastre as empresas (CNPJs) dele no formulário abaixo e conecte o Bling de cada uma.');
+      this.formularioAberto.set(true);
     }
 
     this.carregar();
+    this.carregarEmailRede();
+  }
+
+  private carregarEmailRede(): void {
+    const clienteId = this.sessao.clienteId();
+    if (clienteId === null) {
+      return;
+    }
+    this.previsio.obterCliente(clienteId).subscribe({
+      next: cliente => this.emailRede.set(cliente.imapUsuario),
+      // Sem o e-mail da rede a coluna mostra só "Caixa da rede"
+      error: () => this.emailRede.set('')
+    });
   }
 
   carregar(): void {
@@ -247,7 +303,45 @@ export class EmpresasComponent {
       });
   }
 
-  // ---------- edição no formulário do topo ----------
+  // ---------- formulário do topo: nova empresa ou edição ----------
+
+  /** "+ Nova empresa": abre o formulário vazio e leva o foco ao nome. */
+  abrirNovo(): void {
+    this.confirmacao.set(null);
+    this.limparAvisos();
+    this.limparFormulario();
+    this.formularioAberto.set(true);
+    this.focarFormulario();
+  }
+
+  /** Copia o link de redirecionamento que vai no cadastro do aplicativo do Bling. */
+  copiarLink(): void {
+    if (!navigator.clipboard) {
+      return;
+    }
+    navigator.clipboard.writeText(this.linkRedirecionamento).then(() => {
+      this.linkCopiado.set(true);
+      setTimeout(() => this.linkCopiado.set(false), 2000);
+    });
+  }
+
+  /** CNPJ com pontuação: 11.222.333/0001-81. */
+  formatarCnpj(cnpj: string): string {
+    return formatarCnpj(cnpj);
+  }
+
+  private focarFormulario(): void {
+    afterNextRender(() => {
+      const cartao = this.cartaoFormulario();
+      if (cartao) {
+        cartao.nativeElement.scrollIntoView({ block: 'start' });
+      }
+      const campo = this.campoNome();
+      if (campo) {
+        campo.nativeElement.focus({ preventScroll: true });
+      }
+    }, { injector: this.injector });
+  }
 
   /** Preenche o formulário com a empresa e leva a tela até ele. */
   editar(empresa: Empresa): void {
@@ -263,17 +357,8 @@ export class EmpresasComponent {
     this.imapSsl.set(empresa.emailProprio ? empresa.imapSsl : true);
     this.imapUsuario.set(empresa.imapUsuario);
     this.imapSenha.set('');
-
-    afterNextRender(() => {
-      const cartao = this.cartaoFormulario();
-      if (cartao) {
-        cartao.nativeElement.scrollIntoView({ block: 'start' });
-      }
-      const campo = this.campoNome();
-      if (campo) {
-        campo.nativeElement.focus({ preventScroll: true });
-      }
-    }, { injector: this.injector });
+    this.formularioAberto.set(true);
+    this.focarFormulario();
   }
 
   descricaoOrigem(empresa: Empresa): string {
@@ -314,6 +399,12 @@ export class EmpresasComponent {
   estaEditando(empresa: Empresa): boolean {
     const editando = this.editando();
     return editando !== null && editando.id === empresa.id;
+  }
+
+  /** O certificado é enviado na hora (fora do "Salvar alterações"): atualiza a empresa na lista e no formulário. */
+  aoAlterarCertificado(empresa: Empresa): void {
+    this.empresas.update(lista => lista.map(item => (item.id === empresa.id ? empresa : item)));
+    this.editando.set(empresa);
   }
 
   cancelarEdicao(): void {
@@ -461,7 +552,9 @@ export class EmpresasComponent {
     }
   }
 
+  // Também fecha o formulário: depois de salvar ou cancelar a tela volta para a lista
   private limparFormulario(): void {
+    this.formularioAberto.set(false);
     this.editando.set(null);
     this.nome.set('');
     this.cnpj.set('');
@@ -477,5 +570,17 @@ export class EmpresasComponent {
   private limparAvisos(): void {
     this.erro.set('');
     this.mensagem.set('');
+  }
+
+  /** Clique no cabeçalho: ordena pela coluna e volta para a primeira página. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
+  }
+
+  /** Nova busca volta para a primeira página. */
+  mudarBusca(texto: string): void {
+    this.busca.set(texto);
+    this.pagina.set(1);
   }
 }

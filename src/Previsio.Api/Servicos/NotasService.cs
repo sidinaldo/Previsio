@@ -41,6 +41,7 @@ public class NotasService
     {
         IQueryable<NotaFiscal> consulta = _notas.ConsultarSomenteLeitura()
             .Include(n => n.Empresa)
+            .Include(n => n.EmpresaCaixa)
             .Include(n => n.Parcelas)
             .Where(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status));
 
@@ -63,9 +64,10 @@ public class NotasService
     }
 
     /// <summary>
-    /// Todas as notas lidas do e-mail (lançadas ou não), da recebida mais recente para a mais antiga, com as parcelas.
-    /// Filtros opcionais: empresa, situação (nome da situação ou "Pendentes") e período em que a nota
-    /// chegou (dias no horário de Brasília).
+    /// Todas as notas lidas do e-mail (lançadas ou não), com as parcelas; por padrão, da recebida mais
+    /// recente para a mais antiga. Filtros opcionais: empresa, situação (nome da situação ou "Pendentes"),
+    /// período em que a nota chegou (dias no horário de Brasília) e busca por NF, fornecedor, empresa ou CNPJ.
+    /// Ordem: recebida, numero, fornecedor, empresa, emissao, valor, vencimento ou situacao ("-" = decrescente).
     /// </summary>
     public async Task<Resultado<PaginaNotasDto>> ListarAsync(
         int clienteId,
@@ -73,6 +75,8 @@ public class NotasService
         string? situacao,
         DateTime? de,
         DateTime? ate,
+        string? busca,
+        string? ordem,
         int pagina,
         CancellationToken cancelamento)
     {
@@ -81,6 +85,84 @@ public class NotasService
             pagina = 1;
         }
 
+        Resultado<IOrderedQueryable<NotaFiscal>> filtro = Filtrar(clienteId, empresaId, situacao, de, ate, busca, ordem);
+        if (!filtro.Sucesso)
+        {
+            return Resultado<PaginaNotasDto>.Invalido(filtro.Mensagem!);
+        }
+        IOrderedQueryable<NotaFiscal> ordenada = filtro.Valor!;
+
+        int total = await ordenada.CountAsync(cancelamento);
+
+        List<NotaFiscal> notas = await ordenada
+            .ThenByDescending(n => n.Id)
+            .Include(n => n.Empresa)
+            .Include(n => n.EmpresaCaixa)
+            .Include(n => n.Parcelas)
+            .Skip((pagina - 1) * TamanhoPagina)
+            .Take(TamanhoPagina)
+            .ToListAsync(cancelamento);
+
+        var resposta = new PaginaNotasDto();
+        resposta.Total = total;
+        resposta.Pagina = pagina;
+        resposta.TamanhoPagina = TamanhoPagina;
+        foreach (NotaFiscal nota in notas)
+        {
+            resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
+        }
+        return Resultado<PaginaNotasDto>.Ok(resposta);
+    }
+
+    public const int MaximoExportacao = 20000;
+
+    public const string MensagemExportacaoGrande =
+        "São mais de 20.000 notas. Escolha um período menor ou uma empresa para exportar.";
+
+    /// <summary>
+    /// As mesmas notas da listagem (mesmos filtros, busca e ordem), todas de uma vez e com as parcelas, para a planilha.
+    /// </summary>
+    public async Task<Resultado<List<NotaFiscal>>> ListarParaExportarAsync(
+        int clienteId,
+        int? empresaId,
+        string? situacao,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem,
+        CancellationToken cancelamento)
+    {
+        Resultado<IOrderedQueryable<NotaFiscal>> filtro = Filtrar(clienteId, empresaId, situacao, de, ate, busca, ordem);
+        if (!filtro.Sucesso)
+        {
+            return Resultado<List<NotaFiscal>>.Invalido(filtro.Mensagem!);
+        }
+
+        List<NotaFiscal> notas = await filtro.Valor!
+            .ThenByDescending(n => n.Id)
+            .Include(n => n.Empresa)
+            .Include(n => n.Parcelas)
+            .Take(MaximoExportacao + 1)
+            .ToListAsync(cancelamento);
+        if (notas.Count > MaximoExportacao)
+        {
+            return Resultado<List<NotaFiscal>>.Invalido(MensagemExportacaoGrande);
+        }
+        return Resultado<List<NotaFiscal>>.Ok(notas);
+    }
+
+    /// <summary>
+    /// Consulta das notas do cliente com os filtros da tela e a ordem pedida.
+    /// </summary>
+    private Resultado<IOrderedQueryable<NotaFiscal>> Filtrar(
+        int clienteId,
+        int? empresaId,
+        string? situacao,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem)
+    {
         IQueryable<NotaFiscal> consulta = _notas.ConsultarSomenteLeitura().Where(n => n.ClienteId == clienteId);
 
         if (empresaId.HasValue)
@@ -99,7 +181,7 @@ public class NotasService
                 StatusNota escolhida;
                 if (!Enum.TryParse(situacao, true, out escolhida) || !Enum.IsDefined(typeof(StatusNota), escolhida))
                 {
-                    return Resultado<PaginaNotasDto>.Invalido("Situação inválida.");
+                    return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido("Situação inválida.");
                 }
                 consulta = consulta.Where(n => n.Status == escolhida);
             }
@@ -108,7 +190,7 @@ public class NotasService
         string? erroPeriodo = ValidacaoPeriodo.Validar(de, ate);
         if (erroPeriodo != null)
         {
-            return Resultado<PaginaNotasDto>.Invalido(erroPeriodo);
+            return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido(erroPeriodo);
         }
 
         if (de.HasValue)
@@ -123,26 +205,93 @@ public class NotasService
             consulta = consulta.Where(n => n.RecebidaEm < fimUtc);
         }
 
-        int total = await consulta.CountAsync(cancelamento);
-
-        List<NotaFiscal> notas = await consulta
-            .Include(n => n.Empresa)
-            .Include(n => n.Parcelas)
-            .OrderByDescending(n => n.RecebidaEm)
-            .ThenByDescending(n => n.Id)
-            .Skip((pagina - 1) * TamanhoPagina)
-            .Take(TamanhoPagina)
-            .ToListAsync(cancelamento);
-
-        var resposta = new PaginaNotasDto();
-        resposta.Total = total;
-        resposta.Pagina = pagina;
-        resposta.TamanhoPagina = TamanhoPagina;
-        foreach (NotaFiscal nota in notas)
+        BuscaTexto? termo = BuscaTexto.Ler(busca);
+        if (termo != null)
         {
-            resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
+            string texto = termo.Texto;
+            string digitos = termo.Digitos;
+            if (termo.TemDigitos)
+            {
+                consulta = consulta.Where(n =>
+                    n.Numero.Contains(texto)
+                    || n.NomeFornecedor.ToLower().Contains(texto)
+                    || (n.Empresa != null && n.Empresa.Nome.ToLower().Contains(texto))
+                    || n.CnpjFornecedor.Contains(digitos)
+                    || n.CnpjDestinatario.Contains(digitos)
+                    || n.ChaveAcesso.Contains(digitos));
+            }
+            else
+            {
+                consulta = consulta.Where(n =>
+                    n.Numero.Contains(texto)
+                    || n.NomeFornecedor.ToLower().Contains(texto)
+                    || (n.Empresa != null && n.Empresa.Nome.ToLower().Contains(texto)));
+            }
         }
-        return Resultado<PaginaNotasDto>.Ok(resposta);
+
+        IOrderedQueryable<NotaFiscal>? ordenada = Ordenar(consulta, OrdemLista.Ler(ordem, "recebida", true));
+        if (ordenada == null)
+        {
+            return Resultado<IOrderedQueryable<NotaFiscal>>.Invalido(MensagemOrdemInvalida);
+        }
+        return Resultado<IOrderedQueryable<NotaFiscal>>.Ok(ordenada);
+    }
+
+    public const string MensagemOrdemInvalida =
+        "Ordenação inválida. Use recebida, numero, fornecedor, empresa, emissao, valor, vencimento ou situacao.";
+
+    /// <summary>
+    /// Ordena pela coluna pedida; nula quando a coluna não existe.
+    /// O número da nota é texto: ordena pelo tamanho antes, para 900 vir antes de 48213.
+    /// </summary>
+    private static IOrderedQueryable<NotaFiscal>? Ordenar(IQueryable<NotaFiscal> consulta, OrdemLista ordem)
+    {
+        bool desc = ordem.Decrescente;
+        if (ordem.Coluna == "recebida")
+        {
+            return desc ? consulta.OrderByDescending(n => n.RecebidaEm) : consulta.OrderBy(n => n.RecebidaEm);
+        }
+        if (ordem.Coluna == "numero")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Numero.Length).ThenByDescending(n => n.Numero);
+            }
+            return consulta.OrderBy(n => n.Numero.Length).ThenBy(n => n.Numero);
+        }
+        if (ordem.Coluna == "fornecedor")
+        {
+            return desc ? consulta.OrderByDescending(n => n.NomeFornecedor) : consulta.OrderBy(n => n.NomeFornecedor);
+        }
+        if (ordem.Coluna == "empresa")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Empresa != null ? n.Empresa.Nome : "");
+            }
+            return consulta.OrderBy(n => n.Empresa != null ? n.Empresa.Nome : "");
+        }
+        if (ordem.Coluna == "emissao")
+        {
+            return desc ? consulta.OrderByDescending(n => n.DataEmissao) : consulta.OrderBy(n => n.DataEmissao);
+        }
+        if (ordem.Coluna == "valor")
+        {
+            return desc ? consulta.OrderByDescending(n => n.ValorTotal) : consulta.OrderBy(n => n.ValorTotal);
+        }
+        if (ordem.Coluna == "vencimento")
+        {
+            if (desc)
+            {
+                return consulta.OrderByDescending(n => n.Parcelas.Min(p => (DateTime?)p.Vencimento));
+            }
+            return consulta.OrderBy(n => n.Parcelas.Min(p => (DateTime?)p.Vencimento));
+        }
+        if (ordem.Coluna == "situacao")
+        {
+            return desc ? consulta.OrderByDescending(n => n.Status) : consulta.OrderBy(n => n.Status);
+        }
+        return null;
     }
 
     /// <summary>

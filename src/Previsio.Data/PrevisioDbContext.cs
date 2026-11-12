@@ -16,15 +16,20 @@ public class PrevisioDbContext : DbContext
     public DbSet<ContaPagarSincronizada> ContasPagar => Set<ContaPagarSincronizada>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
+    public DbSet<Aviso> Avisos => Set<Aviso>();
+    public DbSet<NotaSoPdf> NotasSoPdf => Set<NotaSoPdf>();
+    public DbSet<FornecedorBling> FornecedoresBling => Set<FornecedorBling>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Cliente>(entidade =>
         {
             entidade.ToTable("clientes");
+            entidade.Property(c => c.ConferenciaToleranciaValor).HasPrecision(18, 2);
             entidade.Property(c => c.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(c => c.ImapHost).HasMaxLength(200);
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);
+            entidade.Property(c => c.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(c => c.BlingClientId).HasMaxLength(200);
         });
 
@@ -33,16 +38,41 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("empresas");
             entidade.Property(e => e.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(e => e.Cnpj).HasMaxLength(14).IsRequired();
+            entidade.Property(e => e.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(e => e.BlingClientId).HasMaxLength(200);
             entidade.Property(e => e.ImapHost).HasMaxLength(200);
             entidade.Property(e => e.ImapUsuario).HasMaxLength(200);
             entidade.HasIndex(e => new { e.ClienteId, e.Cnpj }).IsUnique();
             entidade.Ignore(e => e.BlingConectado);
             entidade.Ignore(e => e.TemEmailProprio);
+            entidade.Ignore(e => e.TemCertificado);
+            entidade.Property(e => e.CertificadoTitular).HasMaxLength(300);
+            entidade.Property(e => e.Uf).HasMaxLength(2);
 
             entidade.HasOne(e => e.Cliente)
                 .WithMany(c => c.Empresas)
                 .HasForeignKey(e => e.ClienteId);
+        });
+
+        modelBuilder.Entity<NotaSoPdf>(entidade =>
+        {
+            entidade.ToTable("notas_so_pdf");
+            entidade.Property(n => n.MensagemId).HasMaxLength(300);
+            entidade.Property(n => n.Remetente).HasMaxLength(200);
+            entidade.Property(n => n.NomeRemetente).HasMaxLength(200);
+            entidade.Property(n => n.Assunto).HasMaxLength(300);
+            entidade.Property(n => n.OrigemEmail).HasMaxLength(300);
+            entidade.Property(n => n.PdfNome).HasMaxLength(200);
+            entidade.Property(n => n.ChaveAcesso).HasMaxLength(44);
+            entidade.Property(n => n.OrigemChave).HasMaxLength(30);
+            entidade.Property(n => n.Motivo).HasMaxLength(500);
+            entidade.Property(n => n.ResolvidaPor).HasMaxLength(200);
+            entidade.Property(n => n.Observacao).HasMaxLength(500);
+            entidade.HasIndex(n => new { n.ClienteId, n.Situacao });
+            entidade.HasIndex(n => new { n.ClienteId, n.MensagemId });
+
+            entidade.HasOne(n => n.Cliente).WithMany().HasForeignKey(n => n.ClienteId);
+            entidade.HasOne(n => n.EmpresaCaixa).WithMany().HasForeignKey(n => n.EmpresaCaixaId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<NotaFiscal>(entidade =>
@@ -68,6 +98,11 @@ public class PrevisioDbContext : DbContext
             entidade.HasOne(n => n.Empresa)
                 .WithMany()
                 .HasForeignKey(n => n.EmpresaId);
+
+            entidade.HasOne(n => n.EmpresaCaixa)
+                .WithMany()
+                .HasForeignKey(n => n.EmpresaCaixaId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ParcelaNota>(entidade =>
@@ -89,10 +124,23 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.Vencimento).HasColumnType("date");
             entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
             entidade.HasIndex(c => c.Vencimento);
+            entidade.Property(c => c.FornecedorNome).HasMaxLength(200);
 
             entidade.HasOne(c => c.Empresa)
                 .WithMany()
                 .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<FornecedorBling>(entidade =>
+        {
+            entidade.ToTable("fornecedores_bling");
+            entidade.Property(f => f.Nome).HasMaxLength(200).IsRequired();
+            entidade.Property(f => f.Documento).HasMaxLength(20);
+            entidade.HasIndex(f => new { f.EmpresaId, f.BlingContatoId }).IsUnique();
+
+            entidade.HasOne(f => f.Empresa)
+                .WithMany()
+                .HasForeignKey(f => f.EmpresaId);
         });
 
         modelBuilder.Entity<Usuario>(entidade =>
@@ -103,9 +151,11 @@ public class PrevisioDbContext : DbContext
             entidade.Property(u => u.SenhaHash).HasMaxLength(500).IsRequired();
             entidade.Property(u => u.CarimboSeguranca).HasMaxLength(64).IsRequired();
             entidade.Property(u => u.Perfil).HasConversion<int>();
+            entidade.Property(u => u.RedefinicaoSenhaHash).HasMaxLength(64);
 
             // O e-mail é o login: gravado sempre em minúsculas
             entidade.HasIndex(u => u.Email).IsUnique();
+            entidade.HasIndex(u => u.RedefinicaoSenhaHash);
 
             entidade.HasOne(u => u.Cliente)
                 .WithMany()
@@ -149,6 +199,25 @@ public class PrevisioDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(f => f.NotaFiscalId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Aviso>(entidade =>
+        {
+            entidade.ToTable("avisos");
+            entidade.Property(a => a.Tipo).HasConversion<int>();
+            entidade.Property(a => a.Chave).HasMaxLength(100).IsRequired();
+            entidade.Property(a => a.Titulo).HasMaxLength(200).IsRequired();
+            entidade.Property(a => a.Mensagem).HasMaxLength(500);
+            entidade.Property(a => a.Link).HasMaxLength(200);
+
+            // Um aviso aberto por problema: o mesmo problema só gera aviso novo depois de resolvido
+            entidade.HasIndex(a => new { a.ClienteId, a.Chave })
+                .IsUnique()
+                .HasFilter("\"ResolvidoEm\" IS NULL");
+
+            entidade.HasOne(a => a.Cliente)
+                .WithMany()
+                .HasForeignKey(a => a.ClienteId);
         });
     }
 }

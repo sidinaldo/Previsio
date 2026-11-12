@@ -25,6 +25,9 @@ export interface ResumoPainel {
   totalSemanaAtual: number;
   notasPendentes: number;
   valorNotasPendentes: number;
+  /** Contas em aberto no Bling com vencimento antes de hoje. */
+  totalVencidas?: number;
+  quantidadeVencidas?: number;
   semanas: TotalSemana[];
   empresas: TotalEmpresa[];
 }
@@ -49,6 +52,11 @@ export interface Nota {
   status: string;
   mensagemErro: string | null;
   recebidaEm: string;
+  /**
+   * Nome da empresa dona da caixa em que a nota chegou, quando não é a do CNPJ da nota
+   * (o fornecedor mandou para o e-mail de outra loja). A nota vai pelo CNPJ; isto só avisa.
+   */
+  caixaDeOutraEmpresa?: string | null;
 }
 
 /** Preenchidos quando alguém marcou a nota como lançada manualmente no Bling. */
@@ -78,6 +86,11 @@ export interface Empresa {
   /** A senha nunca volta da API, só se está cadastrada. */
   imapSenhaCadastrada: boolean;
   ultimaSincronizacaoEm: string | null;
+  /** Certificado digital A1, para buscar na SEFAZ o XML das notas que chegam só em PDF. */
+  certificadoCadastrado?: boolean;
+  certificadoTitular?: string | null;
+  certificadoValidoAte?: string | null;
+  uf?: string | null;
   ativo: boolean;
 }
 
@@ -129,8 +142,14 @@ export interface Cliente {
   blingClientId: string | null;
   /** O secret nunca volta da API, só se está cadastrado. */
   blingClientSecretCadastrado: boolean;
+  /** Teste grátis: "EmTeste" com os dias que faltam (contando hoje) e o último dia; "TesteEncerrado" parou de processar. */
+  contrato?: SituacaoContrato;
+  testeUltimoDia?: string | null;
+  diasRestantesTeste?: number | null;
   ativo: boolean;
 }
+
+export type SituacaoContrato = 'Contratado' | 'EmTeste' | 'TesteEncerrado';
 
 /** PUT /api/clientes/{id}: só os campos enviados mudam; a senha só troca se vier preenchida. */
 export interface AlteracaoCliente {
@@ -155,6 +174,27 @@ export interface NovoCliente {
   imapSsl: boolean;
   imapUsuario: string;
   imapSenha: string;
+  /** Opcionais: aplicativo privado do Bling da rede. Vão juntos ou nenhum. */
+  blingClientId?: string;
+  blingClientSecret?: string;
+  /** Começa no teste grátis de 15 dias. */
+  emTeste?: boolean;
+}
+
+/** POST /api/email/testar: dados da caixa digitados; sem senha e com clienteId usa a senha gravada da rede. */
+export interface TesteEmail {
+  imapHost: string;
+  imapPorta: number;
+  imapSsl: boolean;
+  imapUsuario: string;
+  imapSenha?: string;
+  clienteId?: number;
+}
+
+/** Se o Previsio conseguiu entrar na caixa e, quando não, o motivo. */
+export interface ResultadoTesteEmail {
+  conectou: boolean;
+  mensagem: string;
 }
 
 export const PERFIL_ADMIN = 'Admin';
@@ -220,6 +260,11 @@ export interface NotaRecebida extends ResolucaoManual {
   recebidaEm: string;
   lancadaEm: string | null;
   parcelas: ParcelaNota[];
+  /**
+   * Nome da empresa dona da caixa em que a nota chegou, quando não é a do CNPJ da nota
+   * (o fornecedor mandou para o e-mail de outra loja). A nota vai pelo CNPJ; isto só avisa.
+   */
+  caixaDeOutraEmpresa?: string | null;
 }
 
 export interface PaginaNotas {
@@ -229,6 +274,51 @@ export interface PaginaNotas {
   tamanhoPagina: number;
 }
 
+/** Conta a pagar do Bling (lançada pelo Previsio ou à mão), na tela Contas a pagar. */
+export interface ContaPagar {
+  id: number;
+  blingId: number;
+  empresaId: number;
+  empresaNome: string;
+  vencimento: string;
+  valor: number;
+  situacao: number;
+  situacaoTexto: string;
+  vencida: boolean;
+  fornecedor: string | null;
+  // 'Previsio' (veio de nota lida do e-mail) ou 'Bling' (lançada direto no Bling)
+  origem: string;
+  notaFiscalId: number | null;
+  numeroNota: string | null;
+  numeroParcela: string | null;
+}
+
+export interface PaginaContasPagar {
+  itens: ContaPagar[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+  valorTotal: number;
+  sincronizadaEm: string | null;
+  diasPassados: number;
+  diasFuturos: number;
+}
+
+/** Filtros da tela Contas a pagar. Datas de vencimento no formato yyyy-MM-dd. */
+export interface FiltroContas {
+  empresaId?: number | null;
+  // Abertas, Vencidas, Pagas, Canceladas ou Todas
+  situacao?: string;
+  // Previsio, Bling ou vazio (as duas)
+  origem?: string;
+  de?: string;
+  ate?: string;
+  // Fornecedor, NF ou empresa
+  busca?: string;
+  ordem?: string;
+  pagina?: number;
+}
+
 /** Filtros da tela de notas recebidas. Datas (dia em que a nota chegou) no formato yyyy-MM-dd. */
 export interface FiltroNotas {
   empresaId?: number | null;
@@ -236,6 +326,10 @@ export interface FiltroNotas {
   situacao?: string;
   de?: string;
   ate?: string;
+  // Caixa de busca: NF, fornecedor, empresa ou CNPJ
+  busca?: string;
+  // Coluna, com "-" na frente para decrescente (ex.: "-valor")
+  ordem?: string;
   pagina?: number;
 }
 
@@ -304,6 +398,10 @@ export interface FiltroFalhas {
   etapa?: string;
   de?: string;
   ate?: string;
+  // Caixa de busca: NF, fornecedor, empresa ou CNPJ
+  busca?: string;
+  // Coluna, com "-" na frente para decrescente (ex.: "-data")
+  ordem?: string;
   pagina?: number;
 }
 
@@ -314,5 +412,169 @@ export const DESCRICAO_ETAPA: { [etapa: string]: string } = {
   RenovacaoToken: 'Renovação do acesso ao Bling',
   BuscaFornecedor: 'Busca do fornecedor no Bling',
   CadastroFornecedor: 'Cadastro do fornecedor no Bling',
+  ConferenciaBling: 'Conferência no Bling',
   LancamentoContaPagar: 'Lançamento da conta a pagar'
 };
+
+export type TipoAviso = 'NotaComProblema' | 'BlingDesconectado' | 'CaixaEmailFalhando' | 'ContasVencidas';
+
+/** Um problema em aberto que precisa de alguém (sininho do topo). */
+export interface Aviso {
+  id: number;
+  tipo: TipoAviso;
+  titulo: string;
+  mensagem: string;
+  // Rota do front, ex.: "/pages/notas-pendentes"
+  link: string;
+  clienteId: number;
+  clienteNome: string;
+  criadoEm: string;
+  // Ainda não visto por este usuário
+  novo: boolean;
+}
+
+export interface PainelAvisos {
+  novos: number;
+  total: number;
+  itens: Aviso[];
+}
+
+/** Resumo por e-mail da rede. dia: 0 = domingo ... 6 = sábado; 7 = todo dia útil (seg a sex); hora no horário de Brasília. */
+export interface ResumoSemanal {
+  ativo: boolean;
+  dia: number;
+  hora: number;
+  ultimoEnvioEm: string | null;
+  // Usuários ativos da rede que recebem
+  destinatarios: number;
+}
+
+export interface AlteracaoResumoSemanal {
+  ativo: boolean;
+  dia: number;
+  hora: number;
+}
+
+// ---------- Saúde das integrações (admin) ----------
+
+export interface SaudeCaixa {
+  usuario: string;
+  ultimaLeituraEm: string | null;
+  ultimaFalhaEm: string | null;
+  ultimoErro: string | null;
+  falhando: boolean;
+}
+
+export interface SaudeEmpresa {
+  id: number;
+  nome: string;
+  cnpj: string;
+  blingConectado: boolean;
+  tokenValidoAte: string | null;
+  ultimaSincronizacaoEm: string | null;
+  // Só para empresa com caixa de e-mail própria
+  caixa: SaudeCaixa | null;
+  notasAguardando: number;
+  notasComProblema: number;
+  avisosAbertos: number;
+}
+
+export interface SaudeRede {
+  clienteId: number;
+  nome: string;
+  contrato?: SituacaoContrato;
+  diasRestantesTeste?: number | null;
+  atencao: boolean;
+  avisosAbertos: number;
+  caixa: SaudeCaixa | null;
+  notasAguardando: number;
+  notasComProblema: number;
+  ultimaNotaEm: string | null;
+  empresas: SaudeEmpresa[];
+}
+
+export type SituacaoJobAgendado = 'Ok' | 'Falhou' | 'TentandoDeNovo' | 'Rodando' | 'NuncaRodou';
+
+export interface SaudeJob {
+  id: string;
+  nome: string;
+  situacao: SituacaoJobAgendado;
+  ultimaExecucaoEm: string | null;
+  proximaExecucaoEm: string | null;
+  erro: string | null;
+}
+
+export interface Saude {
+  geradoEm: string;
+  redesComAtencao: number;
+  jobs: SaudeJob[];
+  redes: SaudeRede[];
+}
+
+// ---------- Notas que chegaram só em PDF ----------
+
+export type SituacaoNotaSoPdf = 'BuscandoNaSefaz' | 'SemChave' | 'SemCertificado' | 'NaoResolvida';
+
+export const DESCRICAO_SITUACAO_SO_PDF: Record<SituacaoNotaSoPdf, string> = {
+  BuscandoNaSefaz: 'Buscando o XML na SEFAZ',
+  SemChave: 'Sem chave de acesso',
+  SemCertificado: 'Falta o certificado A1',
+  NaoResolvida: 'SEFAZ não devolveu o XML'
+};
+
+/** E-mail que trouxe a nota só em PDF, sem o XML. */
+export interface NotaSoPdf {
+  id: number;
+  recebidaEm: string;
+  remetente: string;
+  nomeRemetente: string;
+  assunto: string;
+  pdfNome: string;
+  empresaCaixaNome: string | null;
+  chaveAcesso: string | null;
+  // "nome do arquivo", "PDF", "assunto", "corpo do e-mail" ou "informada"
+  origemChave: string | null;
+  numeroNota: string | null;
+  cnpjFornecedor: string | null;
+  situacao: SituacaoNotaSoPdf;
+  motivo: string | null;
+  tentativasSefaz: number;
+  proximaTentativaEm: string | null;
+  cienciaEnviadaEm: string | null;
+  xmlPedidoEm: string | null;
+}
+
+export const UFS = ['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR',
+  'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'];
+
+/** Texto e cor do selo do contrato (Clientes, Saúde, detalhe do cliente). */
+export function seloContrato(contrato: SituacaoContrato | undefined, diasRestantes: number | null | undefined): { texto: string; classe: string } {
+  if (contrato === 'EmTeste') {
+    if (diasRestantes === 1) {
+      return { texto: 'Teste · último dia', classe: 'badge badge-warning' };
+    }
+    return { texto: 'Teste · faltam ' + (diasRestantes ?? 0) + ' dias', classe: 'badge badge-info' };
+  }
+  if (contrato === 'TesteEncerrado') {
+    return { texto: 'Teste encerrado', classe: 'badge badge-danger' };
+  }
+  return { texto: 'Contratado', classe: 'badge badge-success' };
+}
+
+/** Avisos de vencimento da rede: tolerância das vencidas (dias de atraso) e o e-mail diário de hoje e amanhã. */
+export interface AlertasVencimento {
+  avisoVencidasDias: number;
+  alertaDiarioAtivo: boolean;
+  alertaDiarioHora: number;
+}
+
+/** Conferência com o Bling da rede: evita lançar de novo a nota lançada à mão e fecha as pendentes encontradas lá. */
+export interface ConferenciaBling {
+  conferirAntesDeLancar: boolean;
+  exigeNumeroNota: boolean;
+  /** Diferença de valor aceita, em reais (0 a 5). */
+  toleranciaValor: number;
+  /** Diferença de vencimento aceita, em dias (0 a 5). */
+  toleranciaDias: number;
+  fecharPendentes: boolean;
+}

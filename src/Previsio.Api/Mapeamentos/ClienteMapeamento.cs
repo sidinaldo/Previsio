@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+using Previsio.Api.Contratos;
 using Previsio.Api.Dtos;
 using Previsio.Core.Entidades;
 
@@ -6,23 +6,12 @@ namespace Previsio.Api.Mapeamentos;
 
 public static class ClienteMapeamento
 {
-    /// <summary>
-    /// Mesma conversão de ParaDto, em forma que o EF traduz para SQL (só lê as colunas da tela).
-    /// </summary>
-    public static readonly Expression<Func<Cliente, ClienteDto>> Projecao = c => new ClienteDto
-    {
-        Id = c.Id,
-        Nome = c.Nome,
-        ImapHost = c.ImapHost,
-        ImapPorta = c.ImapPorta,
-        ImapSsl = c.ImapSsl,
-        ImapUsuario = c.ImapUsuario,
-        BlingClientId = c.BlingClientId,
-        BlingClientSecretCadastrado = c.BlingClientSecretProtegido != null && c.BlingClientSecretProtegido != "",
-        Ativo = c.Ativo
-    };
-
     public static ClienteDto ParaDto(Cliente cliente)
+    {
+        return ParaDto(cliente, DateTime.UtcNow);
+    }
+
+    public static ClienteDto ParaDto(Cliente cliente, DateTime agoraUtc)
     {
         var dto = new ClienteDto();
         dto.Id = cliente.Id;
@@ -33,6 +22,12 @@ public static class ClienteMapeamento
         dto.ImapUsuario = cliente.ImapUsuario;
         dto.BlingClientId = cliente.BlingClientId;
         dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(cliente.BlingClientSecretProtegido);
+        dto.Contrato = PeriodoTeste.Situacao(cliente, agoraUtc);
+        if (cliente.Contrato == SituacaoContrato.EmTeste && cliente.TesteTerminaEm.HasValue)
+        {
+            dto.TesteUltimoDia = PeriodoTeste.UltimoDia(cliente.TesteTerminaEm.Value);
+            dto.DiasRestantesTeste = PeriodoTeste.DiasRestantes(cliente.TesteTerminaEm.Value, agoraUtc);
+        }
         dto.Ativo = cliente.Ativo;
         return dto;
     }

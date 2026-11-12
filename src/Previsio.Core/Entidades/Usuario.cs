@@ -21,6 +21,14 @@ public class Usuario
     // (troca de senha, desativação).
     public string CarimboSeguranca { get; set; } = Guid.NewGuid().ToString("N");
 
+    // "Esqueci minha senha": hash (SHA-256) do token enviado por e-mail e até quando ele vale.
+    // O token em si nunca é gravado; um pedido novo substitui o anterior.
+    public string? RedefinicaoSenhaHash { get; set; }
+    public DateTime? RedefinicaoSenhaExpiraEm { get; set; }
+
+    // Quando abriu o sininho pela última vez: avisos criados depois disso contam como novos
+    public DateTime? AvisosVistosEm { get; set; }
+
     public bool Ativo { get; set; } = true;
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     public DateTime? UltimoAcessoEm { get; set; }

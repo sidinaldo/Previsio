@@ -88,7 +88,7 @@
             <div class="table-responsive">
               <table class="table">
                 <tbody>
-                  @for (dia of vencimentos(); track dia.data) {
+                  @for (dia of vencimentosDaPagina(); track dia.data) {
                     <tr>
                       <td>
                         <strong>{{ dia.data | date:'EEE, dd/MM' }}</strong>
@@ -100,6 +100,7 @@
                 </tbody>
               </table>
             </div>
+            <app-paginacao [total]="vencimentos().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" [tamanhos]="[]" />
           }
         </div>
       </div>

@@ -6,17 +6,18 @@ import { filter } from 'rxjs';
 
 import { Cliente } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { SininhoComponent } from '../sininho/sininho.component';
 
 /**
  * Barra do topo do layout admin.
  * Reproduz o comportamento do template sem jQuery, num botão só (à esquerda):
  * - no computador, recolhe o menu lateral (classe "sidebar-mini" no body)
  * - no celular, abre o menu por cima da tela (classe "nav-open" + camada escura)
- * Para o admin, mostra também a escolha do cliente exibido.
+ * Para o admin, mostra também a escolha do cliente exibido. À direita fica o sininho de avisos.
  */
 @Component({
   selector: 'app-navbar',
-  imports: [FormsModule],
+  imports: [FormsModule, SininhoComponent],
   templateUrl: './navbar.component.html'
 })
 export class NavbarComponent {

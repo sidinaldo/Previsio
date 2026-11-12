@@ -21,5 +21,8 @@ public enum EtapaFalha
     CadastroFornecedor = 4,
 
     // Criar a conta a pagar no Bling (POST /contas/pagar)
-    LancamentoContaPagar = 5
+    LancamentoContaPagar = 5,
+
+    // Conferir no Bling se a nota já foi lançada à mão (GET /contas/pagar)
+    ConferenciaBling = 6
 }

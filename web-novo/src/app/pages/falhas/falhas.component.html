@@ -17,6 +17,9 @@
       </div>
       <form (ngSubmit)="filtrar()">
         <div class="card-body">
+          <div class="pv-filtros__busca">
+            <app-busca [(valor)]="busca" placeholder="Buscar por NF, fornecedor, empresa ou CNPJ" />
+          </div>
           <div class="row">
             <div class="col-md-3 col-sm-6">
               <label for="falhas-empresa" class="col-form-label pt-0">Empresa</label>
@@ -100,11 +103,11 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Quando</th>
-                <th>Etapa</th>
-                <th>Nota</th>
-                <th>Empresa</th>
-                <th class="text-right">Valor</th>
+                <th pvColuna="data" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Quando</th>
+                <th pvColuna="etapa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Etapa</th>
+                <th pvColuna="nota" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Nota</th>
+                <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
+                <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
                 <th>Por que falhou</th>
                 <th>Endereço</th>
                 <th class="text-right">Detalhes</th>
@@ -217,21 +220,9 @@
           </table>
         </div>
 
-        @if (totalPaginas() > 1) {
-          <div class="pv-paginacao">
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() - 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'anterior'"
-                    [disabled]="pagina() <= 1 || carregando()">
-              <i class="material-icons" aria-hidden="true">chevron_left</i> Anterior
-            </button>
-            <span class="pv-paginacao__texto">Página {{ pagina() }} de {{ totalPaginas() }}</span>
-            <button type="button" class="btn btn-secundario btn-sm" (click)="irParaPagina(pagina() + 1)"
-                    [pvCarregando]="carregando() && acaoLista() === 'proxima'"
-                    [disabled]="pagina() >= totalPaginas() || carregando()">
-              Próxima <i class="material-icons" aria-hidden="true">chevron_right</i>
-            </button>
-          </div>
-        }
+        <!-- A API devolve uma página por vez, no tamanho dela: sem "Por página" -->
+        <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
+                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
       }
     </div>
 

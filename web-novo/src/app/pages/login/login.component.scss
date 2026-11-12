@@ -14,8 +14,9 @@
   color: #fff;
   background: var(--pv-menu);
 }
-.marca__logo { display: flex; align-items: baseline; gap: 8px; }
-.marca__nome { font-size: 24px; font-weight: 700; letter-spacing: -.2px; }
+.marca__logo { display: flex; align-items: center; gap: 12px; }
+.marca__simbolo { flex: 0 0 auto; width: 40px; height: 40px; }
+.marca__nome { font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
 .marca__assinatura { font-size: 13px; color: rgba(255, 255, 255, .72); }
 .marca__conteudo { max-width: 520px; }
 .marca__frase { margin: 0 0 32px; font-size: 32px; font-weight: 400; line-height: 1.25; color: #fff; }
@@ -90,6 +91,7 @@
   .login { flex-direction: column; background: var(--pv-fundo); }
   .marca { flex: none; padding: 16px 20px; }
   .marca__conteudo, .marca__rodape { display: none; }
+  .marca__simbolo { width: 32px; height: 32px; }
   .marca__nome { font-size: 20px; }
   .acesso { flex: 1 1 auto; align-items: flex-start; padding: 24px 16px; background: transparent; }
   .formulario {
@@ -97,3 +99,4 @@
     background: var(--pv-superficie); box-shadow: var(--pv-sombra-card);
   }
 }
+

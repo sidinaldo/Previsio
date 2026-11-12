@@ -33,6 +33,7 @@ public static class NotaMapeamento
         dto.ResolvidaManualmenteEm = nota.ResolvidaManualmenteEm;
         dto.ResolvidaManualmentePor = nota.ResolvidaManualmentePor;
         dto.ObservacaoResolucao = nota.ObservacaoResolucao;
+        dto.CaixaDeOutraEmpresa = CaixaDeOutraEmpresa(nota);
         return dto;
     }
 
@@ -62,6 +63,7 @@ public static class NotaMapeamento
         dto.ResolvidaManualmenteEm = nota.ResolvidaManualmenteEm;
         dto.ResolvidaManualmentePor = nota.ResolvidaManualmentePor;
         dto.ObservacaoResolucao = nota.ObservacaoResolucao;
+        dto.CaixaDeOutraEmpresa = CaixaDeOutraEmpresa(nota);
 
         List<ParcelaNota> parcelas = nota.Parcelas
             .OrderBy(p => p.Vencimento)
@@ -81,5 +83,21 @@ public static class NotaMapeamento
             dto.Parcelas.Add(parcelaDto);
         }
         return dto;
+    }
+
+    /// <summary>
+    /// A nota chegou na caixa própria de uma empresa, mas o CNPJ do XML é de outra (ou de nenhuma).
+    /// </summary>
+    public static string? CaixaDeOutraEmpresa(NotaFiscal nota)
+    {
+        if (nota.EmpresaCaixaId == null || nota.EmpresaCaixa == null)
+        {
+            return null;
+        }
+        if (nota.EmpresaId == nota.EmpresaCaixaId)
+        {
+            return null;
+        }
+        return nota.EmpresaCaixa.Nome;
     }
 }

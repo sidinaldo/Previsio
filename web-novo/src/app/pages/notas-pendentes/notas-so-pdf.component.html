@@ -1,0 +1,130 @@
+@if (notas().length > 0 || mensagem() || erro()) {
+  <div class="card pv-so-pdf">
+    <div class="pv-card__cabecalho">
+      <div>
+        <h2 class="pv-card__titulo">Notas que chegaram só em PDF</h2>
+        <p class="pv-card__descricao">
+          Sem o XML, a nota não vai sozinha para o Bling. O Previsio busca o XML na SEFAZ pela chave de acesso;
+          as que não der para buscar ficam aqui para resolver.
+        </p>
+      </div>
+    </div>
+
+    @if (mensagem() || erro()) {
+      <div class="card-body pb-0">
+        @if (mensagem()) {
+          <div class="alert alert-info" role="status"><span>{{ mensagem() }}</span></div>
+        }
+        @if (erro()) {
+          <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+        }
+      </div>
+    }
+
+    @if (notas().length > 0) {
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fornecedor (e-mail)</th>
+              <th>NF</th>
+              <th>Recebida</th>
+              <th>Situação</th>
+              <th class="text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (nota of notas(); track nota.id) {
+              <tr>
+                <td>
+                  <strong>{{ fornecedor(nota) }}</strong>
+                  <span class="pv-tabela__auxiliar">{{ nota.assunto || nota.remetente }}</span>
+                  @if (nota.empresaCaixaNome) {
+                    <span class="pv-tabela__auxiliar">Caixa de {{ nota.empresaCaixaNome }}</span>
+                  }
+                </td>
+                <td class="pv-numero">
+                  @if (nota.numeroNota) {
+                    <strong>{{ nota.numeroNota }}</strong>
+                    @if (nota.cnpjFornecedor) {
+                      <span class="pv-tabela__auxiliar">{{ formatarCnpj(nota.cnpjFornecedor) }}</span>
+                    }
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="pv-numero">{{ nota.recebidaEm | date:'dd/MM HH:mm' }}</td>
+                <td>
+                  <span [class]="classe(nota)">{{ descricao(nota) }}</span>
+                  @if (nota.motivo) {
+                    <span class="pv-tabela__auxiliar pv-tabela__auxiliar--quebra">{{ nota.motivo }}</span>
+                  }
+                  @if (nota.xmlPedidoEm) {
+                    <span class="pv-tabela__auxiliar">XML pedido ao fornecedor em {{ nota.xmlPedidoEm | date:'dd/MM HH:mm' }}</span>
+                  }
+                </td>
+                <td class="text-right">
+                  <div class="pv-acoes-linha">
+                    <button type="button" class="pv-botao-icone" title="Anexar o XML" aria-label="Anexar o XML da nota"
+                            [attr.aria-expanded]="abertaId() === nota.id && acao() === 'xml'" (click)="abrir(nota, 'xml')">
+                      <i class="material-icons" aria-hidden="true">upload_file</i>
+                    </button>
+                    <app-menu-acoes [rotulo]="'Mais ações para a nota de ' + fornecedor(nota)">
+                      <button type="button" class="pv-acoes__item" (click)="verPdf(nota)">
+                        <i class="material-icons" aria-hidden="true">picture_as_pdf</i> Ver o PDF
+                      </button>
+                      <button type="button" class="pv-acoes__item" (click)="abrir(nota, 'chave')">
+                        <i class="material-icons" aria-hidden="true">key</i> Informar a chave de acesso
+                      </button>
+                      <button type="button" class="pv-acoes__item" (click)="pedirXml(nota)" [disabled]="ocupadoId() === nota.id">
+                        <i class="material-icons" aria-hidden="true">forward_to_inbox</i> Pedir o XML ao fornecedor
+                      </button>
+                      <button type="button" class="pv-acoes__item" (click)="abrir(nota, 'lancada')">
+                        <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no Bling
+                      </button>
+                    </app-menu-acoes>
+                  </div>
+                </td>
+              </tr>
+              @if (abertaId() === nota.id) {
+                <tr class="pv-tabela__detalhe">
+                  <td colspan="5">
+                    <div class="pv-so-pdf__acao">
+                      @if (acao() === 'xml') {
+                        <label class="pv-rotulo" for="so-pdf-xml-{{ nota.id }}">Arquivo .xml da nota</label>
+                        <input id="so-pdf-xml-{{ nota.id }}" type="file" accept=".xml,text/xml,application/xml" (change)="escolherArquivo($event)">
+                        <div class="pv-so-pdf__botoes">
+                          <button type="button" class="btn btn-info btn-sm" [pvCarregando]="ocupadoId() === nota.id"
+                                  [disabled]="ocupadoId() === nota.id || !arquivoXml()" (click)="anexarXml(nota)">Anexar XML</button>
+                          <button type="button" class="btn btn-secundario btn-sm" (click)="fechar()">Cancelar</button>
+                        </div>
+                      } @else if (acao() === 'chave') {
+                        <label class="pv-rotulo" for="so-pdf-chave-{{ nota.id }}">Chave de acesso (44 dígitos, impressa no DANFE)</label>
+                        <input id="so-pdf-chave-{{ nota.id }}" type="text" class="pv-campo pv-campo--texto pv-entrada-codigo pv-so-pdf__chave" inputmode="numeric"
+                               autocomplete="off" [value]="chave()" (input)="mudarChave($event)">
+                        <div class="pv-so-pdf__botoes">
+                          <button type="button" class="btn btn-info btn-sm" [pvCarregando]="ocupadoId() === nota.id"
+                                  [disabled]="ocupadoId() === nota.id" (click)="informarChave(nota)">Buscar na SEFAZ</button>
+                          <button type="button" class="btn btn-secundario btn-sm" (click)="fechar()">Cancelar</button>
+                        </div>
+                      } @else {
+                        <label class="pv-rotulo" for="so-pdf-obs-{{ nota.id }}">Observação (opcional)</label>
+                        <input id="so-pdf-obs-{{ nota.id }}" type="text" class="pv-campo pv-campo--texto pv-so-pdf__chave" maxlength="500"
+                               placeholder="Ex.: lançada como conta 4512 no Bling" [value]="observacao()" (input)="mudarObservacao($event)">
+                        <div class="pv-so-pdf__botoes">
+                          <button type="button" class="btn btn-info btn-sm" [pvCarregando]="ocupadoId() === nota.id"
+                                  [disabled]="ocupadoId() === nota.id" (click)="marcarLancada(nota)">Já lancei no Bling</button>
+                          <button type="button" class="btn btn-secundario btn-sm" (click)="fechar()">Cancelar</button>
+                        </div>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}

@@ -39,6 +39,14 @@ async function montar() {
   fixture.autoDetectChanges();
   const api = TestBed.inject(HttpTestingController);
   api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
+  api.expectOne(`${API}/clientes/7`).flush({
+    id: 7, nome: 'Rede', imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@rede.com.br',
+    blingClientId: null, blingClientSecretCadastrado: false, ativo: true
+  });
+  // Cards do fim da tela: conferência com o Bling, avisos de vencimento e resumo por e-mail
+  api.expectOne(`${API}/clientes/7/conferencia-bling`).flush({ conferirAntesDeLancar: true, exigeNumeroNota: false, toleranciaValor: 0.1, toleranciaDias: 0, fecharPendentes: true });
+  api.expectOne(`${API}/clientes/7/alertas-vencimento`).flush({ avisoVencidasDias: 1, alertaDiarioAtivo: true, alertaDiarioHora: 7 });
+  api.expectOne(`${API}/clientes/7/resumo-semanal`).flush({ ativo: true, dia: 1, hora: 7, ultimoEnvioEm: null, destinatarios: 1 });
   await fixture.whenStable();
   return { fixture, api, tela: fixture.nativeElement as HTMLElement };
 }
@@ -58,7 +66,7 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
     expect(tela.querySelector('tr.pv-linha--editando')!.textContent).toContain('Loja Norte');
   });
 
-  it('Salvar altera a empresa escolhida (PUT) e volta para o cadastro de uma nova', async () => {
+  it('Salvar altera a empresa escolhida (PUT) e fecha o formulário', async () => {
     const { fixture, api, tela } = await montar();
     const componente = fixture.componentInstance;
     componente.editar(EMPRESAS[1]);
@@ -73,7 +81,8 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
 
     expect(componente.editando()).toBeNull();
     expect(componente.nome()).toBe('');
-    expect(tela.querySelector('.pv-card__titulo')!.textContent).toContain('Nova empresa');
+    // Depois de salvar o formulário fecha e a tela volta para a lista
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
     expect(tela.textContent).toContain('Loja Norte Shopping');
     expect(tela.textContent).toContain('Empresa alterada.');
   });
@@ -152,7 +161,7 @@ describe('EmpresasComponent: e-mail próprio da empresa', () => {
 
   it('a tabela mostra de onde vêm o e-mail e o aplicativo do Bling', async () => {
     const { tela } = await montar();
-    expect(tela.textContent).toContain('E-mail da rede');
+    expect(tela.textContent).toContain('Caixa da rede');
     expect(tela.textContent).toContain('Aplicativo padrão');
   });
 });
@@ -203,3 +212,75 @@ describe('EmpresasComponent: conectar o Bling numa janela separada', () => {
     expect(tela.textContent).toContain('Conta Bling conectada');
   });
 });
+
+describe('EmpresasComponent: coluna E-mail', () => {
+  it('mostra a caixa da rede para quem não tem caixa própria e a própria para quem tem', async () => {
+    const { fixture, api, tela } = await montar();
+    const linhas = tela.querySelectorAll('tbody tr');
+    expect(linhas[0].textContent).toContain('notas@rede.com.br');
+    expect(linhas[0].textContent).toContain('Caixa da rede');
+
+    const comCaixaPropria: Empresa[] = [{ ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'filial@loja.com.br' }, EMPRESAS[1]];
+    fixture.componentInstance.carregar();
+    api.expectOne(`${API}/clientes/7/empresas`).flush(comCaixaPropria);
+    await fixture.whenStable();
+    const primeira = tela.querySelectorAll('tbody tr')[0];
+    expect(primeira.textContent).toContain('filial@loja.com.br');
+    expect(primeira.textContent).toContain('Caixa própria');
+  });
+});
+
+describe('EmpresasComponent: formulário fechado por padrão', () => {
+  it('com empresas cadastradas, abre só em "Nova empresa" e fecha em Cancelar', async () => {
+    const { fixture, tela } = await montar();
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
+
+    const botao = Array.from(tela.querySelectorAll<HTMLButtonElement>('.pv-pagina__acoes button'))
+      .find(b => b.textContent!.includes('Nova empresa'))!;
+    botao.click();
+    await fixture.whenStable();
+    expect(tela.querySelector('#previsio-nome')).not.toBeNull();
+    expect(tela.querySelector('.pv-opcional[open]')).toBeNull();
+
+    fixture.componentInstance.cancelarEdicao();
+    await fixture.whenStable();
+    expect(tela.querySelector('#previsio-nome')).toBeNull();
+  });
+
+  it('editar empresa com caixa própria abre o bloco do e-mail', async () => {
+    const { fixture, tela } = await montar();
+    fixture.componentInstance.editar({ ...EMPRESAS[0], emailProprio: true, imapHost: 'imap.gmail.com', imapUsuario: 'c@r.com' });
+    await fixture.whenStable();
+    const abertos = tela.querySelectorAll('.pv-opcional[open] summary');
+    expect(abertos.length).toBe(1);
+    expect(abertos[0].textContent).toContain('Caixa de e-mail própria');
+  });
+});
+
+describe('EmpresasComponent: busca e ordenação', () => {
+  it('a busca filtra pelo CNPJ com pontuação e o cabeçalho inverte a ordem', async () => {
+    const { fixture, tela } = await montar();
+    const componente = fixture.componentInstance;
+
+    // Começa por nome, A a Z
+    let nomes = Array.from(tela.querySelectorAll('tbody tr td:first-child strong')).map(e => e.textContent);
+    expect(nomes).toEqual(['Loja Centro', 'Loja Norte']);
+
+    const cabecalho = tela.querySelector<HTMLButtonElement>('th.pv-th-ordenavel .pv-coluna')!;
+    cabecalho.click();
+    await fixture.whenStable();
+    nomes = Array.from(tela.querySelectorAll('tbody tr td:first-child strong')).map(e => e.textContent);
+    expect(nomes).toEqual(['Loja Norte', 'Loja Centro']);
+    expect(tela.querySelector('th.pv-th-ordenavel')!.getAttribute('aria-sort')).toBe('descending');
+
+    componente.mudarBusca('11.222.333/0002');
+    await fixture.whenStable();
+    expect(tela.querySelectorAll('tbody tr').length).toBe(1);
+    expect(tela.querySelector('tbody tr')!.textContent).toContain('Loja Norte');
+
+    componente.mudarBusca('nenhuma');
+    await fixture.whenStable();
+    expect(tela.textContent).toContain('Nenhum resultado para "nenhuma"');
+  });
+});
+

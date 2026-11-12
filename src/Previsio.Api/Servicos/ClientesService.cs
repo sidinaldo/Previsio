@@ -26,10 +26,11 @@ public class ClientesService
 
     public async Task<List<ClienteDto>> ListarAsync(CancellationToken cancelamento)
     {
-        return await _clientes.ConsultarSomenteLeitura()
+        List<Cliente> clientes = await _clientes.ConsultarSomenteLeitura()
             .OrderBy(c => c.Nome)
-            .Select(ClienteMapeamento.Projecao)
             .ToListAsync(cancelamento);
+        DateTime agora = DateTime.UtcNow;
+        return clientes.Select(c => ClienteMapeamento.ParaDto(c, agora)).ToList();
     }
 
     public async Task<Resultado<ClienteDto>> ObterAsync(int clienteId, CancellationToken cancelamento)
@@ -71,6 +72,12 @@ public class ClientesService
             }
             cliente.BlingClientId = clientId;
             cliente.BlingClientSecretProtegido = _protetor.Proteger(clientSecret);
+        }
+
+        if (dados.EmTeste)
+        {
+            cliente.Contrato = SituacaoContrato.EmTeste;
+            cliente.TesteTerminaEm = Contratos.PeriodoTeste.Termino(RelogioBrasil.Hoje(), Contratos.PeriodoTeste.DiasPadrao);
         }
 
         _clientes.Adicionar(cliente);

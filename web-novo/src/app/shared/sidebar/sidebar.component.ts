@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MENU, itensVisiveis } from './menu';
 import { PERFIL_ADMIN } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { SimboloComponent } from '../simbolo/simbolo.component';
 
 /**
  * Menu lateral: logotipo, telas (direto no menu, cada uma com ícone) e,
@@ -11,7 +12,7 @@ import { SessaoService } from '../../core/sessao.service';
  */
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, SimboloComponent],
   templateUrl: './sidebar.component.html'
 })
 export class SidebarComponent {

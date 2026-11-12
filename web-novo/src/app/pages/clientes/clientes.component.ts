@@ -1,14 +1,19 @@
-import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { ClientesService } from '../../core/clientes.service';
 import { mensagemDaApi } from '../../core/mensagem-erro';
-import { AlteracaoCliente, Cliente } from '../../core/previsio.models';
+import { AlteracaoCliente, Cliente, seloContrato } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { BuscaComponent } from '../../shared/busca/busca.component';
+import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
+import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 /**
  * Cadastro de clientes (só admin). Cada cliente é uma rede: tem a própria caixa de e-mail,
@@ -17,7 +22,7 @@ import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component
  */
 @Component({
   selector: 'app-clientes',
-  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective],
+  imports: [FormsModule, RouterLink, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {
@@ -28,12 +33,33 @@ export class ClientesComponent {
   private readonly injector = inject(Injector);
 
   readonly lista = this.clientes.lista;
+
+  // Paginação da tabela (a API devolve a lista inteira)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  // Caixa de busca e ordenação por coluna, aplicadas aqui (a API devolve a lista inteira)
+  readonly busca = signal('');
+  readonly ordenacao = signal<Ordenacao | null>({ coluna: 'nome', decrescente: false });
+  readonly clientesFiltrados = computed(() => {
+    const termo = this.busca();
+    return this.lista().filter(item => combinaComBusca(termo, [item.nome, item.imapUsuario, item.imapHost]));
+  });
+  readonly clientesOrdenados = computed(() => ordenarLista(this.clientesFiltrados(), this.ordenacao(), {
+    nome: item => item.nome,
+    email: item => item.imapUsuario,
+    situacao: item => item.ativo ? 0 : 1,
+    // Teste encerrado primeiro, depois os testes com menos dias, por fim os contratados
+    contrato: item => ordemContrato(item)
+  }));
+  readonly clientesDaPagina = computed(() => paginar(this.clientesOrdenados(), this.pagina(), this.tamanhoPagina()));
   readonly clienteExibido = this.sessao.clienteId;
 
   readonly nome = signal('');
   readonly imapHost = signal('imap.gmail.com');
   readonly imapPorta = signal<number | null>(993);
   readonly imapSsl = signal(true);
+  // Rede nova começa no teste grátis (o admin desmarca quando já fechou contrato)
+  readonly emTeste = signal(true);
   readonly imapUsuario = signal('');
   readonly imapSenha = signal('');
   readonly enviando = signal(false);
@@ -43,10 +69,19 @@ export class ClientesComponent {
   // Cliente sendo alterado no formulário; null = cadastro de um novo
   readonly editando = signal<Cliente | null>(null);
 
+  // O formulário fica fechado e abre em "Cadastro rápido" ou "Editar";
+  // sem nenhum cliente cadastrado ele já aparece aberto
+  readonly formularioAberto = signal(false);
+  readonly mostrarFormulario = computed(() => this.formularioAberto() || this.lista().length === 0);
+
   private readonly cartaoFormulario = viewChild<ElementRef<HTMLElement>>('cartaoFormulario');
   private readonly campoNome = viewChild<ElementRef<HTMLInputElement>>('campoNome');
 
   /** Envio do formulário: altera o cliente em edição ou cadastra um novo. */
+  selo(cliente: Cliente): { texto: string; classe: string } {
+    return seloContrato(cliente.contrato, cliente.diasRestantesTeste);
+  }
+
   salvar(): void {
     const cliente = this.editando();
     if (cliente !== null) {
@@ -86,7 +121,8 @@ export class ClientesComponent {
       imapPorta: porta,
       imapSsl: this.imapSsl(),
       imapUsuario: usuario,
-      imapSenha: senha
+      imapSenha: senha,
+      emTeste: this.emTeste()
     }).subscribe({
       next: () => {
         // O cliente novo já está escolhido: o próximo passo é cadastrar as empresas dele
@@ -99,7 +135,29 @@ export class ClientesComponent {
     });
   }
 
-  // ---------- edição no formulário do topo ----------
+  // ---------- formulário do topo: cadastro rápido ou edição ----------
+
+  /** "Cadastro rápido": abre o formulário vazio (sem o assistente de implantação). */
+  abrirNovo(): void {
+    this.erro.set('');
+    this.mensagem.set('');
+    this.limparFormulario();
+    this.formularioAberto.set(true);
+    this.focarFormulario();
+  }
+
+  private focarFormulario(): void {
+    afterNextRender(() => {
+      const cartao = this.cartaoFormulario();
+      if (cartao) {
+        cartao.nativeElement.scrollIntoView({ block: 'start' });
+      }
+      const campo = this.campoNome();
+      if (campo) {
+        campo.nativeElement.focus({ preventScroll: true });
+      }
+    }, { injector: this.injector });
+  }
 
   /** Preenche o formulário com o cliente e leva a tela até ele. A senha fica em branco (mantém a atual). */
   editar(cliente: Cliente): void {
@@ -112,17 +170,8 @@ export class ClientesComponent {
     this.imapSsl.set(cliente.imapSsl);
     this.imapUsuario.set(cliente.imapUsuario);
     this.imapSenha.set('');
-
-    afterNextRender(() => {
-      const cartao = this.cartaoFormulario();
-      if (cartao) {
-        cartao.nativeElement.scrollIntoView({ block: 'start' });
-      }
-      const campo = this.campoNome();
-      if (campo) {
-        campo.nativeElement.focus({ preventScroll: true });
-      }
-    }, { injector: this.injector });
+    this.formularioAberto.set(true);
+    this.focarFormulario();
   }
 
   estaEditando(cliente: Cliente): boolean {
@@ -182,7 +231,9 @@ export class ClientesComponent {
     });
   }
 
+  // Também fecha o formulário: depois de salvar ou cancelar a tela volta para a lista
   private limparFormulario(): void {
+    this.formularioAberto.set(false);
     this.editando.set(null);
     this.nome.set('');
     this.imapHost.set('imap.gmail.com');
@@ -196,4 +247,26 @@ export class ClientesComponent {
     this.sessao.escolherCliente(cliente.id);
     this.router.navigate(['/pages/empresas']);
   }
+
+  /** Clique no cabeçalho: ordena pela coluna e volta para a primeira página. */
+  ordenarPor(coluna: string): void {
+    this.ordenacao.set(alternarOrdenacao(this.ordenacao(), coluna));
+    this.pagina.set(1);
+  }
+
+  /** Nova busca volta para a primeira página. */
+  mudarBusca(texto: string): void {
+    this.busca.set(texto);
+    this.pagina.set(1);
+  }
+}
+
+function ordemContrato(cliente: Cliente): number {
+  if (cliente.contrato === 'TesteEncerrado') {
+    return -1;
+  }
+  if (cliente.contrato === 'EmTeste') {
+    return cliente.diasRestantesTeste ?? 0;
+  }
+  return 1000;
 }

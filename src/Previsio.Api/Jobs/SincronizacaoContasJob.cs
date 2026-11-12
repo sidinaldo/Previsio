@@ -1,7 +1,11 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Previsio.Api.Conferencia;
+using Previsio.Api.Contratos;
 using Previsio.Api.Excecoes;
 using Previsio.Api.Servicos;
+using Previsio.Api.Sincronizacao;
 using Previsio.Bling;
 using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
@@ -12,26 +16,27 @@ namespace Previsio.Api.Jobs;
 /// <summary>
 /// Traz as contas a pagar de cada conta Bling para o banco do Previsio.
 /// Inclui as lançadas à mão pela equipe, para o painel mostrar o total real.
+/// Janela e frequência vêm da seção "Sincronizacao" do appsettings.
 /// </summary>
 public class SincronizacaoContasJob
 {
-    private const int DiasPassados = 30;
-    private const int DiasFuturos = 90;
-
     private readonly PrevisioDbContext _db;
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
+    private readonly SincronizacaoOptions _opcoes;
     private readonly ILogger<SincronizacaoContasJob> _logger;
 
     public SincronizacaoContasJob(
         PrevisioDbContext db,
         BlingClient bling,
         TokenBlingService tokens,
+        IOptions<SincronizacaoOptions> opcoes,
         ILogger<SincronizacaoContasJob> logger)
     {
         _db = db;
         _bling = bling;
         _tokens = tokens;
+        _opcoes = opcoes.Value;
         _logger = logger;
     }
 
@@ -39,8 +44,12 @@ public class SincronizacaoContasJob
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecutarAsync(CancellationToken cancelamento)
     {
+        List<int> redes = await _db.Clientes
+            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
+            .Select(c => c.Id)
+            .ToListAsync(cancelamento);
         List<Empresa> empresas = await _db.Empresas
-            .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null)
+            .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null && redes.Contains(e.ClienteId))
             .ToListAsync(cancelamento);
 
         foreach (Empresa empresa in empresas)
@@ -87,8 +96,8 @@ public class SincronizacaoContasJob
 
         DateTime hoje = RelogioBrasil.Hoje();
         var filtro = new FiltroContasPagar();
-        filtro.VencimentoInicial = hoje.AddDays(-DiasPassados);
-        filtro.VencimentoFinal = hoje.AddDays(DiasFuturos);
+        filtro.VencimentoInicial = hoje.AddDays(-_opcoes.DiasPassadosValidos());
+        filtro.VencimentoFinal = hoje.AddDays(_opcoes.DiasFuturosValidos());
 
         List<ContaPagarBling> remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
 
@@ -105,6 +114,7 @@ public class SincronizacaoContasJob
         }
 
         var idsRecebidos = new HashSet<long>();
+        var atuais = new List<ContaPagarSincronizada>();
         DateTime agora = DateTime.UtcNow;
 
         foreach (ContaPagarBling remota in remotas)
@@ -136,6 +146,7 @@ public class SincronizacaoContasJob
                 local.BlingContatoId = remota.Contato.Id;
             }
             local.SincronizadaEm = agora;
+            atuais.Add(local);
         }
 
         // Contas que sumiram do Bling dentro da janela foram excluídas lá
@@ -147,10 +158,24 @@ public class SincronizacaoContasJob
             }
         }
 
+        // Nome do fornecedor: da nota ligada ou do contato do Bling (guardado)
+        var fornecedores = new FornecedoresBlingService(_db, _bling, _logger);
+        int contatosBuscados = await fornecedores.PreencherNomesAsync(
+            empresa, conta, token, atuais, _opcoes.DiasRenovarFornecedorValidos(), agora, cancelamento);
+        if (contatosBuscados > 0)
+        {
+            _logger.LogInformation("Empresa {Empresa}: {Quantidade} fornecedores buscados no Bling",
+                empresa.Nome, contatosBuscados);
+        }
+
         empresa.UltimaSincronizacaoEm = agora;
         await _db.SaveChangesAsync(cancelamento);
 
         _logger.LogInformation("Empresa {Empresa}: {Quantidade} contas a pagar sincronizadas",
             empresa.Nome, remotas.Count);
+
+        // Com as contas em dia: as notas pendentes que alguém já lançou à mão fecham sozinhas
+        var conferencia = new ConferenciaBlingService(_db, _bling);
+        await conferencia.FecharPendentesAsync(empresa, conta, token, cancelamento);
     }
 }

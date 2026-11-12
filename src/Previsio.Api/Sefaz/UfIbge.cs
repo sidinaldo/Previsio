@@ -1,0 +1,34 @@
+namespace Previsio.Api.Sefaz;
+
+/// <summary>
+/// Código IBGE de cada UF, usado pela SEFAZ (cUFAutor).
+/// </summary>
+public static class UfIbge
+{
+    private static readonly Dictionary<string, string> Codigos = new Dictionary<string, string>
+    {
+        { "RO", "11" }, { "AC", "12" }, { "AM", "13" }, { "RR", "14" }, { "PA", "15" }, { "AP", "16" }, { "TO", "17" },
+        { "MA", "21" }, { "PI", "22" }, { "CE", "23" }, { "RN", "24" }, { "PB", "25" }, { "PE", "26" }, { "AL", "27" },
+        { "SE", "28" }, { "BA", "29" }, { "MG", "31" }, { "ES", "32" }, { "RJ", "33" }, { "SP", "35" }, { "PR", "41" },
+        { "SC", "42" }, { "RS", "43" }, { "MS", "50" }, { "MT", "51" }, { "GO", "52" }, { "DF", "53" }
+    };
+
+    public static bool Valida(string? sigla)
+    {
+        if (sigla == null)
+        {
+            return false;
+        }
+        return Codigos.ContainsKey(sigla.Trim().ToUpperInvariant());
+    }
+
+    public static string Codigo(string sigla)
+    {
+        return Codigos[sigla.Trim().ToUpperInvariant()];
+    }
+
+    public static List<string> Siglas()
+    {
+        return Codigos.Keys.OrderBy(s => s).ToList();
+    }
+}

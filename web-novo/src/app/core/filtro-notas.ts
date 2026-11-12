@@ -20,6 +20,12 @@ export function parametrosDasNotas(filtro: FiltroNotas): HttpParams {
   if (filtro.ate) {
     params = params.set('ate', filtro.ate);
   }
+  if (filtro.busca && filtro.busca.trim() !== '') {
+    params = params.set('busca', filtro.busca.trim());
+  }
+  if (filtro.ordem) {
+    params = params.set('ordem', filtro.ordem);
+  }
   if (filtro.pagina && filtro.pagina > 1) {
     params = params.set('pagina', String(filtro.pagina));
   }

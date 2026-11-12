@@ -6,6 +6,13 @@
         <h1 class="pv-pagina__titulo">Usuários</h1>
         <p class="pv-pagina__subtitulo">Quem entra no painel e de qual cliente</p>
       </div>
+      @if (!formularioAberto()) {
+        <div class="pv-pagina__acoes">
+          <button type="button" class="btn btn-info" (click)="abrirNovo()">
+            <i class="material-icons" aria-hidden="true">person_add</i> Novo usuário
+          </button>
+        </div>
+      }
     </div>
 
     @if (mensagem()) {
@@ -15,7 +22,8 @@
       <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
     }
 
-    <!-- O mesmo formulário cadastra um usuário novo ou altera o escolhido em "Editar" -->
+    <!-- Fechado por padrão: abre em "+ Novo usuário" ou "Editar". O mesmo formulário cadastra ou altera -->
+    @if (formularioAberto()) {
     <div #cartaoFormulario class="card" [class.pv-card--editando]="editando() !== null">
       <div class="pv-card__cabecalho">
         <div>
@@ -28,66 +36,55 @@
         </div>
       </div>
       <form (ngSubmit)="salvar()">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group bmd-form-group">
-                <label for="usuario-nome" class="bmd-label-floating">Nome</label>
-                <input #campoNome id="usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
-              </div>
+        <div class="card-body pv-formulario">
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo">
+              <label for="usuario-nome" class="bmd-label-floating">Nome</label>
+              <input #campoNome id="usuario-nome" type="text" class="form-control" name="nome" [(ngModel)]="nome">
             </div>
-            <div class="col-md-4">
-              <div class="form-group bmd-form-group">
-                <label for="usuario-email" class="bmd-label-floating">E-mail</label>
-                <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email"
-                       [readonly]="editando() !== null">
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group bmd-form-group">
-                <label for="usuario-senha" class="bmd-label-floating">
-                  @if (editando()) {
-                    Nova senha (em branco mantém a atual)
-                  } @else {
-                    Senha provisória (mínimo 8 caracteres)
-                  }
-                </label>
-                <input id="usuario-senha" type="password" class="form-control" name="senha" autocomplete="new-password"
-                       [(ngModel)]="senha">
-              </div>
+            <div class="form-group pv-formulario__campo">
+              <label for="usuario-email" class="bmd-label-floating">E-mail</label>
+              <input id="usuario-email" type="email" class="form-control" name="email" autocomplete="off" [(ngModel)]="email"
+                     [readonly]="editando() !== null">
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group bmd-form-group">
-                <label for="usuario-perfil" class="bmd-label-floating">Perfil</label>
-                <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)"
-                        [disabled]="editando() !== null">
-                  <option [value]="perfilCliente">Cliente</option>
-                  <option [value]="perfilAdmin">Admin</option>
-                </select>
-              </div>
+          <div class="pv-formulario__linha">
+            <div class="form-group pv-formulario__campo pv-formulario__campo--perfil">
+              <label for="usuario-perfil" class="bmd-label-floating">Perfil</label>
+              <select id="usuario-perfil" class="form-control" name="perfil" [ngModel]="perfil()" (ngModelChange)="trocarPerfil($event)"
+                      [disabled]="editando() !== null">
+                <option [value]="perfilCliente">Cliente</option>
+                <option [value]="perfilAdmin">Admin</option>
+              </select>
             </div>
             @if (perfil() === perfilCliente) {
-              <div class="col-md-4">
-                <div class="form-group bmd-form-group">
-                  <label for="usuario-cliente" class="bmd-label-floating">Cliente</label>
-                  <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId"
-                          [disabled]="editando() !== null">
-                    <option [ngValue]="null"></option>
-                    @for (cliente of clientes(); track cliente.id) {
-                      <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
-                    }
-                  </select>
-                </div>
+              <div class="form-group pv-formulario__campo">
+                <label for="usuario-cliente" class="bmd-label-floating">Cliente</label>
+                <select id="usuario-cliente" class="form-control" name="clienteId" [(ngModel)]="clienteId"
+                        [disabled]="editando() !== null">
+                  <option [ngValue]="null"></option>
+                  @for (cliente of clientes(); track cliente.id) {
+                    <option [ngValue]="cliente.id">{{ cliente.nome }}</option>
+                  }
+                </select>
               </div>
             }
+            <div class="form-group pv-formulario__campo">
+              <label for="usuario-senha" class="bmd-label-floating">
+                @if (editando()) {
+                  Nova senha (em branco mantém a atual)
+                } @else {
+                  Senha provisória (mínimo 8 caracteres)
+                }
+              </label>
+              <input id="usuario-senha" type="password" class="form-control" name="senha" autocomplete="new-password"
+                     [(ngModel)]="senha">
+            </div>
           </div>
         </div>
         <div class="pv-formulario__acoes">
           @if (editando(); as u) {
             <button type="submit" class="btn btn-info" [pvCarregando]="processandoId() === u.id" [disabled]="processandoId() === u.id">Salvar alterações</button>
-            <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
           } @else {
             <button type="submit" class="btn btn-info" [pvCarregando]="enviando()" [disabled]="enviando()">
               @if (enviando()) {
@@ -97,9 +94,11 @@
               }
             </button>
           }
+          <button type="button" class="btn btn-secundario" (click)="cancelarEdicao()">Cancelar</button>
         </div>
       </form>
     </div>
+    }
 
     <div class="card">
       <div class="pv-card__cabecalho">
@@ -107,6 +106,7 @@
           <h2 class="pv-card__titulo">Usuários</h2>
           <p class="pv-card__descricao">{{ usuarios().length }} usuários cadastrados</p>
         </div>
+        <app-busca [valor]="busca()" (valorChange)="mudarBusca($event)" placeholder="Buscar por nome, e-mail ou cliente" />
       </div>
       @if (usuarios().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
@@ -118,17 +118,17 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Nome</th>
-                <th>E-mail</th>
-                <th>Perfil</th>
-                <th>Cliente</th>
-                <th>Situação</th>
-                <th>Último acesso</th>
+                <th pvColuna="nome" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Nome</th>
+                <th pvColuna="email" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">E-mail</th>
+                <th pvColuna="perfil" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Perfil</th>
+                <th pvColuna="cliente" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Cliente</th>
+                <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
+                <th pvColuna="acesso" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Último acesso</th>
                 <th class="text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              @for (usuario of usuarios(); track usuario.id) {
+              @for (usuario of usuariosDaPagina(); track usuario.id) {
                 <tr [class.pv-linha--inativa]="!usuario.ativo" [class.pv-linha--editando]="estaEditando(usuario)">
                   <td>
                     <strong>{{ usuario.nome }}</strong>
@@ -184,6 +184,10 @@
             </tbody>
           </table>
         </div>
+        @if (usuariosFiltrados().length === 0) {
+          <p class="pv-sem-resultado">Nenhum resultado para "{{ busca() }}".</p>
+        }
+        <app-paginacao [total]="usuariosFiltrados().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
     </div>
   </div>

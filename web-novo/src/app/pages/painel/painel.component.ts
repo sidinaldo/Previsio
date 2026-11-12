@@ -9,10 +9,13 @@ import { ResumoPainel, TotalSemana } from '../../core/previsio.models';
 // Chartist 0.11 é carregado como script global (angular.json), como no template
 declare const Chartist: any;
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { ExportarComponent } from '../../shared/exportar/exportar.component';
 
 @Component({
   selector: 'app-painel',
-  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective],
+  imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, CarregandoDirective, PaginacaoComponent, ExportarComponent],
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {
@@ -20,7 +23,19 @@ export class PainelComponent {
   private readonly injector = inject(Injector);
 
   readonly resumo = signal<ResumoPainel | null>(null);
+
+  // Paginação da tabela "Por empresa" (a linha de total soma todas as empresas)
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly empresasDaPagina = computed(() => {
+    const resumo = this.resumo();
+    if (!resumo) {
+      return [];
+    }
+    return paginar(resumo.empresas, this.pagina(), this.tamanhoPagina());
+  });
   readonly dias = signal(30);
+  readonly exportar = () => this.previsio.exportarContasPagar(this.dias());
   readonly carregando = signal(false);
   readonly erro = signal('');
 
@@ -48,7 +63,8 @@ export class PainelComponent {
     if (!resumo) {
       return false;
     }
-    return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0;
+    return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0
+      && (resumo.quantidadeVencidas ?? 0) === 0;
   });
 
   // Todas as semanas zeradas: no lugar do gráfico (que mostraria uma escala sem sentido) vai o aviso

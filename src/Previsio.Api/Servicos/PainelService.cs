@@ -69,7 +69,17 @@ public class PainelService
             .Where(n => n.ClienteId == clienteId && StatusPendentes.Todos.Contains(n.Status))
             .ToListAsync(cancelamento);
 
-        return _calculadora.Calcular(hoje, dias, empresas, contas, pendentes);
+        ResumoPainel resumo = _calculadora.Calcular(hoje, dias, empresas, contas, pendentes);
+
+        // Vencidas em aberto (a sincronização traz os últimos 30 dias)
+        List<ContaPagarSincronizada> vencidas = await _contas.ConsultarSomenteLeitura()
+            .Where(c => idsEmpresas.Contains(c.EmpresaId)
+                && c.Vencimento < hoje
+                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+            .ToListAsync(cancelamento);
+        resumo.QuantidadeVencidas = vencidas.Count;
+        resumo.TotalVencidas = vencidas.Sum(c => c.Valor);
+        return resumo;
     }
 
     /// <summary>

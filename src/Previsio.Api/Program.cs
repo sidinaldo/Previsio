@@ -10,6 +10,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Avisos;
+using Previsio.Api.Conferencia;
+using Previsio.Api.Contratos;
+using Previsio.Api.Exportacao;
+using Previsio.Api.NotasSoPdf;
+using Previsio.Api.Resumos;
+using Previsio.Api.Saude;
+using Previsio.Api.Sefaz;
+using Previsio.Api.Sincronizacao;
+using Previsio.Api.Contas;
+using Previsio.Api.Vencimentos;
+using Previsio.Api.Email;
 using Previsio.Api.Jobs;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
@@ -57,6 +69,8 @@ builder.Services.AddScoped<PainelService>();
 builder.Services.AddScoped<NotasService>();
 builder.Services.AddScoped<FalhasService>();
 builder.Services.AddScoped<BlingConexaoService>();
+builder.Services.AddScoped<IConexaoImap, ConexaoImapMailKit>();
+builder.Services.AddScoped<TesteEmailService>();
 builder.Services.AddScoped<LeituraEmailJob>();
 builder.Services.AddScoped<LancamentoNotaJob>();
 builder.Services.AddScoped<SincronizacaoContasJob>();
@@ -78,6 +92,33 @@ builder.Services.Configure<JwtOptions>(secaoJwt);
 builder.Services.AddSingleton<GeradorTokenJwt>();
 builder.Services.AddSingleton<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<AutenticacaoService>();
+builder.Services.AddScoped<RedefinicaoSenhaService>();
+builder.Services.AddScoped<AvisosService>();
+builder.Services.AddScoped<AvisosJob>();
+builder.Services.AddScoped<ResumoSemanalService>();
+builder.Services.AddScoped<ResumoSemanalJob>();
+builder.Services.AddScoped<SaudeService>();
+builder.Services.AddScoped<ContasPagarService>();
+builder.Services.AddScoped<ExportacaoService>();
+builder.Services.AddScoped<ContratosService>();
+builder.Services.AddScoped<AvisosTesteService>();
+builder.Services.AddScoped<AvisosTesteJob>();
+builder.Services.AddScoped<AlertaVencimentosService>();
+builder.Services.AddScoped<AlertaVencimentosJob>();
+builder.Services.AddScoped<ConfiguracaoConferenciaService>();
+
+// Notas que chegam só em PDF: certificado A1 por empresa e busca do XML na SEFAZ
+builder.Services.Configure<SefazOptions>(builder.Configuration.GetSection(SefazOptions.Secao));
+builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
+builder.Services.AddScoped<ISefaz, SefazSoap>();
+builder.Services.AddScoped<CertificadosService>();
+builder.Services.AddScoped<RegistroNotaSoPdf>();
+builder.Services.AddScoped<NotasSoPdfService>();
+builder.Services.AddScoped<BuscaXmlSefazService>();
+builder.Services.AddScoped<BuscaXmlSefazJob>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.Secao));
+builder.Services.AddSingleton<IEnvioEmail, EnvioEmailSmtp>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
@@ -150,6 +191,7 @@ builder.Services.AddHangfireServer(opcoes =>
     opcoes.WorkerCount = 2;
 });
 builder.Services.AddSingleton<IExecucaoJobs, ExecucaoJobsHangfire>();
+builder.Services.AddSingleton<IAgendaJobs, AgendaJobsHangfire>();
 
 // Painel Angular
 string urlFront = builder.Configuration["Front:Url"] ?? "http://localhost:4200";
@@ -165,7 +207,9 @@ builder.Services.AddCors(opcoes =>
     opcoes.AddPolicy("front", politica => politica
         .WithOrigins(origemFront)
         .AllowAnyHeader()
-        .AllowAnyMethod());
+        .AllowAnyMethod()
+        // Nome do arquivo das exportações (o front usa para salvar)
+        .WithExposedHeaders("Content-Disposition"));
 });
 
 builder.Services.AddControllers();
@@ -230,12 +274,29 @@ app.MapControllers();
 // Agenda dos jobs
 IRecurringJobManager agenda = app.Services.GetRequiredService<IRecurringJobManager>();
 var opcoesAgenda = new RecurringJobOptions { TimeZone = RelogioBrasil.Fuso };
+SincronizacaoOptions opcoesSincronizacao = app.Configuration.GetSection(SincronizacaoOptions.Secao).Get<SincronizacaoOptions>()
+    ?? new SincronizacaoOptions();
 
 agenda.AddOrUpdate<LeituraEmailJob>(
     "leitura-email", j => j.ExecutarAsync(CancellationToken.None), "*/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<LancamentoNotaJob>(
     "lancamento", j => j.LancarPendentesAsync(CancellationToken.None), "*/10 * * * *", opcoesAgenda);
+// 5 minutos depois da leitura e do lançamento: avisos do que precisa de alguém e o e-mail dos novos
+agenda.AddOrUpdate<AvisosJob>(
+    "avisos", j => j.ExecutarAsync(CancellationToken.None), "5-59/10 * * * *", opcoesAgenda);
 agenda.AddOrUpdate<SincronizacaoContasJob>(
-    "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), "*/30 * * * *", opcoesAgenda);
+    "sincronizacao", j => j.ExecutarAsync(CancellationToken.None), opcoesSincronizacao.Cron(), opcoesAgenda);
+// De 5 em 5 minutos: o XML das notas que chegaram só em PDF, na SEFAZ
+agenda.AddOrUpdate<BuscaXmlSefazJob>(
+    "busca-xml-sefaz", j => j.ExecutarAsync(CancellationToken.None), "2-59/5 * * * *", opcoesAgenda);
+// De hora em hora: e-mails do fim do teste grátis (3 dias antes e quando acaba)
+agenda.AddOrUpdate<AvisosTesteJob>(
+    "avisos-teste", j => j.ExecutarAsync(CancellationToken.None), "12 * * * *", opcoesAgenda);
+// De hora em hora: e-mail das contas que vencem hoje e amanhã, na hora escolhida por cada rede
+agenda.AddOrUpdate<AlertaVencimentosJob>(
+    "alerta-vencimentos", j => j.ExecutarAsync(CancellationToken.None), "7 * * * *", opcoesAgenda);
+// De hora em hora: o resumo semanal das redes cujo dia e hora chegaram (cada rede escolhe os seus)
+agenda.AddOrUpdate<ResumoSemanalJob>(
+    "resumo-semanal", j => j.ExecutarAsync(CancellationToken.None), "2 * * * *", opcoesAgenda);
 
 app.Run();

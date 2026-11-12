@@ -13,6 +13,7 @@
 // 6. Formulários: rótulo fixo acima, campo com borda e anel de foco
 // 7. Menu de ações "⋯" e ações por linha
 // 8. Detalhes: código e resposta do Bling, linha expandida, voltar
+// 9. Implantação de cliente: etapas, resumo, opcionais, progresso da leitura
 // =============================================================================
 
 // -----------------------------------------------------------------------------
@@ -24,6 +25,10 @@
   --pv-primaria-hover: #1E40AF;
   --pv-primaria-suave: rgba(29, 78, 216, .10);
   --pv-menu: #0B1B36;
+  // Destaque da marca: só para o que é previsão (tracejado do previsto, "próximos 30 dias")
+  --pv-horizonte: #0F766E;
+  --pv-horizonte-suave: rgba(15, 118, 110, .10);
+  --pv-horizonte-sobre-menu: #2DD4BF;
 
   // Superfícies
   --pv-fundo: #F5F7FA;
@@ -35,7 +40,7 @@
   // Texto: nenhum texto mais claro que o auxiliar
   --pv-texto: #0F172A;
   --pv-texto-secundario: #475569;
-  --pv-texto-auxiliar: #64748B;
+  --pv-texto-auxiliar: #5E6E85; // 4,8:1 sobre o fundo (o #64748B ficava em 4,4:1)
 
   // Semânticas: só com significado
   --pv-sucesso: #15803D;
@@ -56,7 +61,8 @@
   --pv-anel-foco: 0 0 0 3px rgba(29, 78, 216, .35);
 
   // Tipografia
-  --pv-fonte: Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pv-fonte: "IBM Plex Sans", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pv-fonte-mono: "IBM Plex Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
 
   // Shell
   --pv-menu-largura: 260px;
@@ -592,6 +598,13 @@ summary:focus-visible,
   }
 }
 
+// O mesmo campo para digitar (sem a seta do select)
+.pv-campo--texto {
+  padding-right: 12px;
+  background-image: none;
+  cursor: text;
+}
+
 .pv-rotulo {
   margin: 0;
   font-size: 12px;
@@ -707,6 +720,50 @@ app-sidebar {
   min-height: 0;
 }
 
+// Símbolo da marca (app-simbolo): o tamanho vem de quem usa
+.pv-simbolo {
+  display: inline-block;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+.pv-simbolo__letra {
+  fill: var(--pv-primaria);
+}
+
+.pv-simbolo__curva {
+  stroke: var(--pv-primaria);
+}
+
+.pv-simbolo__vencimento {
+  fill: var(--pv-horizonte);
+}
+
+.pv-simbolo__previsto {
+  stroke: var(--pv-horizonte);
+}
+
+.pv-simbolo--negativo {
+  .pv-simbolo__letra {
+    fill: #fff;
+  }
+
+  .pv-simbolo__curva {
+    stroke: #fff;
+  }
+
+  .pv-simbolo__vencimento {
+    fill: var(--pv-horizonte-sobre-menu);
+  }
+
+  .pv-simbolo__previsto {
+    stroke: var(--pv-horizonte-sobre-menu);
+  }
+}
+
 .pv-menu__logo {
   flex: 0 0 auto;
   display: flex;
@@ -718,8 +775,8 @@ app-sidebar {
 
 .pv-logo {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   color: #fff;
   white-space: nowrap;
   overflow: hidden;
@@ -736,10 +793,16 @@ app-sidebar {
   gap: 6px;
 }
 
+.pv-logo__simbolo {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+}
+
 .pv-logo__nome {
   font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -.2px;
+  font-weight: 600;
+  letter-spacing: -.02em;
 }
 
 .pv-logo__assinatura {
@@ -747,12 +810,6 @@ app-sidebar {
   color: rgba(255, 255, 255, .72);
 }
 
-// Só aparece com o menu recolhido
-.pv-logo__mini {
-  display: none;
-  font-size: 20px;
-  font-weight: 700;
-}
 
 .sidebar .sidebar-wrapper.pv-menu__navegacao {
   flex: 1 1 auto;
@@ -922,10 +979,6 @@ app-sidebar {
     .pv-menu__logo {
       justify-content: center;
       padding: 0;
-    }
-
-    .pv-logo__mini {
-      display: inline;
     }
 
     .pv-logo__texto {
@@ -1158,7 +1211,7 @@ app-sidebar {
 .pv-kpi__valor {
   margin: 4px 0 0;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 36px;
   color: var(--pv-texto);
   font-variant-numeric: tabular-nums;
@@ -1197,6 +1250,11 @@ app-sidebar {
 .pv-kpi__icone--alerta {
   color: var(--pv-alerta);
   background-color: var(--pv-alerta-suave);
+}
+
+.pv-kpi__icone--erro {
+  color: var(--pv-erro);
+  background-color: var(--pv-erro-suave);
 }
 
 .pv-kpi__icone--neutro {
@@ -1439,6 +1497,18 @@ select.form-control:not([size]):not([multiple]):disabled {
   .btn {
     margin: 0;
   }
+
+  // Ação secundária em forma de link (o template deixa cinza, parecendo desabilitada)
+  .btn.btn-link {
+    color: var(--pv-primaria);
+    text-transform: none;
+
+    &:hover,
+    &:focus {
+      color: var(--pv-primaria-hover);
+      text-decoration: underline;
+    }
+  }
 }
 
 .pv-formulario__ajuda {
@@ -1446,6 +1516,77 @@ select.form-control:not([size]):not([multiple]):disabled {
   font-size: 12px;
   line-height: 18px;
   color: var(--pv-texto-secundario);
+}
+
+// Formulário compacto: campos lado a lado que quebram linha em telas estreitas,
+// sem esticar até a largura toda em monitores largos
+.pv-formulario {
+  max-width: 960px;
+}
+
+.pv-formulario__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0 16px;
+}
+
+.pv-formulario__campo {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.pv-formulario__campo--largo {
+  flex: 2 1 320px;
+}
+
+.pv-formulario__campo--cnpj {
+  flex: 0 1 220px;
+}
+
+.pv-formulario__campo--perfil {
+  flex: 0 1 180px;
+}
+
+.pv-formulario__campo--porta {
+  flex: 0 0 100px;
+}
+
+.pv-formulario__ssl {
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
+}
+
+// Link para copiar (redirecionamento do aplicativo do Bling)
+.pv-link-copiar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+
+  code {
+    padding: 2px 6px;
+    border-radius: var(--pv-raio-controle);
+    background-color: var(--pv-fundo);
+    font-family: var(--pv-fonte-mono);
+    font-size: 12px;
+    color: var(--pv-texto);
+    word-break: break-all;
+  }
+
+  .btn.btn-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 4px 6px;
+    color: var(--pv-primaria);
+    text-transform: none;
+
+    .material-icons {
+      font-size: 16px;
+    }
+  }
 }
 
 .pv-formulario__secao {
@@ -1611,6 +1752,39 @@ select.form-control:not([size]):not([multiple]):disabled {
   color: var(--pv-texto-secundario);
 }
 
+// Componente app-paginacao (tabelas paginadas na própria tela)
+app-paginacao.pv-paginacao {
+  flex-wrap: wrap;
+}
+
+.pv-paginacao__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+// "Por página" e a navegação: cada grupo fica inteiro numa linha
+.pv-paginacao__grupo {
+  display: flex;
+  align-items: center;
+  gap: 4px 8px;
+  white-space: nowrap;
+
+  label {
+    margin: 0;
+  }
+}
+
+// Select menor, para caber ao lado dos botões da paginação
+.pv-campo.pv-campo--compacto {
+  height: 32px;
+  padding: 0 28px 0 8px;
+  font-size: 13px;
+  background-position: right 4px center;
+}
+
 // Linha inativa: texto mais apagado, mas ainda legível (auxiliar = 4,76:1)
 .table > tbody > tr.pv-linha--inativa > td {
   color: var(--pv-texto-auxiliar);
@@ -1624,7 +1798,7 @@ select.form-control:not([size]):not([multiple]):disabled {
 .pv-codigo {
   margin: 0;
   padding: 12px;
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: var(--pv-fonte-mono);
   font-size: 12px;
   line-height: 18px;
   color: var(--pv-texto);
@@ -1811,4 +1985,945 @@ select.form-control:not([size]):not([multiple]):disabled {
   .pv-botao--carregando::before {
     animation-duration: 2s;
   }
+}
+
+// -----------------------------------------------------------------------------
+// 9. Implantação de cliente
+// -----------------------------------------------------------------------------
+
+// Trilho das cinco etapas
+.pv-etapas {
+  margin-bottom: 24px;
+}
+
+.pv-etapas__lista {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-etapas__botao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  background-color: var(--pv-superficie);
+  color: var(--pv-texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background-color: var(--pv-superficie-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+  }
+}
+
+.pv-etapas__marca {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pv-texto-secundario);
+  font-variant-numeric: tabular-nums;
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.pv-etapas__texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pv-etapas__titulo {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.pv-etapas__estado {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-etapas__item--concluida .pv-etapas__marca {
+  border-color: var(--pv-sucesso);
+  background-color: var(--pv-sucesso);
+  color: #fff;
+}
+
+.pv-etapas__item--concluida .pv-etapas__estado {
+  color: var(--pv-sucesso-texto);
+}
+
+.pv-etapas__item--atual .pv-etapas__botao {
+  border-color: var(--pv-primaria);
+  box-shadow: inset 0 0 0 1px var(--pv-primaria);
+}
+
+.pv-etapas__item--atual:not(.pv-etapas__item--concluida) .pv-etapas__marca {
+  border-color: var(--pv-primaria);
+  background-color: var(--pv-primaria);
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .pv-etapas__lista {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
+
+// Resumo do que já está cadastrado (rótulo em cima, valor embaixo)
+.pv-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px 24px;
+  margin: 0 0 16px;
+
+  dt {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    color: var(--pv-texto-secundario);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    color: var(--pv-texto);
+  }
+}
+
+.pv-codigo-inline,
+.form-control.pv-entrada-codigo {
+  font-family: var(--pv-fonte-mono);
+  font-size: 13px;
+}
+
+// Bloco opcional que abre ao clicar (aplicativo Bling, caixa própria)
+.pv-opcional {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+
+  > summary {
+    font-weight: 500;
+    color: var(--pv-primaria);
+    cursor: pointer;
+  }
+
+  &[open] > summary {
+    margin-bottom: 8px;
+  }
+
+  > .pv-formulario__ajuda {
+    margin-bottom: 12px;
+  }
+}
+
+// Passos da primeira leitura
+.pv-progresso {
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-progresso__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  color: var(--pv-texto);
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--pv-texto-auxiliar);
+  }
+}
+
+.pv-progresso__item--feito .material-icons {
+  color: var(--pv-sucesso);
+}
+
+.pv-progresso__item--espera {
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-progresso__giro {
+  width: 18px;
+  height: 18px;
+  margin: 1px;
+  border: 2px solid var(--pv-borda-forte);
+  border-top-color: var(--pv-primaria);
+  border-radius: 50%;
+  animation: pv-girar .8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-progresso__giro {
+    animation-duration: 2s;
+  }
+}
+
+// Números do resultado da leitura
+.pv-implantacao__numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pv-implantacao__numero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+}
+
+.pv-implantacao__rotulo {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-implantacao__valor {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  color: var(--pv-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-implantacao__valor--alerta {
+  color: var(--pv-alerta-texto);
+}
+
+.pv-implantacao__valor--erro {
+  color: var(--pv-erro);
+}
+
+// Nota que chegou na caixa de e-mail de outra empresa (vai pelo CNPJ; isto só avisa)
+.pv-aviso-caixa {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-alerta-texto);
+
+  .material-icons {
+    flex: 0 0 auto;
+    font-size: 14px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 10. Busca e ordenação das listas
+// -----------------------------------------------------------------------------
+
+// Caixa de busca com lupa e botão de limpar
+.pv-busca {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+.pv-busca.bmd-form-group {
+  margin: 0;
+  padding-top: 0;
+}
+
+.pv-busca__lupa {
+  position: absolute;
+  left: 10px;
+  font-size: 18px;
+  color: var(--pv-texto-auxiliar);
+  pointer-events: none;
+}
+
+.pv-busca__campo {
+  width: 100%;
+  height: 36px;
+  padding: 0 34px 0 34px;
+  border: 1px solid var(--pv-borda-forte);
+  border-radius: var(--pv-raio-controle);
+  background-color: var(--pv-superficie);
+  color: var(--pv-texto);
+  font: inherit;
+  font-size: 14px;
+
+  &::placeholder {
+    color: var(--pv-texto-auxiliar);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--pv-primaria);
+    box-shadow: var(--pv-anel-foco);
+  }
+
+  // Sem o "x" do navegador: o componente já tem o botão de limpar
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+.pv-busca__limpar {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  background: transparent;
+  color: var(--pv-texto-secundario);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--pv-neutro-suave);
+  }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+// Busca no cabeçalho do card da lista, à direita do título
+.pv-card__cabecalho .pv-busca {
+  flex: 0 1 320px;
+}
+
+// Cabeçalho de coluna que ordena ao clicar
+.table > thead > tr > th.pv-th-ordenavel {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.pv-coluna {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 -4px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pv-texto);
+    background-color: var(--pv-superficie-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+.pv-coluna__seta {
+  font-size: 14px;
+  color: var(--pv-texto-auxiliar);
+  opacity: .6;
+}
+
+.pv-coluna--ativa {
+  .pv-coluna {
+    color: var(--pv-texto);
+  }
+
+  .pv-coluna__seta {
+    color: var(--pv-primaria);
+    opacity: 1;
+  }
+}
+
+// Busca no topo do card de filtros, acima dos outros campos
+.pv-filtros__busca {
+  margin-bottom: 16px;
+
+  .pv-busca {
+    max-width: 520px;
+  }
+}
+
+// Busca sem nenhuma linha encontrada (a lista tem itens, a busca não achou)
+.pv-sem-resultado {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+}
+
+// Telas de acesso (login, esqueci minha senha, nova senha): links abaixo do formulário.
+// Ficam aqui, e não no SCSS do login, que as três telas compartilham e tem limite de tamanho.
+.formulario__ajuda a {
+  font-weight: 500;
+  color: var(--pv-primaria);
+
+  &:hover {
+    color: var(--pv-primaria-hover);
+  }
+}
+
+// "Enviar de novo" com cara de link
+.formulario__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--pv-primaria);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pv-primaria-hover);
+    text-decoration: underline;
+  }
+}
+
+.formulario__link-alerta {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: underline;
+}
+
+// -----------------------------------------------------------------------------
+// Sininho de avisos (topo)
+// -----------------------------------------------------------------------------
+.pv-sininho {
+  position: relative;
+  display: inline-flex;
+}
+
+.pv-sininho__gatilho {
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--pv-texto-secundario);
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 24px;
+  }
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: var(--pv-texto);
+    background-color: var(--pv-fundo);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--pv-anel-foco);
+  }
+}
+
+.pv-sininho__contador {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #FFFFFF;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  background-color: var(--pv-erro);
+  border: 2px solid var(--pv-superficie);
+  border-radius: 999px;
+  box-sizing: content-box;
+}
+
+.pv-sininho__painel {
+  position: fixed;
+  z-index: 1060;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  max-height: min(70vh, 560px);
+  text-align: left;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+}
+
+.pv-sininho__cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--pv-borda);
+}
+
+.pv-sininho__titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pv-texto);
+}
+
+.pv-sininho__total,
+.pv-sininho__mais {
+  font-size: 12px;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-sininho__lista {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pv-sininho__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--pv-fonte);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--pv-raio-controle);
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    background-color: var(--pv-fundo);
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--pv-primaria);
+  }
+}
+
+.pv-sininho__icone {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  color: var(--pv-alerta);
+  background-color: var(--pv-alerta-suave);
+  border-radius: 50%;
+}
+
+.pv-sininho__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pv-sininho__item-titulo {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pv-texto);
+}
+
+.pv-sininho__mensagem {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--pv-texto-secundario);
+  overflow-wrap: anywhere;
+}
+
+.pv-sininho__rodape {
+  font-size: 12px;
+  color: var(--pv-texto-auxiliar);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-sininho__novo {
+  font-weight: 500;
+  color: var(--pv-primaria);
+}
+
+.pv-sininho__item--novo .pv-sininho__item-titulo {
+  font-weight: 600;
+}
+
+.pv-sininho__vazio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  font-size: 14px;
+  color: var(--pv-texto-secundario);
+
+  .material-icons {
+    color: var(--pv-sucesso);
+  }
+}
+
+.pv-sininho__mais {
+  padding: 8px 16px 12px;
+  border-top: 1px solid var(--pv-borda);
+}
+
+// -----------------------------------------------------------------------------
+// Resumo semanal por e-mail (Empresas e detalhe do cliente)
+// -----------------------------------------------------------------------------
+.pv-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .alert {
+    margin: 0;
+  }
+}
+
+.pv-resumo__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 24px;
+
+  .form-check {
+    margin: 0 0 8px;
+  }
+}
+
+.pv-resumo__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .pv-campo {
+    width: 180px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Saúde das integrações (admin)
+// -----------------------------------------------------------------------------
+.pv-saude__resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.pv-saude__numero {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  padding: 16px 20px;
+  background-color: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+}
+
+.pv-saude__rotulo {
+  font-size: 12px;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-saude__valor {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--pv-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.pv-saude__numero--atencao .pv-saude__valor {
+  color: var(--pv-alerta-texto);
+}
+
+.pv-saude__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin: 8px 0 16px;
+
+  .form-check {
+    margin: 0;
+  }
+}
+
+.pv-saude__rede .pv-card__titulo a {
+  color: var(--pv-texto);
+}
+
+.pv-saude__caixa {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--pv-borda);
+
+  > .material-icons {
+    font-size: 20px;
+    color: var(--pv-texto-secundario);
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+
+  .pv-tabela__auxiliar--quebra {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+.pv-saude__caixa--falhando > .material-icons {
+  color: var(--pv-erro);
+}
+
+.pv-saude__caixa-titulo {
+  font-weight: 500;
+}
+
+.pv-saude__problema {
+  font-weight: 600;
+  color: var(--pv-erro);
+}
+
+// -----------------------------------------------------------------------------
+// Exportar Excel
+// -----------------------------------------------------------------------------
+.pv-exportar {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.pv-exportar__erro {
+  max-width: 320px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pv-erro);
+  text-align: right;
+}
+
+// Busca e botões lado a lado no cabeçalho do card
+.pv-card__ferramentas {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px 12px;
+
+  .pv-busca {
+    flex: 0 1 320px;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Notas que chegaram só em PDF (Notas pendentes)
+// -----------------------------------------------------------------------------
+.pv-so-pdf__acao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 560px;
+  padding: 4px 0;
+}
+
+.pv-so-pdf__chave {
+  width: 100%;
+  padding-right: 12px;
+}
+
+.pv-so-pdf__botoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+// -----------------------------------------------------------------------------
+// Certificado digital A1 (formulário da empresa)
+// -----------------------------------------------------------------------------
+.pv-certificado__atual {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 12px;
+  font-size: 14px;
+
+  > .material-icons {
+    color: var(--pv-sucesso);
+  }
+
+  > span {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.pv-certificado__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+
+  input[type='file'] {
+    max-width: 260px;
+    font-size: 13px;
+  }
+
+  .pv-campo {
+    width: 220px;
+    padding-right: 12px;
+  }
+
+  .pv-certificado__uf {
+    width: 110px;
+    padding-right: 32px;
+  }
+}
+
+.pv-certificado__enviar {
+  align-self: flex-end;
+  margin-bottom: 12px;
+}
+
+.pv-certificado__ok,
+.pv-certificado__erro {
+  margin: 0;
+  font-size: 13px;
+}
+
+.pv-certificado__ok {
+  color: var(--pv-sucesso-texto);
+}
+
+.pv-certificado__erro {
+  color: var(--pv-erro);
+}
+
+// -----------------------------------------------------------------------------
+// Faixa do teste grátis (abaixo da barra do topo)
+// -----------------------------------------------------------------------------
+.pv-faixa-teste {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--pv-texto);
+  background-color: var(--pv-primaria-suave);
+  border-bottom: 1px solid var(--pv-borda);
+
+  > .material-icons {
+    font-size: 20px;
+    color: var(--pv-primaria);
+  }
+
+  > span {
+    flex: 1 1 320px;
+  }
+}
+
+.pv-faixa-teste--fim {
+  background-color: var(--pv-alerta-suave);
+
+  > .material-icons {
+    color: var(--pv-alerta);
+  }
+}
+
+.pv-faixa-teste--encerrado {
+  background-color: var(--pv-erro-suave);
+
+  > .material-icons {
+    color: var(--pv-erro);
+  }
+}
+
+.pv-faixa-teste__link {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pv-teste-gratis {
+  margin-top: 12px;
+}
+
+// Avisos de vencimento: campo de dias com a unidade ao lado
+.pv-alerta__dias {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.pv-alerta__numero.pv-campo {
+  width: 80px;
+}
+
+.pv-conferencia__criterio.pv-campo {
+  width: 380px;
 }

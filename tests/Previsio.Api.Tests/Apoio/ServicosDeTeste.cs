@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Api.Autenticacao;
+using Previsio.Api.Sefaz;
 using Previsio.Api.Servicos;
 using Previsio.Bling;
 using Previsio.Core.Entidades;
@@ -30,6 +31,11 @@ public static class ServicosDeTeste
     public static EmpresasService Empresas(PrevisioDbContext db, ProtetorSegredos protetor)
     {
         return new EmpresasService(new Repositorio<Empresa>(db), new Repositorio<Cliente>(db), Acesso(db), protetor);
+    }
+
+    public static CertificadosService Certificados(PrevisioDbContext db, ProtetorSegredos protetor)
+    {
+        return new CertificadosService(db, protetor, TimeProvider.System);
     }
 
     public static AutenticacaoService Autenticacao(PrevisioDbContext db)

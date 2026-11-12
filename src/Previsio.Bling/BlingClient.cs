@@ -148,6 +148,21 @@ public class BlingClient
         return resposta.Data.Id;
     }
 
+    /// <summary>
+    /// Contato pelo id (a lista de contas a pagar só traz o id do fornecedor).
+    /// </summary>
+    public async Task<ContatoBling?> ObterContatoAsync(
+        string conta, string accessToken, long id, CancellationToken cancelamento)
+    {
+        RespostaItem<ContatoBling>? resposta = await EnviarAsync<RespostaItem<ContatoBling>>(
+            conta, accessToken, HttpMethod.Get, "contatos/" + id, null, cancelamento);
+        if (resposta == null)
+        {
+            return null;
+        }
+        return resposta.Data;
+    }
+
     // ---------------------------------------------------------------
     // Contas a pagar
     // ---------------------------------------------------------------
@@ -206,6 +221,21 @@ public class BlingClient
         }
 
         return todas;
+    }
+
+    /// <summary>
+    /// Detalhe de uma conta a pagar (traz o número do documento e o histórico).
+    /// </summary>
+    public async Task<ContaPagarBling?> ObterContaPagarAsync(
+        string conta, string accessToken, long id, CancellationToken cancelamento)
+    {
+        RespostaItem<ContaPagarBling>? resposta = await EnviarAsync<RespostaItem<ContaPagarBling>>(
+            conta, accessToken, HttpMethod.Get, "contas/pagar/" + id, null, cancelamento);
+        if (resposta == null)
+        {
+            return null;
+        }
+        return resposta.Data;
     }
 
     // ---------------------------------------------------------------
