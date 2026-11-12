@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 using Previsio.Api.Contratos;
+using Previsio.Api.EmailsIgnorados;
 using Previsio.Api.NotasSoPdf;
 using Previsio.Api.Servicos;
 using Previsio.Core.Entidades;
@@ -39,6 +40,7 @@ public class LeituraEmailJob
     private readonly RegistroNotaService _registro;
     private readonly LeitorNFe _leitor;
     private readonly RegistroNotaSoPdf _notasSoPdf;
+    private readonly EmailsIgnoradosService _ignorados;
     private readonly ILogger<LeituraEmailJob> _logger;
 
     public LeituraEmailJob(
@@ -47,6 +49,7 @@ public class LeituraEmailJob
         RegistroNotaService registro,
         LeitorNFe leitor,
         RegistroNotaSoPdf notasSoPdf,
+        EmailsIgnoradosService ignorados,
         ILogger<LeituraEmailJob> logger)
     {
         _db = db;
@@ -54,6 +57,7 @@ public class LeituraEmailJob
         _registro = registro;
         _leitor = leitor;
         _notasSoPdf = notasSoPdf;
+        _ignorados = ignorados;
         _logger = logger;
     }
 
@@ -61,6 +65,16 @@ public class LeituraEmailJob
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecutarAsync(CancellationToken cancelamento)
     {
+        try
+        {
+            await _ignorados.LimparAntigosAsync(cancelamento);
+        }
+        catch (Exception erro)
+        {
+            // Limpeza é só arrumação: não pode impedir a leitura
+            _logger.LogWarning(erro, "Não foi possível apagar os e-mails ignorados antigos");
+        }
+
         List<Cliente> clientes = await _db.Clientes
             .Include(c => c.Empresas)
             .Where(PeriodoTeste.Processa(DateTime.UtcNow))
@@ -189,7 +203,22 @@ public class LeituraEmailJob
                     EmailSemXml? semXml = EmailComPdf(mensagem, origem);
                     if (semXml != null)
                     {
-                        soPdf += await _notasSoPdf.RegistrarAsync(cliente.Id, caixaParaLer.EmpresaId, semXml, cancelamento);
+                        ResultadoNotaSoPdf analise = await _notasSoPdf.AnalisarAsync(
+                            cliente.Id, caixaParaLer.EmpresaId, semXml, false, cancelamento);
+                        soPdf += analise.Registradas;
+                        if (analise.MotivoIgnorado != null)
+                        {
+                            await _ignorados.RegistrarAsync(
+                                ParaRegistrar(mensagem, cliente.Id, caixaParaLer.EmpresaId, uid, analise.MotivoIgnorado, analise.Pdf),
+                                cancelamento);
+                        }
+                    }
+                    else if (mensagem.Attachments.Any())
+                    {
+                        // Tem anexo, mas nenhum é XML, ZIP com XML ou PDF
+                        await _ignorados.RegistrarAsync(
+                            ParaRegistrar(mensagem, cliente.Id, caixaParaLer.EmpresaId, uid, MotivoAnexoSemNota, null),
+                            cancelamento);
                     }
                 }
 
@@ -363,6 +392,59 @@ public class LeituraEmailJob
             return mensagem;
         }
         return mensagem.Substring(0, TamanhoMaximoErroConexao);
+    }
+
+    public const string MotivoAnexoSemNota = "Os anexos não são XML, ZIP com XML nem PDF.";
+
+    /// <summary>
+    /// Dados do e-mail ignorado para a lista da tela Saúde.
+    /// </summary>
+    private static EmailParaRegistrar ParaRegistrar(
+        MimeMessage mensagem, int clienteId, int? empresaCaixaId, UniqueId uid, string motivo, PdfDoEmail? pdf)
+    {
+        var email = new EmailParaRegistrar();
+        email.ClienteId = clienteId;
+        email.EmpresaCaixaId = empresaCaixaId;
+        email.Uid = uid.Id;
+        email.MensagemId = mensagem.MessageId ?? "";
+        MailboxAddress? remetente = mensagem.From.Mailboxes.FirstOrDefault();
+        if (remetente != null)
+        {
+            email.Remetente = remetente.Address ?? "";
+            email.NomeRemetente = remetente.Name ?? "";
+        }
+        email.Assunto = mensagem.Subject ?? "";
+        string corpo = mensagem.TextBody ?? "";
+        if (corpo == "" && mensagem.HtmlBody != null)
+        {
+            corpo = Regex.Replace(mensagem.HtmlBody, "<[^>]+>", " ");
+        }
+        email.Corpo = corpo;
+        if (mensagem.Date != DateTimeOffset.MinValue)
+        {
+            email.EnviadoEm = mensagem.Date.UtcDateTime;
+        }
+        foreach (MimeEntity anexo in mensagem.Attachments)
+        {
+            MimePart? parte = anexo as MimePart;
+            if (parte == null)
+            {
+                continue;
+            }
+            string nome = parte.FileName ?? "";
+            if (nome == "")
+            {
+                nome = "(sem nome, " + parte.ContentType.MimeType + ")";
+            }
+            email.Anexos.Add(nome);
+        }
+        email.Motivo = motivo;
+        if (pdf != null)
+        {
+            email.PdfNome = pdf.Nome;
+            email.Pdf = pdf.Conteudo;
+        }
+        return email;
     }
 
     private static string DescreverOrigem(MimeMessage mensagem)

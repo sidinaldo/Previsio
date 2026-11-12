@@ -12,6 +12,7 @@ import { PrevisioService } from '../../core/previsio.service';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { EmailsIgnoradosComponent, RedeDoFiltro } from './emails-ignorados.component';
 
 const TEXTO_JOB: Record<SituacaoJobAgendado, string> = {
   Ok: 'Em dia',
@@ -35,7 +36,7 @@ const CLASSE_JOB: Record<SituacaoJobAgendado, string> = {
  */
 @Component({
   selector: 'app-saude',
-  imports: [DatePipe, FormsModule, RouterLink, BuscaComponent, CarregandoDirective, PaginacaoComponent],
+  imports: [DatePipe, FormsModule, RouterLink, BuscaComponent, CarregandoDirective, PaginacaoComponent, EmailsIgnoradosComponent],
   templateUrl: './saude.component.html'
 })
 export class SaudeComponent implements OnInit {
@@ -69,6 +70,16 @@ export class SaudeComponent implements OnInit {
       }
       return combinaComBusca(termo, campos);
     });
+  });
+  // Redes para o filtro dos e-mails ignorados, em ordem alfabética
+  readonly redesDoFiltro = computed<RedeDoFiltro[]>(() => {
+    const saude = this.saude();
+    if (!saude) {
+      return [];
+    }
+    return saude.redes
+      .map(rede => ({ clienteId: rede.clienteId, nome: rede.nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
   });
   readonly redesDaPagina = computed(() => paginar(this.redesFiltradas(), this.pagina(), this.tamanhoPagina()));
   readonly jobsComProblema = computed(() => {

@@ -19,6 +19,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<Aviso> Avisos => Set<Aviso>();
     public DbSet<NotaSoPdf> NotasSoPdf => Set<NotaSoPdf>();
     public DbSet<FornecedorBling> FornecedoresBling => Set<FornecedorBling>();
+    public DbSet<EmailIgnorado> EmailsIgnorados => Set<EmailIgnorado>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -129,6 +130,31 @@ public class PrevisioDbContext : DbContext
             entidade.HasOne(c => c.Empresa)
                 .WithMany()
                 .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<EmailIgnorado>(entidade =>
+        {
+            entidade.ToTable("emails_ignorados");
+            entidade.Property(e => e.MensagemId).HasMaxLength(300);
+            entidade.Property(e => e.Remetente).HasMaxLength(200);
+            entidade.Property(e => e.NomeRemetente).HasMaxLength(200);
+            entidade.Property(e => e.Assunto).HasMaxLength(300);
+            entidade.Property(e => e.Corpo).HasMaxLength(4000);
+            entidade.Property(e => e.Anexos).HasMaxLength(500);
+            entidade.Property(e => e.Motivo).HasMaxLength(300);
+            entidade.Property(e => e.PdfNome).HasMaxLength(200);
+            entidade.Property(e => e.TratadoPor).HasMaxLength(200);
+            entidade.Property(e => e.ResultadoTratamento).HasMaxLength(300);
+            entidade.HasIndex(e => new { e.ClienteId, e.LidoEm });
+            entidade.HasIndex(e => new { e.ClienteId, e.MensagemId });
+
+            entidade.HasOne(e => e.Cliente)
+                .WithMany()
+                .HasForeignKey(e => e.ClienteId);
+            entidade.HasOne(e => e.EmpresaCaixa)
+                .WithMany()
+                .HasForeignKey(e => e.EmpresaCaixaId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<FornecedorBling>(entidade =>

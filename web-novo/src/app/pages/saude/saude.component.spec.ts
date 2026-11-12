@@ -36,7 +36,7 @@ const SAUDE: Saude = {
 };
 
 async function montar() {
-  const api = { obterSaude: vi.fn(() => of(SAUDE)) };
+  const api = { obterSaude: vi.fn(() => of(SAUDE)), obterEmailsIgnorados: vi.fn(() => of([])) };
   TestBed.configureTestingModule({
     imports: [SaudeComponent],
     providers: [provideRouter([]), { provide: PrevisioService, useValue: api }]

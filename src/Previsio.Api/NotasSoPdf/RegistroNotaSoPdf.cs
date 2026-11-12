@@ -14,6 +14,8 @@ public class RegistroNotaSoPdf
 {
     public const int TamanhoMaximoPdf = 10 * 1024 * 1024;
     public const string MotivoSemChave = "Não achei a chave de acesso no PDF nem no e-mail. Informe a chave, anexe o XML ou peça o XML ao fornecedor.";
+    public const string MotivoNaoPareceNota = "PDF não parece nota fiscal: sem chave de acesso e sem DANFE no texto, no nome do arquivo ou no assunto.";
+    public const string MotivoPdfInvalido = "PDF vazio ou grande demais (mais de 10 MB).";
 
     private static readonly string[] SinaisDeNota = new string[]
     {
@@ -30,9 +32,22 @@ public class RegistroNotaSoPdf
     /// <returns>Quantas notas em PDF ficaram registradas.</returns>
     public async Task<int> RegistrarAsync(int clienteId, int? empresaDaCaixaId, EmailSemXml email, CancellationToken cancelamento)
     {
+        ResultadoNotaSoPdf resultado = await AnalisarAsync(clienteId, empresaDaCaixaId, email, false, cancelamento);
+        return resultado.Registradas;
+    }
+
+    /// <summary>
+    /// Registra as notas em PDF do e-mail e diz por que nada entrou, quando for o caso.
+    /// "forcar" trata o PDF sem chave como nota mesmo sem parecer (o admin pediu).
+    /// </summary>
+    public async Task<ResultadoNotaSoPdf> AnalisarAsync(
+        int clienteId, int? empresaDaCaixaId, EmailSemXml email, bool forcar, CancellationToken cancelamento)
+    {
+        var resultado = new ResultadoNotaSoPdf();
         if (email.Pdfs.Count == 0)
         {
-            return 0;
+            resultado.MotivoIgnorado = MotivoPdfInvalido;
+            return resultado;
         }
 
         // A mesma mensagem lida de novo (falha no meio da leitura) não duplica
@@ -42,7 +57,8 @@ public class RegistroNotaSoPdf
                 n => n.ClienteId == clienteId && n.MensagemId == email.MensagemId, cancelamento);
             if (jaRegistrado)
             {
-                return 0;
+                resultado.JaConhecido = true;
+                return resultado;
             }
         }
 
@@ -50,11 +66,16 @@ public class RegistroNotaSoPdf
         var porChave = new Dictionary<string, PdfDoEmail>();
         var origemDaChave = new Dictionary<string, string>();
         PdfDoEmail? semChave = null;
+        PdfDoEmail? primeiroUtilizavel = null;
         foreach (PdfDoEmail pdf in email.Pdfs)
         {
             if (pdf.Conteudo.Length == 0 || pdf.Conteudo.Length > TamanhoMaximoPdf)
             {
                 continue;
+            }
+            if (primeiroUtilizavel == null)
+            {
+                primeiroUtilizavel = pdf;
             }
             string origem = "nome do arquivo";
             string? chave = ChaveAcesso.Procurar(pdf.Nome);
@@ -71,7 +92,7 @@ public class RegistroNotaSoPdf
                     origemDaChave[chave] = origem;
                 }
             }
-            else if (semChave == null && PareceNota(pdf, email))
+            else if (semChave == null && (forcar || PareceNota(pdf, email)))
             {
                 semChave = pdf;
             }
@@ -96,6 +117,7 @@ public class RegistroNotaSoPdf
         }
 
         int registradas = 0;
+        int conhecidas = 0;
         foreach (KeyValuePair<string, PdfDoEmail> item in porChave)
         {
             string chave = item.Key;
@@ -104,6 +126,7 @@ public class RegistroNotaSoPdf
             bool jaPendente = await _db.NotasSoPdf.AnyAsync(n => n.ClienteId == clienteId && n.ChaveAcesso == chave, cancelamento);
             if (jaTemNota || jaPendente)
             {
+                conhecidas++;
                 continue;
             }
             NotaSoPdf nota = Nova(clienteId, empresaDaCaixaId, email, item.Value);
@@ -112,6 +135,10 @@ public class RegistroNotaSoPdf
             nota.Situacao = SituacaoNotaSoPdf.BuscandoNaSefaz;
             _db.NotasSoPdf.Add(nota);
             registradas++;
+            if (resultado.Situacao == null)
+            {
+                resultado.Situacao = SituacaoNotaSoPdf.BuscandoNaSefaz;
+            }
         }
 
         if (semChave != null)
@@ -121,13 +148,35 @@ public class RegistroNotaSoPdf
             nota.Motivo = MotivoSemChave;
             _db.NotasSoPdf.Add(nota);
             registradas++;
+            if (resultado.Situacao == null)
+            {
+                resultado.Situacao = SituacaoNotaSoPdf.SemChave;
+            }
         }
 
         if (registradas > 0)
         {
             await _db.SaveChangesAsync(cancelamento);
         }
-        return registradas;
+
+        resultado.Registradas = registradas;
+        if (registradas == 0)
+        {
+            if (conhecidas > 0)
+            {
+                resultado.JaConhecido = true;
+            }
+            else if (primeiroUtilizavel == null)
+            {
+                resultado.MotivoIgnorado = MotivoPdfInvalido;
+            }
+            else
+            {
+                resultado.MotivoIgnorado = MotivoNaoPareceNota;
+                resultado.Pdf = primeiroUtilizavel;
+            }
+        }
+        return resultado;
     }
 
     private static string? ProcurarNoPdf(byte[] pdf)

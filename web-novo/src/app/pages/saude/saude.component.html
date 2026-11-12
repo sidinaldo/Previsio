@@ -212,6 +212,8 @@
       @if (redesFiltradas().length > 0) {
         <app-paginacao [total]="redesFiltradas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
       }
+
+      <app-emails-ignorados [redes]="redesDoFiltro()" />
     } @else if (carregando()) {
       <p class="pv-pagina__subtitulo">Carregando...</p>
     }

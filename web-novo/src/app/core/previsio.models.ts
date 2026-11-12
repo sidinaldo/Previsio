@@ -274,6 +274,30 @@ export interface PaginaNotas {
   tamanhoPagina: number;
 }
 
+/** E-mail com anexo que a leitura examinou e não virou nota (tela Saúde). */
+export interface EmailIgnorado {
+  id: number;
+  clienteId: number;
+  clienteNome: string;
+  // "Caixa da rede" ou o nome da empresa dona da caixa
+  caixa: string;
+  remetente: string;
+  assunto: string;
+  enviadoEm: string | null;
+  lidoEm: string;
+  anexos: string;
+  motivo: string;
+  temPdf: boolean;
+  tratadoEm: string | null;
+  tratadoPor: string | null;
+  resultadoTratamento: string | null;
+}
+
+export interface TratamentoEmailIgnorado {
+  mensagem: string;
+  email: EmailIgnorado;
+}
+
 /** Conta a pagar do Bling (lançada pelo Previsio ou à mão), na tela Contas a pagar. */
 export interface ContaPagar {
   id: number;

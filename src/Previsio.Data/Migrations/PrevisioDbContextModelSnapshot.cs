@@ -246,6 +246,93 @@ namespace Previsio.Data.Migrations
                     b.ToTable("contas_pagar", (string)null);
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.EmailIgnorado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Anexos")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Assunto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Corpo")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int?>("EmpresaCaixaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EnviadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LidoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MensagemId")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("NomeRemetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<byte[]>("Pdf")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PdfNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Remetente")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ResultadoTratamento")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime?>("TratadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TratadoPor")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<long>("Uid")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaCaixaId");
+
+                    b.HasIndex("ClienteId", "LidoEm");
+
+                    b.HasIndex("ClienteId", "MensagemId");
+
+                    b.ToTable("emails_ignorados", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.Empresa", b =>
                 {
                     b.Property<int>("Id")
@@ -806,6 +893,24 @@ namespace Previsio.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.EmailIgnorado", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "EmpresaCaixa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaCaixaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("EmpresaCaixa");
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.Empresa", b =>

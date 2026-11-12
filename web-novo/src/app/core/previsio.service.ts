@@ -12,6 +12,7 @@ import {
   AlertasVencimento,
   ConferenciaBling,
   Cliente,
+  EmailIgnorado,
   Empresa,
   FiltroContas,
   FiltroFalhas,
@@ -32,6 +33,7 @@ import {
   Saude,
   ResultadoTesteEmail,
   TesteEmail,
+  TratamentoEmailIgnorado,
   Usuario,
   VencimentoDia
 } from './previsio.models';
@@ -122,6 +124,23 @@ export class PrevisioService {
   /** Saúde das integrações de todas as redes (admin). */
   obterSaude(): Observable<Saude> {
     return this.http.get<Saude>(`${this.api}/saude`);
+  }
+
+  /** E-mails com anexo que não viraram nota nos últimos N dias (admin). */
+  obterEmailsIgnorados(clienteId: number | null, dias: number): Observable<EmailIgnorado[]> {
+    let params = new HttpParams().set('dias', String(dias));
+    if (clienteId) {
+      params = params.set('clienteId', String(clienteId));
+    }
+    return this.http.get<EmailIgnorado[]>(`${this.api}/saude/emails-ignorados`, { params });
+  }
+
+  baixarPdfEmailIgnorado(id: number): Observable<HttpResponse<Blob>> {
+    return this.http.get(`${this.api}/saude/emails-ignorados/${id}/pdf`, { observe: 'response', responseType: 'blob' });
+  }
+
+  tratarEmailIgnoradoComoNota(id: number): Observable<TratamentoEmailIgnorado> {
+    return this.http.post<TratamentoEmailIgnorado>(`${this.api}/saude/emails-ignorados/${id}/tratar-como-nota`, {});
   }
 
   obterConferenciaBling(clienteId: number): Observable<ConferenciaBling> {
