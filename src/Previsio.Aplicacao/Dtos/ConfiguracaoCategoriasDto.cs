@@ -5,9 +5,11 @@ namespace Previsio.Aplicacao.Dtos;
 /// </summary>
 public class ConfiguracaoCategoriasDto
 {
-    // Nome da categoria das notas sem regra e sem histórico no Bling (nulo = sem categoria)
+    // Nome da categoria das notas sem regra e sem histórico no Bling (nulo = usa a automática)
     public string? CategoriaPadrao { get; set; }
-    // Empresas cujo Bling não tem a categoria padrão
+    // Categoria usada quando a rede não escolhe uma (appsettings Categorias:PadraoAutomatico; nulo = desligada)
+    public string? PadraoAutomatico { get; set; }
+    // Empresas cujo Bling não tem a categoria padrão em uso (a escolhida ou a automática)
     public List<string> PadraoAusenteEm { get; set; } = new List<string>();
     // Categorias de despesa que existem no Bling de alguma empresa da rede
     public List<string> Opcoes { get; set; } = new List<string>();

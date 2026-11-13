@@ -203,10 +203,14 @@ public class ContasPagarService
         string categoria = (filtro.Categoria ?? "").Trim();
         if (string.Equals(categoria, FiltroContas.SemCategoria, StringComparison.OrdinalIgnoreCase))
         {
-            // Já conferidas no Bling e sem categoria (ou com uma que não existe mais lá)
-            consulta = consulta.Where(c => c.CategoriaConferidaEm != null
-                && (c.CategoriaBlingId == null
-                    || !_categorias.Consultar().Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)));
+            // Já conferidas no Bling e sem categoria
+            consulta = consulta.Where(c => c.CategoriaConferidaEm != null && c.CategoriaBlingId == null);
+        }
+        else if (string.Equals(categoria, FiltroContas.CategoriaNaoIdentificada, StringComparison.OrdinalIgnoreCase))
+        {
+            // Têm categoria no Bling, mas ela não está na lista da empresa no Previsio
+            consulta = consulta.Where(c => c.CategoriaBlingId != null
+                && !_categorias.Consultar().Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId));
         }
         else if (categoria != "")
         {
@@ -240,7 +244,7 @@ public class ContasPagarService
             Conta = c,
             EmpresaNome = c.Empresa!.Nome,
             EmpresaCnpj = c.Empresa.Cnpj,
-            Categoria = _categorias.Consultar()
+            CategoriaNome = _categorias.Consultar()
                 .Where(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)
                 .Select(k => k.Descricao)
                 .FirstOrDefault(),

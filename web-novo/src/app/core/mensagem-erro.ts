@@ -10,3 +10,21 @@ export function mensagemDaApi(erro: unknown, padrao: string): string {
   }
   return padrao;
 }
+
+/**
+ * "Não foi possível X: <motivo da API>". Sem texto da API, mostra o código do erro
+ * (500 = erro interno; 0 = API fora do ar), para dar pista do que houve.
+ */
+export function mensagemComMotivo(erro: unknown, frase: string): string {
+  const motivo = mensagemDaApi(erro, '');
+  if (motivo !== '') {
+    return frase + ': ' + motivo;
+  }
+  if (erro instanceof HttpErrorResponse) {
+    if (erro.status === 0) {
+      return frase + ': a API não respondeu.';
+    }
+    return frase + ' (erro ' + erro.status + ').';
+  }
+  return frase + '.';
+}

@@ -83,4 +83,15 @@ describe('CategoriasComponent', () => {
     expect(tela.querySelector('.alert-warning')?.textContent).toContain('Centro');
     expect(tela.querySelector('#categoria-padrao')).toBeNull();
   });
+
+  it('sem padrão escolhida mostra a automática na primeira opção', async () => {
+    const { fixture, tela, api } = await montar(configuracao({ categoriaPadrao: null, padraoAutomatico: 'Compras de Mercadorias' }));
+    const select = tela.querySelector('#categoria-padrao') as HTMLSelectElement;
+    expect(select.value).toBe('');
+    expect(select.options[0].textContent).toContain('Automática (Compras de Mercadorias)');
+    (tela.querySelector('.pv-resumo__linha .btn-info') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(api.alterarCategoriaPadrao).toHaveBeenCalledWith(7, '');
+    expect(tela.querySelector('.alert-success')?.textContent).toContain('vão para Compras de Mercadorias');
+  });
 });

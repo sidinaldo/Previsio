@@ -230,4 +230,27 @@ public class CalculadoraPainelTests
         Assert.Equal(TotalCategoria.TipoAConferir, resumo.Categorias[8].Tipo);
         Assert.Equal(30m, resumo.Categorias[8].Valor);
     }
+
+    [Fact]
+    public void Categoria_fora_da_lista_da_empresa_vai_para_nao_identificada()
+    {
+        ContaPagarSincronizada conhecida = Conta(1, 2, 100m, SituacaoContaBling.EmAberto);
+        conhecida.CategoriaBlingId = 1;
+        conhecida.CategoriaConferidaEm = Hoje;
+        ContaPagarSincronizada desconhecida = Conta(1, 3, 40m, SituacaoContaBling.EmAberto);
+        desconhecida.CategoriaBlingId = 99;
+        desconhecida.CategoriaConferidaEm = Hoje;
+        ContaPagarSincronizada sem = Conta(1, 4, 10m, SituacaoContaBling.EmAberto);
+        sem.CategoriaConferidaEm = Hoje;
+        var pagar = new List<ContaPagarSincronizada> { conhecida, desconhecida, sem };
+        var nomes = new Dictionary<string, string> { { "1:1", "Compras" } };
+
+        var calculadora = new CalculadoraPainel();
+        ResumoPainel resumo = calculadora.Calcular(Hoje, 30, new List<Empresa>(), pagar, new List<NotaFiscal>());
+        calculadora.AplicarCategorias(resumo, pagar, nomes);
+
+        Assert.Equal(new[] { "Compras", "Sem categoria", TotalCategoria.NomeNaoIdentificada }, resumo.Categorias.Select(c => c.Nome).ToArray());
+        Assert.Equal(TotalCategoria.TipoNaoIdentificada, resumo.Categorias[2].Tipo);
+        Assert.Equal(40m, resumo.Categorias[2].Valor);
+    }
 }

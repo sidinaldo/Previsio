@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 
@@ -8,7 +9,7 @@ namespace Previsio.Aplicacao.Categorias;
 /// Escolhe a categoria do Bling para as contas de uma nota, nesta ordem:
 /// 1) regra da rede para o fornecedor (pelo nome da categoria);
 /// 2) a categoria da última conta desse fornecedor no Bling da empresa (aprende com quem corrigiu lá);
-/// 3) a categoria padrão da rede.
+/// 3) a categoria padrão da rede ou, sem ela, o padrão automático (Categorias:PadraoAutomatico).
 /// A regra e a padrão são nomes: vale a categoria de mesmo nome no Bling da empresa. Se a empresa
 /// não tiver, a conta vai sem categoria (a tela de categorias mostra o aviso).
 /// </summary>
@@ -19,14 +20,17 @@ public class CategoriaLancamentoService
     private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
     private readonly CategoriasBlingService _categoriasBling;
+    private readonly CategoriasOptions _opcoes;
 
     public CategoriaLancamentoService(
         IRepositorio<RegraCategoria> regras,
         IRepositorio<Cliente> clientes,
         IRepositorio<ContaPagarSincronizada> contas,
         IRepositorio<CategoriaFinanceira> categorias,
-        CategoriasBlingService categoriasBling)
+        CategoriasBlingService categoriasBling,
+        IOptions<CategoriasOptions> opcoes)
     {
+        _opcoes = opcoes.Value;
         _regras = regras;
         _clientes = clientes;
         _contas = contas;
@@ -67,12 +71,16 @@ public class CategoriaLancamentoService
             return aprendida;
         }
 
-        // 3) Categoria padrão da rede
+        // 3) Categoria padrão da rede (sem ela, a automática)
         string? padrao = await _clientes.ConsultarSomenteLeitura()
             .Where(c => c.Id == clienteId)
             .Select(c => c.CategoriaPadrao)
             .FirstOrDefaultAsync(cancelamento);
         if (string.IsNullOrWhiteSpace(padrao))
+        {
+            padrao = _opcoes.PadraoAutomaticoValido();
+        }
+        if (padrao == null)
         {
             return null;
         }

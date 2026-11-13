@@ -182,6 +182,11 @@ public class ContasPagarTests
         Assert.Equal(30, opcoes.DiasPassadosValidos());
         Assert.Equal(90, opcoes.DiasFuturosValidos());
         Assert.Equal(30, opcoes.DiasRenovarFornecedorValidos());
+        Assert.Equal(1, opcoes.DiasReconferirCategoriaValidos());
+        opcoes.DiasReconferirCategoria = 45;
+        Assert.Equal(1, opcoes.DiasReconferirCategoriaValidos());
+        opcoes.DiasReconferirCategoria = 7;
+        Assert.Equal(7, opcoes.DiasReconferirCategoriaValidos());
         opcoes.DiasPassados = 60;
         opcoes.DiasFuturos = 180;
         Assert.Equal(60, opcoes.DiasPassadosValidos());
@@ -270,7 +275,7 @@ public class ContasPagarTests
         // Conferida e sem categoria
         ContaPagarSincronizada d = Conta(_centro, 4, 23, 400m);
         d.CategoriaConferidaEm = conferida;
-        // Categoria que não existe mais no Bling conta como sem categoria
+        // Categoria que não está na lista da empresa: "não identificada", não "sem categoria"
         ContaPagarSincronizada e = Conta(_centro, 5, 24, 500m);
         e.CategoriaBlingId = 77;
         e.CategoriaConferidaEm = conferida;
@@ -283,7 +288,12 @@ public class ContasPagarTests
         Assert.Equal("Fretes", fretes.Itens[0].Categoria);
 
         PaginaContasPagarDto sem = await Listar(new FiltroContas { Categoria = FiltroContas.SemCategoria, Ordem = "vencimento" });
-        Assert.Equal(new long[] { 4, 5 }, sem.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.BlingId).ToArray());
         Assert.Null(sem.Itens[0].Categoria);
+
+        // Categoria que o Previsio não tem na lista da empresa
+        PaginaContasPagarDto naoIdentificada = await Listar(new FiltroContas { Categoria = FiltroContas.CategoriaNaoIdentificada });
+        Assert.Equal(new long[] { 5 }, naoIdentificada.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(FiltroContas.CategoriaNaoIdentificada, naoIdentificada.Itens[0].Categoria);
     }
 }

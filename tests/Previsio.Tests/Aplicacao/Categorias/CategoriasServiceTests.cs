@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Dtos;
@@ -24,7 +25,8 @@ public class CategoriasServiceTests
             new Repositorio<Empresa>(_db),
             new Repositorio<CategoriaFinanceira>(_db),
             new Repositorio<RegraCategoria>(_db),
-            new Repositorio<NotaFiscal>(_db));
+            new Repositorio<NotaFiscal>(_db),
+            Options.Create(new CategoriasOptions()));
     }
 
     private async Task Cadastrar()

@@ -122,7 +122,7 @@ public class CategoriasBlingServiceTests
         };
         RespostasFixas respostas = BlingComCategorias();
 
-        int abertas = await CriarServico(respostas).ConferirCategoriasAsync(_empresa, "conta", "token", contas, 2, _agora, CancellationToken.None);
+        int abertas = await CriarServico(respostas).ConferirCategoriasAsync(_empresa, "conta", "token", contas, 2, 7, _agora, CancellationToken.None);
 
         Assert.Equal(2, abertas);
         Assert.Contains(respostas.Chamadas, c => c.EndsWith("contas/pagar/503"));
@@ -136,13 +136,32 @@ public class CategoriasBlingServiceTests
     }
 
     [Fact]
+    public async Task Reconfere_as_conferidas_ha_mais_dias_que_o_configurado()
+    {
+        await CadastrarEmpresa();
+        var contas = new List<ContaPagarSincronizada>
+        {
+            Conta(500, _agora.AddHours(-12), 1),  // conferida há 12 horas: fica
+            Conta(501, _agora.AddDays(-2), 2)     // conferida há 2 dias: com 1 dia, confere de novo
+        };
+        RespostasFixas respostas = BlingComCategorias();
+
+        int abertas = await CriarServico(respostas).ConferirCategoriasAsync(_empresa, "conta", "token", contas, 50, 1, _agora, CancellationToken.None);
+
+        Assert.Equal(1, abertas);
+        Assert.Contains(respostas.Chamadas, c => c.EndsWith("contas/pagar/501"));
+        Assert.DoesNotContain(respostas.Chamadas, c => c.EndsWith("contas/pagar/500"));
+        Assert.Equal(_agora, contas[1].CategoriaConferidaEm);
+    }
+
+    [Fact]
     public async Task Limite_do_Bling_para_a_conferencia_sem_derrubar_a_sincronizacao()
     {
         await CadastrarEmpresa();
         var contas = new List<ContaPagarSincronizada> { Conta(501, null, 1), Conta(502, null, 2) };
         var respostas = new RespostasFixas(_ => RespostasFixas.Json((HttpStatusCode)429, "{\"error\":{\"type\":\"TOO_MANY_REQUESTS\"}}"));
 
-        int abertas = await CriarServico(respostas).ConferirCategoriasAsync(_empresa, "conta", "token", contas, 50, _agora, CancellationToken.None);
+        int abertas = await CriarServico(respostas).ConferirCategoriasAsync(_empresa, "conta", "token", contas, 50, 7, _agora, CancellationToken.None);
 
         Assert.Equal(0, abertas);
         Assert.Null(contas[0].CategoriaConferidaEm);

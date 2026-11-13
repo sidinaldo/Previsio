@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Previsio.Aplicacao.Categorias;
 using Previsio.Core.Entidades;
 using Previsio.Data;
@@ -17,7 +18,7 @@ public class CategoriaLancamentoServiceTests
     private Empresa _empresa = null!;
     private NotaFiscal _nota = null!;
 
-    private CategoriaLancamentoService CriarServico()
+    private CategoriaLancamentoService CriarServico(CategoriasOptions? opcoes = null)
     {
         // As categorias já estão guardadas (de hoje): não busca no Bling
         var bling = BlingDeTeste.Criar(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}")));
@@ -26,7 +27,8 @@ public class CategoriaLancamentoServiceTests
             new Repositorio<Cliente>(_db),
             new Repositorio<ContaPagarSincronizada>(_db),
             new Repositorio<CategoriaFinanceira>(_db),
-            new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(_db), bling, NullLogger<CategoriasBlingService>.Instance));
+            new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(_db), bling, NullLogger<CategoriasBlingService>.Instance),
+            Options.Create(opcoes ?? new CategoriasOptions()));
     }
 
     private async Task Cadastrar(string? categoriaPadrao)
@@ -44,9 +46,9 @@ public class CategoriaLancamentoServiceTests
         await _db.SaveChangesAsync();
     }
 
-    private Task<long?> Escolher()
+    private Task<long?> Escolher(CategoriasOptions? opcoes = null)
     {
-        return CriarServico().EscolherAsync(_nota, _empresa, Contato, "conta", "token", CancellationToken.None);
+        return CriarServico(opcoes).EscolherAsync(_nota, _empresa, Contato, "conta", "token", CancellationToken.None);
     }
 
     [Fact]
@@ -91,10 +93,19 @@ public class CategoriaLancamentoServiceTests
     }
 
     [Fact]
-    public async Task Sem_nada_configurado_lanca_sem_categoria()
+    public async Task Rede_sem_padrao_usa_a_categoria_automatica()
+    {
+        // Padrão automático: "Compras de Mercadorias" (a empresa tem "Compras de mercadorias")
+        await Cadastrar(null);
+
+        Assert.Equal(12, await Escolher());
+    }
+
+    [Fact]
+    public async Task Com_a_automatica_desligada_e_sem_padrao_lanca_sem_categoria()
     {
         await Cadastrar(null);
 
-        Assert.Null(await Escolher());
+        Assert.Null(await Escolher(new CategoriasOptions { PadraoAutomatico = "" }));
     }
 }

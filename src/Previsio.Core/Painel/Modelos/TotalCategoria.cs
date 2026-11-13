@@ -10,6 +10,10 @@ public class TotalCategoria
     public const string TipoOutras = "outras";
     // Contas conferidas no Bling sem categoria
     public const string TipoSem = "sem";
+    // Contas com categoria no Bling que o Previsio não tem na lista da empresa
+    // (empresa sem o escopo de categorias ou categoria criada depois da última busca)
+    public const string TipoNaoIdentificada = "naoidentificada";
+    public const string NomeNaoIdentificada = "Categoria não identificada";
     // Contas cuja categoria ainda não foi conferida no Bling (a sincronização busca aos poucos)
     public const string TipoAConferir = "conferir";
 

@@ -166,6 +166,7 @@ public class CalculadoraPainel
         var porNome = new Dictionary<string, TotalCategoria>(StringComparer.OrdinalIgnoreCase);
         var sem = new TotalCategoria { Nome = "Sem categoria", Tipo = TotalCategoria.TipoSem };
         var aConferir = new TotalCategoria { Nome = "A conferir", Tipo = TotalCategoria.TipoAConferir };
+        var naoIdentificada = new TotalCategoria { Nome = TotalCategoria.NomeNaoIdentificada, Tipo = TotalCategoria.TipoNaoIdentificada };
 
         foreach (ContaPagarSincronizada conta in contas)
         {
@@ -189,6 +190,10 @@ public class CalculadoraPainel
                     destino = new TotalCategoria { Nome = chave, Tipo = TotalCategoria.TipoCategoria };
                     porNome[chave] = destino;
                 }
+            }
+            else if (conta.CategoriaBlingId.HasValue)
+            {
+                destino = naoIdentificada;
             }
             else if (!conta.CategoriaConferidaEm.HasValue)
             {
@@ -221,6 +226,10 @@ public class CalculadoraPainel
         if (sem.Quantidade > 0)
         {
             lista.Add(sem);
+        }
+        if (naoIdentificada.Quantidade > 0)
+        {
+            lista.Add(naoIdentificada);
         }
         if (aConferir.Quantidade > 0)
         {

@@ -3375,3 +3375,8 @@ app-paginacao.pv-paginacao {
     margin: 0;
   }
 }
+
+// Categoria que o Previsio não tem na lista da empresa (falta o escopo ou a lista está desatualizada)
+.pv-categorias-painel__item--naoidentificada .pv-categorias-painel__barra span {
+  background: #8b5cf6;
+}

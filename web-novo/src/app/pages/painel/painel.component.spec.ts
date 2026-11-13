@@ -215,4 +215,16 @@ describe('PainelComponent (visual)', () => {
     const { tela } = await montar(resumo([1000, 2500, 0], 0));
     expect(tela.textContent).toContain('Nenhuma nota para resolver');
   });
+
+  it('categoria não identificada tem link para o filtro dela e não conta para o atalho', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.categorias = [
+      { nome: 'Compras', tipo: 'categoria', valor: 700, quantidade: 2 },
+      { nome: 'Categoria não identificada', tipo: 'naoidentificada', valor: 300, quantidade: 1 }
+    ];
+    const { tela } = await montar(dados);
+    const itens = tela.querySelectorAll('.pv-categorias-painel li');
+    expect(itens[1].querySelector('a')!.getAttribute('href')).toContain('categoria=Categoria%20n%C3%A3o%20identificada');
+    expect(tela.querySelector('.pv-categorias-painel__acao')).toBeNull();
+  });
 });

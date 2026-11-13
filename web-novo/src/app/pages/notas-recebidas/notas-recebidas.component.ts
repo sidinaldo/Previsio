@@ -7,6 +7,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { classeDaSituacao, descricaoDaSituacao } from '../../core/filtro-notas';
 import { totalDePaginas } from '../../core/filtro-falhas';
+import { mensagemComMotivo } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
 import { Empresa, FiltroNotas, NotaRecebida, SITUACAO_PENDENTES, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
@@ -211,9 +212,9 @@ export class NotasRecebidasComponent {
         this.mensagem.set(`NF ${nota.numero} enviada para lançamento.`);
         setTimeout(() => this.carregar(), 3000);
       },
-      error: () => {
+      error: erro => {
         this.reprocessandoId.set(null);
-        this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`);
+        this.erro.set(mensagemComMotivo(erro, `Não foi possível reprocessar a NF ${nota.numero}`));
       }
     });
   }

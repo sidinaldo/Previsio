@@ -4,6 +4,7 @@ import { CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { aguardarFimDoJob } from '../../core/aguardar-job';
+import { mensagemComMotivo } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_STATUS, Nota, SITUACAO_PENDENTES, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
@@ -158,9 +159,9 @@ export class NotasPendentesComponent {
         this.mensagem.set(`NF ${nota.numero} enviada para lançamento.`);
         setTimeout(() => this.carregar(), 3000);
       },
-      error: () => {
+      error: erro => {
         this.reprocessandoId.set(null);
-        this.erro.set(`Não foi possível reprocessar a NF ${nota.numero}.`);
+        this.erro.set(mensagemComMotivo(erro, `Não foi possível reprocessar a NF ${nota.numero}`));
       }
     });
   }

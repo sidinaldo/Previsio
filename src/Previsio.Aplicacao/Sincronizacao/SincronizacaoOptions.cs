@@ -15,6 +15,7 @@ public class SincronizacaoOptions
     public const int DiasRenovarFornecedorPadrao = 30;
     public const int MaximoContasAntigasPadrao = 100;
     public const int MaximoDetalhesPadrao = 50;
+    public const int DiasReconferirCategoriaPadrao = 1;
 
     // Vencimentos de quantos dias atrás entram (as vencidas do painel e dos avisos saem daqui)
     public int DiasPassados { get; set; } = DiasPassadosPadrao;
@@ -34,6 +35,10 @@ public class SincronizacaoOptions
     // Contas abertas uma a uma, por empresa e sincronização, para saber a categoria (1 a 1000).
     // A lista do Bling não traz a categoria; ~3 por segundo, então 50 levam uns 17 segundos
     public int MaximoDetalhesPorExecucao { get; set; } = MaximoDetalhesPadrao;
+
+    // Depois de quantos dias a categoria de uma conta já conferida é conferida de novo no Bling (1 a 30):
+    // quem troca a categoria à mão no Bling vê a mudança no Previsio nesse prazo
+    public int DiasReconferirCategoria { get; set; } = DiasReconferirCategoriaPadrao;
 
     public int DiasPassadosValidos()
     {
@@ -63,6 +68,11 @@ public class SincronizacaoOptions
     public int MaximoDetalhesPorExecucaoValido()
     {
         return DentroDoLimite(MaximoDetalhesPorExecucao, 1, 1000, MaximoDetalhesPadrao);
+    }
+
+    public int DiasReconferirCategoriaValidos()
+    {
+        return DentroDoLimite(DiasReconferirCategoria, 1, 30, DiasReconferirCategoriaPadrao);
     }
 
     /// <summary>

@@ -134,6 +134,8 @@ export class PainelComponent {
       nome = categoria.nome;
     } else if (categoria.tipo === 'sem') {
       nome = 'Sem categoria';
+    } else if (categoria.tipo === 'naoidentificada') {
+      nome = 'Categoria não identificada';
     } else {
       return null;
     }

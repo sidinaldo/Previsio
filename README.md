@@ -45,11 +45,14 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
 - **Nº do documento:** `48213` (parcela única) ou `48213/2` (segunda parcela).
 - **Nota sem duplicatas no XML:** fica como pendente ("Sem vencimentos no XML") para lançamento manual.
 - **Categoria da conta:** regra da rede para o fornecedor (pelo nome da categoria) → senão a categoria da última conta
-  desse fornecedor no Bling → senão a categoria padrão da rede → senão vai sem categoria. Configurado no card **Categorias** em Empresas.
+  desse fornecedor no Bling → senão a categoria padrão da rede → senão a automática (`Categorias:PadraoAutomatico`,
+  padrão "Compras de Mercadorias"; vazio desliga) → senão vai sem categoria. Configurado no card **Categorias** em Empresas.
 - **Categoria das contas do Bling:** a lista de contas do Bling não traz a categoria, só o detalhe de cada conta. Por isso a
   sincronização busca o detalhe aos poucos: primeiro as contas novas ou que mudaram, depois as conferidas há mais de 7 dias,
-  até `Sincronizacao:MaximoDetalhesPorExecucao` contas por empresa a cada execução (padrão 50). No painel, as que ainda
-  não foram conferidas aparecem como "A conferir".
+  até `Sincronizacao:MaximoDetalhesPorExecucao` contas por empresa a cada execução (padrão 50). Conta já conferida é
+  conferida de novo depois de `Sincronizacao:DiasReconferirCategoria` dias (padrão 1, de 1 a 30), para quem troca a
+  categoria à mão no Bling. No painel, as que ainda não foram conferidas aparecem como "A conferir" e as que têm uma
+  categoria fora da lista da empresa (falta o escopo ou a lista está desatualizada) como "Categoria não identificada".
 
 ---
 

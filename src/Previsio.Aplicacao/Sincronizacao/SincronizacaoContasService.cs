@@ -229,7 +229,8 @@ public class SincronizacaoContasService
         // Categorias: a lista da empresa (1 vez por dia) e a categoria das contas, aos poucos
         await _categorias.AtualizarAsync(empresa, conta, token, agora, renovarCategorias, cancelamento);
         int detalhes = await _categorias.ConferirCategoriasAsync(
-            empresa, conta, token, atuais, _opcoes.MaximoDetalhesPorExecucaoValido(), agora, cancelamento);
+            empresa, conta, token, atuais, _opcoes.MaximoDetalhesPorExecucaoValido(), _opcoes.DiasReconferirCategoriaValidos(),
+            agora, cancelamento);
         if (detalhes > 0)
         {
             _logger.LogInformation("Empresa {Empresa}: categoria de {Quantidade} contas conferida no Bling", empresa.Nome, detalhes);

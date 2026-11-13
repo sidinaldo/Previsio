@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Aplicacao.Clientes;
@@ -21,14 +22,17 @@ public class CategoriasService
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
     private readonly IRepositorio<RegraCategoria> _regras;
     private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly CategoriasOptions _opcoes;
 
     public CategoriasService(
         IRepositorio<Cliente> clientes,
         IRepositorio<Empresa> empresas,
         IRepositorio<CategoriaFinanceira> categorias,
         IRepositorio<RegraCategoria> regras,
-        IRepositorio<NotaFiscal> notas)
+        IRepositorio<NotaFiscal> notas,
+        IOptions<CategoriasOptions> opcoes)
     {
+        _opcoes = opcoes.Value;
         _clientes = clientes;
         _empresas = empresas;
         _categorias = categorias;
@@ -47,11 +51,18 @@ public class CategoriasService
         CategoriasDaRede rede = await CarregarRedeAsync(clienteId, cancelamento);
         var dto = new ConfiguracaoCategoriasDto();
         dto.CategoriaPadrao = cliente.CategoriaPadrao;
+        dto.PadraoAutomatico = _opcoes.PadraoAutomaticoValido();
         dto.Opcoes = rede.Opcoes();
         dto.EmpresasSemCategorias = rede.EmpresasSemCategorias();
-        if (!string.IsNullOrWhiteSpace(cliente.CategoriaPadrao))
+        // A que vale de fato: a escolhida pela rede ou, sem ela, a automática
+        string? padraoEmUso = cliente.CategoriaPadrao;
+        if (string.IsNullOrWhiteSpace(padraoEmUso))
         {
-            dto.PadraoAusenteEm = rede.AusenteEm(cliente.CategoriaPadrao);
+            padraoEmUso = dto.PadraoAutomatico;
+        }
+        if (padraoEmUso != null)
+        {
+            dto.PadraoAusenteEm = rede.AusenteEm(padraoEmUso);
         }
 
         List<RegraCategoria> regras = await _regras.ConsultarSomenteLeitura()

@@ -49,7 +49,7 @@ import { CarregandoDirective } from '../carregando.directive';
                 <label class="pv-rotulo" for="categoria-padrao">Categoria padrão</label>
                 <span class="pv-campo-grupo bmd-form-group">
                   <select id="categoria-padrao" class="pv-campo pv-categorias__select" [value]="padrao()" (change)="padrao.set(valor($event))">
-                    <option value="">Sem categoria</option>
+                    <option value="">{{ rotuloSemPadrao() }}</option>
                     @for (nome of atual.opcoes; track nome) {
                       <option [value]="nome" [selected]="nome === padrao()">{{ nome }}</option>
                     }
@@ -151,6 +151,15 @@ export class CategoriasComponent {
 
   readonly podeAdicionar = computed(() => this.fornecedor() !== '' && this.categoriaRegra() !== '');
 
+  /** Primeira opção da categoria padrão: a automática (quando ligada) ou sem categoria. */
+  readonly rotuloSemPadrao = computed(() => {
+    const automatica = this.dados()?.padraoAutomatico;
+    if (automatica) {
+      return 'Automática (' + automatica + ')';
+    }
+    return 'Sem categoria';
+  });
+
   constructor() {
     effect(() => {
       const id = this.clienteId();
@@ -173,6 +182,10 @@ export class CategoriasComponent {
   salvarPadrao(): void {
     this.executar('padrao', this.api.alterarCategoriaPadrao(this.clienteId(), this.padrao()), () => {
       if (this.padrao() === '') {
+        const automatica = this.dados()?.padraoAutomatico;
+        if (automatica) {
+          return 'Padrão automática: notas de fornecedor sem regra e sem histórico vão para ' + automatica + '.';
+        }
         return 'Sem categoria padrão: notas de fornecedor sem regra e sem histórico vão sem categoria.';
       }
       return 'Categoria padrão salva.';

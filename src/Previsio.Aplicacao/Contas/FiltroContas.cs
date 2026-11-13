@@ -22,6 +22,8 @@ public class FiltroContas
 
     // Contas já conferidas no Bling que estão sem categoria
     public const string SemCategoria = "Sem categoria";
+    // Contas com categoria no Bling que não está na lista da empresa no Previsio
+    public const string CategoriaNaoIdentificada = "Categoria não identificada";
 
     // vencimento, valor, fornecedor ou empresa ("-" na frente = decrescente)
     public string? Ordem { get; set; }

@@ -309,9 +309,10 @@ public class SincronizacaoContasServiceTests
     {
         Cliente rede = await CadastrarRede(true);
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
-        DateTime ontem = DateTime.UtcNow.AddDays(-1);
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = ontem });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = ontem });
+        // Conferidas há 6 horas: dentro do prazo de reconferência (1 dia)
+        DateTime conferidaHaPouco = DateTime.UtcNow.AddHours(-6);
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = conferidaHaPouco });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = conferidaHaPouco });
         await _db.SaveChangesAsync();
         // A 10 mudou de valor; a 11 veio igual
         string contas = "{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":130,\"contato\":{\"id\":555}},"

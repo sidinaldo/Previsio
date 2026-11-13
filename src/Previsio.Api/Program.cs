@@ -17,6 +17,7 @@ using Previsio.Core.Abstracoes;
 using Previsio.Core.Comum;
 using Previsio.Core.Entidades;
 using Previsio.Infra;
+using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.Abstracoes;
 using Previsio.Aplicacao.Autenticacao;
 using Previsio.Aplicacao.EmailsIgnorados;
@@ -54,6 +55,7 @@ builder.Services.AddPrevisioInfra(builder.Configuration);
 // Serviços de aplicação (um por assunto): Previsio.Aplicacao
 builder.Services.AddPrevisioAplicacao();
 builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
+builder.Services.Configure<CategoriasOptions>(builder.Configuration.GetSection(CategoriasOptions.Secao));
 builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
 builder.Services.AddSingleton(new AmbienteAplicacao(builder.Environment.IsDevelopment()));
 builder.Services.AddSingleton(TimeProvider.System);

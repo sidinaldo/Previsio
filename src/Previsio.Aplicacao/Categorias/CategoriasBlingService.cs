@@ -15,8 +15,6 @@ public class CategoriasBlingService
 {
     // A lista de categorias muda pouco: busca de novo depois de um dia
     public static readonly TimeSpan RenovarLista = TimeSpan.FromDays(1);
-    // Conta já conferida é conferida de novo depois de uma semana (alguém pode ter mudado a categoria no Bling)
-    public static readonly TimeSpan RevisarConta = TimeSpan.FromDays(7);
 
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
     private readonly BlingClient _bling;
@@ -118,7 +116,7 @@ public class CategoriasBlingService
     /// <summary>
     /// Abre no Bling até "maximo" contas para saber a categoria: primeiro as nunca conferidas
     /// (novas, ou que mudaram de valor, vencimento ou situação), depois as conferidas há mais de
-    /// uma semana. Devolve quantas foram abertas.
+    /// "diasReconferir" dias (alguém pode ter trocado a categoria à mão no Bling). Devolve quantas foram abertas.
     /// </summary>
     public async Task<int> ConferirCategoriasAsync(
         Empresa empresa,
@@ -126,10 +124,11 @@ public class CategoriasBlingService
         string token,
         List<ContaPagarSincronizada> contas,
         int maximo,
+        int diasReconferir,
         DateTime agoraUtc,
         CancellationToken cancelamento)
     {
-        DateTime limiteRevisao = agoraUtc - RevisarConta;
+        DateTime limiteRevisao = agoraUtc.AddDays(-diasReconferir);
         List<ContaPagarSincronizada> aConferir = contas
             .Where(c => !c.CategoriaConferidaEm.HasValue || c.CategoriaConferidaEm.Value < limiteRevisao)
             .OrderBy(c => c.CategoriaConferidaEm.HasValue ? 1 : 0)

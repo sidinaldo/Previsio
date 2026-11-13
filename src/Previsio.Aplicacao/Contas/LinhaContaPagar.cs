@@ -10,8 +10,29 @@ public class LinhaContaPagar
     public ContaPagarSincronizada Conta { get; set; } = null!;
     public string EmpresaNome { get; set; } = "";
     public string EmpresaCnpj { get; set; } = "";
-    public string? Categoria { get; set; }
+    // Nome da categoria na lista da empresa (preenchido na consulta)
+    public string? CategoriaNome { get; set; }
     public ParcelaDaConta? Parcela { get; set; }
+
+    /// <summary>
+    /// O que mostrar na coluna Categoria: o nome; "Categoria não identificada" quando a conta tem
+    /// categoria no Bling que não está na lista da empresa; nulo quando não tem categoria.
+    /// </summary>
+    public string? Categoria
+    {
+        get
+        {
+            if (CategoriaNome != null)
+            {
+                return CategoriaNome;
+            }
+            if (Conta.CategoriaBlingId.HasValue)
+            {
+                return FiltroContas.CategoriaNaoIdentificada;
+            }
+            return null;
+        }
+    }
 
     public string? Fornecedor
     {

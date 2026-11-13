@@ -50,7 +50,10 @@ export interface ResumoPainel {
   categorias?: TotalCategoria[];
 }
 
-/** tipo: 'categoria', 'outras', 'sem' (conferida no Bling, sem categoria) ou 'conferir' (ainda não conferida). */
+/**
+ * tipo: 'categoria', 'outras', 'sem' (conferida no Bling, sem categoria), 'naoidentificada' (tem categoria
+ * no Bling que não está na lista da empresa) ou 'conferir' (ainda não conferida).
+ */
 export interface TotalCategoria {
   nome: string;
   tipo: string;
@@ -421,7 +424,10 @@ export interface FluxoCaixa {
 
 /** Card Categorias da rede: categoria padrão e regras "fornecedor → categoria" do lançamento. */
 export interface ConfiguracaoCategorias {
+  /** Escolhida pela rede; nulo = usa a automática. */
   categoriaPadrao: string | null;
+  /** Usada quando a rede não escolhe (appsettings Categorias:PadraoAutomatico); nulo = desligada. */
+  padraoAutomatico?: string | null;
   /** Empresas cujo Bling não tem a categoria padrão. */
   padraoAusenteEm: string[];
   /** Categorias de despesa do Bling das empresas da rede. */
