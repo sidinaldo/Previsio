@@ -109,6 +109,26 @@ http.BaseAddress = new Uri(opcoesBling.ApiBaseUrl);
 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+// Token recusado antes de vencer (o Bling revoga quando os escopos do aplicativo mudam):
+// força a renovação uma vez. Se o refresh token também foi revogado, a empresa precisa reconectar.
+HttpResponseMessage teste = await http.GetAsync("contas/pagar?pagina=1&limite=1");
+if ((int)teste.StatusCode == 401)
+{
+    Console.WriteLine("Token recusado pelo Bling; renovando...");
+    empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
+    try
+    {
+        token = await tokens.ObterAccessTokenAsync(empresa, CancellationToken.None);
+    }
+    catch (Exception erro)
+    {
+        Console.WriteLine("A renovação também foi recusada: " + erro.Message);
+        Console.WriteLine("Clique em Conectar Bling na empresa, no Previsio, e rode de novo.");
+        return 1;
+    }
+    http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+}
+
 var relatorio = new StringBuilder();
 relatorio.AppendLine("# Sondagem da API do Bling");
 relatorio.AppendLine();
