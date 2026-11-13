@@ -45,6 +45,10 @@ public class Cliente : ICaixaEmail
     // Conferência com o Bling: antes de lançar, procura a conta já lançada à mão (mesmo fornecedor,
     // vencimento e valor, com as tolerâncias); e fecha sozinhas as notas pendentes encontradas lá.
     public bool ConferirBlingAntesDeLancar { get; set; } = true;
+
+    // Fluxo de caixa: traz as contas a receber do Bling e mostra entradas × saídas no painel.
+    // Desligado para quem não lança as vendas no Bling (as entradas ficariam zeradas).
+    public bool MostrarFluxoCaixa { get; set; } = true;
     public bool ConferenciaExigeNumeroNota { get; set; }
     public decimal ConferenciaToleranciaValor { get; set; } = 0.10m;
     public int ConferenciaToleranciaDias { get; set; }

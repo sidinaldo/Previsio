@@ -1326,6 +1326,18 @@ app-sidebar {
   }
 }
 
+// Fluxo de caixa: saídas (série a) e entradas (série b) lado a lado
+.pv-grafico--fluxo {
+  .ct-series-a .ct-bar {
+    stroke-width: 18px;
+  }
+
+  .ct-series-b .ct-bar {
+    stroke: var(--pv-sucesso);
+    stroke-width: 18px;
+  }
+}
+
 @media (max-width: 575.98px) {
   .pv-grafico {
     height: 220px;
@@ -1334,6 +1346,63 @@ app-sidebar {
       stroke-width: 20px;
     }
   }
+
+  .pv-grafico--fluxo {
+    .ct-series-a .ct-bar,
+    .ct-series-b .ct-bar {
+      stroke-width: 9px;
+    }
+  }
+}
+
+// Legenda do gráfico do fluxo de caixa
+.pv-legenda {
+  display: flex;
+  gap: 16px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+
+  li::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 2px;
+    vertical-align: -1px;
+  }
+}
+
+.pv-legenda__saidas::before {
+  background-color: var(--pv-primaria);
+}
+
+.pv-legenda__entradas::before {
+  background-color: var(--pv-sucesso);
+}
+
+.pv-kpi__icone--sucesso {
+  color: var(--pv-sucesso);
+  background-color: var(--pv-sucesso-suave);
+}
+
+.pv-semanas__detalhe {
+  display: block;
+  font-size: 12px;
+  color: var(--pv-texto-secundario);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pv-valor--positivo {
+  color: var(--pv-sucesso-texto);
+}
+
+.pv-valor--negativo {
+  color: var(--pv-erro);
 }
 
 // ---------- Resumo semanal (embaixo do gráfico) ----------

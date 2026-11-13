@@ -28,7 +28,8 @@ public class ExportacaoServiceTests
     private ExportacaoService CriarServico()
     {
         var contas = ServicosDeTeste.ContasPagarService(_db, _relogio, Options.Create(new SincronizacaoOptions()));
-        return new ExportacaoService(ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), contas, _relogio);
+        var receber = ServicosDeTeste.ContasReceberService(_db, _relogio, Options.Create(new SincronizacaoOptions()));
+        return new ExportacaoService(ServicosDeTeste.Notas(_db, new FilaDeJobsDeTeste()), contas, receber, _relogio);
     }
 
     private async Task CadastrarRede()
@@ -257,5 +258,27 @@ public class ExportacaoServiceTests
 
         Resultado<ArquivoExportado> todas = await CriarServico().ContasPagarAsync(_rede.Id, new FiltroContas(), CancellationToken.None);
         Assert.Equal(3, Linhas(todas.Valor!.Conteudo).Count);
+    }
+
+    [Fact]
+    public async Task ContasReceber_GeraUmaLinhaPorContaComOCliente()
+    {
+        await CadastrarRede();
+        _db.ContasReceber.Add(new ContaReceberSincronizada
+        {
+            EmpresaId = _centro.Id, BlingId = 1, Vencimento = new DateTime(2026, 11, 5), Valor = 150.5m,
+            Situacao = SituacaoContaBling.EmAberto, ClienteNome = "Oficina do Zé"
+        });
+        await _db.SaveChangesAsync();
+
+        Resultado<ArquivoExportado> resultado = await CriarServico().ContasReceberAsync(
+            _rede.Id, new FiltroContasReceber(), CancellationToken.None);
+
+        Assert.True(resultado.Sucesso);
+        Assert.StartsWith("previsio-contas-a-receber-", resultado.Valor!.Nome);
+        List<List<string>> linhas = Linhas(resultado.Valor.Conteudo);
+        Assert.Equal("F1=Cliente", linhas[0][5]);
+        Assert.Equal("E2=Em aberto (vencida)", linhas[1][4]);
+        Assert.Equal("F2=Oficina do Zé", linhas[1][5]);
     }
 }

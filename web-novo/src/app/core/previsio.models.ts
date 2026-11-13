@@ -1,7 +1,12 @@
 export interface TotalSemana {
   inicio: string;
   fim: string;
+  /** Saídas: contas a pagar em aberto da semana. */
   valor: number;
+  /** Fluxo de caixa: contas a receber em aberto da semana, entradas - saídas e o acumulado. */
+  entradas?: number;
+  saldo?: number;
+  saldoAcumulado?: number;
 }
 
 export interface TotalEmpresa {
@@ -10,6 +15,8 @@ export interface TotalEmpresa {
   cnpj: string;
   quantidadeContas: number;
   valor: number;
+  /** A receber no período (fluxo de caixa ligado). */
+  valorReceber?: number;
   notasPendentes: number;
   valorNotasPendentes: number;
   proximoVencimento: string | null;
@@ -28,6 +35,13 @@ export interface ResumoPainel {
   /** Contas em aberto no Bling com vencimento antes de hoje. */
   totalVencidas?: number;
   quantidadeVencidas?: number;
+  /** Fluxo de caixa (contas a receber do Bling), quando a rede usa. */
+  fluxoCaixaAtivo?: boolean;
+  totalEntradasPeriodo?: number;
+  quantidadeContasReceber?: number;
+  saldoPeriodo?: number;
+  totalReceberVencido?: number;
+  quantidadeReceberVencido?: number;
   semanas: TotalSemana[];
   empresas: TotalEmpresa[];
   /** As notas pendentes que vencem primeiro (até 5); as demais ficam em Notas pendentes. */
@@ -362,10 +376,41 @@ export interface PaginaContasPagar {
   diasFuturos: number;
 }
 
+export interface ContaReceber {
+  id: number;
+  blingId: number;
+  empresaId: number;
+  empresaNome: string;
+  vencimento: string;
+  valor: number;
+  situacao: number;
+  situacaoTexto: string;
+  vencida: boolean;
+  cliente: string | null;
+}
+
+export interface PaginaContasReceber {
+  itens: ContaReceber[];
+  total: number;
+  pagina: number;
+  tamanhoPagina: number;
+  valorTotal: number;
+  sincronizadaEm: string | null;
+  diasPassados: number;
+  diasFuturos: number;
+  /** Desligado na rede: a sincronização não traz contas a receber. */
+  fluxoCaixaAtivo: boolean;
+}
+
+/** Fluxo de caixa da rede: contas a receber do Bling no painel. */
+export interface FluxoCaixa {
+  ativo: boolean;
+}
+
 /** Filtros da tela Contas a pagar. Datas de vencimento no formato yyyy-MM-dd. */
 export interface FiltroContas {
   empresaId?: number | null;
-  // Abertas, Vencidas, Pagas, Canceladas ou Todas
+  // Abertas, Vencidas, Pagas (Recebidas, nas contas a receber), Canceladas ou Todas
   situacao?: string;
   // Previsio, Bling ou vazio (as duas)
   origem?: string;

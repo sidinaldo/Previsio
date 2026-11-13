@@ -24,6 +24,8 @@ import {
   NovoUsuario,
   NotaSoPdf,
   PaginaContasPagar,
+  PaginaContasReceber,
+  FluxoCaixa,
   PaginaFalhas,
   PaginaNotas,
   PainelAvisos,
@@ -98,6 +100,26 @@ export class PrevisioService {
   exportarContasFiltradas(filtro: FiltroContas): Observable<HttpResponse<Blob>> {
     const params = parametrosDasContas({ ...filtro, pagina: 1 });
     return this.doCliente(url => this.http.get(`${url}/contas-pagar/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
+  /** Contas a receber sincronizadas do Bling (fluxo de caixa), com os filtros da tela. */
+  obterContasReceber(filtro: FiltroContas): Observable<PaginaContasReceber> {
+    const params = parametrosDasContas(filtro);
+    return this.doCliente(url => this.http.get<PaginaContasReceber>(`${url}/contas-receber`, { params }));
+  }
+
+  /** Planilha das contas a receber com os mesmos filtros e ordem da tela. */
+  exportarContasReceber(filtro: FiltroContas): Observable<HttpResponse<Blob>> {
+    const params = parametrosDasContas({ ...filtro, pagina: 1 });
+    return this.doCliente(url => this.http.get(`${url}/contas-receber/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
+  obterFluxoCaixa(clienteId: number): Observable<FluxoCaixa> {
+    return this.http.get<FluxoCaixa>(`${this.api}/clientes/${clienteId}/fluxo-caixa`);
+  }
+
+  alterarFluxoCaixa(clienteId: number, dados: FluxoCaixa): Observable<FluxoCaixa> {
+    return this.http.put<FluxoCaixa>(`${this.api}/clientes/${clienteId}/fluxo-caixa`, dados);
   }
 
   /** Planilha das contas a pagar em aberto no Bling dos próximos N dias (as do painel). */

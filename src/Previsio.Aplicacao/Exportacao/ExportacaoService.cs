@@ -15,12 +15,14 @@ public class ExportacaoService
 {
     private readonly NotasService _notas;
     private readonly ContasPagarService _contas;
+    private readonly ContasReceberService _contasReceber;
     private readonly TimeProvider _relogio;
 
-    public ExportacaoService(NotasService notas, ContasPagarService contas, TimeProvider relogio)
+    public ExportacaoService(NotasService notas, ContasPagarService contas, ContasReceberService contasReceber, TimeProvider relogio)
     {
         _notas = notas;
         _contas = contas;
+        _contasReceber = contasReceber;
         _relogio = relogio;
     }
 
@@ -183,6 +185,45 @@ public class ExportacaoService
         }
 
         return Resultado<ArquivoExportado>.Ok(Arquivo("contas-a-pagar", planilha));
+    }
+
+    /// <summary>
+    /// Contas a receber com os filtros da tela Contas a receber.
+    /// </summary>
+    public async Task<Resultado<ArquivoExportado>> ContasReceberAsync(
+        int clienteId, FiltroContasReceber filtro, CancellationToken cancelamento)
+    {
+        Resultado<List<LinhaContaReceber>> consulta = await _contasReceber.ListarParaExportarAsync(clienteId, filtro, cancelamento);
+        if (!consulta.Sucesso)
+        {
+            return Resultado<ArquivoExportado>.Invalido(consulta.Mensagem!);
+        }
+
+        var colunas = new List<ColunaPlanilha>
+        {
+            new ColunaPlanilha("Vencimento", TipoColunaPlanilha.Data, 12),
+            new ColunaPlanilha("Empresa", TipoColunaPlanilha.Texto, 28),
+            new ColunaPlanilha("CNPJ da empresa", TipoColunaPlanilha.Texto, 20),
+            new ColunaPlanilha("Valor", TipoColunaPlanilha.Dinheiro, 15),
+            new ColunaPlanilha("Situação no Bling", TipoColunaPlanilha.Texto, 22),
+            new ColunaPlanilha("Cliente", TipoColunaPlanilha.Texto, 36)
+        };
+        var planilha = new PlanilhaXlsx("Contas a receber", colunas);
+
+        DateTime hoje = _contasReceber.Hoje();
+        foreach (LinhaContaReceber linha in consulta.Valor!)
+        {
+            ContaReceberSincronizada conta = linha.Conta;
+            string situacao = TextoSituacaoConta.DeReceber(conta.Situacao);
+            if (TextoSituacaoConta.EmAberto(conta.Situacao) && conta.Vencimento.Date < hoje)
+            {
+                situacao = situacao + " (vencida)";
+            }
+            planilha.AdicionarLinha(conta.Vencimento.Date, linha.EmpresaNome, Cnpj(linha.EmpresaCnpj),
+                conta.Valor, situacao, conta.ClienteNome);
+        }
+
+        return Resultado<ArquivoExportado>.Ok(Arquivo("contas-a-receber", planilha));
     }
 
     private ArquivoExportado Arquivo(string prefixo, PlanilhaXlsx planilha)

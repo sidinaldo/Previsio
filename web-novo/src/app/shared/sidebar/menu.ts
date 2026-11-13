@@ -23,7 +23,8 @@ export const MENU: GrupoMenu[] = [
     titulo: 'Financeiro',
     itens: [
       { path: '/pages/painel', title: 'Painel', icone: 'dashboard' },
-      { path: '/pages/contas-pagar', title: 'Contas a pagar', icone: 'payments' }
+      { path: '/pages/contas-pagar', title: 'Contas a pagar', icone: 'payments' },
+      { path: '/pages/contas-receber', title: 'Contas a receber', icone: 'savings' }
     ]
   },
   {

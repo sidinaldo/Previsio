@@ -99,6 +99,58 @@ public class CalculadoraPainel
     }
 
     /// <summary>
+    /// Fluxo de caixa: soma as contas a receber em aberto do período às semanas e às empresas e
+    /// calcula o saldo (entradas - saídas). As vencidas e não recebidas ficam fora do saldo,
+    /// num total à parte. Chamar depois de Calcular, com as contas a receber da rede.
+    /// </summary>
+    public void AplicarEntradas(ResumoPainel resumo, IList<ContaReceberSincronizada> contasReceber)
+    {
+        resumo.FluxoCaixaAtivo = true;
+        DateTime inicio = resumo.Inicio.Date;
+        DateTime fim = resumo.Fim.Date;
+
+        var doPeriodo = new List<ContaReceberSincronizada>();
+        foreach (ContaReceberSincronizada conta in contasReceber)
+        {
+            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto
+                || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            if (!emAberto)
+            {
+                continue;
+            }
+            if (conta.Vencimento.Date < inicio)
+            {
+                resumo.TotalReceberVencido = resumo.TotalReceberVencido + conta.Valor;
+                resumo.QuantidadeReceberVencido = resumo.QuantidadeReceberVencido + 1;
+            }
+            else if (conta.Vencimento.Date <= fim)
+            {
+                doPeriodo.Add(conta);
+            }
+        }
+
+        resumo.TotalEntradasPeriodo = doPeriodo.Sum(c => c.Valor);
+        resumo.QuantidadeContasReceber = doPeriodo.Count;
+        resumo.SaldoPeriodo = resumo.TotalEntradasPeriodo - resumo.TotalPeriodo;
+
+        decimal acumulado = 0m;
+        foreach (TotalSemana semana in resumo.Semanas)
+        {
+            semana.Entradas = doPeriodo
+                .Where(c => c.Vencimento.Date >= semana.Inicio && c.Vencimento.Date <= semana.Fim)
+                .Sum(c => c.Valor);
+            semana.Saldo = semana.Entradas - semana.Valor;
+            acumulado = acumulado + semana.Saldo;
+            semana.SaldoAcumulado = acumulado;
+        }
+
+        foreach (TotalEmpresa empresa in resumo.Empresas)
+        {
+            empresa.ValorReceber = doPeriodo.Where(c => c.EmpresaId == empresa.EmpresaId).Sum(c => c.Valor);
+        }
+    }
+
+    /// <summary>
     /// As notas pendentes que vencem primeiro (pela primeira parcela). Nota sem parcelas vai
     /// para o fim; empate fica na ordem de chegada.
     /// </summary>

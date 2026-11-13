@@ -75,6 +75,8 @@ public static class ServicosDeTeste
             new Repositorio<Empresa>(db),
             new Repositorio<ContaPagarSincronizada>(db),
             new Repositorio<NotaFiscal>(db),
+            new Repositorio<ContaReceberSincronizada>(db),
+            new Repositorio<Cliente>(db),
             new CalculadoraPainel());
     }
 
@@ -125,6 +127,19 @@ public static class ServicosDeTeste
             new Repositorio<ContaPagarSincronizada>(db),
             new Repositorio<ParcelaNota>(db),
             new Repositorio<Empresa>(db),
+            relogio,
+            opcoes);
+    }
+
+    public static ContasReceberService ContasReceberService(
+        PrevisioDbContext db,
+        TimeProvider relogio,
+        IOptions<SincronizacaoOptions> opcoes)
+    {
+        return new ContasReceberService(
+            new Repositorio<ContaReceberSincronizada>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<Cliente>(db),
             relogio,
             opcoes);
     }
@@ -227,6 +242,11 @@ public static class ServicosDeTeste
             ContasAntigasEmAberto(db, bling, NullLogger<ContasAntigasEmAberto>.Instance),
             FornecedoresBlingService(db, bling, NullLogger<FornecedoresBlingService>.Instance),
             ConferenciaBlingService(db, bling),
+            new ContasReceberBlingService(
+                new Repositorio<ContaReceberSincronizada>(db),
+                bling,
+                FornecedoresBlingService(db, bling, NullLogger<FornecedoresBlingService>.Instance),
+                NullLogger<ContasReceberBlingService>.Instance),
             NullLogger<SincronizacaoContasService>.Instance);
     }
 

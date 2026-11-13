@@ -54,6 +54,9 @@ public static class RegistroAplicacao
         servicos.AddScoped<FornecedoresBlingService>();
         servicos.AddScoped<ContasAntigasEmAberto>();
         servicos.AddScoped<SincronizacaoContasService>();
+        servicos.AddScoped<ContasReceberBlingService>();
+        servicos.AddScoped<ContasReceberService>();
+        servicos.AddScoped<FluxoCaixaService>();
 
         // Leitura das caixas de e-mail
         servicos.AddScoped<LeituraEmailService>();

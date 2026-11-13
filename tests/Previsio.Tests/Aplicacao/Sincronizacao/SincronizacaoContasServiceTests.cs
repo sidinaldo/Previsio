@@ -187,4 +187,88 @@ public class SincronizacaoContasServiceTests
         Assert.NotNull(_db.Empresas.Single(e => e.Id == empresa.Id).UltimaSincronizacaoEm);
         Assert.Empty(_db.Falhas);
     }
+
+    // ---------- contas a receber (fluxo de caixa) ----------
+
+    [Fact]
+    public async Task Sincronizar_traz_as_contas_a_receber_com_o_nome_do_cliente()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, BlingId = 50, Vencimento = _hoje.AddDays(2), Valor = 10m, Situacao = SituacaoContaBling.EmAberto });
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, BlingId = 51, Vencimento = _hoje.AddDays(3), Valor = 20m, Situacao = SituacaoContaBling.EmAberto });
+        await _db.SaveChangesAsync();
+        string receber = "{\"id\":50,\"situacao\":2,\"vencimento\":\"" + Data(2) + "\",\"valor\":15,\"contato\":{\"id\":700,\"nome\":\"OFICINA DO ZE\"}},"
+            + "{\"id\":52,\"situacao\":1,\"vencimento\":\"" + Data(10) + "\",\"valor\":800,\"contato\":{\"id\":701}},"
+            // Fora da janela (o filtro da API pode não valer): ignorada
+            + "{\"id\":53,\"situacao\":1,\"vencimento\":\"" + Data(400) + "\",\"valor\":5,\"contato\":{\"id\":700}}";
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("contas/receber?"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[" + receber + "]}");
+            }
+            if (url.Contains("contatos/701"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":701,\"nome\":\"AUTO PECAS BETA\",\"numeroDocumento\":\"11222333000181\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
+
+        List<ContaReceberSincronizada> contas = _db.ContasReceber.OrderBy(c => c.BlingId).ToList();
+        Assert.Equal(new long[] { 50, 52 }, contas.Select(c => c.BlingId).ToArray());
+        Assert.Equal(15m, contas[0].Valor);
+        Assert.Equal(SituacaoContaBling.Pago, contas[0].Situacao);
+        Assert.Equal("OFICINA DO ZE", contas[0].ClienteNome);
+        Assert.Equal("AUTO PECAS BETA", contas[1].ClienteNome);
+    }
+
+    [Fact]
+    public async Task Sem_o_escopo_de_contas_a_receber_as_contas_a_pagar_seguem()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        string pagar = "{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":120,\"contato\":{\"id\":555}}";
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("contas/receber?"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.Forbidden, "{\"error\":{\"type\":\"insufficient_scope\"}}");
+            }
+            if (url.Contains("contas/pagar?"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[" + pagar + "]}");
+            }
+            if (url.Contains("contatos/"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":555,\"nome\":\"Fornecedor Beta\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).ExecutarAsync(CancellationToken.None);
+
+        Assert.Single(_db.ContasPagar);
+        Assert.Empty(_db.ContasReceber);
+        Assert.NotNull(_db.Empresas.Single().UltimaSincronizacaoEm);
+        Assert.Empty(_db.Falhas);
+    }
+
+    [Fact]
+    public async Task Rede_sem_fluxo_de_caixa_nao_consulta_contas_a_receber()
+    {
+        Cliente rede = await CadastrarRede(true);
+        rede.MostrarFluxoCaixa = false;
+        await _db.SaveChangesAsync();
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        RespostasFixas respostas = BlingComContas("");
+
+        await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
+
+        Assert.DoesNotContain(respostas.Chamadas, c => c.Contains("contas/receber"));
+    }
 }

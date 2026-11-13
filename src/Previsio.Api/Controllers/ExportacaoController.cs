@@ -75,4 +75,27 @@ public class ExportacaoController : PrevisioControllerBase
         }
         return Responder(resultado, arquivo => File(arquivo.Conteudo, ArquivoExportado.TipoXlsx, arquivo.Nome));
     }
+
+    /// <summary>
+    /// Contas a receber, com os mesmos filtros da tela Contas a receber.
+    /// </summary>
+    [HttpGet("api/clientes/{clienteId:int}/contas-receber/exportar")]
+    public async Task<IActionResult> ContasReceber(
+        int clienteId,
+        [FromQuery] int? empresaId,
+        [FromQuery] DateTime? de,
+        [FromQuery] DateTime? ate,
+        [FromQuery] string? situacao,
+        [FromQuery] string? busca,
+        [FromQuery] string? ordem,
+        CancellationToken cancelamento)
+    {
+        if (!User.PodeAcessarCliente(clienteId))
+        {
+            return Forbid();
+        }
+        FiltroContasReceber filtro = ContasReceberController.Filtro(empresaId, de, ate, situacao, busca, ordem);
+        Resultado<ArquivoExportado> resultado = await _exportacao.ContasReceberAsync(clienteId, filtro, cancelamento);
+        return Responder(resultado, arquivo => File(arquivo.Conteudo, ArquivoExportado.TipoXlsx, arquivo.Nome));
+    }
 }

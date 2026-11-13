@@ -41,6 +41,9 @@ export class PainelComponent {
   readonly carregando = signal(false);
   readonly erro = signal('');
 
+  readonly fluxoCaixa = computed(() => this.resumo()?.fluxoCaixaAtivo === true);
+  readonly abs = Math.abs;
+
   // Semana com mais saídas; nenhuma quando todas estão zeradas
   readonly maiorSemana = computed<TotalSemana | null>(() => {
     const resumo = this.resumo();
@@ -66,11 +69,21 @@ export class PainelComponent {
       return false;
     }
     return resumo.totalPeriodo === 0 && resumo.quantidadeContas === 0 && resumo.notasPendentes === 0
-      && (resumo.quantidadeVencidas ?? 0) === 0;
+      && (resumo.quantidadeVencidas ?? 0) === 0
+      && (resumo.quantidadeContasReceber ?? 0) === 0 && (resumo.quantidadeReceberVencido ?? 0) === 0;
   });
 
-  // Todas as semanas zeradas: no lugar do gráfico (que mostraria uma escala sem sentido) vai o aviso
-  readonly graficoVazio = computed(() => this.maiorSemana() === null);
+  // Todas as semanas zeradas (saídas e entradas): no lugar do gráfico vai o aviso
+  readonly graficoVazio = computed(() => {
+    if (this.maiorSemana() !== null) {
+      return false;
+    }
+    const resumo = this.resumo();
+    if (!resumo || !this.fluxoCaixa()) {
+      return true;
+    }
+    return resumo.semanas.every(semana => (semana.entradas ?? 0) <= 0);
+  });
   readonly notasParaResolver = computed<NotaParaResolver[]>(() => this.resumo()?.notasParaResolver ?? []);
   readonly descricaoSituacao = descricaoDaSituacao;
 
@@ -125,13 +138,18 @@ export class PainelComponent {
 
     const rotulos: string[] = [];
     const valores: number[] = [];
+    const entradas: number[] = [];
     let maiorValor = 0;
 
     for (const semana of resumo.semanas) {
       rotulos.push(this.formatarDiaMes(semana.inicio));
       valores.push(semana.valor);
+      entradas.push(semana.entradas ?? 0);
       if (semana.valor > maiorValor) {
         maiorValor = semana.valor;
+      }
+      if ((semana.entradas ?? 0) > maiorValor) {
+        maiorValor = semana.entradas ?? 0;
       }
     }
 
@@ -152,7 +170,13 @@ export class PainelComponent {
       chartPadding: { top: 12, right: 8, bottom: 0, left: 0 }
     };
 
-    const grafico = new Chartist.Bar('#previsioSemanasChart', { labels: rotulos, series: [valores] }, opcoes);
+    // Fluxo de caixa: saídas e entradas lado a lado (série a e série b)
+    let series: number[][] = [valores];
+    if (this.fluxoCaixa()) {
+      series = [valores, entradas];
+      opcoes.seriesBarDistance = 20;
+    }
+    const grafico = new Chartist.Bar('#previsioSemanasChart', { labels: rotulos, series: series }, opcoes);
     this.animarBarras(grafico);
   }
 

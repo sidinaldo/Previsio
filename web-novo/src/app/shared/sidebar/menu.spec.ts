@@ -50,6 +50,7 @@ describe('menu lateral', () => {
     expect(caminhos(visiveis)).toEqual([
       '/pages/painel',
       '/pages/contas-pagar',
+      '/pages/contas-receber',
       '/pages/notas-recebidas',
       '/pages/notas-pendentes',
       '/pages/empresas'

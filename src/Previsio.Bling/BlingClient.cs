@@ -224,6 +224,47 @@ public class BlingClient
     }
 
     /// <summary>
+    /// Contas a receber com vencimento no período, todas as páginas. Vão os dois jeitos de filtrar
+    /// por vencimento que a API do Bling usa; quem chama confere a data de novo.
+    /// </summary>
+    public async Task<List<ContaReceberBling>> ListarContasReceberAsync(
+        string conta, string accessToken, DateTime vencimentoInicial, DateTime vencimentoFinal, CancellationToken cancelamento)
+    {
+        var todas = new List<ContaReceberBling>();
+        int pagina = 1;
+        const int limite = 100;
+
+        while (true)
+        {
+            string url = "contas/receber?pagina=" + pagina
+                + "&limite=" + limite
+                + "&tipoFiltroData=V"
+                + "&dataInicial=" + FormatarData(vencimentoInicial)
+                + "&dataFinal=" + FormatarData(vencimentoFinal)
+                + "&dataVencimentoInicial=" + FormatarData(vencimentoInicial)
+                + "&dataVencimentoFinal=" + FormatarData(vencimentoFinal);
+
+            RespostaLista<ContaReceberBling>? resposta =
+                await EnviarAsync<RespostaLista<ContaReceberBling>>(conta, accessToken, HttpMethod.Get, url, null, cancelamento);
+
+            if (resposta == null || resposta.Data.Count == 0)
+            {
+                break;
+            }
+
+            todas.AddRange(resposta.Data);
+
+            if (resposta.Data.Count < limite)
+            {
+                break;
+            }
+            pagina++;
+        }
+
+        return todas;
+    }
+
+    /// <summary>
     /// Detalhe de uma conta a pagar (traz o número do documento e o histórico).
     /// </summary>
     public async Task<ContaPagarBling?> ObterContaPagarAsync(

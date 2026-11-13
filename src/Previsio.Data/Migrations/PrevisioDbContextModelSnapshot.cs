@@ -171,6 +171,9 @@ namespace Previsio.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("MostrarFluxoCaixa")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -244,6 +247,50 @@ namespace Previsio.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("contas_pagar", (string)null);
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.ContaReceberSincronizada", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long?>("BlingContatoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BlingId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ClienteNome")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SincronizadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<DateTime>("Vencimento")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Vencimento");
+
+                    b.HasIndex("EmpresaId", "BlingId")
+                        .IsUnique();
+
+                    b.ToTable("contas_receber", (string)null);
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.EmailIgnorado", b =>
@@ -892,6 +939,17 @@ namespace Previsio.Data.Migrations
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.ContaPagarSincronizada", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.ContaReceberSincronizada", b =>
                 {
                     b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
                         .WithMany()

@@ -32,6 +32,20 @@ public static class TextoSituacaoConta
         return "Situação " + situacao;
     }
 
+    /// <summary>A mesma situação, falando de conta a receber ("Recebida" no lugar de "Paga").</summary>
+    public static string DeReceber(int situacao)
+    {
+        if (situacao == SituacaoContaBling.Pago)
+        {
+            return "Recebida";
+        }
+        if (situacao == SituacaoContaBling.ParcialmentePago)
+        {
+            return "Parcialmente recebida";
+        }
+        return De(situacao);
+    }
+
     public static bool EmAberto(int situacao)
     {
         return situacao == SituacaoContaBling.EmAberto || situacao == SituacaoContaBling.ParcialmentePago;

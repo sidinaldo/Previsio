@@ -14,6 +14,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<NotaFiscal> NotasFiscais => Set<NotaFiscal>();
     public DbSet<ParcelaNota> ParcelasNota => Set<ParcelaNota>();
     public DbSet<ContaPagarSincronizada> ContasPagar => Set<ContaPagarSincronizada>();
+    public DbSet<ContaReceberSincronizada> ContasReceber => Set<ContaReceberSincronizada>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
@@ -126,6 +127,20 @@ public class PrevisioDbContext : DbContext
             entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
             entidade.HasIndex(c => c.Vencimento);
             entidade.Property(c => c.FornecedorNome).HasMaxLength(200);
+
+            entidade.HasOne(c => c.Empresa)
+                .WithMany()
+                .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<ContaReceberSincronizada>(entidade =>
+        {
+            entidade.ToTable("contas_receber");
+            entidade.Property(c => c.Valor).HasPrecision(14, 2);
+            entidade.Property(c => c.Vencimento).HasColumnType("date");
+            entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
+            entidade.HasIndex(c => c.Vencimento);
+            entidade.Property(c => c.ClienteNome).HasMaxLength(200);
 
             entidade.HasOne(c => c.Empresa)
                 .WithMany()

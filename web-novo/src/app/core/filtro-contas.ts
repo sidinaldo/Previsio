@@ -1,6 +1,13 @@
 import { HttpParams } from '@angular/common/http';
 
-import { ContaPagar, FiltroContas } from './previsio.models';
+import { FiltroContas } from './previsio.models';
+
+/** O que o badge da situação usa: vale para conta a pagar e a receber. */
+export interface SituacaoDaConta {
+  vencida: boolean;
+  situacao: number;
+  situacaoTexto: string;
+}
 
 // Ao abrir a tela: as em aberto (inclusive as vencidas) que vencem até daqui a N dias
 export const DIAS_PADRAO_CONTAS = 30;
@@ -119,7 +126,7 @@ export function lerFiltroContas(clienteId: number | null, hoje: Date): FiltroCon
 }
 
 /** Cor do badge da situação da conta. */
-export function classeDaConta(conta: ContaPagar): string {
+export function classeDaConta(conta: SituacaoDaConta): string {
   if (conta.vencida) {
     return 'badge-danger';
   }
@@ -136,7 +143,7 @@ export function classeDaConta(conta: ContaPagar): string {
 }
 
 /** Texto da situação; em aberto e já vencida aparece como "Vencida". */
-export function textoDaConta(conta: ContaPagar): string {
+export function textoDaConta(conta: SituacaoDaConta): string {
   if (conta.vencida) {
     if (conta.situacao === 3) {
       return 'Vencida (parcial)';

@@ -33,7 +33,7 @@ algo que fala com o mundo de fora vira uma interface em `Aplicacao/Abstracoes` i
 |---|---|---|
 | `leitura-email` | 10 min | Lê e-mails não lidos, extrai XMLs (inclusive em `.zip`), registra notas novas |
 | `lancamento` | 10 min | Cria fornecedor (se preciso) e uma conta a pagar por parcela no Bling |
-| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) para o painel |
+| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber |
 
 Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máquina).
 
@@ -66,7 +66,11 @@ e informe a conexão em `ConnectionStrings:Previsio` no `appsettings.Development
 
 1. Acesse a **Área do integrador** em https://developer.bling.com.br e cadastre um aplicativo.
 2. Em **Link de redirecionamento**, informe: `http://localhost:5080/api/bling/callback`
-3. Escopos necessários: **Contatos** e **Contas a pagar** (leitura e escrita).
+3. Escopos necessários: **Contatos** e **Contas a pagar** (leitura e escrita) e **Contas a receber** (leitura, para o fluxo de caixa).
+   Para as próximas funcionalidades, já marque também em leitura: **Categorias de receitas e despesas**, **Formas de pagamento**,
+   **Pedidos de compra**, **Contas contábeis** e **Caixas e bancos**.
+   > Mudar os escopos do aplicativo derruba a conexão de todas as empresas (o Bling revoga o token e o refresh token):
+   > cada empresa precisa clicar em **Conectar Bling** de novo. Junte as mudanças de escopo numa vez só.
 4. Copie o **Client ID** e o **Client Secret**.
 
 ## 4. Configuração

@@ -17,6 +17,7 @@ import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-seman
 import { ContratoClienteComponent } from './contrato-cliente.component';
 import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
 import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
+import { FluxoCaixaComponent } from '../../shared/fluxo-caixa/fluxo-caixa.component';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -24,7 +25,7 @@ import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/confer
  */
 @Component({
   selector: 'app-cliente-detalhe',
-  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent, ContratoClienteComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
+  imports: [FormsModule, RouterLink, DatePipe, CarregandoDirective, PaginacaoComponent, ResumoSemanalComponent, ContratoClienteComponent, AlertasVencimentoComponent, ConferenciaBlingComponent, FluxoCaixaComponent],
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {

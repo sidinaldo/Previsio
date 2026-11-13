@@ -29,6 +29,7 @@ public class SincronizacaoContasService
     private readonly ContasAntigasEmAberto _antigas;
     private readonly FornecedoresBlingService _fornecedores;
     private readonly ConferenciaBlingService _conferencia;
+    private readonly ContasReceberBlingService _receber;
     private readonly ILogger<SincronizacaoContasService> _logger;
 
     public SincronizacaoContasService(
@@ -42,6 +43,7 @@ public class SincronizacaoContasService
         ContasAntigasEmAberto antigas,
         FornecedoresBlingService fornecedores,
         ConferenciaBlingService conferencia,
+        ContasReceberBlingService receber,
         ILogger<SincronizacaoContasService> logger)
     {
         _clientes = clientes;
@@ -54,6 +56,7 @@ public class SincronizacaoContasService
         _antigas = antigas;
         _fornecedores = fornecedores;
         _conferencia = conferencia;
+        _receber = receber;
         _logger = logger;
     }
 
@@ -203,6 +206,22 @@ public class SincronizacaoContasService
         {
             _logger.LogInformation("Empresa {Empresa}: {Quantidade} fornecedores buscados no Bling",
                 empresa.Nome, contatosBuscados);
+        }
+
+        // Contas a receber (fluxo de caixa), quando a rede usa
+        int empresaRede = empresa.ClienteId;
+        bool fluxoCaixa = await _clientes.ConsultarSomenteLeitura()
+            .Where(c => c.Id == empresaRede)
+            .Select(c => c.MostrarFluxoCaixa)
+            .FirstOrDefaultAsync(cancelamento);
+        if (fluxoCaixa)
+        {
+            int? receber = await _receber.SincronizarAsync(empresa, conta, token, filtro.VencimentoInicial, filtro.VencimentoFinal,
+                _opcoes.DiasRenovarFornecedorValidos(), agora, cancelamento);
+            if (receber.HasValue)
+            {
+                _logger.LogInformation("Empresa {Empresa}: {Quantidade} contas a receber sincronizadas", empresa.Nome, receber.Value);
+            }
         }
 
         empresa.UltimaSincronizacaoEm = agora;

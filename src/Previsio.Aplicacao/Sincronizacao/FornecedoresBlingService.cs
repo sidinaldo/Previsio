@@ -91,6 +91,41 @@ public class FornecedoresBlingService
 
         // 2) Lançadas direto no Bling: contato guardado ou buscado agora
         List<long> idsContatos = semNota.Select(c => c.BlingContatoId!.Value).Distinct().ToList();
+        NomesDeContatos contatos = await NomesDosContatosAsync(
+            empresa, conta, token, idsContatos, diasRenovar, agoraUtc, cancelamento);
+
+        foreach (ContaPagarSincronizada contaPagar in semNota)
+        {
+            string? nome;
+            if (contatos.Nomes.TryGetValue(contaPagar.BlingContatoId!.Value, out nome))
+            {
+                contaPagar.FornecedorNome = nome;
+            }
+        }
+
+        return contatos.Buscas;
+    }
+
+    /// <summary>
+    /// Nome de cada contato do Bling (fornecedor ou cliente): o guardado, ou buscado agora quando
+    /// ainda não existe ou passou de diasRenovar (até MaximoBuscasPorExecucao por vez).
+    /// Os novos ficam acompanhados pelo contexto; quem chama salva.
+    /// </summary>
+    public async Task<NomesDeContatos> NomesDosContatosAsync(
+        Empresa empresa,
+        string conta,
+        string token,
+        List<long> idsContatos,
+        int diasRenovar,
+        DateTime agoraUtc,
+        CancellationToken cancelamento)
+    {
+        var resultado = new NomesDeContatos();
+        if (idsContatos.Count == 0)
+        {
+            return resultado;
+        }
+
         List<FornecedorBling> guardados = await _fornecedores.Consultar()
             .Where(f => f.EmpresaId == empresa.Id && idsContatos.Contains(f.BlingContatoId))
             .ToListAsync(cancelamento);
@@ -102,19 +137,18 @@ public class FornecedoresBlingService
         }
 
         DateTime limiteRenovacao = agoraUtc.AddDays(-diasRenovar);
-        int buscas = 0;
         foreach (long idContato in idsContatos)
         {
             FornecedorBling? fornecedor;
             porContato.TryGetValue(idContato, out fornecedor);
 
             bool precisaBuscar = fornecedor == null || fornecedor.AtualizadoEm < limiteRenovacao;
-            if (!precisaBuscar || buscas >= MaximoBuscasPorExecucao)
+            if (!precisaBuscar || resultado.Buscas >= MaximoBuscasPorExecucao)
             {
                 continue;
             }
 
-            buscas++;
+            resultado.Buscas++;
             ContatoBling? contato = await BuscarAsync(empresa, conta, token, idContato, cancelamento);
             if (contato == null || string.IsNullOrWhiteSpace(contato.Nome))
             {
@@ -134,16 +168,11 @@ public class FornecedoresBlingService
             fornecedor.AtualizadoEm = agoraUtc;
         }
 
-        foreach (ContaPagarSincronizada contaPagar in semNota)
+        foreach (KeyValuePair<long, FornecedorBling> item in porContato)
         {
-            FornecedorBling? fornecedor;
-            if (porContato.TryGetValue(contaPagar.BlingContatoId!.Value, out fornecedor))
-            {
-                contaPagar.FornecedorNome = fornecedor.Nome;
-            }
+            resultado.Nomes[item.Key] = item.Value.Nome;
         }
-
-        return buscas;
+        return resultado;
     }
 
     private async Task<ContatoBling?> BuscarAsync(
@@ -162,7 +191,7 @@ public class FornecedoresBlingService
         }
     }
 
-    private static string? Limitar(string? texto)
+    public static string? Limitar(string? texto)
     {
         if (texto == null)
         {

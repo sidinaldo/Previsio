@@ -145,6 +145,7 @@
       <app-contrato-cliente [cliente]="atual" (alterado)="aoAlterarContrato($event)" />
 
       <app-conferencia-bling [clienteId]="atual.id" />
+      <app-fluxo-caixa [clienteId]="atual.id" />
 
       <app-alertas-vencimento [clienteId]="atual.id" />
 

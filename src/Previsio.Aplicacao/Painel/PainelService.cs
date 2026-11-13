@@ -10,7 +10,8 @@ using Previsio.Aplicacao.Dtos;
 namespace Previsio.Aplicacao.Painel;
 
 /// <summary>
-/// Números do painel: contas a pagar dos próximos dias, por semana, por empresa e por dia.
+/// Números do painel: contas a pagar dos próximos dias, por semana, por empresa e por dia,
+/// e o fluxo de caixa (entradas × saídas) quando a rede usa.
 /// </summary>
 public class PainelService
 {
@@ -20,17 +21,23 @@ public class PainelService
     private readonly IRepositorio<Empresa> _empresas;
     private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly IRepositorio<NotaFiscal> _notas;
+    private readonly IRepositorio<ContaReceberSincronizada> _contasReceber;
+    private readonly IRepositorio<Cliente> _clientes;
     private readonly CalculadoraPainel _calculadora;
 
     public PainelService(
         IRepositorio<Empresa> empresas,
         IRepositorio<ContaPagarSincronizada> contas,
         IRepositorio<NotaFiscal> notas,
+        IRepositorio<ContaReceberSincronizada> contasReceber,
+        IRepositorio<Cliente> clientes,
         CalculadoraPainel calculadora)
     {
         _empresas = empresas;
         _contas = contas;
         _notas = notas;
+        _contasReceber = contasReceber;
+        _clientes = clientes;
         _calculadora = calculadora;
     }
 
@@ -82,6 +89,19 @@ public class PainelService
             .ToListAsync(cancelamento);
         resumo.QuantidadeVencidas = vencidas.Count;
         resumo.TotalVencidas = vencidas.Sum(c => c.Valor);
+
+        // Fluxo de caixa: contas a receber do período e as vencidas da janela sincronizada
+        bool fluxoCaixa = await _clientes.ConsultarSomenteLeitura()
+            .Where(c => c.Id == clienteId)
+            .Select(c => c.MostrarFluxoCaixa)
+            .FirstOrDefaultAsync(cancelamento);
+        if (fluxoCaixa)
+        {
+            List<ContaReceberSincronizada> receber = await _contasReceber.ConsultarSomenteLeitura()
+                .Where(c => idsEmpresas.Contains(c.EmpresaId) && c.Vencimento <= fim)
+                .ToListAsync(cancelamento);
+            _calculadora.AplicarEntradas(resumo, receber);
+        }
         return resumo;
     }
 

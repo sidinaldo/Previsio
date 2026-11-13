@@ -26,6 +26,10 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./contas-pagar/contas-pagar.component').then(m => m.ContasPagarComponent)
       },
       {
+        path: 'contas-receber',
+        loadComponent: () => import('./contas-receber/contas-receber.component').then(m => m.ContasReceberComponent)
+      },
+      {
         path: 'notas-recebidas',
         loadComponent: () => import('./notas-recebidas/notas-recebidas.component').then(m => m.NotasRecebidasComponent)
       },

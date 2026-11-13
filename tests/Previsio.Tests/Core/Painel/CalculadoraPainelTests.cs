@@ -131,4 +131,54 @@ public class CalculadoraPainelTests
         Assert.Equal(new[] { 1, 2 }, resumo.NotasParaResolver.Select(n => n.NotaId).ToArray());
         Assert.Null(resumo.NotasParaResolver[1].PrimeiroVencimento);
     }
+
+    private static ContaReceberSincronizada Receber(int empresaId, int dias, decimal valor, int situacao)
+    {
+        return new ContaReceberSincronizada { EmpresaId = empresaId, Vencimento = Hoje.AddDays(dias), Valor = valor, Situacao = situacao };
+    }
+
+    [Fact]
+    public void Fluxo_de_caixa_soma_entradas_por_semana_e_calcula_o_saldo()
+    {
+        var empresas = new List<Empresa> { new Empresa { Id = 1, Nome = "Matriz" }, new Empresa { Id = 2, Nome = "Filial" } };
+        var pagar = new List<ContaPagarSincronizada>
+        {
+            new ContaPagarSincronizada { EmpresaId = 1, Vencimento = Hoje.AddDays(1), Valor = 1000m, Situacao = SituacaoContaBling.EmAberto },
+            new ContaPagarSincronizada { EmpresaId = 2, Vencimento = Hoje.AddDays(8), Valor = 300m, Situacao = SituacaoContaBling.EmAberto }
+        };
+        var receber = new List<ContaReceberSincronizada>
+        {
+            Receber(1, 2, 400m, SituacaoContaBling.EmAberto),
+            Receber(2, 9, 900m, SituacaoContaBling.ParcialmentePago),
+            Receber(1, 3, 50m, SituacaoContaBling.Pago),        // já recebida: fora
+            Receber(1, -4, 700m, SituacaoContaBling.EmAberto),  // vencida: fora do saldo, card à parte
+            Receber(1, 30, 999m, SituacaoContaBling.EmAberto)   // depois do período de 14 dias
+        };
+        var calculadora = new CalculadoraPainel();
+        ResumoPainel resumo = calculadora.Calcular(Hoje, 14, empresas, pagar, new List<NotaFiscal>());
+
+        calculadora.AplicarEntradas(resumo, receber);
+
+        Assert.True(resumo.FluxoCaixaAtivo);
+        Assert.Equal(1300m, resumo.TotalEntradasPeriodo);
+        Assert.Equal(2, resumo.QuantidadeContasReceber);
+        Assert.Equal(0m, resumo.SaldoPeriodo);
+        Assert.Equal(700m, resumo.TotalReceberVencido);
+        Assert.Equal(1, resumo.QuantidadeReceberVencido);
+        Assert.Equal(400m, resumo.Semanas[0].Entradas);
+        Assert.Equal(-600m, resumo.Semanas[0].Saldo);
+        Assert.Equal(600m, resumo.Semanas[1].Saldo);
+        Assert.Equal(0m, resumo.Semanas[1].SaldoAcumulado);
+        Assert.Equal(400m, resumo.Empresas.Single(e => e.EmpresaId == 1).ValorReceber);
+        Assert.Equal(900m, resumo.Empresas.Single(e => e.EmpresaId == 2).ValorReceber);
+    }
+
+    [Fact]
+    public void Sem_aplicar_entradas_o_fluxo_de_caixa_fica_desligado()
+    {
+        ResumoPainel resumo = new CalculadoraPainel().Calcular(Hoje, 30, new List<Empresa>(), new List<ContaPagarSincronizada>(), new List<NotaFiscal>());
+
+        Assert.False(resumo.FluxoCaixaAtivo);
+        Assert.Equal(0m, resumo.Semanas[0].Entradas);
+    }
 }

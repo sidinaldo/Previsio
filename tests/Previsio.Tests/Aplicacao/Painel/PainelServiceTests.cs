@@ -107,4 +107,26 @@ public class PainelServiceTests
         Assert.Equal(hoje.AddDays(5), item.PrimeiroVencimento);
         Assert.Equal("Bling recusou", item.MensagemErro);
     }
+
+    [Fact]
+    public async Task Resumo_SoTrazEntradasQuandoARedeUsaFluxoDeCaixa()
+    {
+        var rede = new Cliente { Nome = "Rede" };
+        _db.Clientes.Add(rede);
+        await _db.SaveChangesAsync();
+        Empresa matriz = await CadastrarEmpresa(rede.Id, "Matriz", true);
+        DateTime amanha = RelogioBrasil.Hoje().AddDays(1);
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = matriz.Id, BlingId = 1, Vencimento = amanha, Valor = 500m, Situacao = SituacaoContaBling.EmAberto });
+        await _db.SaveChangesAsync();
+
+        ResumoPainel ligado = await ServicosDeTeste.Painel(_db).ResumoAsync(rede.Id, 30, CancellationToken.None);
+        rede.MostrarFluxoCaixa = false;
+        await _db.SaveChangesAsync();
+        ResumoPainel desligado = await ServicosDeTeste.Painel(_db).ResumoAsync(rede.Id, 30, CancellationToken.None);
+
+        Assert.True(ligado.FluxoCaixaAtivo);
+        Assert.Equal(500m, ligado.TotalEntradasPeriodo);
+        Assert.False(desligado.FluxoCaixaAtivo);
+        Assert.Equal(0m, desligado.TotalEntradasPeriodo);
+    }
 }

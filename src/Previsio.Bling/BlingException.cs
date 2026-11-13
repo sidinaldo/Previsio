@@ -45,6 +45,12 @@ public class BlingException : Exception
         get { return StatusCode == HttpStatusCode.Unauthorized; }
     }
 
+    // 403: o aplicativo não tem o escopo (ou o usuário do Bling não tem permissão) para o recurso
+    public bool SemPermissao
+    {
+        get { return StatusCode == HttpStatusCode.Forbidden; }
+    }
+
     public bool FalhaDeConexao
     {
         get { return StatusCode == SemResposta; }

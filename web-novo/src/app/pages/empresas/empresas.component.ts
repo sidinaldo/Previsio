@@ -22,6 +22,7 @@ import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-seman
 import { CertificadoEmpresaComponent } from './certificado-empresa.component';
 import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
 import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
+import { FluxoCaixaComponent } from '../../shared/fluxo-caixa/fluxo-caixa.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -33,7 +34,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
 import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, ProvedorEmailComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, ProvedorEmailComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent, FluxoCaixaComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {

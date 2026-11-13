@@ -116,6 +116,66 @@
           </div>
         </div>
 
+        <!-- Fluxo de caixa: o que entra (contas a receber do Bling) e o saldo do período -->
+        @if (fluxoCaixa()) {
+          <div class="row">
+            <div class="col-lg-4 col-md-6">
+              <div class="card pv-kpi">
+                <div class="pv-kpi__topo">
+                  <p class="pv-kpi__rotulo">A receber em {{ dias() }} dias</p>
+                  <span class="pv-kpi__icone pv-kpi__icone--sucesso" aria-hidden="true">
+                    <i class="material-icons">savings</i>
+                  </span>
+                </div>
+                <p class="pv-kpi__valor">R$ {{ (r.totalEntradasPeriodo ?? 0) | number:'1.0-0' }}</p>
+                <p class="pv-kpi__auxiliar">
+                  <a routerLink="/pages/contas-receber">{{ r.quantidadeContasReceber ?? 0 }} contas a receber</a>
+                </p>
+              </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+              <div class="card pv-kpi">
+                <div class="pv-kpi__topo">
+                  <p class="pv-kpi__rotulo">Saldo do período</p>
+                  <span class="pv-kpi__icone" aria-hidden="true"
+                        [class.pv-kpi__icone--sucesso]="(r.saldoPeriodo ?? 0) >= 0"
+                        [class.pv-kpi__icone--erro]="(r.saldoPeriodo ?? 0) < 0">
+                    <i class="material-icons">account_balance</i>
+                  </span>
+                </div>
+                <p class="pv-kpi__valor" [class.pv-valor--negativo]="(r.saldoPeriodo ?? 0) < 0">
+                  {{ (r.saldoPeriodo ?? 0) < 0 ? '−' : '' }}R$ {{ abs(r.saldoPeriodo ?? 0) | number:'1.0-0' }}
+                </p>
+                <p class="pv-kpi__auxiliar">Entradas menos saídas, sem o saldo do banco</p>
+              </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+              <div class="card pv-kpi">
+                <div class="pv-kpi__topo">
+                  <p class="pv-kpi__rotulo">A receber vencido</p>
+                  <span class="pv-kpi__icone" aria-hidden="true"
+                        [class.pv-kpi__icone--alerta]="(r.quantidadeReceberVencido ?? 0) > 0"
+                        [class.pv-kpi__icone--neutro]="(r.quantidadeReceberVencido ?? 0) === 0">
+                    <i class="material-icons">running_with_errors</i>
+                  </span>
+                </div>
+                <p class="pv-kpi__valor">R$ {{ (r.totalReceberVencido ?? 0) | number:'1.0-0' }}</p>
+                <p class="pv-kpi__auxiliar">
+                  @if ((r.quantidadeReceberVencido ?? 0) === 0) {
+                    Nenhum cliente em atraso
+                  } @else {
+                    <a routerLink="/pages/contas-receber" [queryParams]="{ situacao: 'Vencidas' }">
+                      {{ r.quantidadeReceberVencido }} {{ r.quantidadeReceberVencido === 1 ? 'conta' : 'contas' }}: fora do saldo, para cobrar
+                    </a>
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
         <!-- Notas que ainda não estão no Bling: ficam fora da previsão até serem lançadas -->
         @if (notasParaResolver().length > 0) {
           <div class="card">
@@ -188,10 +248,17 @@
         <div class="card">
           <div class="pv-card__cabecalho">
             <div>
-              <h2 class="pv-card__titulo">Saídas previstas por semana</h2>
-              <p class="pv-card__descricao">
-                Contas em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana
-              </p>
+              @if (fluxoCaixa()) {
+                <h2 class="pv-card__titulo">Entradas × saídas por semana</h2>
+                <p class="pv-card__descricao">
+                  Contas a receber e a pagar em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana
+                </p>
+              } @else {
+                <h2 class="pv-card__titulo">Saídas previstas por semana</h2>
+                <p class="pv-card__descricao">
+                  Contas em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana
+                </p>
+              }
             </div>
           </div>
           <div class="card-body">
@@ -201,14 +268,32 @@
                 <p class="pv-vazio__titulo">Nenhuma saída prevista no período.</p>
               </div>
             } @else {
-              <div class="ct-chart pv-grafico" id="previsioSemanasChart" role="img"
-                   aria-label="Gráfico de barras das saídas previstas por semana; os valores estão no resumo abaixo."></div>
+              @if (fluxoCaixa()) {
+                <ul class="pv-legenda" aria-hidden="true">
+                  <li class="pv-legenda__saidas">Saídas</li>
+                  <li class="pv-legenda__entradas">Entradas</li>
+                </ul>
+              }
+              <div class="ct-chart pv-grafico" id="previsioSemanasChart" role="img" [class.pv-grafico--fluxo]="fluxoCaixa()"
+                   aria-label="Gráfico de barras por semana; os valores estão no resumo abaixo."></div>
               <ul class="pv-semanas">
                 @for (semana of r.semanas; track semana.inicio) {
-                  <li [class.pv-semanas__item--maior]="semana === maiorSemana()">
-                    <span class="pv-semanas__periodo">{{ semana.inicio | date:'dd/MM' }} – {{ semana.fim | date:'dd/MM' }}</span>
-                    <span class="pv-semanas__valor">{{ semana.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
-                  </li>
+                  @if (fluxoCaixa()) {
+                    <li>
+                      <span class="pv-semanas__periodo">{{ semana.inicio | date:'dd/MM' }} – {{ semana.fim | date:'dd/MM' }}</span>
+                      <span class="pv-semanas__valor" [class.pv-valor--negativo]="(semana.saldo ?? 0) < 0"
+                            [class.pv-valor--positivo]="(semana.saldo ?? 0) > 0">
+                        {{ (semana.saldo ?? 0) < 0 ? '−' : '' }}{{ abs(semana.saldo ?? 0) | currency:'BRL':'symbol':'1.0-0' }}
+                      </span>
+                      <span class="pv-semanas__detalhe">Entra {{ (semana.entradas ?? 0) | currency:'BRL':'symbol':'1.0-0' }}</span>
+                      <span class="pv-semanas__detalhe">Sai {{ semana.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
+                    </li>
+                  } @else {
+                    <li [class.pv-semanas__item--maior]="semana === maiorSemana()">
+                      <span class="pv-semanas__periodo">{{ semana.inicio | date:'dd/MM' }} – {{ semana.fim | date:'dd/MM' }}</span>
+                      <span class="pv-semanas__valor">{{ semana.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
+                    </li>
+                  }
                 }
               </ul>
             }
@@ -236,6 +321,9 @@
                   <th>Empresa</th>
                   <th class="text-right">Contas</th>
                   <th class="text-right">A pagar</th>
+                  @if (fluxoCaixa()) {
+                    <th class="text-right">A receber</th>
+                  }
                   <th class="text-right">Fora do Bling</th>
                   <th>Próximo vencimento</th>
                 </tr>
@@ -249,6 +337,9 @@
                     </td>
                     <td class="text-right">{{ empresa.quantidadeContas }}</td>
                     <td class="text-right"><strong>{{ empresa.valor | currency:'BRL' }}</strong></td>
+                    @if (fluxoCaixa()) {
+                      <td class="text-right pv-valor--positivo">{{ (empresa.valorReceber ?? 0) | currency:'BRL' }}</td>
+                    }
                     <td class="text-right" [class.text-warning]="empresa.notasPendentes > 0">
                       @if (empresa.notasPendentes > 0) {
                         {{ empresa.notasPendentes }} · {{ empresa.valorNotasPendentes | currency:'BRL' }}
@@ -269,6 +360,9 @@
                   <td>Total</td>
                   <td class="text-right">{{ r.quantidadeContas }}</td>
                   <td class="text-right">{{ r.totalPeriodo | currency:'BRL' }}</td>
+                  @if (fluxoCaixa()) {
+                    <td class="text-right pv-valor--positivo">{{ (r.totalEntradasPeriodo ?? 0) | currency:'BRL' }}</td>
+                  }
                   <td class="text-right" [class.text-warning]="r.notasPendentes > 0">
                     {{ r.notasPendentes }} · {{ r.valorNotasPendentes | currency:'BRL' }}
                   </td>
