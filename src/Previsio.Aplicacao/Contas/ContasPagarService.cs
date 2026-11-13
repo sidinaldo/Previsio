@@ -15,7 +15,6 @@ namespace Previsio.Aplicacao.Contas;
 /// </summary>
 public class ContasPagarService
 {
-    public const int TamanhoPagina = 50;
     public const int MaximoExportacao = 20000;
 
     public const string MensagemExportacaoGrande =
@@ -47,9 +46,17 @@ public class ContasPagarService
         _opcoes = opcoes.Value;
     }
 
-    public async Task<Resultado<PaginaContasPagarDto>> ListarAsync(
+    public Task<Resultado<PaginaContasPagarDto>> ListarAsync(
         int clienteId, FiltroContas filtro, int pagina, CancellationToken cancelamento)
     {
+        return ListarAsync(clienteId, filtro, pagina, null, cancelamento);
+    }
+
+    /// <summary>Uma página das contas; "tamanho" de 1 a 100 (sem ele, 25).</summary>
+    public async Task<Resultado<PaginaContasPagarDto>> ListarAsync(
+        int clienteId, FiltroContas filtro, int pagina, int? tamanho, CancellationToken cancelamento)
+    {
+        int tamanhoPagina = TamanhoPagina.Valido(tamanho);
         if (pagina < 1)
         {
             pagina = 1;
@@ -72,15 +79,15 @@ public class ContasPagarService
 
         IQueryable<ContaPagarSincronizada> daPagina = ordenada.Valor!
             .ThenBy(c => c.Id)
-            .Skip((pagina - 1) * TamanhoPagina)
-            .Take(TamanhoPagina);
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina);
         List<LinhaContaPagar> linhas = await Projetar(daPagina).ToListAsync(cancelamento);
 
         DateTime hoje = Hoje();
         var resposta = new PaginaContasPagarDto();
         resposta.Total = total;
         resposta.Pagina = pagina;
-        resposta.TamanhoPagina = TamanhoPagina;
+        resposta.TamanhoPagina = tamanhoPagina;
         resposta.ValorTotal = valorTotal;
         resposta.DiasPassados = _opcoes.DiasPassadosValidos();
         resposta.DiasFuturos = _opcoes.DiasFuturosValidos();

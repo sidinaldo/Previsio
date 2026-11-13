@@ -34,6 +34,7 @@ public class ContasPagarController : PrevisioControllerBase
         [FromQuery] string? ordem,
         [FromQuery] string? categoria,
         [FromQuery] int pagina,
+        [FromQuery] int? tamanho,
         CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
@@ -41,7 +42,7 @@ public class ContasPagarController : PrevisioControllerBase
             return Forbid();
         }
         FiltroContas filtro = Filtro(empresaId, de, ate, situacao, origem, busca, ordem, categoria);
-        return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, cancelamento));
+        return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, tamanho, cancelamento));
     }
 
     public static FiltroContas Filtro(

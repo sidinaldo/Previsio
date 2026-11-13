@@ -8,6 +8,7 @@ import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { classeDaSituacao, descricaoDaSituacao } from '../../core/filtro-notas';
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { mensagemComMotivo } from '../../core/mensagem-erro';
+import { TAMANHOS_PAGINA_API, lerTamanhoPagina, salvarTamanhoPagina } from '../../core/paginacao';
 import { PrevisioService } from '../../core/previsio.service';
 import { Empresa, FiltroNotas, NotaRecebida, SITUACAO_PENDENTES, SITUACOES_COM_PROBLEMA } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
@@ -72,7 +73,8 @@ export class NotasRecebidasComponent {
 
   readonly notas = signal<NotaRecebida[]>([]);
   readonly total = signal(0);
-  readonly tamanhoPagina = signal(50);
+  readonly tamanhoPagina = signal(lerTamanhoPagina('notas-recebidas'));
+  readonly tamanhosPagina = TAMANHOS_PAGINA_API;
   readonly carregando = signal(false);
   readonly acaoLista = signal<AcaoLista>(null);
   readonly carregada = signal(false);
@@ -182,8 +184,17 @@ export class NotasRecebidasComponent {
     this.carregar();
   }
 
+  /** "Por página": guarda a escolha neste navegador e volta para a primeira página. */
+  trocarTamanho(tamanho: number): void {
+    this.tamanhoPagina.set(tamanho);
+    salvarTamanhoPagina('notas-recebidas', tamanho);
+    this.pagina.set(1);
+    this.carregar();
+  }
+
   irParaPagina(pagina: number): void {
-    if (pagina < 1 || pagina > this.totalPaginas()) {
+    // Mesma página: acontece logo depois de trocar o "Por página" (que já recarregou)
+    if (pagina < 1 || pagina > this.totalPaginas() || pagina === this.pagina()) {
       return;
     }
     if (pagina > this.pagina()) {
@@ -266,7 +277,8 @@ export class NotasRecebidasComponent {
       ate: this.ate(),
       busca: this.busca(),
       ordem: parametroOrdem(this.ordenacao()),
-      pagina: this.pagina()
+      pagina: this.pagina(),
+      tamanho: this.tamanhoPagina()
     };
     this.filtroAplicado = filtro;
 

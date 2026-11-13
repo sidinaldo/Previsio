@@ -286,7 +286,8 @@
 
         <!-- A API devolve uma página por vez, no tamanho dela: sem "Por página" -->
         <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
-                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
+                       [tamanho]="tamanhoPagina()" [tamanhos]="tamanhosPagina"
+                       (tamanhoChange)="trocarTamanho($event)" />
       }
     </div>
 

@@ -100,4 +100,24 @@ describe('ContasPagarComponent', () => {
     expect(api.obterContasPagar.mock.calls[1][0].categoria).toBe('');
     expect(tela.querySelector('.pv-filtro-categoria')).toBeNull();
   });
+
+  it('"Por página" pede o tamanho à API, volta para a página 1 e guarda a escolha', async () => {
+    const { fixture, api, tela } = await montar();
+    const pagina30 = { ...PAGINA, total: 30, tamanhoPagina: 25 };
+    api.obterContasPagar.mockReturnValue(of(pagina30));
+    fixture.componentInstance.carregar();
+    await fixture.whenStable();
+    expect(api.obterContasPagar.mock.calls[0][0].tamanho).toBe(25);
+
+    const seletor = tela.querySelector('app-paginacao select') as HTMLSelectElement;
+    expect(Array.from(seletor.options).map(o => o.value)).toEqual(['10', '25', '50', '100']);
+    seletor.value = '10';
+    seletor.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    const ultimo = api.obterContasPagar.mock.calls[api.obterContasPagar.mock.calls.length - 1][0];
+    expect(ultimo.tamanho).toBe(10);
+    expect(ultimo.pagina).toBe(1);
+    expect(localStorage.getItem('previsio.por-pagina.contas-pagar')).toBe('10');
+  });
 });

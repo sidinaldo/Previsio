@@ -34,7 +34,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (nota of notas(); track nota.id) {
+            @for (nota of notasDaPagina(); track nota.id) {
               <tr>
                 <td>
                   <strong>{{ fornecedor(nota) }}</strong>
@@ -125,6 +125,7 @@
           </tbody>
         </table>
       </div>
+      <app-paginacao [total]="notas().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
     }
   </div>
 }

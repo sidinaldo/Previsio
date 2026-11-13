@@ -13,7 +13,6 @@ namespace Previsio.Aplicacao.Falhas;
 /// </summary>
 public class FalhasService
 {
-    public const int TamanhoPagina = 50;
 
     private readonly IRepositorio<FalhaProcessamento> _falhas;
 
@@ -27,7 +26,7 @@ public class FalhasService
     /// Filtros opcionais: empresa, nota, etapa, período (dias no horário de Brasília) e busca por NF,
     /// fornecedor, empresa ou CNPJ. Ordem: data, etapa, empresa, nota, fornecedor ou valor ("-" = decrescente).
     /// </summary>
-    public async Task<Resultado<PaginaFalhasDto>> ListarAsync(
+    public Task<Resultado<PaginaFalhasDto>> ListarAsync(
         int clienteId,
         int? empresaId,
         int? notaId,
@@ -39,6 +38,24 @@ public class FalhasService
         int pagina,
         CancellationToken cancelamento)
     {
+        return ListarAsync(clienteId, empresaId, notaId, etapa, de, ate, busca, ordem, pagina, null, cancelamento);
+    }
+
+    /// <summary>Como acima, com "tamanho" de 1 a 100 itens por página (sem ele, 25).</summary>
+    public async Task<Resultado<PaginaFalhasDto>> ListarAsync(
+        int clienteId,
+        int? empresaId,
+        int? notaId,
+        string? etapa,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem,
+        int pagina,
+        int? tamanho,
+        CancellationToken cancelamento)
+    {
+        int tamanhoPagina = TamanhoPagina.Valido(tamanho);
         if (pagina < 1)
         {
             pagina = 1;
@@ -119,14 +136,14 @@ public class FalhasService
         List<FalhaProcessamento> falhas = await ordenada
             .ThenByDescending(f => f.Id)
             .Include(f => f.Empresa)
-            .Skip((pagina - 1) * TamanhoPagina)
-            .Take(TamanhoPagina)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
             .ToListAsync(cancelamento);
 
         var resposta = new PaginaFalhasDto();
         resposta.Total = total;
         resposta.Pagina = pagina;
-        resposta.TamanhoPagina = TamanhoPagina;
+        resposta.TamanhoPagina = tamanhoPagina;
         foreach (FalhaProcessamento falha in falhas)
         {
             resposta.Itens.Add(FalhaMapeamento.ParaDto(falha));

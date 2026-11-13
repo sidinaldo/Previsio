@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Comum;
 using Microsoft.AspNetCore.Mvc;
 using Previsio.Api.Controllers;
 using Previsio.Tests.Apoio;
@@ -54,9 +55,10 @@ public class NotasControllerTests
     }
 
     private static Task<ActionResult<PaginaNotasDto>> Listar(
-        NotasController controller, int clienteId, int? empresaId, string? situacao, DateTime? de, DateTime? ate, int pagina)
+        NotasController controller, int clienteId, int? empresaId, string? situacao, DateTime? de, DateTime? ate, int pagina,
+        int? tamanho = null)
     {
-        return controller.Listar(clienteId, empresaId, situacao, de, ate, null, null, pagina, CancellationToken.None);
+        return controller.Listar(clienteId, empresaId, situacao, de, ate, null, null, pagina, tamanho, CancellationToken.None);
     }
 
     [Fact]
@@ -148,7 +150,7 @@ public class NotasControllerTests
     }
 
     [Fact]
-    public async Task Pagina_De50EmQuantidade()
+    public async Task Pagina_De25PorPadrao_OuNoTamanhoPedido_AteCem()
     {
         int alfa = await CadastrarCliente("Rede Alfa");
         DateTime inicio = new DateTime(2026, 11, 1, 12, 0, 0, DateTimeKind.Utc);
@@ -157,13 +159,22 @@ public class NotasControllerTests
             _db.NotasFiscais.Add(Nota(alfa, null, i.ToString(), StatusNota.Lancada, inicio.AddMinutes(i)));
         }
         await _db.SaveChangesAsync();
+        NotasController controller = CriarController(UsuarioDeTeste.Admin());
 
-        ActionResult<PaginaNotasDto> segunda = await Listar(CriarController(UsuarioDeTeste.Admin()), alfa, null, null, null, null, 2);
+        // Sem tamanho: 25 por página; a terceira tem as 5 mais antigas
+        ActionResult<PaginaNotasDto> terceira = await Listar(controller, alfa, null, null, null, null, 3);
+        Assert.Equal(55, terceira.Value!.Total);
+        Assert.Equal(TamanhoPagina.Padrao, terceira.Value.TamanhoPagina);
+        Assert.Equal(5, terceira.Value.Itens.Count);
+        Assert.Equal("5", terceira.Value.Itens[0].Numero);
 
-        Assert.Equal(55, segunda.Value!.Total);
-        Assert.Equal(NotasController.TamanhoPagina, segunda.Value.TamanhoPagina);
-        Assert.Equal(5, segunda.Value.Itens.Count);
-        Assert.Equal("5", segunda.Value.Itens[0].Numero);
+        ActionResult<PaginaNotasDto> de50 = await Listar(controller, alfa, null, null, null, null, 2, 50);
+        Assert.Equal(50, de50.Value!.TamanhoPagina);
+        Assert.Equal(5, de50.Value.Itens.Count);
+
+        // Acima de 100 vira 100; zero ou negativo volta ao padrão
+        Assert.Equal(100, (await Listar(controller, alfa, null, null, null, null, 1, 500)).Value!.TamanhoPagina);
+        Assert.Equal(TamanhoPagina.Padrao, (await Listar(controller, alfa, null, null, null, null, 1, 0)).Value!.TamanhoPagina);
     }
 
     [Fact]

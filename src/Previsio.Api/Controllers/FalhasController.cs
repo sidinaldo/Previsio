@@ -11,8 +11,6 @@ namespace Previsio.Api.Controllers;
 [ApiController]
 public class FalhasController : PrevisioControllerBase
 {
-    public const int TamanhoPagina = FalhasService.TamanhoPagina;
-
     private readonly FalhasService _falhas;
 
     public FalhasController(FalhasService falhas)
@@ -36,6 +34,7 @@ public class FalhasController : PrevisioControllerBase
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
         [FromQuery] int pagina,
+        [FromQuery] int? tamanho,
         CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
@@ -43,6 +42,6 @@ public class FalhasController : PrevisioControllerBase
             return Forbid();
         }
 
-        return Responder(await _falhas.ListarAsync(clienteId, empresaId, notaId, etapa, de, ate, busca, ordem, pagina, cancelamento));
+        return Responder(await _falhas.ListarAsync(clienteId, empresaId, notaId, etapa, de, ate, busca, ordem, pagina, tamanho, cancelamento));
     }
 }

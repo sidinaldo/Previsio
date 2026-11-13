@@ -82,6 +82,11 @@ export class SaudeComponent implements OnInit {
       .sort((a, b) => a.nome.localeCompare(b.nome));
   });
   readonly redesDaPagina = computed(() => paginar(this.redesFiltradas(), this.pagina(), this.tamanhoPagina()));
+
+  // Jobs do Hangfire: paginados à parte das redes
+  readonly paginaJobs = signal(1);
+  readonly tamanhoPaginaJobs = signal(TAMANHO_PAGINA_PADRAO);
+  readonly jobsDaPagina = computed(() => paginar(this.saude()?.jobs ?? [], this.paginaJobs(), this.tamanhoPaginaJobs()));
   readonly jobsComProblema = computed(() => {
     const saude = this.saude();
     if (!saude) {

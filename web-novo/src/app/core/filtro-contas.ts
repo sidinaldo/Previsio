@@ -46,6 +46,9 @@ export function parametrosDasContas(filtro: FiltroContas): HttpParams {
   if (filtro.pagina && filtro.pagina > 1) {
     params = params.set('pagina', String(filtro.pagina));
   }
+  if (filtro.tamanho) {
+    params = params.set('tamanho', String(filtro.tamanho));
+  }
   return params;
 }
 

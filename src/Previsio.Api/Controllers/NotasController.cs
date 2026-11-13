@@ -9,8 +9,6 @@ namespace Previsio.Api.Controllers;
 [ApiController]
 public class NotasController : PrevisioControllerBase
 {
-    public const int TamanhoPagina = NotasService.TamanhoPagina;
-
     // Filtro de situação que junta todas as que ainda não viraram conta a pagar
     public const string SituacaoPendentes = NotasService.SituacaoPendentes;
 
@@ -65,6 +63,7 @@ public class NotasController : PrevisioControllerBase
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
         [FromQuery] int pagina,
+        [FromQuery] int? tamanho,
         CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
@@ -72,7 +71,7 @@ public class NotasController : PrevisioControllerBase
             return Forbid();
         }
 
-        return Responder(await _notas.ListarAsync(clienteId, empresaId, situacao, de, ate, busca, ordem, pagina, cancelamento));
+        return Responder(await _notas.ListarAsync(clienteId, empresaId, situacao, de, ate, busca, ordem, pagina, tamanho, cancelamento));
     }
 
     /// <summary>

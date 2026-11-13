@@ -6,6 +6,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { classeDaConta, filtroPadraoContas, textoDaConta } from '../../core/filtro-contas';
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
+import { TAMANHOS_PAGINA_API, lerTamanhoPagina, salvarTamanhoPagina } from '../../core/paginacao';
 import { PrevisioService } from '../../core/previsio.service';
 import { ContaReceber, Empresa, FiltroContas } from '../../core/previsio.models';
 import { BuscaComponent } from '../../shared/busca/busca.component';
@@ -62,7 +63,8 @@ export class ContasReceberComponent {
   readonly contas = signal<ContaReceber[]>([]);
   readonly total = signal(0);
   readonly valorTotal = signal(0);
-  readonly tamanhoPagina = signal(50);
+  readonly tamanhoPagina = signal(lerTamanhoPagina('contas-receber'));
+  readonly tamanhosPagina = TAMANHOS_PAGINA_API;
   readonly sincronizadaEm = signal<string | null>(null);
   readonly diasPassados = signal(30);
   readonly diasFuturos = signal(90);
@@ -126,8 +128,18 @@ export class ContasReceberComponent {
     this.carregar();
   }
 
+  /** "Por página": guarda a escolha neste navegador e volta para a primeira página. */
+  trocarTamanho(tamanho: number): void {
+    this.tamanhoPagina.set(tamanho);
+    salvarTamanhoPagina('contas-receber', tamanho);
+    this.acaoLista.set('pagina');
+    this.pagina.set(1);
+    this.carregar();
+  }
+
   irParaPagina(pagina: number): void {
-    if (pagina < 1 || pagina > this.totalPaginas()) {
+    // Mesma página: acontece logo depois de trocar o "Por página" (que já recarregou)
+    if (pagina < 1 || pagina > this.totalPaginas() || pagina === this.pagina()) {
       return;
     }
     this.acaoLista.set('pagina');
@@ -148,7 +160,8 @@ export class ContasReceberComponent {
       ate: this.ate(),
       busca: this.busca(),
       ordem: parametroOrdem(this.ordenacao()),
-      pagina: this.pagina()
+      pagina: this.pagina(),
+      tamanho: this.tamanhoPagina()
     };
     this.filtroAplicado = filtro;
 

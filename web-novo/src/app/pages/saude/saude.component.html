@@ -55,7 +55,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (job of s.jobs; track job.id) {
+                @for (job of jobsDaPagina(); track job.id) {
                   <tr>
                     <td><strong>{{ job.nome }}</strong></td>
                     <td>
@@ -75,6 +75,7 @@
               </tbody>
             </table>
           </div>
+          <app-paginacao [total]="s.jobs.length" [(pagina)]="paginaJobs" [(tamanho)]="tamanhoPaginaJobs" />
         }
       </div>
 

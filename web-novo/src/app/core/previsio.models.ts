@@ -472,6 +472,8 @@ export interface FiltroContas {
   categoria?: string;
   ordem?: string;
   pagina?: number;
+  /** Itens por página (10 a 100); sem ele a API usa 25. */
+  tamanho?: number;
 }
 
 /** Filtros da tela de notas recebidas. Datas (dia em que a nota chegou) no formato yyyy-MM-dd. */
@@ -486,6 +488,8 @@ export interface FiltroNotas {
   // Coluna, com "-" na frente para decrescente (ex.: "-valor")
   ordem?: string;
   pagina?: number;
+  /** Itens por página (10 a 100); sem ele a API usa 25. */
+  tamanho?: number;
 }
 
 /** Jobs em segundo plano que o admin pode rodar na hora. */
@@ -565,6 +569,8 @@ export interface FiltroFalhas {
   // Coluna, com "-" na frente para decrescente (ex.: "-data")
   ordem?: string;
   pagina?: number;
+  /** Itens por página (10 a 100); sem ele a API usa 25. */
+  tamanho?: number;
 }
 
 /** Nome de cada etapa como aparece na tela, na ordem do caminho e-mail → Bling. */

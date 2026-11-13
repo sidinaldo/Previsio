@@ -1,12 +1,14 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import { mensagemDoDownload, salvarArquivo } from '../../core/download';
 import { formatarCnpj } from '../../core/implantacao';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { DESCRICAO_SITUACAO_SO_PDF, NotaSoPdf } from '../../core/previsio.models';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
 
 type Acao = 'xml' | 'chave' | 'lancada';
@@ -18,7 +20,7 @@ type Acao = 'xml' | 'chave' | 'lancada';
  */
 @Component({
   selector: 'app-notas-so-pdf',
-  imports: [DatePipe, CarregandoDirective, MenuAcoesComponent],
+  imports: [DatePipe, CarregandoDirective, MenuAcoesComponent, PaginacaoComponent],
   templateUrl: './notas-so-pdf.component.html'
 })
 export class NotasSoPdfComponent {
@@ -27,6 +29,9 @@ export class NotasSoPdfComponent {
   readonly empresaId = input<number | undefined>(undefined);
 
   readonly notas = signal<NotaSoPdf[]>([]);
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly notasDaPagina = computed(() => paginar(this.notas(), this.pagina(), this.tamanhoPagina()));
   readonly mensagem = signal('');
   readonly erro = signal('');
   readonly abertaId = signal<number | null>(null);

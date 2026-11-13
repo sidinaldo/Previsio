@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { mensagemDaApi } from '../../core/mensagem-erro';
+import { TAMANHOS_PAGINA_API, lerTamanhoPagina, salvarTamanhoPagina } from '../../core/paginacao';
 import { PrevisioService } from '../../core/previsio.service';
 import { DESCRICAO_ETAPA, Empresa, Falha, FiltroFalhas } from '../../core/previsio.models';
 import { totalDePaginas } from '../../core/filtro-falhas';
@@ -46,7 +47,8 @@ export class FalhasComponent {
 
   readonly falhas = signal<Falha[]>([]);
   readonly total = signal(0);
-  readonly tamanhoPagina = signal(50);
+  readonly tamanhoPagina = signal(lerTamanhoPagina('falhas'));
+  readonly tamanhosPagina = TAMANHOS_PAGINA_API;
   readonly carregando = signal(false);
   readonly acaoLista = signal<AcaoLista>(null);
   readonly erro = signal('');
@@ -117,8 +119,17 @@ export class FalhasComponent {
     this.carregar();
   }
 
+  /** "Por página": guarda a escolha neste navegador e volta para a primeira página. */
+  trocarTamanho(tamanho: number): void {
+    this.tamanhoPagina.set(tamanho);
+    salvarTamanhoPagina('falhas', tamanho);
+    this.pagina.set(1);
+    this.carregar();
+  }
+
   irParaPagina(pagina: number): void {
-    if (pagina < 1 || pagina > this.totalPaginas()) {
+    // Mesma página: acontece logo depois de trocar o "Por página" (que já recarregou)
+    if (pagina < 1 || pagina > this.totalPaginas() || pagina === this.pagina()) {
       return;
     }
     if (pagina > this.pagina()) {
@@ -152,7 +163,8 @@ export class FalhasComponent {
       ate: this.ate(),
       busca: this.busca(),
       ordem: parametroOrdem(this.ordenacao()),
-      pagina: this.pagina()
+      pagina: this.pagina(),
+      tamanho: this.tamanhoPagina()
     };
 
     this.carregando.set(true);

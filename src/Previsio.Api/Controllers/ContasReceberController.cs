@@ -35,6 +35,7 @@ public class ContasReceberController : PrevisioControllerBase
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
         [FromQuery] int pagina,
+        [FromQuery] int? tamanho,
         CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
@@ -42,7 +43,7 @@ public class ContasReceberController : PrevisioControllerBase
             return Forbid();
         }
         FiltroContasReceber filtro = Filtro(empresaId, de, ate, situacao, busca, ordem);
-        return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, cancelamento));
+        return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, tamanho, cancelamento));
     }
 
     /// <summary>

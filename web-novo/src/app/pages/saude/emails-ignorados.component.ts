@@ -1,11 +1,13 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 import { mensagemDoDownload, salvarArquivo } from '../../core/download';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { EmailIgnorado } from '../../core/previsio.models';
+import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PrevisioService } from '../../core/previsio.service';
+import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 
 /** Rede para o filtro (vem da tela Saúde). */
@@ -20,7 +22,7 @@ export interface RedeDoFiltro {
  */
 @Component({
   selector: 'app-emails-ignorados',
-  imports: [DatePipe, RouterLink, CarregandoDirective],
+  imports: [DatePipe, RouterLink, CarregandoDirective, PaginacaoComponent],
   template: `
     <div class="card">
       <div class="pv-card__cabecalho">
@@ -73,7 +75,7 @@ export interface RedeDoFiltro {
               </tr>
             </thead>
             <tbody>
-              @for (email of emails(); track email.id) {
+              @for (email of emailsDaPagina(); track email.id) {
                 <tr>
                   <td class="pv-numero">{{ email.lidoEm | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td>
@@ -120,6 +122,7 @@ export interface RedeDoFiltro {
             </tbody>
           </table>
         </div>
+        <app-paginacao [total]="emails().length" [(pagina)]="pagina" [(tamanho)]="tamanhoPagina" />
         @if (emails().length >= 200) {
           <p class="pv-card__rodape">Mostrando os 200 mais recentes. Escolha uma rede ou um período menor.</p>
         }
@@ -137,6 +140,9 @@ export class EmailsIgnoradosComponent {
   readonly clienteId = signal<number | null>(null);
   readonly dias = signal(7);
   readonly emails = signal<EmailIgnorado[]>([]);
+  readonly pagina = signal(1);
+  readonly tamanhoPagina = signal(TAMANHO_PAGINA_PADRAO);
+  readonly emailsDaPagina = computed(() => paginar(this.emails(), this.pagina(), this.tamanhoPagina()));
   readonly carregado = signal(false);
   readonly tratandoId = signal<number | null>(null);
   readonly mensagem = signal('');

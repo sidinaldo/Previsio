@@ -44,7 +44,7 @@ public class FalhasControllerTests
     private static Task<ActionResult<PaginaFalhasDto>> Listar(
         FalhasController controller, int clienteId, int? notaId, string? etapa, DateTime? de, DateTime? ate)
     {
-        return controller.Listar(clienteId, null, notaId, etapa, de, ate, null, null, 1, CancellationToken.None);
+        return controller.Listar(clienteId, null, notaId, etapa, de, ate, null, null, 1, null, CancellationToken.None);
     }
 
     [Fact]

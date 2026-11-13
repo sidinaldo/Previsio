@@ -16,7 +16,6 @@ namespace Previsio.Aplicacao.Notas;
 /// </summary>
 public class NotasService
 {
-    public const int TamanhoPagina = 50;
 
     // Máximo de linhas da tela de notas pendentes
     public const int MaximoPendentes = 500;
@@ -79,7 +78,7 @@ public class NotasService
     /// período em que a nota chegou (dias no horário de Brasília) e busca por NF, fornecedor, empresa ou CNPJ.
     /// Ordem: recebida, numero, fornecedor, empresa, emissao, valor, vencimento ou situacao ("-" = decrescente).
     /// </summary>
-    public async Task<Resultado<PaginaNotasDto>> ListarAsync(
+    public Task<Resultado<PaginaNotasDto>> ListarAsync(
         int clienteId,
         int? empresaId,
         string? situacao,
@@ -90,6 +89,23 @@ public class NotasService
         int pagina,
         CancellationToken cancelamento)
     {
+        return ListarAsync(clienteId, empresaId, situacao, de, ate, busca, ordem, pagina, null, cancelamento);
+    }
+
+    /// <summary>Como acima, com "tamanho" de 1 a 100 itens por página (sem ele, 25).</summary>
+    public async Task<Resultado<PaginaNotasDto>> ListarAsync(
+        int clienteId,
+        int? empresaId,
+        string? situacao,
+        DateTime? de,
+        DateTime? ate,
+        string? busca,
+        string? ordem,
+        int pagina,
+        int? tamanho,
+        CancellationToken cancelamento)
+    {
+        int tamanhoPagina = TamanhoPagina.Valido(tamanho);
         if (pagina < 1)
         {
             pagina = 1;
@@ -109,14 +125,14 @@ public class NotasService
             .Include(n => n.Empresa)
             .Include(n => n.EmpresaCaixa)
             .Include(n => n.Parcelas)
-            .Skip((pagina - 1) * TamanhoPagina)
-            .Take(TamanhoPagina)
+            .Skip((pagina - 1) * tamanhoPagina)
+            .Take(tamanhoPagina)
             .ToListAsync(cancelamento);
 
         var resposta = new PaginaNotasDto();
         resposta.Total = total;
         resposta.Pagina = pagina;
-        resposta.TamanhoPagina = TamanhoPagina;
+        resposta.TamanhoPagina = tamanhoPagina;
         foreach (NotaFiscal nota in notas)
         {
             resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));

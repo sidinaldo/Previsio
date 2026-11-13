@@ -192,7 +192,8 @@
         </div>
 
         <app-paginacao [total]="total()" [pagina]="pagina()" (paginaChange)="irParaPagina($event)"
-                       [tamanho]="tamanhoPagina()" [tamanhos]="[]" />
+                       [tamanho]="tamanhoPagina()" [tamanhos]="tamanhosPagina"
+                       (tamanhoChange)="trocarTamanho($event)" />
       }
 
       <p class="pv-card__rodape">

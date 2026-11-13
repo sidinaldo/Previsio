@@ -27,3 +27,30 @@ export function paginar<T>(lista: T[], pagina: number, tamanho: number): T[] {
   const inicio = (atual - 1) * tamanho;
   return lista.slice(inicio, inicio + tamanho);
 }
+
+/** Opções do "Por página" das listas paginadas pela API (contas, notas recebidas, falhas); a API aceita até 100. */
+export const TAMANHOS_PAGINA_API = [10, 25, 50, 100];
+export const TAMANHO_PAGINA_API_PADRAO = 25;
+
+const CHAVE_TAMANHO_PAGINA = 'previsio.por-pagina.';
+
+/** "Por página" escolhido nesta tela, guardado neste navegador (ou o padrão). */
+export function lerTamanhoPagina(tela: string): number {
+  try {
+    const salvo = Number(localStorage.getItem(CHAVE_TAMANHO_PAGINA + tela));
+    if (TAMANHOS_PAGINA_API.includes(salvo)) {
+      return salvo;
+    }
+  } catch {
+    // Navegador sem armazenamento: vale o padrão
+  }
+  return TAMANHO_PAGINA_API_PADRAO;
+}
+
+export function salvarTamanhoPagina(tela: string, tamanho: number): void {
+  try {
+    localStorage.setItem(CHAVE_TAMANHO_PAGINA + tela, String(tamanho));
+  } catch {
+    // Navegador sem armazenamento: a escolha vale só até sair da tela
+  }
+}
