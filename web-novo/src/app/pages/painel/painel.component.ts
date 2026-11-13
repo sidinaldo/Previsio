@@ -15,6 +15,9 @@ import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 
+// Acima desta parte das saídas sem categoria (%), o painel mostra o atalho para configurar
+const LIMITE_SEM_CATEGORIA = 20;
+
 @Component({
   selector: 'app-painel',
   imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, DecimalPipe, SlicePipe, CarregandoDirective, PaginacaoComponent, ExportarComponent],
@@ -48,6 +51,21 @@ export class PainelComponent {
   readonly categorias = computed<TotalCategoria[]>(() => this.resumo()?.categorias ?? []);
   private readonly maiorCategoria = computed(() => Math.max(0, ...this.categorias().map(c => c.valor)));
   private readonly totalCategorias = computed(() => this.categorias().reduce((soma, c) => soma + c.valor, 0));
+
+  /** Parte das saídas sem categoria no Bling (0 a 100). */
+  readonly percentualSemCategoria = computed(() => {
+    const sem = this.categorias().find(c => c.tipo === 'sem');
+    if (!sem) {
+      return 0;
+    }
+    return this.percentualCategoria(sem);
+  });
+
+  /** Acima do limite, o card de categorias mostra o atalho "Configurar categorias". */
+  readonly mostrarConfigurarCategorias = computed(() => this.percentualSemCategoria() > LIMITE_SEM_CATEGORIA);
+
+  /** Semana sob o mouse (ou o foco) no gráfico, com a posição do tooltip dentro da área do gráfico. */
+  readonly dica = signal<{ semana: TotalSemana; esquerda: number; topo: number } | null>(null);
 
   // Semana com mais saídas; nenhuma quando todas estão zeradas
   readonly maiorSemana = computed<TotalSemana | null>(() => {
@@ -165,6 +183,33 @@ export class PainelComponent {
       + cnpj.substring(8, 12) + '-' + cnpj.substring(12, 14);
   }
 
+  /** Tooltip do gráfico: a barra traz o índice da semana (data-semana), gravado ao desenhar. */
+  mostrarDica(evento: Event): void {
+    const alvo = evento.target as Element | null;
+    const barra = alvo && typeof alvo.closest === 'function' ? alvo.closest('[data-semana]') : null;
+    const area = evento.currentTarget as HTMLElement | null;
+    const resumo = this.resumo();
+    if (!barra || !area || !resumo) {
+      return;
+    }
+    const indice = Number(barra.getAttribute('data-semana'));
+    const semana = resumo.semanas[indice];
+    if (!semana) {
+      return;
+    }
+    const caixaArea = area.getBoundingClientRect();
+    const caixaBarra = barra.getBoundingClientRect();
+    this.dica.set({
+      semana,
+      esquerda: caixaBarra.left - caixaArea.left + caixaBarra.width / 2,
+      topo: caixaBarra.top - caixaArea.top
+    });
+  }
+
+  esconderDica(): void {
+    this.dica.set(null);
+  }
+
   private desenharGrafico(): void {
     const resumo = this.resumo();
     if (!resumo || this.semDados() || this.graficoVazio()) {
@@ -209,10 +254,32 @@ export class PainelComponent {
     let series: number[][] = [valores];
     if (this.fluxoCaixa()) {
       series = [valores, entradas];
-      opcoes.seriesBarDistance = 20;
+      opcoes.seriesBarDistance = 24;
     }
-    const grafico = new Chartist.Bar('#previsioSemanasChart', { labels: rotulos, series: series }, opcoes);
+    // No celular as barras do fluxo de caixa ficam mais finas e mais juntas
+    const responsivo = [['screen and (max-width: 575.98px)', { seriesBarDistance: 12 }]];
+    const grafico = new Chartist.Bar('#previsioSemanasChart', { labels: rotulos, series: series }, opcoes, responsivo);
+    this.prepararDica(grafico, resumo.semanas);
     this.animarBarras(grafico);
+  }
+
+  // Cada barra recebe o índice da semana e entra no Tab, para o tooltip abrir no foco do teclado
+  private prepararDica(grafico: any, semanas: TotalSemana[]): void {
+    grafico.on('draw', (dado: any) => {
+      if (dado.type !== 'bar') {
+        return;
+      }
+      const semana = semanas[dado.index];
+      if (!semana) {
+        return;
+      }
+      dado.element.attr({
+        'data-semana': String(dado.index),
+        tabindex: '0',
+        'aria-describedby': 'pv-grafico-dica',
+        'aria-label': 'Semana de ' + this.formatarDiaMes(semana.inicio) + ' a ' + this.formatarDiaMes(semana.fim)
+      });
+    });
   }
 
   // Mesma animação usada no dashboard de exemplo do template, só no primeiro desenho:

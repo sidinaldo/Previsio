@@ -153,6 +153,28 @@ export class EmpresasComponent {
 
     this.carregar();
     this.carregarEmailRede();
+
+    // Do painel ("Configurar categorias"): /pages/empresas#categorias rola até o card Categorias
+    if (this.rota.snapshot.fragment === 'categorias') {
+      afterNextRender(() => this.rolarAteCategorias(0), { injector: this.injector });
+    }
+  }
+
+  // Espera a lista de empresas e o card terminarem de carregar (senão o card muda de lugar depois de rolar)
+  private rolarAteCategorias(tentativa: number): void {
+    const cartao = document.getElementById('categorias');
+    let pronto = false;
+    if (cartao !== null) {
+      const cartaoCarregando = (cartao.textContent ?? '').includes('Carregando...');
+      pronto = tentativa >= 20 || (this.carregada() && !cartaoCarregando);
+    }
+    if (pronto && cartao !== null) {
+      cartao.scrollIntoView({ block: 'start' });
+      return;
+    }
+    if (tentativa < 20) {
+      setTimeout(() => this.rolarAteCategorias(tentativa + 1), 150);
+    }
   }
 
   private carregarEmailRede(): void {

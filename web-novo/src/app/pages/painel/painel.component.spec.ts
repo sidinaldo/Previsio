@@ -106,4 +106,97 @@ describe('PainelComponent (visual)', () => {
     const { tela } = await montar(resumo([1000, 2500, 0], 0));
     expect(tela.querySelector('.pv-categorias-painel')).toBeNull();
   });
+
+  it('indicadores num grid só: 4 sem fluxo de caixa e 7 com fluxo', async () => {
+    const semFluxo = await montar(resumo([1000, 2500, 0], 0));
+    expect(semFluxo.tela.querySelectorAll('.pv-kpis > .pv-kpi').length).toBe(4);
+    expect(semFluxo.tela.querySelector('.pv-kpis .row')).toBeNull();
+    TestBed.resetTestingModule();
+
+    const comFluxo = resumo([1000, 2500, 0], 0);
+    comFluxo.fluxoCaixaAtivo = true;
+    comFluxo.saldoPeriodo = -500;
+    const { tela } = await montar(comFluxo);
+    expect(tela.querySelectorAll('.pv-kpis > .pv-kpi').length).toBe(7);
+    // "?" do saldo descreve o cálculo para leitor de tela
+    const ajuda = tela.querySelector('.pv-ajuda__botao') as HTMLButtonElement;
+    expect(ajuda.getAttribute('aria-describedby')).toBe('pv-ajuda-saldo');
+    expect(tela.querySelector('#pv-ajuda-saldo')!.textContent).toContain('Não considera o saldo atual das contas bancárias');
+  });
+
+  it('tooltip do gráfico mostra a semana da barra com centavos e some ao sair', async () => {
+    const dados = resumo([1000.5, 2500, 0], 0);
+    dados.fluxoCaixaAtivo = true;
+    dados.semanas[1].entradas = 3200.25;
+    dados.semanas[1].saldo = 700.25;
+    const { tela } = await montar(dados);
+    const area = tela.querySelector('.pv-grafico-area') as HTMLElement;
+    // O Chartist é simulado: põe uma "barra" como o draw faria
+    const barra = document.createElement('span');
+    barra.setAttribute('data-semana', '1');
+    area.appendChild(barra);
+
+    barra.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    await new Promise(r => setTimeout(r));
+    const dica = tela.querySelector('#pv-grafico-dica') as HTMLElement;
+    expect(dica.getAttribute('role')).toBe('tooltip');
+    expect(dica.textContent).toContain('17/11');
+    // Com centavos (o separador depende da localidade do teste)
+    expect(dica.textContent).toMatch(/Entradas: R\$\s?3[.,]200[.,]25/);
+    expect(dica.textContent).toMatch(/Saídas: R\$\s?2[.,]500[.,]00/);
+    expect(dica.textContent).toMatch(/Saldo: R\$\s?700[.,]25/);
+
+    barra.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    await new Promise(r => setTimeout(r));
+    expect(tela.querySelector('#pv-grafico-dica')).toBeNull();
+
+    barra.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await new Promise(r => setTimeout(r));
+    expect(tela.querySelector('#pv-grafico-dica')).not.toBeNull();
+  });
+
+  it('resumo semanal usa as mesmas colunas do gráfico', async () => {
+    const { tela } = await montar(resumo([1000, 2500, 0], 0));
+    const lista = tela.querySelector('.pv-semanas--alinhado') as HTMLElement;
+    expect(lista.style.getPropertyValue('--pv-semanas-colunas')).toBe('3');
+  });
+
+  it('com mais de 20% sem categoria mostra o atalho para Configurar categorias', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.categorias = [
+      { nome: 'Compras', tipo: 'categoria', valor: 700, quantidade: 2 },
+      { nome: 'Sem categoria', tipo: 'sem', valor: 300, quantidade: 1 }
+    ];
+    const { tela } = await montar(dados);
+    const acao = tela.querySelector('.pv-categorias-painel__acao') as HTMLElement;
+    expect(acao.textContent).toContain('30% das saídas estão sem categoria');
+    expect(acao.querySelector('a')!.getAttribute('href')).toContain('/pages/empresas#categorias');
+  });
+
+  it('até 20% sem categoria não mostra o atalho', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.categorias = [
+      { nome: 'Compras', tipo: 'categoria', valor: 800, quantidade: 2 },
+      { nome: 'Sem categoria', tipo: 'sem', valor: 200, quantidade: 1 }
+    ];
+    const { tela } = await montar(dados);
+    expect(tela.querySelector('.pv-categorias-painel')).not.toBeNull();
+    expect(tela.querySelector('.pv-categorias-painel__acao')).toBeNull();
+  });
+
+  it('Por empresa: rótulos revisados e Total com traço sem notas fora do Bling', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.empresas = [{
+      empresaId: 1, nome: 'Matriz', cnpj: '11222333000181', quantidadeContas: 3, valor: 3500,
+      notasPendentes: 0, valorNotasPendentes: 0, proximoVencimento: null, valorProximoVencimento: 0, ultimaSincronizacaoEm: null
+    }];
+    const { tela } = await montar(dados);
+    const cabecalho = Array.from(tela.querySelectorAll('th')).map(th => th.textContent!.trim());
+    expect(cabecalho).toContain('Contas a pagar');
+    expect(cabecalho).toContain('Notas fora do Bling');
+    expect(cabecalho).toContain('Próximo a pagar');
+    const total = tela.querySelector('.pv-tabela__total') as HTMLElement;
+    expect(total.textContent).toContain('—');
+    expect(total.textContent).not.toContain('0 ·');
+  });
 });

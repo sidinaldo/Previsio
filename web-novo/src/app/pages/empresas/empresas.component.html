@@ -293,7 +293,7 @@
     @if (clienteId(); as id) {
       <app-conferencia-bling [clienteId]="id" />
       <app-fluxo-caixa [clienteId]="id" />
-      <app-categorias [clienteId]="id" />
+      <app-categorias id="categorias" [clienteId]="id" />
       <app-alertas-vencimento [clienteId]="id" />
       <app-resumo-semanal [clienteId]="id" />
     }
