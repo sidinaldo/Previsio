@@ -218,6 +218,16 @@ if (receberId.HasValue)
 await Consultar(new Recurso("Categorias de receitas e despesas", "categorias/receitas-despesas?pagina=1&limite=100",
     "Quais categorias existem e se dá para usar no lançamento e no painel"));
 
+// 2b. Categoria nas contas a pagar: vem na lista ou só no detalhe?
+RespostaBling contasPagar = await Consultar(new Recurso("Contas a pagar (lista)", "contas/pagar?pagina=1&limite=20",
+    "A lista já traz a categoria de cada conta (para o painel por categoria)?"));
+long? pagarId = RespostaBling.LerId(contasPagar.PrimeiroItem(), "id");
+if (pagarId.HasValue)
+{
+    await Consultar(new Recurso("Conta a pagar (detalhe)", "contas/pagar/" + pagarId.Value,
+        "O detalhe traz categoria e forma de pagamento?"));
+}
+
 // 3. Contas a pagar: detalhe de uma paga (categoria, forma de pagamento, borderô)
 RespostaBling pagas = await Consultar(new Recurso("Contas a pagar pagas", "contas/pagar?pagina=1&limite=20&situacoes[]=2",
     "Existem contas pagas para ver como fica a baixa?"));
