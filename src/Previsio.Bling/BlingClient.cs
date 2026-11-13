@@ -184,6 +184,14 @@ public class BlingClient
         return id;
     }
 
+    // Sem "situacoes[]", a lista do Bling traz só as contas em aberto: a paga sumia da sincronização
+    // e o Previsio achava que tinha sido excluída. Pede todas: em aberto, paga, parcial, devolvida e cancelada
+    private const string TodasAsSituacoes =
+        "&situacoes[]=1&situacoes[]=2&situacoes[]=3&situacoes[]=4&situacoes[]=5";
+
+    /// <summary>
+    /// Contas a pagar com vencimento no período, em todas as situações.
+    /// </summary>
     public async Task<List<ContaPagarBling>> ListarContasPagarAsync(
         string conta, string accessToken, FiltroContasPagar filtro, CancellationToken cancelamento)
     {
@@ -196,12 +204,8 @@ public class BlingClient
             string url = "contas/pagar?pagina=" + pagina
                 + "&limite=" + limite
                 + "&dataVencimentoInicial=" + FormatarData(filtro.VencimentoInicial)
-                + "&dataVencimentoFinal=" + FormatarData(filtro.VencimentoFinal);
-
-            if (filtro.Situacao.HasValue)
-            {
-                url = url + "&situacao=" + filtro.Situacao.Value;
-            }
+                + "&dataVencimentoFinal=" + FormatarData(filtro.VencimentoFinal)
+                + TodasAsSituacoes;
 
             RespostaLista<ContaPagarBling>? resposta =
                 await EnviarAsync<RespostaLista<ContaPagarBling>>(conta, accessToken, HttpMethod.Get, url, null, cancelamento);
@@ -242,7 +246,8 @@ public class BlingClient
                 + "&dataInicial=" + FormatarData(vencimentoInicial)
                 + "&dataFinal=" + FormatarData(vencimentoFinal)
                 + "&dataVencimentoInicial=" + FormatarData(vencimentoInicial)
-                + "&dataVencimentoFinal=" + FormatarData(vencimentoFinal);
+                + "&dataVencimentoFinal=" + FormatarData(vencimentoFinal)
+                + TodasAsSituacoes;
 
             RespostaLista<ContaReceberBling>? resposta =
                 await EnviarAsync<RespostaLista<ContaReceberBling>>(conta, accessToken, HttpMethod.Get, url, null, cancelamento);

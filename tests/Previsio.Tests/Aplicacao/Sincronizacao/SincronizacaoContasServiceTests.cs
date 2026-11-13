@@ -273,6 +273,44 @@ public class SincronizacaoContasServiceTests
     }
 
     [Fact]
+    public async Task Conta_paga_no_Bling_fica_paga_e_nao_e_removida()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 20, Vencimento = _hoje.AddDays(3), Valor = 645m, Situacao = SituacaoContaBling.EmAberto });
+        await _db.SaveChangesAsync();
+        // O Bling só devolve a paga quando a consulta pede situacoes[]=2
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = Uri.UnescapeDataString(requisicao.RequestUri!.ToString());
+            if (url.Contains("contas/pagar?"))
+            {
+                if (!url.Contains("situacoes[]=2"))
+                {
+                    return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+                }
+                return RespostasFixas.Json(HttpStatusCode.OK,
+                    "{\"data\":[{\"id\":20,\"situacao\":2,\"vencimento\":\"" + Data(3) + "\",\"valor\":645,\"contato\":{\"id\":555}}]}");
+            }
+            if (url.Contains("contatos/"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":555,\"nome\":\"Kappa\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
+
+        ContaPagarSincronizada conta = Assert.Single(_db.ContasPagar.Where(c => c.EmpresaId == empresa.Id));
+        Assert.Equal(SituacaoContaBling.Pago, conta.Situacao);
+        string consulta = Uri.UnescapeDataString(respostas.Chamadas.First(c => c.Contains("contas/pagar?")));
+        for (int situacao = 1; situacao <= 5; situacao++)
+        {
+            Assert.Contains("situacoes[]=" + situacao, consulta);
+        }
+    }
+
+    [Fact]
     public async Task Sincronizar_uma_rede_so_mexe_nas_empresas_dela()
     {
         Cliente alfa = await CadastrarRede(true);
