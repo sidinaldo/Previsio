@@ -114,7 +114,21 @@ public class SincronizacaoContasService
         filtro.VencimentoInicial = hoje.AddDays(-_opcoes.DiasPassadosValidos());
         filtro.VencimentoFinal = hoje.AddDays(_opcoes.DiasFuturosValidos());
 
-        List<ContaPagarBling> remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+        List<ContaPagarBling> remotas;
+        try
+        {
+            remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+        }
+        catch (BlingException erro)
+        {
+            // Primeira chamada da empresa: se o Bling revogou o token, renova uma vez e repete
+            if (!erro.TokenInvalido)
+            {
+                throw;
+            }
+            token = await _tokens.RenovarAposRecusaAsync(empresa, cancelamento);
+            remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+        }
 
         List<ContaPagarSincronizada> locais = await _contas.Consultar()
             .Where(c => c.EmpresaId == empresa.Id

@@ -256,6 +256,63 @@ public class ConferenciaBlingTests
         Assert.Equal(SituacaoContaBling.Pago, contas[1].Situacao);
     }
 
+    // ---------- Token revogado pelo Bling antes de vencer ----------
+
+    private static RespostasFixas BlingQueRevogouOToken(bool renovacaoAceita)
+    {
+        return new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("oauth/token"))
+            {
+                if (!renovacaoAceita)
+                {
+                    return RespostasFixas.Json(HttpStatusCode.BadRequest, "{\"error\":{\"type\":\"invalid_grant\"}}");
+                }
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"access_token\":\"access-novo\",\"refresh_token\":\"refresh-novo\",\"expires_in\":21600}");
+            }
+            // Só o token novo é aceito: o antigo foi revogado quando os escopos mudaram
+            string? token = requisicao.Headers.Authorization?.Parameter;
+            if (token != "access-novo")
+            {
+                return RespostasFixas.Json(HttpStatusCode.Unauthorized, "{\"error\":{\"type\":\"invalid_token\"}}");
+            }
+            if (requisicao.Method == HttpMethod.Get && url.Contains("contatos"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.Created, "{\"data\":{\"id\":9001}}");
+        });
+    }
+
+    [Fact]
+    public async Task Token_revogado_renova_uma_vez_e_lanca()
+    {
+        NotaFiscal nota = await CadastrarNota(false);
+        RespostasFixas respostas = BlingQueRevogouOToken(true);
+
+        bool lancou = await Job(respostas).LancarAsync(nota.Id, CancellationToken.None);
+
+        Assert.True(lancou);
+        Assert.Equal(StatusNota.Lancada, _db.NotasFiscais.Single().Status);
+        Assert.Equal(1, respostas.Chamadas.Count(c => c.Contains("oauth/token")));
+        Assert.Equal("access-novo", _protetor.Revelar(_db.Empresas.Single().BlingAccessTokenProtegido!));
+        Assert.Empty(_db.Falhas);
+    }
+
+    [Fact]
+    public async Task Token_revogado_e_renovacao_recusada_desconecta_a_empresa()
+    {
+        NotaFiscal nota = await CadastrarNota(false);
+
+        await Job(BlingQueRevogouOToken(false)).LancarAsync(nota.Id, CancellationToken.None);
+
+        Assert.Equal(StatusNota.BlingDesconectado, _db.NotasFiscais.Single().Status);
+        Assert.False(_db.Empresas.Single().BlingConectado);
+        FalhaProcessamento falha = Assert.Single(_db.Falhas);
+        Assert.Equal(EtapaFalha.RenovacaoToken, falha.Etapa);
+    }
+
     // ---------- Pendentes depois da sincronização ----------
 
     [Fact]

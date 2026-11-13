@@ -121,8 +121,23 @@ public class LancamentoNotaService
 
             etapa = EtapaFalha.BuscaFornecedor;
             long contatoId;
-            ContatoBling? existente = await _bling.BuscarContatoPorDocumentoAsync(
-                conta, token, nota.CnpjFornecedor, cancelamento);
+            ContatoBling? existente;
+            try
+            {
+                existente = await _bling.BuscarContatoPorDocumentoAsync(conta, token, nota.CnpjFornecedor, cancelamento);
+            }
+            catch (BlingException erro)
+            {
+                // Primeira chamada da nota: se o Bling revogou o token, renova uma vez e repete
+                if (!erro.TokenInvalido)
+                {
+                    throw;
+                }
+                etapa = EtapaFalha.RenovacaoToken;
+                token = await _tokens.RenovarAposRecusaAsync(empresa, cancelamento);
+                etapa = EtapaFalha.BuscaFornecedor;
+                existente = await _bling.BuscarContatoPorDocumentoAsync(conta, token, nota.CnpjFornecedor, cancelamento);
+            }
 
             if (existente != null)
             {

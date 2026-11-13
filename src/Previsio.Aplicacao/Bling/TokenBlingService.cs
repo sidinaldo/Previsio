@@ -85,6 +85,19 @@ public class TokenBlingService
     }
 
     /// <summary>
+    /// O Bling recusou um access token que ainda não tinha vencido (acontece quando os escopos
+    /// do aplicativo mudam: o Bling revoga os tokens na hora). Descarta o token e renova com o
+    /// refresh token. Se a renovação também for recusada, a empresa fica desconectada e sai
+    /// EmpresaDesconectadaException, como numa renovação comum.
+    /// </summary>
+    public Task<string> RenovarAposRecusaAsync(Empresa empresa, CancellationToken cancelamento)
+    {
+        _logger.LogWarning("O Bling recusou o token da empresa {EmpresaId} antes de vencer; renovando", empresa.Id);
+        empresa.BlingTokenExpiraEm = null;
+        return ObterAccessTokenAsync(empresa, cancelamento);
+    }
+
+    /// <summary>
     /// Aplicativo do Bling usado pela empresa, nesta ordem: o privado dela, o da rede (Cliente)
     /// e, se nenhum dos dois estiver cadastrado, o aplicativo global do Previsio.
     /// </summary>

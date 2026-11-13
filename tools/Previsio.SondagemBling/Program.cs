@@ -115,10 +115,9 @@ HttpResponseMessage teste = await http.GetAsync("contas/pagar?pagina=1&limite=1"
 if ((int)teste.StatusCode == 401)
 {
     Console.WriteLine("Token recusado pelo Bling; renovando...");
-    empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
     try
     {
-        token = await tokens.ObterAccessTokenAsync(empresa, CancellationToken.None);
+        token = await tokens.RenovarAposRecusaAsync(empresa, CancellationToken.None);
     }
     catch (Exception erro)
     {

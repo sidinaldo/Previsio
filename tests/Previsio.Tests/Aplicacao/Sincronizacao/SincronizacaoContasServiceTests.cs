@@ -159,4 +159,32 @@ public class SincronizacaoContasServiceTests
         Assert.Equal(EtapaFalha.RenovacaoToken, falha.Etapa);
         Assert.NotNull(_db.Empresas.Single(e => e.Id == outra.Id).UltimaSincronizacaoEm);
     }
+
+    [Fact]
+    public async Task Sincronizar_com_token_revogado_renova_uma_vez_e_segue()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        int renovacoes = 0;
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("oauth/token"))
+            {
+                renovacoes = renovacoes + 1;
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"access_token\":\"access-novo\",\"refresh_token\":\"refresh-novo\",\"expires_in\":21600}");
+            }
+            if (requisicao.Headers.Authorization?.Parameter != "access-novo")
+            {
+                return RespostasFixas.Json(HttpStatusCode.Unauthorized, "{\"error\":{\"type\":\"invalid_token\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).ExecutarAsync(CancellationToken.None);
+
+        Assert.Equal(1, renovacoes);
+        Assert.NotNull(_db.Empresas.Single(e => e.Id == empresa.Id).UltimaSincronizacaoEm);
+        Assert.Empty(_db.Falhas);
+    }
 }
