@@ -95,7 +95,8 @@ public class SincronizacaoContasService
         {
             try
             {
-                await SincronizarEmpresaAsync(empresa, cancelamento);
+                // Pedida pelo usuário (uma rede): renova também a lista de categorias
+                await SincronizarEmpresaAsync(empresa, clienteId.HasValue, cancelamento);
             }
             catch (EmpresaDesconectadaException erro)
             {
@@ -128,7 +129,16 @@ public class SincronizacaoContasService
         }
     }
 
-    public async Task SincronizarEmpresaAsync(Empresa empresa, CancellationToken cancelamento)
+    public Task SincronizarEmpresaAsync(Empresa empresa, CancellationToken cancelamento)
+    {
+        return SincronizarEmpresaAsync(empresa, false, cancelamento);
+    }
+
+    /// <summary>
+    /// Sincroniza uma empresa. "renovarCategorias" busca a lista de categorias do Bling mesmo
+    /// que ela tenha sido atualizada há menos de um dia.
+    /// </summary>
+    public async Task SincronizarEmpresaAsync(Empresa empresa, bool renovarCategorias, CancellationToken cancelamento)
     {
         string token = await _tokens.ObterAccessTokenAsync(empresa, cancelamento);
         string conta = TokenBlingService.IdentificadorConta(empresa);
@@ -217,7 +227,7 @@ public class SincronizacaoContasService
         }
 
         // Categorias: a lista da empresa (1 vez por dia) e a categoria das contas, aos poucos
-        await _categorias.AtualizarSePrecisoAsync(empresa, conta, token, agora, cancelamento);
+        await _categorias.AtualizarAsync(empresa, conta, token, agora, renovarCategorias, cancelamento);
         int detalhes = await _categorias.ConferirCategoriasAsync(
             empresa, conta, token, atuais, _opcoes.MaximoDetalhesPorExecucaoValido(), agora, cancelamento);
         if (detalhes > 0)

@@ -36,13 +36,23 @@ public class CategoriasBlingService
     /// Busca a lista de categorias da empresa quando não tem ou passou de um dia.
     /// Sem o escopo de categorias no aplicativo, deixa como está e segue.
     /// </summary>
-    public async Task AtualizarSePrecisoAsync(Empresa empresa, string conta, string token, DateTime agoraUtc, CancellationToken cancelamento)
+    public Task AtualizarSePrecisoAsync(Empresa empresa, string conta, string token, DateTime agoraUtc, CancellationToken cancelamento)
+    {
+        return AtualizarAsync(empresa, conta, token, agoraUtc, false, cancelamento);
+    }
+
+    /// <summary>
+    /// Como AtualizarSePrecisoAsync; com "forcar" busca a lista mesmo que tenha sido atualizada há pouco
+    /// (sincronização pedida pelo usuário: a categoria recém-criada no Bling aparece na hora).
+    /// </summary>
+    public async Task AtualizarAsync(
+        Empresa empresa, string conta, string token, DateTime agoraUtc, bool forcar, CancellationToken cancelamento)
     {
         List<CategoriaFinanceira> guardadas = await _categorias.Consultar()
             .Where(c => c.EmpresaId == empresa.Id)
             .ToListAsync(cancelamento);
 
-        bool precisa = guardadas.Count == 0 || guardadas.Min(c => c.AtualizadaEm) < agoraUtc - RenovarLista;
+        bool precisa = forcar || guardadas.Count == 0 || guardadas.Min(c => c.AtualizadaEm) < agoraUtc - RenovarLista;
         if (!precisa)
         {
             return;

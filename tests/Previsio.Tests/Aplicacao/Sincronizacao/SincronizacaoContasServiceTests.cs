@@ -287,6 +287,24 @@ public class SincronizacaoContasServiceTests
     }
 
     [Fact]
+    public async Task Sincronizar_pelo_botao_renova_a_lista_de_categorias_e_o_job_respeita_o_dia()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        // Lista atualizada há uma hora: o job automático não busca de novo
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 1, Descricao = "Antiga", Tipo = 1, AtualizadaEm = DateTime.UtcNow.AddHours(-1) });
+        await _db.SaveChangesAsync();
+
+        RespostasFixas automatico = BlingComContas("");
+        await CriarServico(automatico).ExecutarAsync(CancellationToken.None);
+        Assert.DoesNotContain(automatico.Chamadas, c => c.Contains("categorias"));
+
+        RespostasFixas botao = BlingComContas("");
+        await CriarServico(botao).ExecutarRedeAsync(rede.Id, CancellationToken.None);
+        Assert.Contains(botao.Chamadas, c => c.Contains("categorias"));
+    }
+
+    [Fact]
     public async Task Conta_que_mudou_no_Bling_tem_a_categoria_conferida_de_novo()
     {
         Cliente rede = await CadastrarRede(true);

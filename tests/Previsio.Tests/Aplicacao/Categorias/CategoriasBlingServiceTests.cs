@@ -75,6 +75,21 @@ public class CategoriasBlingServiceTests
     }
 
     [Fact]
+    public async Task Forcar_busca_a_lista_mesmo_atualizada_ha_pouco()
+    {
+        await CadastrarEmpresa();
+        RespostasFixas respostas = BlingComCategorias();
+
+        await CriarServico(respostas).AtualizarSePrecisoAsync(_empresa, "conta", "token", _agora, CancellationToken.None);
+        await _db.SaveChangesAsync();
+        await CriarServico(respostas).AtualizarAsync(_empresa, "conta", "token", _agora.AddMinutes(10), true, CancellationToken.None);
+        await _db.SaveChangesAsync();
+
+        Assert.Equal(2, respostas.Chamadas.Count(c => c.Contains("categorias")));
+        Assert.Equal(3, _db.Categorias.Count());
+    }
+
+    [Fact]
     public async Task Sem_o_escopo_de_categorias_segue_sem_erro()
     {
         await CadastrarEmpresa();

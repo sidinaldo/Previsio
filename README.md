@@ -33,7 +33,7 @@ algo que fala com o mundo de fora vira uma interface em `Aplicacao/Abstracoes` i
 |---|---|---|
 | `leitura-email` | 10 min | Lê e-mails não lidos, extrai XMLs (inclusive em `.zip`), registra notas novas |
 | `lancamento` | 10 min | Cria fornecedor (se preciso) e uma conta a pagar por parcela no Bling |
-| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber. Também atualiza as categorias do Bling (uma vez por dia) e confere a categoria das contas aos poucos |
+| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber. Também atualiza as categorias do Bling (uma vez por dia; o botão **Sincronizar com o Bling** busca de novo na hora) e confere a categoria das contas aos poucos |
 
 Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máquina).
 
