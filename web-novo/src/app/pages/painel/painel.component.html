@@ -83,7 +83,15 @@
             </div>
             <p class="pv-kpi__valor">R$ {{ r.valorNotasPendentes | number:'1.0-0' }}</p>
             <p class="pv-kpi__auxiliar">
-              <a routerLink="/pages/notas-pendentes">{{ r.notasPendentes }} notas para resolver</a>
+              <a routerLink="/pages/notas-pendentes">
+                @if (r.notasPendentes === 0) {
+                  Nenhuma nota para resolver
+                } @else if (r.notasPendentes === 1) {
+                  1 nota para resolver
+                } @else {
+                  {{ r.notasPendentes }} notas para resolver
+                }
+              </a>
             </p>
           </div>
 
@@ -244,12 +252,12 @@
               @if (fluxoCaixa()) {
                 <h2 class="pv-card__titulo">Entradas × saídas por semana</h2>
                 <p class="pv-card__descricao">
-                  Contas a receber e a pagar em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana
+                  Contas a receber e a pagar em aberto no Bling {{ textoEmpresas(r.empresas.length) }}, semana a semana
                 </p>
               } @else {
                 <h2 class="pv-card__titulo">Saídas previstas por semana</h2>
                 <p class="pv-card__descricao">
-                  Contas em aberto no Bling das {{ r.empresas.length }} empresas, semana a semana
+                  Contas em aberto no Bling {{ textoEmpresas(r.empresas.length) }}, semana a semana
                 </p>
               }
             </div>

@@ -199,4 +199,20 @@ describe('PainelComponent (visual)', () => {
     expect(total.textContent).toContain('—');
     expect(total.textContent).not.toContain('0 ·');
   });
+
+  it('concordância: 1 nota, nenhuma nota e "da empresa" no gráfico', async () => {
+    const umaNota = resumo([1000, 2500, 0], 1);
+    umaNota.empresas = [{
+      empresaId: 1, nome: 'Matriz', cnpj: '11222333000181', quantidadeContas: 3, valor: 3500,
+      notasPendentes: 1, valorNotasPendentes: 100, proximoVencimento: null, valorProximoVencimento: 0, ultimaSincronizacaoEm: null
+    }];
+    const primeira = await montar(umaNota);
+    expect(primeira.tela.textContent).toContain('1 nota para resolver');
+    expect(primeira.tela.textContent).not.toContain('1 notas');
+    expect(primeira.tela.textContent).toContain('no Bling da empresa, semana a semana');
+    TestBed.resetTestingModule();
+
+    const { tela } = await montar(resumo([1000, 2500, 0], 0));
+    expect(tela.textContent).toContain('Nenhuma nota para resolver');
+  });
 });

@@ -175,6 +175,14 @@ export class PainelComponent {
     this.carregar();
   }
 
+  /** "da empresa" ou "das 3 empresas", para a descrição do gráfico. */
+  textoEmpresas(quantidade: number): string {
+    if (quantidade === 1) {
+      return 'da empresa';
+    }
+    return 'das ' + quantidade + ' empresas';
+  }
+
   formatarCnpj(cnpj: string): string {
     if (!cnpj || cnpj.length !== 14) {
       return cnpj;
