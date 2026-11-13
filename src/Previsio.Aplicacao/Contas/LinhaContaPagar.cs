@@ -10,6 +10,7 @@ public class LinhaContaPagar
     public ContaPagarSincronizada Conta { get; set; } = null!;
     public string EmpresaNome { get; set; } = "";
     public string EmpresaCnpj { get; set; } = "";
+    public string? Categoria { get; set; }
     public ParcelaDaConta? Parcela { get; set; }
 
     public string? Fornecedor

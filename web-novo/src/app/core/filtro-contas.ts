@@ -37,6 +37,9 @@ export function parametrosDasContas(filtro: FiltroContas): HttpParams {
   if (filtro.busca && filtro.busca.trim() !== '') {
     params = params.set('busca', filtro.busca.trim());
   }
+  if (filtro.categoria) {
+    params = params.set('categoria', filtro.categoria);
+  }
   if (filtro.ordem) {
     params = params.set('ordem', filtro.ordem);
   }

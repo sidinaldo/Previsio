@@ -49,6 +49,9 @@ public class Cliente : ICaixaEmail
     // Fluxo de caixa: traz as contas a receber do Bling e mostra entradas × saídas no painel.
     // Desligado para quem não lança as vendas no Bling (as entradas ficariam zeradas).
     public bool MostrarFluxoCaixa { get; set; } = true;
+
+    // Categoria (nome) das notas de fornecedor sem regra e sem histórico no Bling; vazio = sem categoria
+    public string? CategoriaPadrao { get; set; }
     public bool ConferenciaExigeNumeroNota { get; set; }
     public decimal ConferenciaToleranciaValor { get; set; } = 0.10m;
     public int ConferenciaToleranciaDias { get; set; }

@@ -79,4 +79,31 @@ describe('PainelComponent (visual)', () => {
     expect(tela.textContent).toContain('Nenhuma saída prevista no período.');
     expect(desenhos.length).toBe(0);
   });
+
+  it('saídas por categoria: barras, link para Contas a pagar e Outras sem link', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.categorias = [
+      { nome: 'Compras', tipo: 'categoria', valor: 2000, quantidade: 2 },
+      { nome: 'Outras (3)', tipo: 'outras', valor: 1000, quantidade: 3 },
+      { nome: 'Sem categoria', tipo: 'sem', valor: 400, quantidade: 1 },
+      { nome: 'A conferir', tipo: 'conferir', valor: 100, quantidade: 1 }
+    ];
+    const { tela } = await montar(dados);
+    const itens = tela.querySelectorAll('.pv-categorias-painel li');
+    expect(itens.length).toBe(4);
+    const link = itens[0].querySelector('a') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toContain('/pages/contas-pagar?categoria=Compras&de=2026-11-10&ate=2026-12-09');
+    expect((itens[0].querySelector('.pv-categorias-painel__barra span') as HTMLElement).style.width).toBe('100%');
+    expect((itens[1].querySelector('.pv-categorias-painel__barra span') as HTMLElement).style.width).toBe('50%');
+    expect(itens[1].querySelector('a')).toBeNull();
+    expect(itens[2].querySelector('a')!.getAttribute('href')).toContain('categoria=Sem%20categoria');
+    expect(itens[3].querySelector('a')).toBeNull();
+    expect(itens[0].textContent).toContain('57%');
+    expect(tela.textContent).toContain('ainda vai olhar no Bling');
+  });
+
+  it('sem categorias no resumo o card não aparece', async () => {
+    const { tela } = await montar(resumo([1000, 2500, 0], 0));
+    expect(tela.querySelector('.pv-categorias-painel')).toBeNull();
+  });
 });

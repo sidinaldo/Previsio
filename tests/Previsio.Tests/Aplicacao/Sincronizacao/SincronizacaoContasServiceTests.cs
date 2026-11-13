@@ -285,4 +285,41 @@ public class SincronizacaoContasServiceTests
         Assert.NotNull(_db.Empresas.Single(e => e.Id == daAlfa.Id).UltimaSincronizacaoEm);
         Assert.Null(_db.Empresas.Single(e => e.Id == daBeta.Id).UltimaSincronizacaoEm);
     }
+
+    [Fact]
+    public async Task Conta_que_mudou_no_Bling_tem_a_categoria_conferida_de_novo()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        DateTime ontem = DateTime.UtcNow.AddDays(-1);
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = ontem });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = ontem });
+        await _db.SaveChangesAsync();
+        // A 10 mudou de valor; a 11 veio igual
+        string contas = "{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":130,\"contato\":{\"id\":555}},"
+            + "{\"id\":11,\"situacao\":1,\"vencimento\":\"" + Data(6) + "\",\"valor\":50,\"contato\":{\"id\":555}}";
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("contas/pagar?"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[" + contas + "]}");
+            }
+            if (url.Contains("contas/pagar/10"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":130,\"categoria\":{\"id\":8}}}");
+            }
+            if (url.Contains("contatos/"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":555,\"nome\":\"Fornecedor Beta\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
+
+        Assert.Equal(8, _db.ContasPagar.Single(c => c.BlingId == 10).CategoriaBlingId);
+        Assert.Equal(7, _db.ContasPagar.Single(c => c.BlingId == 11).CategoriaBlingId);
+        Assert.DoesNotContain(respostas.Chamadas, c => c.EndsWith("contas/pagar/11"));
+    }
 }

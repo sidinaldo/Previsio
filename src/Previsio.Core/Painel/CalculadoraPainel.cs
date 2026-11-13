@@ -12,6 +12,9 @@ public class CalculadoraPainel
     // Quantas notas pendentes o painel lista; as outras ficam em Notas pendentes
     public const int MaximoNotasParaResolver = 5;
 
+    // Quantas categorias o card mostra pelo nome; as outras viram "Outras"
+    public const int MaximoCategorias = 6;
+
     public ResumoPainel Calcular(
         DateTime hoje,
         int dias,
@@ -148,6 +151,82 @@ public class CalculadoraPainel
         {
             empresa.ValorReceber = doPeriodo.Where(c => c.EmpresaId == empresa.EmpresaId).Sum(c => c.Valor);
         }
+    }
+
+    /// <summary>
+    /// Saídas em aberto do período por categoria. "nomes" leva a chave EmpresaId:BlingId da
+    /// categoria ao nome dela no Bling da empresa; categorias de mesmo nome em empresas diferentes
+    /// somam juntas. Mostra as 6 maiores e junta o resto em "Outras"; no fim vêm "Sem categoria"
+    /// (conferidas sem categoria) e "A conferir" (a sincronização ainda não abriu a conta no Bling).
+    /// </summary>
+    public void AplicarCategorias(ResumoPainel resumo, IList<ContaPagarSincronizada> contas, IDictionary<string, string> nomes)
+    {
+        DateTime inicio = resumo.Inicio.Date;
+        DateTime fim = resumo.Fim.Date;
+        var porNome = new Dictionary<string, TotalCategoria>(StringComparer.OrdinalIgnoreCase);
+        var sem = new TotalCategoria { Nome = "Sem categoria", Tipo = TotalCategoria.TipoSem };
+        var aConferir = new TotalCategoria { Nome = "A conferir", Tipo = TotalCategoria.TipoAConferir };
+
+        foreach (ContaPagarSincronizada conta in contas)
+        {
+            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            if (!emAberto || conta.Vencimento.Date < inicio || conta.Vencimento.Date > fim)
+            {
+                continue;
+            }
+
+            TotalCategoria destino;
+            string? nome = null;
+            if (conta.CategoriaBlingId.HasValue)
+            {
+                nomes.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaBlingId.Value, out nome);
+            }
+            if (nome != null)
+            {
+                string chave = nome.Trim();
+                if (!porNome.TryGetValue(chave, out destino!))
+                {
+                    destino = new TotalCategoria { Nome = chave, Tipo = TotalCategoria.TipoCategoria };
+                    porNome[chave] = destino;
+                }
+            }
+            else if (!conta.CategoriaConferidaEm.HasValue)
+            {
+                destino = aConferir;
+            }
+            else
+            {
+                destino = sem;
+            }
+            destino.Valor = destino.Valor + conta.Valor;
+            destino.Quantidade = destino.Quantidade + 1;
+        }
+
+        List<TotalCategoria> ordenadas = porNome.Values
+            .OrderByDescending(c => c.Valor)
+            .ThenBy(c => c.Nome)
+            .ToList();
+        var lista = ordenadas.Take(MaximoCategorias).ToList();
+        List<TotalCategoria> resto = ordenadas.Skip(MaximoCategorias).ToList();
+        if (resto.Count > 0)
+        {
+            lista.Add(new TotalCategoria
+            {
+                Nome = "Outras (" + resto.Count + ")",
+                Tipo = TotalCategoria.TipoOutras,
+                Valor = resto.Sum(c => c.Valor),
+                Quantidade = resto.Sum(c => c.Quantidade)
+            });
+        }
+        if (sem.Quantidade > 0)
+        {
+            lista.Add(sem);
+        }
+        if (aConferir.Quantidade > 0)
+        {
+            lista.Add(aConferir);
+        }
+        resumo.Categorias = lista;
     }
 
     /// <summary>

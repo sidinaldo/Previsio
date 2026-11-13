@@ -249,4 +249,41 @@ public class ContasPagarTests
         Assert.Single(respostas.Chamadas);
         Assert.EndsWith("contatos/904", respostas.Chamadas[0]);
     }
+
+    [Fact]
+    public async Task Filtra_pela_categoria_pelo_nome_e_mostra_a_categoria_na_lista()
+    {
+        await CadastrarRede();
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 11, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, BlingId = 91, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 12, Descricao = "Compras", Tipo = 1 });
+        DateTime conferida = new DateTime(2026, 11, 10, 12, 0, 0, DateTimeKind.Utc);
+        ContaPagarSincronizada a = Conta(_centro, 1, 20, 100m);
+        a.CategoriaBlingId = 11;
+        a.CategoriaConferidaEm = conferida;
+        ContaPagarSincronizada b = Conta(_norte, 2, 21, 200m);
+        b.CategoriaBlingId = 91;
+        b.CategoriaConferidaEm = conferida;
+        ContaPagarSincronizada c = Conta(_centro, 3, 22, 300m);
+        c.CategoriaBlingId = 12;
+        c.CategoriaConferidaEm = conferida;
+        // Conferida e sem categoria
+        ContaPagarSincronizada d = Conta(_centro, 4, 23, 400m);
+        d.CategoriaConferidaEm = conferida;
+        // Categoria que não existe mais no Bling conta como sem categoria
+        ContaPagarSincronizada e = Conta(_centro, 5, 24, 500m);
+        e.CategoriaBlingId = 77;
+        e.CategoriaConferidaEm = conferida;
+        // Ainda não conferida: não entra em "Sem categoria"
+        Conta(_centro, 6, 25, 600m);
+        await _db.SaveChangesAsync();
+
+        PaginaContasPagarDto fretes = await Listar(new FiltroContas { Categoria = "fretes", Ordem = "vencimento" });
+        Assert.Equal(new long[] { 1, 2 }, fretes.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal("Fretes", fretes.Itens[0].Categoria);
+
+        PaginaContasPagarDto sem = await Listar(new FiltroContas { Categoria = FiltroContas.SemCategoria, Ordem = "vencimento" });
+        Assert.Equal(new long[] { 4, 5 }, sem.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Null(sem.Itens[0].Categoria);
+    }
 }

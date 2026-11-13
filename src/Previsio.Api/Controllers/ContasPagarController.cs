@@ -32,6 +32,7 @@ public class ContasPagarController : PrevisioControllerBase
         [FromQuery] string? origem,
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
+        [FromQuery] string? categoria,
         [FromQuery] int pagina,
         CancellationToken cancelamento)
     {
@@ -39,12 +40,13 @@ public class ContasPagarController : PrevisioControllerBase
         {
             return Forbid();
         }
-        FiltroContas filtro = Filtro(empresaId, de, ate, situacao, origem, busca, ordem);
+        FiltroContas filtro = Filtro(empresaId, de, ate, situacao, origem, busca, ordem, categoria);
         return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, cancelamento));
     }
 
     public static FiltroContas Filtro(
-        int? empresaId, DateTime? de, DateTime? ate, string? situacao, string? origem, string? busca, string? ordem)
+        int? empresaId, DateTime? de, DateTime? ate, string? situacao, string? origem, string? busca, string? ordem,
+        string? categoria = null)
     {
         var filtro = new FiltroContas();
         filtro.EmpresaId = empresaId;
@@ -54,6 +56,7 @@ public class ContasPagarController : PrevisioControllerBase
         filtro.Origem = origem;
         filtro.Busca = busca;
         filtro.Ordem = ordem;
+        filtro.Categoria = categoria;
         return filtro;
     }
 }

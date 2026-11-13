@@ -24,6 +24,8 @@ using Previsio.Aplicacao.Vencimentos;
 using Previsio.Core.NFe;
 using Previsio.Core.Painel;
 
+using Previsio.Aplicacao.Categorias;
+
 namespace Previsio.Aplicacao;
 
 /// <summary>
@@ -56,6 +58,9 @@ public static class RegistroAplicacao
         servicos.AddScoped<SincronizacaoContasService>();
         servicos.AddScoped<ContasReceberBlingService>();
         servicos.AddScoped<SincronizacaoManualService>();
+        servicos.AddScoped<CategoriasBlingService>();
+        servicos.AddScoped<CategoriaLancamentoService>();
+        servicos.AddScoped<CategoriasService>();
         servicos.AddScoped<ContasReceberService>();
         servicos.AddScoped<FluxoCaixaService>();
 

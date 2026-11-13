@@ -239,6 +239,10 @@ public class ConferenciaBlingTests
             {
                 return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
             }
+            if (url.Contains("categorias"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+            }
             proximoId = proximoId + 1;
             return RespostasFixas.Json(HttpStatusCode.Created, "{\"data\":{\"id\":" + proximoId + "}}");
         });
@@ -254,6 +258,42 @@ public class ConferenciaBlingTests
         Assert.Equal("ROTA SUL PECAS LTDA", contas[0].FornecedorNome);
         // A que já existia fica como a sincronização trouxe
         Assert.Equal(SituacaoContaBling.Pago, contas[1].Situacao);
+    }
+
+    [Fact]
+    public async Task Ao_lancar_manda_a_categoria_da_regra_e_guarda_na_conta()
+    {
+        NotaFiscal nota = await CadastrarNota(false);
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = nota.EmpresaId!.Value, BlingId = 11, Descricao = "Fretes", Tipo = 1 });
+        _db.RegrasCategoria.Add(new RegraCategoria { ClienteId = nota.ClienteId, CnpjFornecedor = "12345678000199", Categoria = "Fretes" });
+        await _db.SaveChangesAsync();
+        var corpos = new List<string>();
+        int proximoId = 9000;
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (requisicao.Method == HttpMethod.Get && url.Contains("contatos"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
+            }
+            if (requisicao.Method == HttpMethod.Post && url.Contains("contas/pagar"))
+            {
+                corpos.Add(requisicao.Content!.ReadAsStringAsync().Result);
+                proximoId = proximoId + 1;
+                return RespostasFixas.Json(HttpStatusCode.Created, "{\"data\":{\"id\":" + proximoId + "}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await Job(respostas).LancarAsync(nota.Id, CancellationToken.None);
+
+        Assert.Equal(2, corpos.Count);
+        Assert.All(corpos, corpo => Assert.Contains("\"categoria\":{\"id\":11}", corpo));
+        Assert.All(_db.ContasPagar.ToList(), conta =>
+        {
+            Assert.Equal(11, conta.CategoriaBlingId);
+            Assert.NotNull(conta.CategoriaConferidaEm);
+        });
     }
 
     // ---------- Token revogado pelo Bling antes de vencer ----------

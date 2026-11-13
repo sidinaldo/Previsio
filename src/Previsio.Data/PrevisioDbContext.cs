@@ -15,6 +15,8 @@ public class PrevisioDbContext : DbContext
     public DbSet<ParcelaNota> ParcelasNota => Set<ParcelaNota>();
     public DbSet<ContaPagarSincronizada> ContasPagar => Set<ContaPagarSincronizada>();
     public DbSet<ContaReceberSincronizada> ContasReceber => Set<ContaReceberSincronizada>();
+    public DbSet<CategoriaFinanceira> Categorias => Set<CategoriaFinanceira>();
+    public DbSet<RegraCategoria> RegrasCategoria => Set<RegraCategoria>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
@@ -33,6 +35,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);
             entidade.Property(c => c.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(c => c.BlingClientId).HasMaxLength(200);
+            entidade.Property(c => c.CategoriaPadrao).HasMaxLength(200);
         });
 
         modelBuilder.Entity<Empresa>(entidade =>
@@ -131,6 +134,29 @@ public class PrevisioDbContext : DbContext
             entidade.HasOne(c => c.Empresa)
                 .WithMany()
                 .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<CategoriaFinanceira>(entidade =>
+        {
+            entidade.ToTable("categorias_financeiras");
+            entidade.Property(c => c.Descricao).HasMaxLength(200);
+            entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
+
+            entidade.HasOne(c => c.Empresa)
+                .WithMany()
+                .HasForeignKey(c => c.EmpresaId);
+        });
+
+        modelBuilder.Entity<RegraCategoria>(entidade =>
+        {
+            entidade.ToTable("regras_categoria");
+            entidade.Property(r => r.CnpjFornecedor).HasMaxLength(14);
+            entidade.Property(r => r.Categoria).HasMaxLength(200);
+            entidade.HasIndex(r => new { r.ClienteId, r.CnpjFornecedor }).IsUnique();
+
+            entidade.HasOne(r => r.Cliente)
+                .WithMany()
+                .HasForeignKey(r => r.ClienteId);
         });
 
         modelBuilder.Entity<ContaReceberSincronizada>(entidade =>

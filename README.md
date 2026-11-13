@@ -33,7 +33,7 @@ algo que fala com o mundo de fora vira uma interface em `Aplicacao/Abstracoes` i
 |---|---|---|
 | `leitura-email` | 10 min | Lê e-mails não lidos, extrai XMLs (inclusive em `.zip`), registra notas novas |
 | `lancamento` | 10 min | Cria fornecedor (se preciso) e uma conta a pagar por parcela no Bling |
-| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber |
+| `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber. Também atualiza as categorias do Bling (uma vez por dia) e confere a categoria das contas aos poucos |
 
 Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máquina).
 
@@ -44,6 +44,12 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
 - **Rastreio:** o Bling não tem campo para a chave da NF-e, então ela vai no `historico` da conta a pagar.
 - **Nº do documento:** `48213` (parcela única) ou `48213/2` (segunda parcela).
 - **Nota sem duplicatas no XML:** fica como pendente ("Sem vencimentos no XML") para lançamento manual.
+- **Categoria da conta:** regra da rede para o fornecedor (pelo nome da categoria) → senão a categoria da última conta
+  desse fornecedor no Bling → senão a categoria padrão da rede → senão vai sem categoria. Configurado no card **Categorias** em Empresas.
+- **Categoria das contas do Bling:** a lista de contas do Bling não traz a categoria, só o detalhe de cada conta. Por isso a
+  sincronização busca o detalhe aos poucos: primeiro as contas novas ou que mudaram, depois as conferidas há mais de 7 dias,
+  até `Sincronizacao:MaximoDetalhesPorExecucao` contas por empresa a cada execução (padrão 50). No painel, as que ainda
+  não foram conferidas aparecem como "A conferir".
 
 ---
 
@@ -226,6 +232,9 @@ npm start
 | POST | `/api/auth/trocar-senha` | Trocar a própria senha (devolve um token novo) |
 | GET/POST | `/api/usuarios` | Listar (`?clienteId=`) / cadastrar usuários (só admin) |
 | PUT | `/api/usuarios/{id}` | Alterar nome, ativar/desativar, redefinir senha (só admin) |
+| GET | `/api/clientes/{id}/categorias` | Card Categorias: padrão, opções do Bling, regras por fornecedor e avisos |
+| PUT | `/api/clientes/{id}/categorias/padrao` | Categoria padrão da rede pelo nome (`{ "categoria": "" }` tira) |
+| POST/DELETE | `/api/clientes/{id}/categorias/regras[/{regraId}]` | Criar (ou trocar a categoria) / remover a regra de um fornecedor |
 
 `GET/POST /api/clientes` também são só para admin.
 

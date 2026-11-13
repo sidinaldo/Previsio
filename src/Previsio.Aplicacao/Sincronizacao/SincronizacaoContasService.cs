@@ -8,6 +8,7 @@ using Previsio.Core.Contratos;
 using Previsio.Core.Comum;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.Conferencia;
 
 namespace Previsio.Aplicacao.Sincronizacao;
@@ -30,6 +31,7 @@ public class SincronizacaoContasService
     private readonly FornecedoresBlingService _fornecedores;
     private readonly ConferenciaBlingService _conferencia;
     private readonly ContasReceberBlingService _receber;
+    private readonly CategoriasBlingService _categorias;
     private readonly ILogger<SincronizacaoContasService> _logger;
 
     public SincronizacaoContasService(
@@ -44,6 +46,7 @@ public class SincronizacaoContasService
         FornecedoresBlingService fornecedores,
         ConferenciaBlingService conferencia,
         ContasReceberBlingService receber,
+        CategoriasBlingService categorias,
         ILogger<SincronizacaoContasService> logger)
     {
         _clientes = clientes;
@@ -57,6 +60,7 @@ public class SincronizacaoContasService
         _fornecedores = fornecedores;
         _conferencia = conferencia;
         _receber = receber;
+        _categorias = categorias;
         _logger = logger;
     }
 
@@ -186,6 +190,11 @@ public class SincronizacaoContasService
                 local.BlingId = remota.Id;
                 _contas.Adicionar(local);
             }
+            else if (local.Vencimento != vencimento.Date || local.Valor != remota.Valor || local.Situacao != remota.Situacao)
+            {
+                // Mudou no Bling: a categoria pode ter mudado junto, então é conferida de novo
+                local.CategoriaConferidaEm = null;
+            }
 
             local.Vencimento = vencimento.Date;
             local.Valor = remota.Valor;
@@ -205,6 +214,15 @@ public class SincronizacaoContasService
             {
                 _contas.Remover(local);
             }
+        }
+
+        // Categorias: a lista da empresa (1 vez por dia) e a categoria das contas, aos poucos
+        await _categorias.AtualizarSePrecisoAsync(empresa, conta, token, agora, cancelamento);
+        int detalhes = await _categorias.ConferirCategoriasAsync(
+            empresa, conta, token, atuais, _opcoes.MaximoDetalhesPorExecucaoValido(), agora, cancelamento);
+        if (detalhes > 0)
+        {
+            _logger.LogInformation("Empresa {Empresa}: categoria de {Quantidade} contas conferida no Bling", empresa.Nome, detalhes);
         }
 
         // Contas em aberto que venceram antes da janela: conferidas uma a uma até baixarem

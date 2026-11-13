@@ -306,6 +306,46 @@
           }
         </div>
 
+        <!-- Saídas por categoria do Bling: as 6 maiores, Outras, Sem categoria e A conferir -->
+        @if (categorias().length > 0) {
+          <div class="card">
+            <div class="pv-card__cabecalho">
+              <div>
+                <h2 class="pv-card__titulo">Saídas por categoria</h2>
+                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela categoria do Bling</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <ul class="pv-categorias-painel">
+                @for (categoria of categorias(); track categoria.nome) {
+                  <li [class]="'pv-categorias-painel__item pv-categorias-painel__item--' + categoria.tipo">
+                    <div class="pv-categorias-painel__linha">
+                      @if (linkCategoria(categoria, r); as parametros) {
+                        <a class="pv-categorias-painel__nome" routerLink="/pages/contas-pagar" [queryParams]="parametros">{{ categoria.nome }}</a>
+                      } @else {
+                        <span class="pv-categorias-painel__nome">{{ categoria.nome }}</span>
+                      }
+                      <span class="pv-categorias-painel__valor pv-numero">
+                        {{ categoria.valor | currency:'BRL':'symbol':'1.0-0' }}
+                        <small>{{ percentualCategoria(categoria) }}%</small>
+                      </span>
+                    </div>
+                    <div class="pv-categorias-painel__barra" aria-hidden="true">
+                      <span [style.width.%]="larguraCategoria(categoria)"></span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+            @if (categorias()[categorias().length - 1].tipo === 'conferir') {
+              <div class="pv-card__rodape">
+                <i class="material-icons" aria-hidden="true">schedule</i>
+                "A conferir": contas que o Previsio ainda vai olhar no Bling, aos poucos, a cada sincronização.
+              </div>
+            }
+          </div>
+        }
+
         <!-- Por empresa -->
         <div class="card">
           <div class="pv-card__cabecalho">

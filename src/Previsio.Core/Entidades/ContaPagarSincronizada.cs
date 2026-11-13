@@ -20,5 +20,10 @@ public class ContaPagarSincronizada
     // o contato do Bling guardado em FornecedorBling. Preenchido na sincronização.
     public string? FornecedorNome { get; set; }
 
-    public DateTime SincronizadaEm { get; set; } = DateTime.UtcNow;
+    public DateTime SincronizadaEm { get; set; }
+
+    // Categoria no Bling (só vem no detalhe da conta, buscado aos poucos); nulo = sem categoria
+    public long? CategoriaBlingId { get; set; }
+    // Quando a categoria foi conferida no Bling; nulo = ainda não conferida (ou a conta mudou)
+    public DateTime? CategoriaConferidaEm { get; set; }
 }

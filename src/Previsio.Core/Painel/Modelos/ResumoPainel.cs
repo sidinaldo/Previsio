@@ -24,6 +24,8 @@ public class ResumoPainel
     public int QuantidadeReceberVencido { get; set; }
 
     public List<TotalSemana> Semanas { get; set; } = new List<TotalSemana>();
+    // Saídas do período por categoria: as maiores, Outras, Sem categoria e A conferir
+    public List<TotalCategoria> Categorias { get; set; } = new List<TotalCategoria>();
     public List<TotalEmpresa> Empresas { get; set; } = new List<TotalEmpresa>();
     // As notas pendentes mais urgentes (até CalculadoraPainel.MaximoNotasParaResolver)
     public List<NotaParaResolver> NotasParaResolver { get; set; } = new List<NotaParaResolver>();

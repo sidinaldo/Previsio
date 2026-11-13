@@ -25,4 +25,8 @@ public class ContaPagarBling
 
     [JsonPropertyName("historico")]
     public string? Historico { get; set; }
+
+    // Só vem no detalhe (GET /contas/pagar/{id}); id 0 = sem categoria
+    [JsonPropertyName("categoria")]
+    public Referencia? Categoria { get; set; }
 }

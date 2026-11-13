@@ -23,6 +23,7 @@ public class PainelService
     private readonly IRepositorio<NotaFiscal> _notas;
     private readonly IRepositorio<ContaReceberSincronizada> _contasReceber;
     private readonly IRepositorio<Cliente> _clientes;
+    private readonly IRepositorio<CategoriaFinanceira> _categorias;
     private readonly CalculadoraPainel _calculadora;
 
     public PainelService(
@@ -31,6 +32,7 @@ public class PainelService
         IRepositorio<NotaFiscal> notas,
         IRepositorio<ContaReceberSincronizada> contasReceber,
         IRepositorio<Cliente> clientes,
+        IRepositorio<CategoriaFinanceira> categorias,
         CalculadoraPainel calculadora)
     {
         _empresas = empresas;
@@ -38,6 +40,7 @@ public class PainelService
         _notas = notas;
         _contasReceber = contasReceber;
         _clientes = clientes;
+        _categorias = categorias;
         _calculadora = calculadora;
     }
 
@@ -80,6 +83,18 @@ public class PainelService
             .ToListAsync(cancelamento);
 
         ResumoPainel resumo = _calculadora.Calcular(hoje, dias, empresas, contas, pendentes);
+
+        // Saídas por categoria: nome da categoria no Bling de cada empresa
+        var nomesCategorias = new Dictionary<string, string>();
+        var categorias = await _categorias.ConsultarSomenteLeitura()
+            .Where(k => idsEmpresas.Contains(k.EmpresaId))
+            .Select(k => new { k.EmpresaId, k.BlingId, k.Descricao })
+            .ToListAsync(cancelamento);
+        foreach (var categoria in categorias)
+        {
+            nomesCategorias[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao;
+        }
+        _calculadora.AplicarCategorias(resumo, contas, nomesCategorias);
 
         // Vencidas em aberto (a sincronização traz os últimos 30 dias)
         List<ContaPagarSincronizada> vencidas = await _contas.ConsultarSomenteLeitura()

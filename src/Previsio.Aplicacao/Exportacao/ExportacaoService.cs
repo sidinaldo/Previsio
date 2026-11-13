@@ -156,7 +156,8 @@ public class ExportacaoService
             new ColunaPlanilha("Fornecedor", TipoColunaPlanilha.Texto, 36),
             new ColunaPlanilha("NF", TipoColunaPlanilha.Texto, 10),
             new ColunaPlanilha("Parcela", TipoColunaPlanilha.Texto, 9),
-            new ColunaPlanilha("Origem", TipoColunaPlanilha.Texto, 26)
+            new ColunaPlanilha("Origem", TipoColunaPlanilha.Texto, 26),
+            new ColunaPlanilha("Categoria", TipoColunaPlanilha.Texto, 28)
         };
         var planilha = new PlanilhaXlsx("Contas a pagar", colunas);
 
@@ -181,7 +182,7 @@ public class ExportacaoService
             }
 
             planilha.AdicionarLinha(conta.Vencimento.Date, linha.EmpresaNome, Cnpj(linha.EmpresaCnpj),
-                conta.Valor, situacao, linha.Fornecedor, numero, numeroParcela, origem);
+                conta.Valor, situacao, linha.Fornecedor, numero, numeroParcela, origem, linha.Categoria);
         }
 
         return Resultado<ArquivoExportado>.Ok(Arquivo("contas-a-pagar", planilha));

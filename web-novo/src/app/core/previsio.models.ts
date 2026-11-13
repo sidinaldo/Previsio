@@ -46,6 +46,16 @@ export interface ResumoPainel {
   empresas: TotalEmpresa[];
   /** As notas pendentes que vencem primeiro (até 5); as demais ficam em Notas pendentes. */
   notasParaResolver?: NotaParaResolver[];
+  /** Saídas do período por categoria do Bling: as 6 maiores, Outras, Sem categoria e A conferir. */
+  categorias?: TotalCategoria[];
+}
+
+/** tipo: 'categoria', 'outras', 'sem' (conferida no Bling, sem categoria) ou 'conferir' (ainda não conferida). */
+export interface TotalCategoria {
+  nome: string;
+  tipo: string;
+  valor: number;
+  quantidade: number;
 }
 
 /** Nota fora do Bling na lista do painel: ainda não entra na previsão. */
@@ -363,6 +373,8 @@ export interface ContaPagar {
   notaFiscalId: number | null;
   numeroNota: string | null;
   numeroParcela: string | null;
+  /** Nome da categoria no Bling; nulo = sem categoria ou ainda não conferida. */
+  categoria?: string | null;
 }
 
 export interface PaginaContasPagar {
@@ -407,6 +419,38 @@ export interface FluxoCaixa {
   ativo: boolean;
 }
 
+/** Card Categorias da rede: categoria padrão e regras "fornecedor → categoria" do lançamento. */
+export interface ConfiguracaoCategorias {
+  categoriaPadrao: string | null;
+  /** Empresas cujo Bling não tem a categoria padrão. */
+  padraoAusenteEm: string[];
+  /** Categorias de despesa do Bling das empresas da rede. */
+  opcoes: string[];
+  regras: RegraCategoria[];
+  fornecedores: FornecedorDaRede[];
+  /** Empresas conectadas sem nenhuma categoria guardada. */
+  empresasSemCategorias: string[];
+}
+
+export interface RegraCategoria {
+  id: number;
+  cnpjFornecedor: string;
+  fornecedorNome: string | null;
+  categoria: string;
+  /** Empresas cujo Bling não tem essa categoria. */
+  ausenteEm: string[];
+}
+
+export interface FornecedorDaRede {
+  cnpj: string;
+  nome: string;
+}
+
+export interface NovaRegraCategoria {
+  cnpjFornecedor: string;
+  categoria: string;
+}
+
 /** Filtros da tela Contas a pagar. Datas de vencimento no formato yyyy-MM-dd. */
 export interface FiltroContas {
   empresaId?: number | null;
@@ -418,6 +462,8 @@ export interface FiltroContas {
   ate?: string;
   // Fornecedor, NF ou empresa
   busca?: string;
+  // Nome da categoria do Bling ou 'Sem categoria' (só contas a pagar)
+  categoria?: string;
   ordem?: string;
   pagina?: number;
 }

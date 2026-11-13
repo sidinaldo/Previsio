@@ -17,6 +17,11 @@ public class FiltroContas
 
     // Fornecedor, número da NF ou empresa
     public string? Busca { get; set; }
+    // Nome da categoria do Bling, ou FiltroContas.SemCategoria (só contas a pagar)
+    public string? Categoria { get; set; }
+
+    // Contas já conferidas no Bling que estão sem categoria
+    public const string SemCategoria = "Sem categoria";
 
     // vencimento, valor, fornecedor ou empresa ("-" na frente = decrescente)
     public string? Ordem { get; set; }

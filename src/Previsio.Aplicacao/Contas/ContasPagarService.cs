@@ -27,6 +27,7 @@ public class ContasPagarService
     private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
     private readonly IRepositorio<ParcelaNota> _parcelas;
     private readonly IRepositorio<Empresa> _empresas;
+    private readonly IRepositorio<CategoriaFinanceira> _categorias;
     private readonly TimeProvider _relogio;
     private readonly SincronizacaoOptions _opcoes;
 
@@ -34,12 +35,14 @@ public class ContasPagarService
         IRepositorio<ContaPagarSincronizada> contasPagar,
         IRepositorio<ParcelaNota> parcelas,
         IRepositorio<Empresa> empresas,
+        IRepositorio<CategoriaFinanceira> categorias,
         TimeProvider relogio,
         IOptions<SincronizacaoOptions> opcoes)
     {
         _contasPagar = contasPagar;
         _parcelas = parcelas;
         _empresas = empresas;
+        _categorias = categorias;
         _relogio = relogio;
         _opcoes = opcoes.Value;
     }
@@ -197,6 +200,21 @@ public class ContasPagarService
             return Resultado<IQueryable<ContaPagarSincronizada>>.Invalido("Origem inválida. Use Previsio ou Bling.");
         }
 
+        string categoria = (filtro.Categoria ?? "").Trim();
+        if (string.Equals(categoria, FiltroContas.SemCategoria, StringComparison.OrdinalIgnoreCase))
+        {
+            // Já conferidas no Bling e sem categoria (ou com uma que não existe mais lá)
+            consulta = consulta.Where(c => c.CategoriaConferidaEm != null
+                && (c.CategoriaBlingId == null
+                    || !_categorias.Consultar().Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)));
+        }
+        else if (categoria != "")
+        {
+            string nome = categoria.ToLower();
+            consulta = consulta.Where(c => _categorias.Consultar()
+                .Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId && k.Descricao.ToLower() == nome));
+        }
+
         BuscaTexto? termo = BuscaTexto.Ler(filtro.Busca);
         if (termo != null)
         {
@@ -222,6 +240,10 @@ public class ContasPagarService
             Conta = c,
             EmpresaNome = c.Empresa!.Nome,
             EmpresaCnpj = c.Empresa.Cnpj,
+            Categoria = _categorias.Consultar()
+                .Where(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)
+                .Select(k => k.Descricao)
+                .FirstOrDefault(),
             Parcela = _parcelas.Consultar()
                 .Where(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId)
                 .Select(p => new ParcelaDaConta
@@ -305,6 +327,7 @@ public class ContasPagarService
         dto.SituacaoTexto = TextoSituacaoConta.De(conta.Situacao);
         dto.Vencida = TextoSituacaoConta.EmAberto(conta.Situacao) && conta.Vencimento.Date < hoje;
         dto.Fornecedor = linha.Fornecedor;
+        dto.Categoria = linha.Categoria;
         dto.Origem = linha.Origem;
         if (linha.Parcela != null)
         {

@@ -14,6 +14,7 @@ public class SincronizacaoOptions
     public const int IntervaloMinutosPadrao = 30;
     public const int DiasRenovarFornecedorPadrao = 30;
     public const int MaximoContasAntigasPadrao = 100;
+    public const int MaximoDetalhesPadrao = 50;
 
     // Vencimentos de quantos dias atrás entram (as vencidas do painel e dos avisos saem daqui)
     public int DiasPassados { get; set; } = DiasPassadosPadrao;
@@ -29,6 +30,10 @@ public class SincronizacaoOptions
 
     // Contas em aberto vencidas antes da janela conferidas uma a uma, por empresa, a cada sincronização (1 a 1000)
     public int MaximoContasAntigas { get; set; } = MaximoContasAntigasPadrao;
+
+    // Contas abertas uma a uma, por empresa e sincronização, para saber a categoria (1 a 1000).
+    // A lista do Bling não traz a categoria; ~3 por segundo, então 50 levam uns 17 segundos
+    public int MaximoDetalhesPorExecucao { get; set; } = MaximoDetalhesPadrao;
 
     public int DiasPassadosValidos()
     {
@@ -53,6 +58,11 @@ public class SincronizacaoOptions
     public int MaximoContasAntigasValido()
     {
         return DentroDoLimite(MaximoContasAntigas, 1, 1000, MaximoContasAntigasPadrao);
+    }
+
+    public int MaximoDetalhesPorExecucaoValido()
+    {
+        return DentroDoLimite(MaximoDetalhesPorExecucao, 1, 1000, MaximoDetalhesPadrao);
     }
 
     /// <summary>

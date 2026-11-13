@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
 
@@ -25,7 +25,7 @@ const PAGINA: PaginaContasPagar = {
   sincronizadaEm: '2026-11-11T12:30:00Z', diasPassados: 30, diasFuturos: 90
 };
 
-async function montar() {
+async function montar(parametros: Record<string, string> = {}) {
   const api = {
     obterContasPagar: vi.fn((_: FiltroContas) => of(PAGINA)),
     exportarContasFiltradas: vi.fn(),
@@ -36,7 +36,8 @@ async function montar() {
     providers: [
       provideRouter([]),
       { provide: PrevisioService, useValue: api },
-      { provide: SessaoService, useValue: { clienteId: signal(2) } }
+      { provide: SessaoService, useValue: { clienteId: signal(2) } },
+      { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(parametros) } } }
     ]
   });
   const fixture = TestBed.createComponent(ContasPagarComponent);
@@ -80,5 +81,23 @@ describe('ContasPagarComponent', () => {
     const ultimo = api.obterContasPagar.mock.calls[2][0];
     expect(ultimo.situacao).toBe('Abertas');
     expect(ultimo.origem).toBe('');
+  });
+
+  it('do painel abre nas em aberto da categoria, no período, e o filtro sai no x', async () => {
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '', ate: '', datasPadrao: true }));
+    const { fixture, api, tela } = await montar({ categoria: 'Fretes', de: '2026-11-13', ate: '2026-12-12' });
+    const filtro = api.obterContasPagar.mock.calls[0][0];
+    expect(filtro.categoria).toBe('Fretes');
+    expect(filtro.situacao).toBe('Abertas');
+    expect(filtro.empresaId).toBeNull();
+    expect(filtro.origem).toBe('');
+    expect(filtro.de).toBe('2026-11-13');
+    expect(filtro.ate).toBe('2026-12-12');
+    expect(tela.querySelector('.pv-filtro-categoria')?.textContent).toContain('Fretes');
+
+    (tela.querySelector('.pv-filtro-categoria__remover') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(api.obterContasPagar.mock.calls[1][0].categoria).toBe('');
+    expect(tela.querySelector('.pv-filtro-categoria')).toBeNull();
   });
 });

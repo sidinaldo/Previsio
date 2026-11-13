@@ -3078,3 +3078,141 @@ app-paginacao.pv-paginacao {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+// Card Categorias (Empresas e detalhe do cliente)
+.pv-categorias__subtitulo {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.pv-categorias__regras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  small {
+    display: block;
+  }
+}
+
+.pv-categorias__seta {
+  margin: 0 6px;
+  color: #999;
+}
+
+.pv-categorias__cnpj {
+  color: #888;
+}
+
+.pv-categorias__aviso {
+  color: #b26a00;
+}
+
+// Filtro de categoria vindo do painel (Contas a pagar)
+.pv-filtro-categoria {
+  margin: 0 0 12px;
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
+    padding: 4px 6px 4px 10px;
+  }
+}
+
+.pv-filtro-categoria__remover {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
+// Painel: saídas por categoria (barras horizontais)
+.pv-categorias-painel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pv-categorias-painel__linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.pv-categorias-painel__nome {
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pv-categorias-painel__valor {
+  white-space: nowrap;
+
+  small {
+    margin-left: 6px;
+    color: #888;
+  }
+}
+
+.pv-categorias-painel__barra {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: #00acc1;
+  }
+}
+
+.pv-categorias-painel__item--outras .pv-categorias-painel__barra span {
+  background: #7b8a99;
+}
+
+.pv-categorias-painel__item--sem .pv-categorias-painel__barra span {
+  background: #ff9800;
+}
+
+.pv-categorias-painel__item--conferir {
+  .pv-categorias-painel__nome {
+    color: #888;
+    font-style: italic;
+  }
+
+  .pv-categorias-painel__barra span {
+    background: repeating-linear-gradient(45deg, #bbb, #bbb 4px, #ddd 4px, #ddd 8px);
+  }
+}
+
+.pv-resumo__campo .pv-campo.pv-categorias__select {
+  min-width: 260px;
+  max-width: 100%;
+}

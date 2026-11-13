@@ -57,6 +57,7 @@ public class ExportacaoController : PrevisioControllerBase
         [FromQuery] string? origem,
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
+        [FromQuery] string? categoria,
         CancellationToken cancelamento)
     {
         if (!User.PodeAcessarCliente(clienteId))
@@ -70,7 +71,7 @@ public class ExportacaoController : PrevisioControllerBase
         }
         else
         {
-            FiltroContas filtro = ContasPagarController.Filtro(empresaId, de, ate, situacao, origem, busca, ordem);
+            FiltroContas filtro = ContasPagarController.Filtro(empresaId, de, ate, situacao, origem, busca, ordem, categoria);
             resultado = await _exportacao.ContasPagarAsync(clienteId, filtro, cancelamento);
         }
         return Responder(resultado, arquivo => File(arquivo.Conteudo, ArquivoExportado.TipoXlsx, arquivo.Nome));

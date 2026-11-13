@@ -265,6 +265,35 @@ public class BlingClient
     }
 
     /// <summary>
+    /// Todas as categorias de receitas e despesas da conta Bling (todas as páginas).
+    /// </summary>
+    public async Task<List<CategoriaBling>> ListarCategoriasAsync(
+        string conta, string accessToken, CancellationToken cancelamento)
+    {
+        var todas = new List<CategoriaBling>();
+        int pagina = 1;
+        const int limite = 100;
+
+        while (true)
+        {
+            string url = "categorias/receitas-despesas?pagina=" + pagina + "&limite=" + limite;
+            RespostaLista<CategoriaBling>? resposta =
+                await EnviarAsync<RespostaLista<CategoriaBling>>(conta, accessToken, HttpMethod.Get, url, null, cancelamento);
+            if (resposta == null || resposta.Data.Count == 0)
+            {
+                break;
+            }
+            todas.AddRange(resposta.Data);
+            if (resposta.Data.Count < limite)
+            {
+                break;
+            }
+            pagina++;
+        }
+        return todas;
+    }
+
+    /// <summary>
     /// Detalhe de uma conta a pagar (traz o número do documento e o histórico).
     /// </summary>
     public async Task<ContaPagarBling?> ObterContaPagarAsync(

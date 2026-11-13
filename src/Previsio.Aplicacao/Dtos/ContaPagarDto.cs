@@ -15,6 +15,8 @@ public class ContaPagarDto
     public string SituacaoTexto { get; set; } = "";
     public bool Vencida { get; set; }
     public string? Fornecedor { get; set; }
+    // Nome da categoria no Bling (nulo = sem categoria ou ainda não conferida)
+    public string? Categoria { get; set; }
 
     // "Previsio" ou "Bling"
     public string Origem { get; set; } = "";

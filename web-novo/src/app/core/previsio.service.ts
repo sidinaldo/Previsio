@@ -26,6 +26,8 @@ import {
   PaginaContasPagar,
   PaginaContasReceber,
   FluxoCaixa,
+  ConfiguracaoCategorias,
+  NovaRegraCategoria,
   SituacaoSincronizacao,
   PaginaFalhas,
   PaginaNotas,
@@ -132,6 +134,24 @@ export class PrevisioService {
 
   alterarFluxoCaixa(clienteId: number, dados: FluxoCaixa): Observable<FluxoCaixa> {
     return this.http.put<FluxoCaixa>(`${this.api}/clientes/${clienteId}/fluxo-caixa`, dados);
+  }
+
+  obterCategorias(clienteId: number): Observable<ConfiguracaoCategorias> {
+    return this.http.get<ConfiguracaoCategorias>(`${this.api}/clientes/${clienteId}/categorias`);
+  }
+
+  /** Categoria padrão da rede pelo nome (vazio tira). */
+  alterarCategoriaPadrao(clienteId: number, categoria: string): Observable<ConfiguracaoCategorias> {
+    return this.http.put<ConfiguracaoCategorias>(`${this.api}/clientes/${clienteId}/categorias/padrao`, { categoria });
+  }
+
+  /** Cria a regra do fornecedor ou troca a categoria da que já existe. */
+  salvarRegraCategoria(clienteId: number, regra: NovaRegraCategoria): Observable<ConfiguracaoCategorias> {
+    return this.http.post<ConfiguracaoCategorias>(`${this.api}/clientes/${clienteId}/categorias/regras`, regra);
+  }
+
+  removerRegraCategoria(clienteId: number, regraId: number): Observable<ConfiguracaoCategorias> {
+    return this.http.delete<ConfiguracaoCategorias>(`${this.api}/clientes/${clienteId}/categorias/regras/${regraId}`);
   }
 
   /** Planilha das contas a pagar em aberto no Bling dos próximos N dias (as do painel). */

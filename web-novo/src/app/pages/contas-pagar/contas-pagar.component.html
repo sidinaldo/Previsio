@@ -39,6 +39,16 @@
           <div class="pv-filtros__busca">
             <app-busca [(valor)]="busca" placeholder="Buscar por fornecedor, NF ou empresa" />
           </div>
+          @if (categoria()) {
+            <p class="pv-filtro-categoria">
+              <span class="badge badge-info">
+                Categoria: {{ categoria() }}
+                <button type="button" class="pv-filtro-categoria__remover" aria-label="Tirar o filtro de categoria" (click)="tirarCategoria()">
+                  <i class="material-icons" aria-hidden="true">close</i>
+                </button>
+              </span>
+            </p>
+          }
           <div class="row">
             <div class="col-md-3 col-sm-6">
               <label for="contas-empresa" class="col-form-label pt-0">Empresa</label>
@@ -136,6 +146,7 @@
               <tr>
                 <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Vencimento</th>
                 <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
+                <th>Categoria</th>
                 <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
                 <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
                 <th>Situação</th>
@@ -151,6 +162,13 @@
                       {{ conta.fornecedor }}
                     } @else {
                       <span class="pv-tabela__auxiliar" title="O nome é buscado no Bling na próxima sincronização">Fornecedor ainda não identificado</span>
+                    }
+                  </td>
+                  <td>
+                    @if (conta.categoria) {
+                      {{ conta.categoria }}
+                    } @else {
+                      <span class="pv-tabela__auxiliar">—</span>
                     }
                   </td>
                   <td>{{ conta.empresaNome }}</td>

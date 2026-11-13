@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -14,6 +15,8 @@ import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-o
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { SincronizarBlingComponent } from '../../shared/sincronizar-bling/sincronizar-bling.component';
+
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Opção de um select de filtro. */
 interface Opcao {
@@ -60,6 +63,8 @@ export class ContasPagarComponent {
   readonly de = signal('');
   readonly ate = signal('');
   readonly busca = signal('');
+  // Vem do card "Saídas por categoria" do painel; não fica guardado no navegador
+  readonly categoria = signal('');
   readonly pagina = signal(1);
   readonly ordenacao = signal<Ordenacao | null>({ coluna: 'vencimento', decrescente: false });
 
@@ -85,6 +90,7 @@ export class ContasPagarComponent {
 
   constructor() {
     this.aplicar(lerFiltroContas(this.sessao.clienteId(), new Date()));
+    this.aplicarDoPainel(inject(ActivatedRoute).snapshot.queryParamMap);
     this.previsio.listarEmpresas().subscribe({
       next: empresas => this.empresas.set(empresas),
       error: () => this.empresas.set([])
@@ -111,6 +117,14 @@ export class ContasPagarComponent {
     this.acaoLista.set('limpar');
     this.aplicar(filtroPadraoContas(new Date()));
     this.busca.set('');
+    this.categoria.set('');
+    this.pagina.set(1);
+    this.carregar();
+  }
+
+  tirarCategoria(): void {
+    this.categoria.set('');
+    this.acaoLista.set('filtrar');
     this.pagina.set(1);
     this.carregar();
   }
@@ -143,6 +157,7 @@ export class ContasPagarComponent {
       de: this.de(),
       ate: this.ate(),
       busca: this.busca(),
+      categoria: this.categoria(),
       ordem: parametroOrdem(this.ordenacao()),
       pagina: this.pagina()
     };
@@ -168,6 +183,24 @@ export class ContasPagarComponent {
         this.carregando.set(false);
       }
     });
+  }
+
+  /** Do painel: as contas em aberto da categoria, no período do painel. */
+  private aplicarDoPainel(parametros: ParamMap): void {
+    const categoria = (parametros.get('categoria') ?? '').trim();
+    if (categoria === '') {
+      return;
+    }
+    this.categoria.set(categoria);
+    this.situacao.set('Abertas');
+    this.empresaId.set(null);
+    this.origem.set('');
+    const de = parametros.get('de') ?? '';
+    const ate = parametros.get('ate') ?? '';
+    if (DATA_ISO.test(de) && DATA_ISO.test(ate)) {
+      this.de.set(de);
+      this.ate.set(ate);
+    }
   }
 
   private aplicar(filtro: FiltroContas): void {

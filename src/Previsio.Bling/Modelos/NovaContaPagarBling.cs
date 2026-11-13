@@ -24,4 +24,9 @@ public class NovaContaPagarBling
 
     [JsonPropertyName("historico")]
     public string Historico { get; set; } = "";
+
+    // Categoria de despesa do Bling desta conta; sem categoria, o campo não vai
+    [JsonPropertyName("categoria")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Referencia? Categoria { get; set; }
 }

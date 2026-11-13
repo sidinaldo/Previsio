@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { PrevisioService } from '../../core/previsio.service';
-import { NotaParaResolver, ResumoPainel, TotalSemana } from '../../core/previsio.models';
+import { NotaParaResolver, ResumoPainel, TotalCategoria, TotalSemana } from '../../core/previsio.models';
 import { descricaoDaSituacao } from '../../core/filtro-notas';
 import { UrgenciaNota, urgenciaDaNota } from './notas-para-resolver';
 
@@ -43,6 +43,11 @@ export class PainelComponent {
 
   readonly fluxoCaixa = computed(() => this.resumo()?.fluxoCaixaAtivo === true);
   readonly abs = Math.abs;
+
+  /** Card "Saídas por categoria": só aparece quando há contas no período. */
+  readonly categorias = computed<TotalCategoria[]>(() => this.resumo()?.categorias ?? []);
+  private readonly maiorCategoria = computed(() => Math.max(0, ...this.categorias().map(c => c.valor)));
+  private readonly totalCategorias = computed(() => this.categorias().reduce((soma, c) => soma + c.valor, 0));
 
   // Semana com mais saídas; nenhuma quando todas estão zeradas
   readonly maiorSemana = computed<TotalSemana | null>(() => {
@@ -86,6 +91,36 @@ export class PainelComponent {
   });
   readonly notasParaResolver = computed<NotaParaResolver[]>(() => this.resumo()?.notasParaResolver ?? []);
   readonly descricaoSituacao = descricaoDaSituacao;
+
+  /** Largura da barra, proporcional à maior categoria. */
+  larguraCategoria(categoria: TotalCategoria): number {
+    const maior = this.maiorCategoria();
+    if (maior <= 0) {
+      return 0;
+    }
+    return Math.max(2, Math.round((categoria.valor / maior) * 100));
+  }
+
+  percentualCategoria(categoria: TotalCategoria): number {
+    const total = this.totalCategorias();
+    if (total <= 0) {
+      return 0;
+    }
+    return Math.round((categoria.valor / total) * 100);
+  }
+
+  /** Filtro de Contas a pagar da categoria; Outras e A conferir não têm. */
+  linkCategoria(categoria: TotalCategoria, resumo: ResumoPainel): Record<string, string> | null {
+    let nome = '';
+    if (categoria.tipo === 'categoria') {
+      nome = categoria.nome;
+    } else if (categoria.tipo === 'sem') {
+      nome = 'Sem categoria';
+    } else {
+      return null;
+    }
+    return { categoria: nome, de: resumo.inicio.substring(0, 10), ate: resumo.fim.substring(0, 10) };
+  }
 
   urgencia(nota: NotaParaResolver): UrgenciaNota {
     const resumo = this.resumo();

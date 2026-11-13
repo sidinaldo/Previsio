@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Previsio.Core.NFe;
 using Previsio.Aplicacao.Empresas;
 using Previsio.Aplicacao.Bling;
+using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Notas;
@@ -77,6 +78,7 @@ public static class ServicosDeTeste
             new Repositorio<NotaFiscal>(db),
             new Repositorio<ContaReceberSincronizada>(db),
             new Repositorio<Cliente>(db),
+            new Repositorio<CategoriaFinanceira>(db),
             new CalculadoraPainel());
     }
 
@@ -127,6 +129,7 @@ public static class ServicosDeTeste
             new Repositorio<ContaPagarSincronizada>(db),
             new Repositorio<ParcelaNota>(db),
             new Repositorio<Empresa>(db),
+            new Repositorio<CategoriaFinanceira>(db),
             relogio,
             opcoes);
     }
@@ -219,6 +222,12 @@ public static class ServicosDeTeste
             new Repositorio<Cliente>(db),
             new Repositorio<FalhaProcessamento>(db),
             new Repositorio<ContaPagarSincronizada>(db),
+            new CategoriaLancamentoService(
+                new Repositorio<RegraCategoria>(db),
+                new Repositorio<Cliente>(db),
+                new Repositorio<ContaPagarSincronizada>(db),
+                new Repositorio<CategoriaFinanceira>(db),
+                new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(db), bling, NullLogger<CategoriasBlingService>.Instance)),
             bling,
             tokens,
             conferencia,
@@ -247,6 +256,7 @@ public static class ServicosDeTeste
                 bling,
                 FornecedoresBlingService(db, bling, NullLogger<FornecedoresBlingService>.Instance),
                 NullLogger<ContasReceberBlingService>.Instance),
+            new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(db), bling, NullLogger<CategoriasBlingService>.Instance),
             NullLogger<SincronizacaoContasService>.Instance);
     }
 

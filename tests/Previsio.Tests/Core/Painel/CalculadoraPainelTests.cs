@@ -181,4 +181,53 @@ public class CalculadoraPainelTests
         Assert.False(resumo.FluxoCaixaAtivo);
         Assert.Equal(0m, resumo.Semanas[0].Entradas);
     }
+
+    [Fact]
+    public void Categorias_somam_as_seis_maiores_e_juntam_o_resto_em_outras()
+    {
+        var pagar = new List<ContaPagarSincronizada>();
+        var nomes = new Dictionary<string, string>();
+        for (int i = 1; i <= 8; i++)
+        {
+            ContaPagarSincronizada conta = Conta(1, i, i * 100m, SituacaoContaBling.EmAberto);
+            conta.CategoriaBlingId = i;
+            conta.CategoriaConferidaEm = Hoje;
+            pagar.Add(conta);
+            nomes["1:" + i] = "Categoria " + i;
+        }
+        // A mesma categoria (pelo nome) em outra empresa soma junto
+        ContaPagarSincronizada outraEmpresa = Conta(2, 2, 1000m, SituacaoContaBling.EmAberto);
+        outraEmpresa.CategoriaBlingId = 50;
+        outraEmpresa.CategoriaConferidaEm = Hoje;
+        pagar.Add(outraEmpresa);
+        nomes["2:50"] = "CATEGORIA 1";
+        ContaPagarSincronizada sem = Conta(1, 3, 70m, SituacaoContaBling.EmAberto);
+        sem.CategoriaConferidaEm = Hoje;
+        pagar.Add(sem);
+        pagar.Add(Conta(1, 4, 30m, SituacaoContaBling.EmAberto));
+        // Paga e fora do período não entram
+        ContaPagarSincronizada paga = Conta(1, 1, 9999m, SituacaoContaBling.Pago);
+        paga.CategoriaBlingId = 1;
+        pagar.Add(paga);
+        ContaPagarSincronizada longe = Conta(1, 60, 9999m, SituacaoContaBling.EmAberto);
+        longe.CategoriaBlingId = 1;
+        pagar.Add(longe);
+
+        var calculadora = new CalculadoraPainel();
+        ResumoPainel resumo = calculadora.Calcular(Hoje, 30, new List<Empresa>(), pagar, new List<NotaFiscal>());
+        calculadora.AplicarCategorias(resumo, pagar, nomes);
+
+        Assert.Equal(9, resumo.Categorias.Count);
+        Assert.Equal("Categoria 1", resumo.Categorias[0].Nome);
+        Assert.Equal(1100m, resumo.Categorias[0].Valor);
+        Assert.Equal(2, resumo.Categorias[0].Quantidade);
+        Assert.Equal("Categoria 8", resumo.Categorias[1].Nome);
+        Assert.Equal("Outras (2)", resumo.Categorias[6].Nome);
+        Assert.Equal(TotalCategoria.TipoOutras, resumo.Categorias[6].Tipo);
+        Assert.Equal(500m, resumo.Categorias[6].Valor);
+        Assert.Equal(TotalCategoria.TipoSem, resumo.Categorias[7].Tipo);
+        Assert.Equal(70m, resumo.Categorias[7].Valor);
+        Assert.Equal(TotalCategoria.TipoAConferir, resumo.Categorias[8].Tipo);
+        Assert.Equal(30m, resumo.Categorias[8].Valor);
+    }
 }
