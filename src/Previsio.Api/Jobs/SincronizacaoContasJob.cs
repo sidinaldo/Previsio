@@ -21,4 +21,13 @@ public class SincronizacaoContasJob
     {
         return _sincronizacao.ExecutarAsync(cancelamento);
     }
+
+    // Uma rede só (pedida pela tela). Mesmo nome de método: o Hangfire usa a mesma trava, então
+    // não roda junto com a sincronização de todas as redes.
+    [DisableConcurrentExecution(timeoutInSeconds: 900)]
+    [AutomaticRetry(Attempts = 0)]
+    public Task ExecutarAsync(int clienteId, CancellationToken cancelamento)
+    {
+        return _sincronizacao.ExecutarRedeAsync(clienteId, cancelamento);
+    }
 }

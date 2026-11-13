@@ -7,6 +7,7 @@
         <p class="pv-pagina__subtitulo">O que os clientes das empresas têm a pagar, copiado do Bling: as entradas do fluxo de caixa</p>
       </div>
       <div class="pv-pagina__acoes">
+        <app-sincronizar-bling (sincronizado)="carregar()" (aviso)="avisoSincronizacao.set($event)" />
         <button type="button" class="btn btn-secundario" (click)="acaoLista.set('atualizar'); carregar()"
                 [pvCarregando]="carregando() && acaoLista() === 'atualizar'" [disabled]="carregando()">
           <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
@@ -16,6 +17,13 @@
 
     @if (erro()) {
       <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    @if (avisoSincronizacao(); as aviso) {
+      <div class="alert" role="status" [class.alert-info]="aviso.tipo === 'info'" [class.alert-success]="aviso.tipo === 'sucesso'"
+           [class.alert-danger]="aviso.tipo === 'erro'">
+        <span>{{ aviso.texto }}</span>
+      </div>
     }
 
     @if (carregada() && !fluxoCaixaAtivo()) {

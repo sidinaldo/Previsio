@@ -55,6 +55,7 @@ public static class RegistroAplicacao
         servicos.AddScoped<ContasAntigasEmAberto>();
         servicos.AddScoped<SincronizacaoContasService>();
         servicos.AddScoped<ContasReceberBlingService>();
+        servicos.AddScoped<SincronizacaoManualService>();
         servicos.AddScoped<ContasReceberService>();
         servicos.AddScoped<FluxoCaixaService>();
 

@@ -13,4 +13,8 @@ public interface IFilaJobs
 
     // Traz do Bling as contas a pagar de todas as empresas conectadas
     void SincronizarContas();
+    // Traz do Bling as contas só das empresas de uma rede
+    void SincronizarRede(int clienteId);
+    // Alguma sincronização (de todas as redes ou de uma) na fila ou rodando
+    bool SincronizacaoEmAndamento();
 }

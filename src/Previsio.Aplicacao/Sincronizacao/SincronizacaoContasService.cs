@@ -60,10 +60,27 @@ public class SincronizacaoContasService
         _logger = logger;
     }
 
-    public async Task ExecutarAsync(CancellationToken cancelamento)
+    /// <summary>Todas as redes (o job de 30 em 30 minutos).</summary>
+    public Task ExecutarAsync(CancellationToken cancelamento)
     {
-        List<int> redes = await _clientes.Consultar()
-            .Where(PeriodoTeste.Processa(DateTime.UtcNow))
+        return ExecutarRedesAsync(null, cancelamento);
+    }
+
+    /// <summary>Só as empresas de uma rede (botão "Sincronizar com o Bling" das telas de contas).</summary>
+    public Task ExecutarRedeAsync(int clienteId, CancellationToken cancelamento)
+    {
+        return ExecutarRedesAsync(clienteId, cancelamento);
+    }
+
+    private async Task ExecutarRedesAsync(int? clienteId, CancellationToken cancelamento)
+    {
+        IQueryable<Cliente> consultaRedes = _clientes.Consultar().Where(PeriodoTeste.Processa(DateTime.UtcNow));
+        if (clienteId.HasValue)
+        {
+            int id = clienteId.Value;
+            consultaRedes = consultaRedes.Where(c => c.Id == id);
+        }
+        List<int> redes = await consultaRedes
             .Select(c => c.Id)
             .ToListAsync(cancelamento);
         List<Empresa> empresas = await _empresas.Consultar()

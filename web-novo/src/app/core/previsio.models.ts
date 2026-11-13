@@ -445,6 +445,13 @@ export interface SituacaoJob {
   emExecucao: boolean;
 }
 
+/** Sincronização com o Bling da rede (botão das telas de contas). */
+export interface SituacaoSincronizacao {
+  emExecucao: boolean;
+  ultimaSincronizacaoEm: string | null;
+  podeSincronizarEm: string | null;
+}
+
 /** Situações em que alguém precisa resolver a nota; só estas podem ser marcadas como lançadas manualmente. */
 export const SITUACOES_COM_PROBLEMA = ['Erro', 'BlingDesconectado', 'EmpresaNaoEncontrada', 'SemParcelas'];
 

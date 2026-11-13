@@ -9,10 +9,12 @@ namespace Previsio.Api.Jobs;
 public class FilaJobsHangfire : IFilaJobs
 {
     private readonly IBackgroundJobClient _jobs;
+    private readonly IExecucaoJobs _execucao;
 
-    public FilaJobsHangfire(IBackgroundJobClient jobs)
+    public FilaJobsHangfire(IBackgroundJobClient jobs, IExecucaoJobs execucao)
     {
         _jobs = jobs;
+        _execucao = execucao;
     }
 
     public void LancarNota(int notaId)
@@ -28,5 +30,15 @@ public class FilaJobsHangfire : IFilaJobs
     public void SincronizarContas()
     {
         _jobs.Enqueue<SincronizacaoContasJob>(j => j.ExecutarAsync(CancellationToken.None));
+    }
+
+    public void SincronizarRede(int clienteId)
+    {
+        _jobs.Enqueue<SincronizacaoContasJob>(j => j.ExecutarAsync(clienteId, CancellationToken.None));
+    }
+
+    public bool SincronizacaoEmAndamento()
+    {
+        return _execucao.EstaEmExecucao(typeof(SincronizacaoContasJob), nameof(SincronizacaoContasJob.ExecutarAsync));
     }
 }

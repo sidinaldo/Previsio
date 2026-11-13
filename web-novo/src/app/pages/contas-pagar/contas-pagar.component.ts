@@ -13,6 +13,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { SincronizarBlingComponent } from '../../shared/sincronizar-bling/sincronizar-bling.component';
 
 /** Opção de um select de filtro. */
 interface Opcao {
@@ -29,7 +30,7 @@ type AcaoLista = 'filtrar' | 'limpar' | 'atualizar' | 'pagina' | null;
  */
 @Component({
   selector: 'app-contas-pagar',
-  imports: [FormsModule, CurrencyPipe, DatePipe, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent],
+  imports: [FormsModule, CurrencyPipe, DatePipe, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ExportarComponent, SincronizarBlingComponent],
   templateUrl: './contas-pagar.component.html'
 })
 export class ContasPagarComponent {
@@ -73,6 +74,8 @@ export class ContasPagarComponent {
   readonly acaoLista = signal<AcaoLista>(null);
   readonly carregada = signal(false);
   readonly erro = signal('');
+  // Andamento, fim ou recusa do "Sincronizar com o Bling"
+  readonly avisoSincronizacao = signal<{ tipo: 'info' | 'sucesso' | 'erro'; texto: string } | null>(null);
 
   readonly totalPaginas = computed(() => totalDePaginas(this.total(), this.tamanhoPagina()));
 

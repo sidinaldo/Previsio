@@ -1,7 +1,5 @@
 import { Observable, exhaustMap, first, map, timeout, timer } from 'rxjs';
 
-import { SituacaoJob } from './previsio.models';
-
 /** De quanto em quanto tempo a tela pergunta se o job terminou. */
 export const INTERVALO_CONSULTA_JOB_MS = 2000;
 
@@ -13,7 +11,8 @@ export const LIMITE_ESPERA_JOB_MS = 3 * 60 * 1000;
  * Dá erro se passar do limite ou se a consulta falhar; quem chama decide o que mostrar.
  */
 export function aguardarFimDoJob(
-  consultar: () => Observable<SituacaoJob>,
+  // Situação de um job ou da sincronização da rede: só importa se ainda está rodando
+  consultar: () => Observable<{ emExecucao: boolean }>,
   intervaloMs: number = INTERVALO_CONSULTA_JOB_MS,
   limiteMs: number = LIMITE_ESPERA_JOB_MS
 ): Observable<void> {

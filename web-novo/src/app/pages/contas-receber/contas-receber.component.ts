@@ -13,6 +13,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { SincronizarBlingComponent } from '../../shared/sincronizar-bling/sincronizar-bling.component';
 
 /** Opção de um select de filtro. */
 interface Opcao {
@@ -33,7 +34,7 @@ const SITUACOES_VALIDAS = ['Abertas', 'Vencidas', 'Recebidas', 'Canceladas', 'To
 @Component({
   selector: 'app-contas-receber',
   imports: [FormsModule, RouterLink, CurrencyPipe, DatePipe, CarregandoDirective, PaginacaoComponent, BuscaComponent,
-    ColunaOrdenavelComponent, ExportarComponent],
+    ColunaOrdenavelComponent, ExportarComponent, SincronizarBlingComponent],
   templateUrl: './contas-receber.component.html'
 })
 export class ContasReceberComponent {
@@ -70,6 +71,8 @@ export class ContasReceberComponent {
   readonly acaoLista = signal<AcaoLista>(null);
   readonly carregada = signal(false);
   readonly erro = signal('');
+  // Andamento, fim ou recusa do "Sincronizar com o Bling"
+  readonly avisoSincronizacao = signal<{ tipo: 'info' | 'sucesso' | 'erro'; texto: string } | null>(null);
 
   readonly totalPaginas = computed(() => totalDePaginas(this.total(), this.tamanhoPagina()));
 

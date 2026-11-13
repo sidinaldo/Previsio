@@ -26,6 +26,7 @@ import {
   PaginaContasPagar,
   PaginaContasReceber,
   FluxoCaixa,
+  SituacaoSincronizacao,
   PaginaFalhas,
   PaginaNotas,
   PainelAvisos,
@@ -100,6 +101,17 @@ export class PrevisioService {
   exportarContasFiltradas(filtro: FiltroContas): Observable<HttpResponse<Blob>> {
     const params = parametrosDasContas({ ...filtro, pagina: 1 });
     return this.doCliente(url => this.http.get(`${url}/contas-pagar/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
+  /** Pede a sincronização das contas só da rede atual (409 se sincronizou há menos de 2 minutos). */
+  sincronizarRede(): Observable<SituacaoSincronizacao> {
+    return this.doCliente(url => this.http.post<SituacaoSincronizacao>(`${url}/sincronizacao`, {}));
+  }
+
+  /** Se a sincronização da rede ainda está rodando. Consultado de tempos em tempos, sem a barra de carregamento. */
+  situacaoSincronizacao(): Observable<SituacaoSincronizacao> {
+    const context = new HttpContext().set(SEM_BARRA_CARREGAMENTO, true);
+    return this.doCliente(url => this.http.get<SituacaoSincronizacao>(`${url}/sincronizacao`, { context }));
   }
 
   /** Contas a receber sincronizadas do Bling (fluxo de caixa), com os filtros da tela. */

@@ -271,4 +271,18 @@ public class SincronizacaoContasServiceTests
 
         Assert.DoesNotContain(respostas.Chamadas, c => c.Contains("contas/receber"));
     }
+
+    [Fact]
+    public async Task Sincronizar_uma_rede_so_mexe_nas_empresas_dela()
+    {
+        Cliente alfa = await CadastrarRede(true);
+        Cliente beta = await CadastrarRede(true);
+        Empresa daAlfa = await CadastrarEmpresa(alfa, "98765432000110", true);
+        Empresa daBeta = await CadastrarEmpresa(beta, "11222333000181", true);
+
+        await CriarServico(BlingComContas("")).ExecutarRedeAsync(alfa.Id, CancellationToken.None);
+
+        Assert.NotNull(_db.Empresas.Single(e => e.Id == daAlfa.Id).UltimaSincronizacaoEm);
+        Assert.Null(_db.Empresas.Single(e => e.Id == daBeta.Id).UltimaSincronizacaoEm);
+    }
 }

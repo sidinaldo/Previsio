@@ -39,4 +39,17 @@ public class FilaDeJobsDeTeste : IBackgroundJobClient, IFilaJobs
     {
         Enfileirados.Add(Job.FromExpression<SincronizacaoContasJob>(j => j.ExecutarAsync(CancellationToken.None)));
     }
+
+    public void SincronizarRede(int clienteId)
+    {
+        Enfileirados.Add(Job.FromExpression<SincronizacaoContasJob>(j => j.ExecutarAsync(clienteId, CancellationToken.None)));
+    }
+
+    // Os testes ligam para simular uma sincronização já rodando
+    public bool EmAndamento { get; set; }
+
+    public bool SincronizacaoEmAndamento()
+    {
+        return EmAndamento;
+    }
 }
