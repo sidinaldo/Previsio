@@ -51,6 +51,7 @@ describe('menu lateral', () => {
       '/pages/painel',
       '/pages/contas-pagar',
       '/pages/contas-receber',
+      '/pages/relatorios',
       '/pages/notas-recebidas',
       '/pages/notas-pendentes',
       '/pages/empresas',

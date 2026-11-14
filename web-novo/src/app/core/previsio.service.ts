@@ -28,6 +28,7 @@ import {
   FluxoCaixa,
   ConfiguracaoCategorias,
   ConfiguracaoFormasPagamento,
+  Dossie,
   NovaRegraCategoria,
   NovaRegraFormaPagamento,
   SituacaoSincronizacao,
@@ -102,6 +103,18 @@ export class PrevisioService {
   }
 
   /** Planilha das contas a pagar com os mesmos filtros e ordem da tela Contas a pagar. */
+  /** Dossiê financeiro da rede atual: projeção de 30/60/90 dias e o período de/até (datas yyyy-MM-dd). */
+  obterDossie(dias: number, de: string, ate: string): Observable<Dossie> {
+    const params = new HttpParams().set('dias', dias).set('de', de).set('ate', ate);
+    return this.doCliente(url => this.http.get<Dossie>(`${url}/dossie`, { params }));
+  }
+
+  /** Planilha do dossiê: uma aba por bloco e as contas a pagar do período. */
+  exportarDossie(dias: number, de: string, ate: string): Observable<HttpResponse<Blob>> {
+    const params = new HttpParams().set('dias', dias).set('de', de).set('ate', ate);
+    return this.doCliente(url => this.http.get(`${url}/dossie/exportar`, { params, observe: 'response', responseType: 'blob' }));
+  }
+
   exportarContasFiltradas(filtro: FiltroContas): Observable<HttpResponse<Blob>> {
     const params = parametrosDasContas({ ...filtro, pagina: 1 });
     return this.doCliente(url => this.http.get(`${url}/contas-pagar/exportar`, { params, observe: 'response', responseType: 'blob' }));

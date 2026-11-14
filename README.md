@@ -52,6 +52,15 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
   Vai para os usuários da rede (o admin não recebe). **Enviar para mim agora** (Configurações → Avisos de vencimento,
   `POST /api/clientes/{id}/alertas-vencimento/teste`) manda o aviso de hoje só para quem clicou, admin inclusive, sem
   contar como o envio do dia; sem nada vencendo hoje, amanhã ou vencido, não envia e diz o motivo.
+- **Relatórios (Dossiê financeiro):** tela **Relatórios** com três blocos, feita para levar a sócios ou ao banco.
+  1) Projeção de caixa de 30, 60 ou 90 dias por semana (entradas × saídas em aberto, saldo acumulado a partir de zero);
+  semana crítica = pico de desembolso, saídas a partir de `Relatorios:FatorSemanaCritica` × a média semanal (padrão 1,5),
+  e a semana em que o saldo fica negativo. 2) Saúde dos lançamentos: contas do período com categoria (por valor, só as
+  já conferidas), notas recebidas no período já lançadas e contas a pagar em dia, num índice de 0 a 100
+  (`Relatorios:PesoCategorias`, `PesoNotasLancadas`, `PesoContasEmDia`; faixas `ConformidadeVerde` 90 e
+  `ConformidadeAmarela` 70). 3) Comparativo do período (contas pagas e em aberto que vencem nele) por empresa e o
+  ranking dos fornecedores e categorias (`Relatorios:TamanhoRanking`, padrão 10). **Exportar PDF** é a impressão do
+  navegador (A4, até 2 páginas, sem menu); **Exportar Excel** baixa uma aba por bloco e as contas do período.
 - **Busca completa na SEFAZ:** com o certificado A1 da empresa (ou da matriz, mesma raiz de CNPJ), o Previsio lê a
   distribuição de NF-e por NSU e pega a nota que o fornecedor não mandou por e-mail. A primeira busca pula o histórico
   (só notas de agora em diante); resumo de nota recebe a Ciência da Operação e o XML completo chega na busca seguinte,
@@ -269,6 +278,8 @@ npm start
 | GET | `/api/clientes/{id}/formas-pagamento` | Seção Formas de pagamento: padrão, formas do Bling com o grupo, regras e avisos |
 | PUT | `/api/clientes/{id}/formas-pagamento/padrao` | Forma padrão da rede pelo nome (`{ "forma": "" }` volta para a automática) |
 | POST/DELETE | `/api/clientes/{id}/formas-pagamento/regras[/{regraId}]` | Criar (ou trocar a forma) / remover a regra de um fornecedor |
+| GET | `/api/clientes/{id}/dossie?dias=30&de=&ate=` | Dossiê financeiro (projeção 30/60/90, auditoria e comparativo do período; sem datas, o mês atual) |
+| GET | `/api/clientes/{id}/dossie/exportar?dias=&de=&ate=` | Planilha do dossiê (uma aba por bloco e as contas do período) |
 
 `GET/POST /api/clientes` também são só para admin.
 

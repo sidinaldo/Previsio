@@ -27,6 +27,7 @@ using Previsio.Core.Painel;
 
 using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.FormasPagamento;
+using Previsio.Aplicacao.Relatorios;
 
 namespace Previsio.Aplicacao;
 
@@ -66,6 +67,7 @@ public static class RegistroAplicacao
         servicos.AddScoped<FormasPagamentoBlingService>();
         servicos.AddScoped<FormaPagamentoLancamentoService>();
         servicos.AddScoped<FormasPagamentoService>();
+        servicos.AddScoped<DossieService>();
         servicos.AddScoped<ContasReceberService>();
         servicos.AddScoped<FluxoCaixaService>();
 

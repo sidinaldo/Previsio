@@ -3661,3 +3661,603 @@ app-paginacao.pv-paginacao {
   margin-left: 6px;
   font-weight: 400;
 }
+
+// ---------------------------------------------------------------------------
+// Relatórios: Dossiê financeiro (tela e documento impresso em A4)
+// ---------------------------------------------------------------------------
+.pv-dossie__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+}
+
+.pv-dossie__campo {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+.pv-dossie__espaco {
+  flex: 1 1 auto;
+}
+
+.pv-dossie__exportacoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pv-dossie__dica {
+  margin: 0;
+  padding: 0 20px 16px;
+}
+
+.pv-dossie__documento {
+  max-width: 1040px;
+  margin: 0 auto 32px;
+  padding: 32px 40px;
+  background: var(--pv-superficie);
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  box-shadow: var(--pv-sombra-card);
+  color: var(--pv-texto);
+  transition: opacity .15s;
+
+  @media (max-width: 767px) {
+    padding: 20px 16px;
+  }
+}
+
+.pv-dossie__documento--carregando {
+  opacity: .55;
+}
+
+.pv-dossie__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--pv-primaria);
+}
+
+.pv-dossie__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.pv-dossie__simbolo {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.pv-dossie__produto {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.pv-dossie__tipo {
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--pv-horizonte);
+}
+
+.pv-dossie__identificacao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: 60%;
+  text-align: right;
+  font-size: .82rem;
+  color: var(--pv-texto-secundario);
+
+  strong {
+    font-size: 1rem;
+    color: var(--pv-texto);
+  }
+
+  @media (max-width: 767px) {
+    align-items: flex-start;
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
+.pv-dossie__gerado {
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-dossie__bloco {
+  margin-bottom: 24px;
+}
+
+.pv-dossie__titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.pv-dossie__numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--pv-primaria);
+  color: #fff;
+  font-size: .8rem;
+}
+
+.pv-dossie__subtitulo {
+  margin: 0 0 8px;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.pv-dossie__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pv-dossie__kpi {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border: 1px solid var(--pv-borda);
+  border-left: 4px solid var(--pv-primaria);
+  border-radius: 6px;
+
+  span {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--pv-texto-auxiliar);
+  }
+
+  strong {
+    font-size: 1.2rem;
+  }
+}
+
+.pv-dossie__kpi--negativo {
+  border-left-color: var(--pv-erro);
+
+  strong {
+    color: var(--pv-erro);
+  }
+}
+
+.pv-dossie__sem {
+  font-size: .9rem !important;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-dossie__grafico {
+  margin: 0 0 8px;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.pv-dossie__grade {
+  stroke: var(--pv-borda);
+  stroke-width: 1;
+}
+
+.pv-dossie__eixo {
+  font-size: 10px;
+  fill: var(--pv-texto-auxiliar);
+}
+
+.pv-dossie__barra-entrada {
+  fill: var(--pv-horizonte);
+}
+
+.pv-dossie__barra-saida {
+  fill: var(--pv-primaria);
+}
+
+.pv-dossie__barra-saida--critica {
+  fill: var(--pv-erro);
+}
+
+.pv-dossie__linha-saldo {
+  fill: none;
+  stroke: var(--pv-texto);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+}
+
+.pv-dossie__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: .75rem;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-dossie__cor {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.pv-dossie__cor--entrada { background: var(--pv-horizonte); }
+.pv-dossie__cor--saida { background: var(--pv-primaria); }
+.pv-dossie__cor--critica { background: var(--pv-erro); }
+.pv-dossie__cor--saldo { height: 2px; vertical-align: 3px; background: var(--pv-texto); }
+
+.pv-dossie__tabela {
+  width: 100%;
+  margin-bottom: 8px;
+  border-collapse: collapse;
+  font-size: .82rem;
+
+  th {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--pv-borda-forte);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--pv-texto-auxiliar);
+  }
+
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--pv-borda);
+    vertical-align: middle;
+  }
+}
+
+// No celular as tabelas rolam de lado dentro do documento
+.pv-dossie__rolagem {
+  overflow-x: auto;
+}
+
+.pv-dossie__critica td {
+  background: var(--pv-erro-suave);
+}
+
+.pv-dossie__negativo {
+  color: var(--pv-erro);
+}
+
+.pv-dossie__selo {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--pv-erro);
+}
+
+.pv-dossie__selo--saldo {
+  color: var(--pv-alerta);
+}
+
+.pv-dossie__nota {
+  margin: 4px 0 0;
+  font-size: .72rem;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-dossie__resumo {
+  margin: 0 0 8px;
+  font-size: .85rem;
+  color: var(--pv-texto-secundario);
+}
+
+// Índice de conformidade e indicadores
+.pv-dossie__auditoria {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pv-dossie__indice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  --pv-faixa: var(--pv-texto-auxiliar);
+
+  svg {
+    width: 130px;
+    height: 130px;
+    transform: rotate(-90deg);
+  }
+}
+
+.pv-dossie__anel-fundo {
+  fill: none;
+  stroke: var(--pv-borda);
+  stroke-width: 10;
+}
+
+.pv-dossie__anel {
+  fill: none;
+  stroke: var(--pv-faixa);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.pv-dossie__indice-texto {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+
+  strong {
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--pv-faixa);
+  }
+
+  span {
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--pv-texto-secundario);
+  }
+}
+
+.pv-dossie__indice-rotulo {
+  margin-top: 4px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-dossie__faixa--verde { --pv-faixa: var(--pv-sucesso); }
+.pv-dossie__faixa--amarelo { --pv-faixa: var(--pv-alerta); }
+.pv-dossie__faixa--vermelho { --pv-faixa: var(--pv-erro); }
+.pv-dossie__faixa--sem { --pv-faixa: var(--pv-texto-auxiliar); }
+
+.pv-dossie__indicadores {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pv-dossie__indicador-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: .9rem;
+
+  span {
+    font-weight: 700;
+    color: var(--pv-faixa);
+  }
+}
+
+.pv-dossie__progresso {
+  height: 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+  background: var(--pv-borda);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--pv-faixa);
+  }
+}
+
+.pv-dossie__indicador-detalhe {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .78rem;
+  color: var(--pv-texto-secundario);
+}
+
+.pv-dossie__arrumar {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+// Comparativo
+.pv-dossie__cnpj {
+  display: block;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-dossie__coluna-barra {
+  width: 28%;
+
+  small {
+    margin-left: 6px;
+    color: var(--pv-texto-secundario);
+  }
+}
+
+.pv-dossie__barra-horizontal {
+  display: inline-block;
+  width: calc(100% - 52px);
+  height: 8px;
+  border-radius: 4px;
+  background: var(--pv-borda);
+  vertical-align: middle;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--pv-primaria);
+  }
+}
+
+.pv-dossie__rankings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 16px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pv-dossie__ranking {
+  margin: 0;
+  padding-left: 22px;
+  font-size: .82rem;
+
+  li {
+    padding: 3px 0;
+    border-bottom: 1px solid var(--pv-borda);
+  }
+
+  li > span,
+  li > small {
+    display: inline-block;
+  }
+
+  small {
+    width: 44px;
+    text-align: right;
+    color: var(--pv-texto-auxiliar);
+  }
+}
+
+.pv-dossie__ranking-nome {
+  width: calc(100% - 150px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.pv-dossie__ranking li > .pv-numero:not(small) {
+  width: 100px;
+  text-align: right;
+}
+
+.pv-dossie__ranking-outros {
+  list-style: none;
+  color: var(--pv-texto-secundario);
+  font-style: italic;
+}
+
+.pv-dossie__rodape {
+  padding-top: 10px;
+  border-top: 1px solid var(--pv-borda);
+  font-size: .7rem;
+  color: var(--pv-texto-auxiliar);
+}
+
+// Impressão: só o documento, em A4, com as cores dos gráficos
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 12mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .sidebar,
+  app-navbar,
+  .navbar,
+  app-faixa-teste,
+  app-footer,
+  .footer,
+  .pv-dossie__controles,
+  .pv-dossie__arrumar,
+  app-barra-carregamento {
+    display: none !important;
+  }
+
+  .wrapper,
+  .main-panel,
+  .main-content,
+  .main-content > .container-fluid {
+    position: static !important;
+    float: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .pv-dossie__documento {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    font-size: 11px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .pv-dossie__bloco,
+  .pv-dossie__tabela tr,
+  .pv-dossie__grafico,
+  .pv-dossie__auditoria {
+    break-inside: avoid;
+  }
+
+  .pv-dossie__bloco--nova-pagina {
+    break-before: page;
+  }
+
+  .pv-dossie__rolagem {
+    overflow: visible;
+  }
+
+  .pv-dossie__grafico svg {
+    max-height: 62mm;
+  }
+
+  .pv-dossie__tabela td {
+    padding: 3px 6px;
+  }
+}

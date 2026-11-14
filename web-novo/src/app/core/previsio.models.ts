@@ -820,3 +820,102 @@ export interface ConferenciaBling {
   toleranciaDias: number;
   fecharPendentes: boolean;
 }
+
+/** Dossiê financeiro (tela Relatórios): projeção de caixa, auditoria dos lançamentos e comparativo. */
+export interface Dossie {
+  redeNome: string;
+  empresas: { nome: string; cnpj: string }[];
+  geradoEm: string;
+  dias: number;
+  de: string;
+  ate: string;
+  projecao: ProjecaoCaixa;
+  auditoria: AuditoriaLancamentos;
+  comparativo: ComparativoDossie;
+}
+
+export interface ProjecaoCaixa {
+  inicio: string;
+  fim: string;
+  fluxoCaixaAtivo: boolean;
+  totalEntradas: number;
+  totalSaidas: number;
+  saldo: number;
+  saidasVencidas: number;
+  entradasVencidas: number;
+  mediaSaidasSemana: number;
+  fatorSemanaCritica: number;
+  quantidadeCriticas: number;
+  menorSaldoAcumulado: number;
+  semanaMenorSaldo: string | null;
+  /** Semana em que o saldo acumulado fica negativo pela primeira vez. */
+  saldoNegativoEm: string | null;
+  semanas: SemanaProjecao[];
+}
+
+export interface SemanaProjecao {
+  inicio: string;
+  fim: string;
+  entradas: number;
+  saidas: number;
+  saldo: number;
+  saldoAcumulado: number;
+  /** Pico de desembolso. */
+  critica: boolean;
+  motivos: string[];
+  saldoFicaNegativo: boolean;
+}
+
+export interface AuditoriaLancamentos {
+  /** 0 a 100; nulo sem base no período. */
+  indice: number | null;
+  /** 'verde', 'amarelo' ou 'vermelho' */
+  faixa: string;
+  faixaVerde: number;
+  faixaAmarela: number;
+  indicadores: IndicadorConformidade[];
+  quantidadeReceberVencido: number;
+  valorReceberVencido: number;
+}
+
+export interface IndicadorConformidade {
+  /** 'categorias', 'notas' ou 'em-dia' */
+  chave: string;
+  nome: string;
+  percentual: number | null;
+  faixa: string;
+  peso: number;
+  quantidade: number;
+  valor: number;
+  descricao: string;
+  quantidadeAConferir: number;
+}
+
+export interface ComparativoDossie {
+  totalSaidas: number;
+  totalEntradas: number;
+  quantidadeContas: number;
+  empresas: EmpresaComparativo[];
+  fornecedores: ItemRanking[];
+  categorias: ItemRanking[];
+}
+
+export interface EmpresaComparativo {
+  empresaId: number;
+  nome: string;
+  cnpj: string;
+  saidas: number;
+  saidasPagas: number;
+  saidasEmAberto: number;
+  entradas: number;
+  quantidadeContas: number;
+  percentual: number;
+}
+
+export interface ItemRanking {
+  nome: string;
+  valor: number;
+  quantidade: number;
+  percentual: number;
+  tipo: string;
+}

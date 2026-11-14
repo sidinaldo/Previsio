@@ -6,7 +6,7 @@ using System.Xml;
 namespace Previsio.Aplicacao.Exportacao;
 
 /// <summary>
-/// Gera um arquivo Excel (.xlsx) de uma aba, sem biblioteca externa: o .xlsx é um zip de XMLs (Office Open XML).
+/// Gera um arquivo Excel (.xlsx) de uma ou várias abas, sem biblioteca externa: o .xlsx é um zip de XMLs (Office Open XML).
 /// Cabeçalho em negrito com filtro e primeira linha congelada; valores em reais, datas e datas com hora
 /// já no formato brasileiro, como números de verdade (dá para somar e filtrar no Excel).
 /// </summary>
@@ -48,18 +48,52 @@ public class PlanilhaXlsx
         _linhas.Add(valores);
     }
 
+    public string NomeAba
+    {
+        get { return _nomeAba; }
+    }
+
     public byte[] Gerar()
     {
+        return Gerar(new List<PlanilhaXlsx> { this });
+    }
+
+    /// <summary>
+    /// Um arquivo com várias abas, na ordem da lista. Abas de mesmo nome ganham " (2)", " (3)"...
+    /// </summary>
+    public static byte[] Gerar(List<PlanilhaXlsx> abas)
+    {
+        if (abas.Count == 0)
+        {
+            throw new ArgumentException("Informe ao menos uma aba.");
+        }
+        var nomes = new List<string>();
+        foreach (PlanilhaXlsx aba in abas)
+        {
+            string nome = aba._nomeAba;
+            int repeticao = 2;
+            while (nomes.Contains(nome, StringComparer.OrdinalIgnoreCase))
+            {
+                string sufixo = " (" + repeticao + ")";
+                nome = NomeAbaValido(aba._nomeAba.Substring(0, Math.Min(aba._nomeAba.Length, 31 - sufixo.Length)) + sufixo);
+                repeticao++;
+            }
+            nomes.Add(nome);
+        }
+
         using (var memoria = new MemoryStream())
         {
             using (var zip = new ZipArchive(memoria, ZipArchiveMode.Create, true))
             {
-                Gravar(zip, "[Content_Types].xml", TiposDeConteudo());
+                Gravar(zip, "[Content_Types].xml", TiposDeConteudo(abas.Count));
                 Gravar(zip, "_rels/.rels", RelacoesRaiz());
-                Gravar(zip, "xl/workbook.xml", Pasta());
-                Gravar(zip, "xl/_rels/workbook.xml.rels", RelacoesPasta());
+                Gravar(zip, "xl/workbook.xml", Pasta(abas, nomes));
+                Gravar(zip, "xl/_rels/workbook.xml.rels", RelacoesPasta(abas.Count));
                 Gravar(zip, "xl/styles.xml", Estilos());
-                GravarAba(zip);
+                for (int i = 0; i < abas.Count; i++)
+                {
+                    abas[i].GravarAba(zip, i + 1);
+                }
             }
             return memoria.ToArray();
         }
@@ -74,9 +108,9 @@ public class PlanilhaXlsx
         }
     }
 
-    private void GravarAba(ZipArchive zip)
+    private void GravarAba(ZipArchive zip, int numero)
     {
-        ZipArchiveEntry entrada = zip.CreateEntry("xl/worksheets/sheet1.xml", CompressionLevel.Optimal);
+        ZipArchiveEntry entrada = zip.CreateEntry("xl/worksheets/sheet" + numero + ".xml", CompressionLevel.Optimal);
         var configuracao = new XmlWriterSettings();
         configuracao.Encoding = new UTF8Encoding(false);
         using (Stream destino = entrada.Open())
@@ -271,14 +305,19 @@ public class PlanilhaXlsx
         return limpo;
     }
 
-    private static string TiposDeConteudo()
+    private static string TiposDeConteudo(int abas)
     {
+        var planilhas = new StringBuilder();
+        for (int i = 1; i <= abas; i++)
+        {
+            planilhas.Append("<Override PartName=\"/xl/worksheets/sheet" + i + ".xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
+        }
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
             + "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">"
             + "<Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>"
             + "<Default Extension=\"xml\" ContentType=\"application/xml\"/>"
             + "<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>"
-            + "<Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>"
+            + planilhas
             + "<Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/>"
             + "</Types>";
     }
@@ -291,15 +330,25 @@ public class PlanilhaXlsx
             + "</Relationships>";
     }
 
-    private string Pasta()
+    private static string Pasta(List<PlanilhaXlsx> abas, List<string> nomes)
     {
-        // O filtro do cabeçalho precisa do nome definido _FilterDatabase para o Excel reconhecer
-        string intervalo = "'" + _nomeAba.Replace("'", "''") + "'!$A$1:$" + LetrasColuna(_colunas.Count - 1) + "$" + Math.Max(1, _linhas.Count + 1);
+        var planilhas = new StringBuilder();
+        var filtros = new StringBuilder();
+        for (int i = 0; i < abas.Count; i++)
+        {
+            PlanilhaXlsx aba = abas[i];
+            planilhas.Append("<sheet name=\"" + System.Security.SecurityElement.Escape(nomes[i]) + "\" sheetId=\"" + (i + 1)
+                + "\" r:id=\"rId" + (i + 1) + "\"/>");
+            // O filtro do cabeçalho precisa do nome definido _FilterDatabase para o Excel reconhecer
+            string intervalo = "'" + nomes[i].Replace("'", "''") + "'!$A$1:$" + LetrasColuna(aba._colunas.Count - 1) + "$"
+                + Math.Max(1, aba._linhas.Count + 1);
+            filtros.Append("<definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"" + i + "\" hidden=\"1\">"
+                + System.Security.SecurityElement.Escape(intervalo) + "</definedName>");
+        }
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
             + "<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">"
-            + "<sheets><sheet name=\"" + System.Security.SecurityElement.Escape(_nomeAba) + "\" sheetId=\"1\" r:id=\"rId1\"/></sheets>"
-            + "<definedNames><definedName name=\"_xlnm._FilterDatabase\" localSheetId=\"0\" hidden=\"1\">"
-            + System.Security.SecurityElement.Escape(intervalo) + "</definedName></definedNames>"
+            + "<sheets>" + planilhas + "</sheets>"
+            + "<definedNames>" + filtros + "</definedNames>"
             + "</workbook>";
     }
 
@@ -309,12 +358,17 @@ public class PlanilhaXlsx
         return referencia.Substring(0, referencia.Length - 1);
     }
 
-    private static string RelacoesPasta()
+    private static string RelacoesPasta(int abas)
     {
+        var relacoes = new StringBuilder();
+        for (int i = 1; i <= abas; i++)
+        {
+            relacoes.Append("<Relationship Id=\"rId" + i + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet" + i + ".xml\"/>");
+        }
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
             + "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">"
-            + "<Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/>"
-            + "<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
+            + relacoes
+            + "<Relationship Id=\"rId" + (abas + 1) + "\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/>"
             + "</Relationships>";
     }
 

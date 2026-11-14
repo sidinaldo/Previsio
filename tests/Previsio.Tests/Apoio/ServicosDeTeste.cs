@@ -15,6 +15,7 @@ using Previsio.Aplicacao.Empresas;
 using Previsio.Aplicacao.Bling;
 using Previsio.Aplicacao.Categorias;
 using Previsio.Aplicacao.FormasPagamento;
+using Previsio.Aplicacao.Relatorios;
 using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Notas;
@@ -69,6 +70,19 @@ public static class ServicosDeTeste
     public static UsuariosService Usuarios(PrevisioDbContext db)
     {
         return new UsuariosService(new Repositorio<Usuario>(db), new Repositorio<Cliente>(db), Autenticacao(db));
+    }
+
+    public static DossieService Dossie(PrevisioDbContext db, RelatoriosOptions? opcoes = null)
+    {
+        return new DossieService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<ContaReceberSincronizada>(db),
+            new Repositorio<NotaFiscal>(db),
+            new Repositorio<CategoriaFinanceira>(db),
+            Painel(db),
+            Options.Create(opcoes ?? new RelatoriosOptions()));
     }
 
     public static PainelService Painel(PrevisioDbContext db)

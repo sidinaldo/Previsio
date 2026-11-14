@@ -1,0 +1,332 @@
+<div class="main-content">
+  <div class="container-fluid pv-dossie">
+    <div class="pv-pagina__cabecalho pv-dossie__controles">
+      <div>
+        <h1 class="pv-pagina__titulo">Relatórios</h1>
+        <p class="pv-pagina__subtitulo">Dossiê financeiro da rede: projeção de caixa, saúde dos lançamentos e onde o dinheiro vai.</p>
+      </div>
+    </div>
+
+    <div class="card pv-dossie__controles">
+      <div class="card-body pv-dossie__filtros">
+        <div class="pv-dossie__campo">
+          <label class="pv-rotulo" for="dossie-dias">Projeção</label>
+          <select id="dossie-dias" class="pv-campo" [value]="dias()" (change)="mudarDias($event)">
+            @for (h of horizontes; track h) {
+              <option [value]="h" [selected]="h === dias()">Próximos {{ h }} dias</option>
+            }
+          </select>
+        </div>
+        <div class="pv-dossie__campo">
+          <label class="pv-rotulo" for="dossie-de">Período de</label>
+          <input id="dossie-de" type="date" class="pv-campo pv-campo--texto" [value]="de()" (change)="mudarDe($event)">
+        </div>
+        <div class="pv-dossie__campo">
+          <label class="pv-rotulo" for="dossie-ate">Até</label>
+          <input id="dossie-ate" type="date" class="pv-campo pv-campo--texto" [value]="ate()" (change)="mudarAte($event)">
+        </div>
+        <button type="button" class="btn btn-secundario" [disabled]="carregando()" (click)="carregar()">
+          <i class="material-icons" aria-hidden="true">refresh</i> Atualizar
+        </button>
+        <span class="pv-dossie__espaco"></span>
+        <div class="pv-dossie__exportacoes">
+        <app-exportar [gerar]="exportar" nomePadrao="previsio-dossie.xlsx" titulo="Baixar a planilha com uma aba por bloco e as contas do período"
+                      [desabilitado]="!dossie()" />
+        <button type="button" class="btn btn-info" [disabled]="!dossie() || carregando()" (click)="imprimir()"
+                title="Abre a impressão: escolha &quot;Salvar como PDF&quot;">
+          <i class="material-icons" aria-hidden="true">picture_as_pdf</i> Exportar PDF
+        </button>
+        </div>
+      </div>
+      <p class="pv-formulario__ajuda pv-dossie__dica">
+        A projeção mostra as contas em aberto dos próximos dias. O período vale para a auditoria e o comparativo
+        (contas pagas e em aberto que vencem nele). No PDF, escolha "Salvar como PDF" na janela de impressão.
+      </p>
+    </div>
+
+    @if (erro()) {
+      <div class="alert alert-danger pv-dossie__controles" role="alert"><span>{{ erro() }}</span></div>
+    }
+
+    @if (dossie(); as d) {
+      <article class="pv-dossie__documento" [class.pv-dossie__documento--carregando]="carregando()" aria-label="Dossiê financeiro">
+        <!-- Cabeçalho do documento -->
+        <header class="pv-dossie__cabecalho">
+          <div class="pv-dossie__marca">
+            <app-simbolo class="pv-dossie__simbolo" />
+            <div>
+              <span class="pv-dossie__produto">Previsio</span>
+              <span class="pv-dossie__tipo">Dossiê financeiro</span>
+            </div>
+          </div>
+          <div class="pv-dossie__identificacao">
+            <strong>{{ d.redeNome }}</strong>
+            <span>
+              @for (empresa of d.empresas; track empresa.cnpj; let ultima = $last) {
+                {{ empresa.nome }} ({{ cnpj(empresa.cnpj) }})@if (!ultima) {<span>, </span>}
+              }
+            </span>
+            <span>Período {{ d.de | date:'dd/MM/yyyy' }} a {{ d.ate | date:'dd/MM/yyyy' }} · projeção de {{ d.dias }} dias</span>
+            <span class="pv-dossie__gerado">Gerado em {{ d.geradoEm | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </header>
+
+        <!-- 1. Projeção -->
+        <section class="pv-dossie__bloco">
+          <h2 class="pv-dossie__titulo"><span class="pv-dossie__numero">1</span> Projeção de caixa · próximos {{ d.dias }} dias</h2>
+          <div class="pv-dossie__kpis">
+            <div class="pv-dossie__kpi">
+              <span>Entradas previstas</span>
+              @if (d.projecao.fluxoCaixaAtivo) {
+                <strong class="pv-numero">{{ d.projecao.totalEntradas | currency:'BRL':'symbol':'1.0-0' }}</strong>
+              } @else {
+                <strong class="pv-dossie__sem">Fluxo de caixa desligado</strong>
+              }
+            </div>
+            <div class="pv-dossie__kpi">
+              <span>Saídas previstas</span>
+              <strong class="pv-numero">{{ d.projecao.totalSaidas | currency:'BRL':'symbol':'1.0-0' }}</strong>
+            </div>
+            <div class="pv-dossie__kpi" [class.pv-dossie__kpi--negativo]="d.projecao.saldo < 0">
+              <span>Saldo do período</span>
+              <strong class="pv-numero">{{ d.projecao.saldo | currency:'BRL':'symbol':'1.0-0' }}</strong>
+            </div>
+            @if (d.projecao.fluxoCaixaAtivo) {
+              <div class="pv-dossie__kpi" [class.pv-dossie__kpi--negativo]="d.projecao.saldoNegativoEm">
+                <span>Saldo negativo a partir de</span>
+                @if (d.projecao.saldoNegativoEm) {
+                  <strong class="pv-numero">{{ d.projecao.saldoNegativoEm | date:'dd/MM' }}</strong>
+                } @else {
+                  <strong class="pv-dossie__sem">Não fica no horizonte</strong>
+                }
+              </div>
+            }
+            <div class="pv-dossie__kpi" [class.pv-dossie__kpi--negativo]="d.projecao.quantidadeCriticas > 0">
+              <span>Semanas críticas</span>
+              <strong class="pv-numero">{{ d.projecao.quantidadeCriticas }} de {{ d.projecao.semanas.length }}</strong>
+            </div>
+          </div>
+
+          @if (d.projecao.semanas.length > 0) {
+            <figure class="pv-dossie__grafico">
+              <svg [attr.viewBox]="'0 0 ' + larguraGrafico + ' ' + alturaGrafico" role="img"
+                   [attr.aria-label]="'Entradas e saídas por semana nos próximos ' + d.dias + ' dias, com o saldo acumulado'">
+                @for (marca of marcasEixo(); track marca.y) {
+                  <line class="pv-dossie__grade" [attr.x1]="margemEsquerda" [attr.x2]="larguraGrafico" [attr.y1]="marca.y" [attr.y2]="marca.y" />
+                  <text class="pv-dossie__eixo" [attr.x]="margemEsquerda - 6" [attr.y]="marca.y + 4" text-anchor="end">{{ marca.texto }}</text>
+                }
+                @for (barra of barras(); track barra.rotulo) {
+                  <g>
+                    <title>{{ barra.dica }}</title>
+                    <rect class="pv-dossie__barra-entrada" [attr.x]="barra.x" [attr.y]="barra.yEntradas"
+                          [attr.width]="barra.largura" [attr.height]="barra.alturaEntradas" rx="2" />
+                    <rect class="pv-dossie__barra-saida" [class.pv-dossie__barra-saida--critica]="barra.critica"
+                          [attr.x]="barra.x + barra.largura + 2" [attr.y]="barra.ySaidas"
+                          [attr.width]="barra.largura" [attr.height]="barra.alturaSaidas" rx="2" />
+                    <text class="pv-dossie__eixo" [attr.x]="barra.x + barra.largura + 1" [attr.y]="alturaGrafico - 8" text-anchor="middle">{{ barra.rotulo }}</text>
+                  </g>
+                }
+                @if (d.projecao.fluxoCaixaAtivo) {
+                  <polyline class="pv-dossie__linha-saldo" [attr.points]="linhaSaldo()" />
+                }
+              </svg>
+              <figcaption class="pv-dossie__legenda">
+                @if (d.projecao.fluxoCaixaAtivo) {
+                  <span><i class="pv-dossie__cor pv-dossie__cor--entrada"></i> Entradas</span>
+                }
+                <span><i class="pv-dossie__cor pv-dossie__cor--saida"></i> Saídas</span>
+                <span><i class="pv-dossie__cor pv-dossie__cor--critica"></i> Semana crítica</span>
+                @if (d.projecao.fluxoCaixaAtivo) {
+                  <span><i class="pv-dossie__cor pv-dossie__cor--saldo"></i> Saldo acumulado</span>
+                }
+              </figcaption>
+            </figure>
+
+            <div class="pv-dossie__rolagem"><table class="pv-dossie__tabela">
+              <thead>
+                <tr>
+                  <th>Semana</th>
+                  @if (d.projecao.fluxoCaixaAtivo) {
+                    <th class="text-right">Entradas</th>
+                  }
+                  <th class="text-right">Saídas</th>
+                  @if (d.projecao.fluxoCaixaAtivo) {
+                    <th class="text-right">Saldo acumulado</th>
+                  }
+                  <th>Atenção</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (semana of d.projecao.semanas; track semana.inicio) {
+                  <tr [class.pv-dossie__critica]="semana.critica">
+                    <td class="pv-numero">{{ semana.inicio | date:'dd/MM' }} a {{ semana.fim | date:'dd/MM' }}</td>
+                    @if (d.projecao.fluxoCaixaAtivo) {
+                      <td class="text-right pv-numero">{{ semana.entradas | currency:'BRL':'symbol':'1.0-0' }}</td>
+                    }
+                    <td class="text-right pv-numero">{{ semana.saidas | currency:'BRL':'symbol':'1.0-0' }}</td>
+                    @if (d.projecao.fluxoCaixaAtivo) {
+                      <td class="text-right pv-numero" [class.pv-dossie__negativo]="semana.saldoAcumulado < 0">
+                        {{ semana.saldoAcumulado | currency:'BRL':'symbol':'1.0-0' }}
+                      </td>
+                    }
+                    <td>
+                      @if (semana.critica) {
+                        <span class="pv-dossie__selo">{{ semana.motivos.join(' · ') }}</span>
+                      }
+                      @if (semana.saldoFicaNegativo) {
+                        <span class="pv-dossie__selo pv-dossie__selo--saldo">Saldo fica negativo</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table></div>
+          } @else {
+            <p class="pv-formulario__ajuda">Nenhuma conta em aberto nos próximos {{ d.dias }} dias.</p>
+          }
+          <p class="pv-dossie__nota">
+            Semana crítica: pico de desembolso, com saídas a partir de {{ d.projecao.fatorSemanaCritica | number:'1.0-1' }}× a média semanal
+            ({{ d.projecao.mediaSaidasSemana | currency:'BRL':'symbol':'1.0-0' }}).
+            O saldo parte de zero (só o efeito das contas).
+            @if (d.projecao.saidasVencidas > 0) {
+              Fora da projeção: {{ d.projecao.saidasVencidas | currency:'BRL':'symbol':'1.0-0' }} a pagar já vencidos.
+            }
+          </p>
+        </section>
+
+        <!-- 2. Auditoria -->
+        <section class="pv-dossie__bloco">
+          <h2 class="pv-dossie__titulo"><span class="pv-dossie__numero">2</span> Saúde dos lançamentos no Bling</h2>
+          <div class="pv-dossie__auditoria">
+            <div class="pv-dossie__indice" [class]="'pv-dossie__indice pv-dossie__faixa--' + (d.auditoria.faixa || 'sem')">
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="pv-dossie__anel-fundo" cx="50" cy="50" r="42" />
+                <circle class="pv-dossie__anel" cx="50" cy="50" r="42"
+                        [attr.stroke-dasharray]="anelIndice().preenchido + ' ' + anelIndice().circunferencia" />
+              </svg>
+              <div class="pv-dossie__indice-texto">
+                @if (d.auditoria.indice !== null) {
+                  <strong>{{ d.auditoria.indice }}</strong>
+                } @else {
+                  <strong>—</strong>
+                }
+                <span>{{ textoFaixa(d.auditoria.faixa) }}</span>
+              </div>
+              <span class="pv-dossie__indice-rotulo">Índice de conformidade</span>
+            </div>
+            <ul class="pv-dossie__indicadores">
+              @for (indicador of d.auditoria.indicadores; track indicador.chave) {
+                <li [class]="'pv-dossie__faixa--' + (indicador.faixa || 'sem')">
+                  <div class="pv-dossie__indicador-linha">
+                    <strong>{{ indicador.nome }}</strong>
+                    <span class="pv-numero">
+                      @if (indicador.percentual !== null) { {{ indicador.percentual }}% } @else { sem dados }
+                    </span>
+                  </div>
+                  <div class="pv-dossie__progresso" aria-hidden="true"><span [style.width.%]="indicador.percentual ?? 0"></span></div>
+                  <div class="pv-dossie__indicador-detalhe">
+                    <span>
+                      {{ indicador.descricao }}@if (indicador.valor > 0) {<span> · {{ indicador.valor | currency:'BRL':'symbol':'1.0-0' }}</span>}
+                      @if (indicador.quantidadeAConferir > 0) {
+                        <span> · {{ indicador.quantidadeAConferir }} ainda a conferir</span>
+                      }
+                    </span>
+                    @if (indicador.quantidade > 0) {
+                      <a class="pv-dossie__arrumar" [routerLink]="linkIndicador(indicador).rota" [queryParams]="linkIndicador(indicador).parametros">Arrumar</a>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+          <p class="pv-dossie__nota">
+            Em ordem a partir de {{ d.auditoria.faixaVerde }}; atenção a partir de {{ d.auditoria.faixaAmarela }}.
+            Categorias: contas do período já conferidas no Bling. Notas: recebidas no período. Em dia: tudo o que está em aberto.
+            @if (d.auditoria.valorReceberVencido > 0) {
+              A receber vencido: {{ d.auditoria.quantidadeReceberVencido }} contas, {{ d.auditoria.valorReceberVencido | currency:'BRL':'symbol':'1.0-0' }}.
+            }
+          </p>
+        </section>
+
+        <!-- 3. Comparativo -->
+        <section class="pv-dossie__bloco pv-dossie__bloco--nova-pagina">
+          <h2 class="pv-dossie__titulo">
+            <span class="pv-dossie__numero">3</span> Onde o dinheiro vai · {{ d.de | date:'dd/MM' }} a {{ d.ate | date:'dd/MM/yyyy' }}
+          </h2>
+          <p class="pv-dossie__resumo">
+            {{ d.comparativo.totalSaidas | currency:'BRL':'symbol':'1.0-0' }} em {{ d.comparativo.quantidadeContas }}
+            {{ d.comparativo.quantidadeContas === 1 ? 'conta a pagar' : 'contas a pagar' }} (pagas e em aberto) que vencem no período.
+          </p>
+          <div class="pv-dossie__rolagem"><table class="pv-dossie__tabela">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th class="text-right">Saídas</th>
+                <th class="pv-dossie__coluna-barra">Peso no grupo</th>
+                <th class="text-right">Pagas</th>
+                <th class="text-right">Em aberto</th>
+                @if (d.projecao.fluxoCaixaAtivo) {
+                  <th class="text-right">Entradas</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (empresa of d.comparativo.empresas; track empresa.empresaId) {
+                <tr>
+                  <td>{{ empresa.nome }}<small class="pv-dossie__cnpj">{{ cnpj(empresa.cnpj) }}</small></td>
+                  <td class="text-right pv-numero">{{ empresa.saidas | currency:'BRL':'symbol':'1.0-0' }}</td>
+                  <td class="pv-dossie__coluna-barra">
+                    <span class="pv-dossie__barra-horizontal"><span [style.width.%]="larguraEmpresa(empresa.saidas)"></span></span>
+                    <small class="pv-numero">{{ empresa.percentual | number:'1.0-1' }}%</small>
+                  </td>
+                  <td class="text-right pv-numero">{{ empresa.saidasPagas | currency:'BRL':'symbol':'1.0-0' }}</td>
+                  <td class="text-right pv-numero">{{ empresa.saidasEmAberto | currency:'BRL':'symbol':'1.0-0' }}</td>
+                  @if (d.projecao.fluxoCaixaAtivo) {
+                    <td class="text-right pv-numero">{{ empresa.entradas | currency:'BRL':'symbol':'1.0-0' }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table></div>
+
+          <div class="pv-dossie__rankings">
+            <div>
+              <h3 class="pv-dossie__subtitulo">Fornecedores que mais consomem caixa</h3>
+              <ol class="pv-dossie__ranking">
+                @for (item of d.comparativo.fornecedores; track item.nome) {
+                  <li [class.pv-dossie__ranking-outros]="item.tipo !== 'fornecedor'">
+                    <span class="pv-dossie__ranking-nome">{{ item.nome }}</span>
+                    <span class="pv-numero">{{ item.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
+                    <small class="pv-numero">{{ item.percentual | number:'1.0-1' }}%</small>
+                  </li>
+                } @empty {
+                  <li class="pv-dossie__ranking-outros">Nenhuma conta no período.</li>
+                }
+              </ol>
+            </div>
+            <div>
+              <h3 class="pv-dossie__subtitulo">Categorias</h3>
+              <ol class="pv-dossie__ranking">
+                @for (item of d.comparativo.categorias; track item.nome) {
+                  <li [class.pv-dossie__ranking-outros]="item.tipo !== 'categoria'">
+                    <span class="pv-dossie__ranking-nome">{{ item.nome }}</span>
+                    <span class="pv-numero">{{ item.valor | currency:'BRL':'symbol':'1.0-0' }}</span>
+                    <small class="pv-numero">{{ item.percentual | number:'1.0-1' }}%</small>
+                  </li>
+                } @empty {
+                  <li class="pv-dossie__ranking-outros">Nenhuma conta no período.</li>
+                }
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <footer class="pv-dossie__rodape">
+          Previsio · dados das contas do Bling sincronizadas até {{ d.geradoEm | date:'dd/MM/yyyy HH:mm' }}. Valores em reais.
+        </footer>
+      </article>
+    } @else if (carregando()) {
+      <p class="pv-formulario__ajuda">Montando o dossiê...</p>
+    }
+  </div>
+</div>
