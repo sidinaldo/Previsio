@@ -14,6 +14,9 @@ let proximoId = 1;
  * Só aparece quando há mais itens do que cabem na menor página.
  * Com [tamanhos]="[]" some o "Por página" (cartões estreitos).
  */
+// Depois da troca de página, tempo para a lista nova da API chegar e a página encolher
+const CONFERIR_DE_NOVO_MS = 700;
+
 @Component({
   selector: 'app-paginacao',
   host: {
@@ -114,23 +117,26 @@ export class PaginacaoComponent {
   /**
    * Âncora da tabela: quem estava no fim de uma página longa (100 linhas) e troca de página ou
    * passa para 10 por página ficaria olhando o rodapé. Se o topo do card da tabela saiu da tela,
-   * rola até ele; se já está visível, não mexe.
+   * rola até ele (sem animação: a lista nova chega da API no meio e cortaria a rolagem suave).
+   * Confere de novo depois que a lista nova chega e a página encolhe.
    */
   private trazerTabelaParaATela(): void {
     const host = this.elemento.nativeElement as HTMLElement;
-    setTimeout(() => {
-      let alvo = host.closest('.card') as HTMLElement | null;
-      if (alvo === null) {
-        alvo = host.parentElement;
-      }
-      if (alvo === null || alvo.getBoundingClientRect().top >= 0) {
-        return;
-      }
-      let suave = true;
-      if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        suave = false;
-      }
-      alvo.scrollIntoView({ block: 'start', behavior: suave ? 'smooth' : 'auto' });
-    });
+    setTimeout(() => this.rolarSeSaiuDaTela(host), 0);
+    setTimeout(() => this.rolarSeSaiuDaTela(host), CONFERIR_DE_NOVO_MS);
+  }
+
+  private rolarSeSaiuDaTela(host: HTMLElement): void {
+    if (!host.isConnected) {
+      return;
+    }
+    let alvo = host.closest('.card') as HTMLElement | null;
+    if (alvo === null) {
+      alvo = host.parentElement;
+    }
+    if (alvo === null || alvo.getBoundingClientRect().top >= 0) {
+      return;
+    }
+    alvo.scrollIntoView({ block: 'start' });
   }
 }

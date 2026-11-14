@@ -99,18 +99,28 @@ describe('paginação', () => {
     expect(tela.querySelector('app-paginacao')!.classList.contains('pv-paginacao')).toBe(false);
   });
 
-  it('âncora: trocar de 100 para 10 com o topo da tabela fora da tela rola até o card', async () => {
+  it('âncora: trocar de 100 para 10 com o topo da tabela fora da tela rola até o card, sem animação', async () => {
     const { tela, rolar } = await montarComCard(-1200);
     const seletor = tela.querySelector('select') as HTMLSelectElement;
     seletor.value = '10';
     seletor.dispatchEvent(new Event('change'));
     await new Promise(r => setTimeout(r));
     expect(rolar).toHaveBeenCalledTimes(1);
-    expect(rolar.mock.calls[0][0].block).toBe('start');
+    expect(rolar.mock.calls[0][0]).toEqual({ block: 'start' });
+  });
 
-    botao(tela, 'Próxima página').click();
-    await new Promise(r => setTimeout(r));
-    expect(rolar).toHaveBeenCalledTimes(2);
+  it('âncora: confere de novo depois que a lista nova chega', async () => {
+    vi.useFakeTimers();
+    try {
+      const { tela, rolar } = await montarComCard(-1200);
+      botao(tela, 'Próxima página').click();
+      vi.advanceTimersByTime(0);
+      expect(rolar).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(700);
+      expect(rolar).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('âncora: com o topo da tabela visível não rola', async () => {
