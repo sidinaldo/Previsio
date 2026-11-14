@@ -252,6 +252,11 @@ export class PrevisioService {
     return this.http.post<void>(`${this.api}/clientes/${clienteId}/resumo-semanal/teste`, {});
   }
 
+  /** Manda o aviso de vencimentos de hoje agora, só para o usuário logado. Não conta como o envio do dia. */
+  enviarAlertaVencimentosTeste(clienteId: number): Observable<void> {
+    return this.http.post<void>(`${this.api}/clientes/${clienteId}/alertas-vencimento/teste`, {});
+  }
+
   /** Notas que chegaram por e-mail só em PDF e ainda precisam do XML. */
   obterNotasSoPdf(empresaId?: number): Observable<NotaSoPdf[]> {
     let params = new HttpParams();

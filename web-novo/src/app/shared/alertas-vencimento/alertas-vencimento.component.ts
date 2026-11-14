@@ -8,7 +8,7 @@ import { CarregandoDirective } from '../carregando.directive';
 /**
  * Card "Avisos de vencimento" da rede: depois de quantos dias de atraso a conta vencida vira aviso
  * (sininho e e-mails) e o e-mail diário com as contas que vencem hoje e amanhã.
- * Usado em Empresas (financeiro da rede e admin) e no detalhe do cliente (admin).
+ * "Enviar para mim agora" manda o aviso de hoje só para quem clicou (o admin não recebe o diário).
  */
 @Component({
   selector: 'app-alertas-vencimento',
@@ -64,12 +64,18 @@ import { CarregandoDirective } from '../carregando.directive';
               </span>
             </div>
           </div>
-          <p class="pv-formulario__ajuda">Vai para os usuários da rede, no horário de Brasília. Se não houver nada vencido nem vencendo, o e-mail não sai.</p>
+          <p class="pv-formulario__ajuda">Vai para os usuários da rede, no horário de Brasília. Se não houver nada vencido nem vencendo, o e-mail não sai.
+            "Enviar para mim agora" manda o aviso de hoje só para você, sem contar como o envio do dia.</p>
           </div>
           </div>
         </div>
         <div class="pv-formulario__acoes">
-          <button type="button" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando()" (click)="salvar()">Salvar</button>
+          <button type="button" class="btn btn-secundario" [pvCarregando]="acao() === 'teste'" [disabled]="acao() !== null"
+                  (click)="enviarTeste()">
+            <i class="material-icons" aria-hidden="true">send</i> Enviar para mim agora
+          </button>
+          <button type="button" class="btn btn-info" [pvCarregando]="acao() === 'salvar'" [disabled]="acao() !== null"
+                  (click)="salvar()">Salvar</button>
         </div>
       } @else if (erro()) {
         <div class="card-body"><div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div></div>
@@ -90,7 +96,7 @@ export class AlertasVencimentoComponent {
   readonly dias = signal(1);
   readonly diarioAtivo = signal(true);
   readonly hora = signal(7);
-  readonly salvando = signal(false);
+  readonly acao = signal<'salvar' | 'teste' | null>(null);
   readonly mensagem = signal('');
   readonly erro = signal('');
 
@@ -125,17 +131,34 @@ export class AlertasVencimentoComponent {
     }
     this.mensagem.set('');
     this.erro.set('');
-    this.salvando.set(true);
+    this.acao.set('salvar');
     const dados: AlertasVencimento = { avisoVencidasDias: dias, alertaDiarioAtivo: this.diarioAtivo(), alertaDiarioHora: this.hora() };
     this.api.alterarAlertasVencimento(this.clienteId(), dados).subscribe({
       next: salvo => {
         this.preencher(salvo);
-        this.salvando.set(false);
+        this.acao.set(null);
         this.mensagem.set('Avisos de vencimento salvos.');
       },
       error: erro => {
-        this.salvando.set(false);
+        this.acao.set(null);
         this.erro.set(mensagemDaApi(erro, 'Não consegui salvar os avisos de vencimento.'));
+      }
+    });
+  }
+
+  /** O aviso de hoje (o que vence hoje, amanhã e as vencidas), só para quem clicou; não conta como o envio do dia. */
+  enviarTeste(): void {
+    this.mensagem.set('');
+    this.erro.set('');
+    this.acao.set('teste');
+    this.api.enviarAlertaVencimentosTeste(this.clienteId()).subscribe({
+      next: () => {
+        this.acao.set(null);
+        this.mensagem.set('Aviso de vencimentos enviado para o seu e-mail. Confira a caixa de entrada.');
+      },
+      error: erro => {
+        this.acao.set(null);
+        this.erro.set(mensagemDaApi(erro, 'Não consegui enviar o aviso. Tente de novo.'));
       }
     });
   }

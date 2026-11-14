@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Vencimentos;
 using Previsio.Aplicacao.Dtos;
@@ -38,5 +39,24 @@ public class AlertasVencimentoController : PrevisioControllerBase
             return NotFound(ClientesService.MensagemNaoEncontrado);
         }
         return Responder(await _alertas.AlterarAsync(clienteId, dados, cancelamento));
+    }
+
+    /// <summary>
+    /// Envia o aviso de hoje agora, só para quem clicou. Não conta como o envio do dia.
+    /// </summary>
+    [HttpPost("teste")]
+    public async Task<IActionResult> EnviarTeste(int clienteId, CancellationToken cancelamento)
+    {
+        int? usuarioId = User.UsuarioId();
+        if (!usuarioId.HasValue)
+        {
+            return Unauthorized();
+        }
+        if (!User.PodeAcessarCliente(clienteId))
+        {
+            return NotFound(ClientesService.MensagemNaoEncontrado);
+        }
+        Resultado resultado = await _alertas.EnviarTesteAsync(clienteId, usuarioId.Value, cancelamento);
+        return Responder(resultado, () => NoContent());
     }
 }

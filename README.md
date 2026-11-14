@@ -49,6 +49,9 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
   valor e, nas vencidas, os dias de atraso, até `AlertaVencimentos:MaximoContasPorBloco` (padrão 10; o resto vira
   "e mais N contas"). Cada bloco tem o link para Contas a pagar já filtrada (`?situacao=Abertas&de=&ate=` ou
   `?situacao=Vencidas`); quem não está logado entra e volta direto para a lista.
+  Vai para os usuários da rede (o admin não recebe). **Enviar para mim agora** (Configurações → Avisos de vencimento,
+  `POST /api/clientes/{id}/alertas-vencimento/teste`) manda o aviso de hoje só para quem clicou, admin inclusive, sem
+  contar como o envio do dia; sem nada vencendo hoje, amanhã ou vencido, não envia e diz o motivo.
 - **Busca completa na SEFAZ:** com o certificado A1 da empresa (ou da matriz, mesma raiz de CNPJ), o Previsio lê a
   distribuição de NF-e por NSU e pega a nota que o fornecedor não mandou por e-mail. A primeira busca pula o histórico
   (só notas de agora em diante); resumo de nota recebe a Ciência da Operação e o XML completo chega na busca seguinte,

@@ -97,6 +97,59 @@ public class AlertaVencimentosService
         return Resultado<AlertasVencimentoDto>.Ok(ParaDto(cliente));
     }
 
+    public const string MensagemNadaParaAvisar =
+        "Hoje não há aviso para enviar: nenhuma conta em aberto vence hoje ou amanhã e nenhuma passou da tolerância de atraso.";
+
+    /// <summary>
+    /// Envia o aviso de hoje agora, só para quem clicou (inclusive o admin, que não recebe o diário).
+    /// Não conta como o envio do dia. Sem nada para avisar, não envia e diz o motivo.
+    /// </summary>
+    public async Task<Resultado> EnviarTesteAsync(int clienteId, int usuarioId, CancellationToken cancelamento)
+    {
+        if (!_email.Configurado)
+        {
+            return Resultado.Invalido(ResumoSemanalService.MensagemSmtpNaoConfigurado);
+        }
+        Cliente? cliente = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        if (cliente == null)
+        {
+            return Resultado.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
+        }
+        Usuario? usuario = await _usuarios.ConsultarSomenteLeitura().FirstOrDefaultAsync(u => u.Id == usuarioId, cancelamento);
+        if (usuario == null)
+        {
+            return Resultado.NaoEncontrado(null);
+        }
+
+        DateTime hoje = TimeZoneInfo.ConvertTimeFromUtc(_relogio.GetUtcNow().UtcDateTime, RelogioBrasil.Fuso).Date;
+        MensagemEmail? modelo = await MontarAsync(cliente, hoje, cancelamento);
+        if (modelo == null)
+        {
+            return Resultado.Invalido(MensagemNadaParaAvisar);
+        }
+
+        var mensagem = new MensagemEmail();
+        mensagem.Para = usuario.Email;
+        mensagem.NomePara = usuario.Nome;
+        mensagem.Assunto = modelo.Assunto;
+        mensagem.Html = modelo.Html.Replace("{nome}", WebUtility.HtmlEncode(usuario.Nome));
+        mensagem.Texto = modelo.Texto.Replace("{nome}", usuario.Nome);
+        try
+        {
+            await _email.EnviarAsync(mensagem, cancelamento);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception erro)
+        {
+            _logger.LogError(erro, "Falha ao enviar o aviso de vencimentos de teste da rede {ClienteId}", clienteId);
+            return Resultado.Invalido(ResumoSemanalService.MensagemFalhaEnvio);
+        }
+        return Resultado.Ok();
+    }
+
     /// <summary>
     /// De hora em hora: manda o alerta das redes cuja hora chegou e que ainda não receberam hoje.
     /// </summary>

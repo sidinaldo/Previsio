@@ -251,4 +251,52 @@ public class VencimentosTests
         Assert.Contains("2 contas vencidas em aberto no Bling, somando R$ 150,50", resumoEmail.Texto);
         Assert.Contains("Ver as vencidas: https://x/#/pages/contas-pagar?situacao=Vencidas", resumoEmail.Texto);
     }
+
+    [Fact]
+    public async Task Enviar_para_mim_agora_manda_so_para_quem_clicou_mesmo_admin_e_desligado()
+    {
+        await CadastrarRede();
+        var admin = new Usuario { Nome = "Sidinaldo", Email = "admin@previsio.com.br", SenhaHash = "x", Perfil = PerfilUsuario.Admin };
+        _db.Usuarios.Add(admin);
+        Conta(_norte, 1, 250m, fornecedor: "ALFA DISTRIBUIDORA");
+        Cliente rede = _db.Clientes.Single(c => c.Id == _rede.Id);
+        rede.AlertaVencimentosAtivo = false;
+        await _db.SaveChangesAsync();
+
+        Resultado resultado = await Alertas().EnviarTesteAsync(_rede.Id, admin.Id, CancellationToken.None);
+
+        Assert.True(resultado.Sucesso);
+        MensagemEmail email = Assert.Single(_email.Enviados);
+        Assert.Equal("admin@previsio.com.br", email.Para);
+        Assert.Contains("Sidinaldo", email.Texto);
+        Assert.Contains("ALFA DISTRIBUIDORA", email.Texto);
+        Assert.DoesNotContain("{nome}", email.Html);
+        // Não conta como o envio do dia
+        Assert.Null(_db.Clientes.Single(c => c.Id == _rede.Id).AlertaVencimentosEnviadoEm);
+    }
+
+    [Fact]
+    public async Task Enviar_para_mim_agora_sem_nada_sem_smtp_ou_com_falha_explica_o_motivo()
+    {
+        await CadastrarRede();
+        int ana = _db.Usuarios.Single().Id;
+        Conta(_norte, 5, 100m);
+        await _db.SaveChangesAsync();
+
+        Resultado nada = await Alertas().EnviarTesteAsync(_rede.Id, ana, CancellationToken.None);
+        Assert.False(nada.Sucesso);
+        Assert.Equal(AlertaVencimentosService.MensagemNadaParaAvisar, nada.Mensagem);
+        Assert.Empty(_email.Enviados);
+
+        Conta(_norte, 0, 100m);
+        await _db.SaveChangesAsync();
+        _email.Configurado = false;
+        Resultado semSmtp = await Alertas().EnviarTesteAsync(_rede.Id, ana, CancellationToken.None);
+        Assert.Equal(ResumoSemanalService.MensagemSmtpNaoConfigurado, semSmtp.Mensagem);
+
+        _email.Configurado = true;
+        _email.Falhar = true;
+        Resultado comFalha = await Alertas().EnviarTesteAsync(_rede.Id, ana, CancellationToken.None);
+        Assert.Equal(ResumoSemanalService.MensagemFalhaEnvio, comFalha.Mensagem);
+    }
 }
