@@ -41,7 +41,7 @@ describe('menu lateral', () => {
   it('menu real do gestor: Usuários em Configuração, sem o grupo Administração', () => {
     const visiveis = gruposVisiveis(MENU, false, true);
     expect(visiveis.map(g => g.titulo)).toEqual(['Financeiro', 'Notas', 'Configuração']);
-    expect(visiveis[2].itens.map(i => i.path)).toEqual(['/pages/empresas', '/pages/usuarios']);
+    expect(visiveis[2].itens.map(i => i.path)).toEqual(['/pages/empresas', '/pages/usuarios', '/pages/configuracoes']);
   });
 
   it('menu real do usuário comum: Financeiro, Notas e Configuração, sem Usuários nem Falhas', () => {
@@ -53,7 +53,8 @@ describe('menu lateral', () => {
       '/pages/contas-receber',
       '/pages/notas-recebidas',
       '/pages/notas-pendentes',
-      '/pages/empresas'
+      '/pages/empresas',
+      '/pages/configuracoes'
     ]);
   });
 

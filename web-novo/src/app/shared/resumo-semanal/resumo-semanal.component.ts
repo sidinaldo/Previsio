@@ -21,15 +21,14 @@ export const TODO_DIA_UTIL = 7;
   selector: 'app-resumo-semanal',
   imports: [FormsModule, DatePipe, CarregandoDirective],
   template: `
-    <div class="card">
-      <div class="pv-card__cabecalho">
-        <div>
-          <h2 class="pv-card__titulo">Resumo por e-mail</h2>
-          <p class="pv-card__descricao">
-            O que vence nos próximos 7 dias, o total dos próximos 30, as notas recebidas desde o último resumo e o que está pendente.
-          </p>
-        </div>
+    <section class="pv-secao">
+      <div class="pv-secao__cabecalho">
+        <h2 class="pv-card__titulo">Resumo por e-mail</h2>
+        <p class="pv-card__descricao">
+          O que vence nos próximos 7 dias, o total dos próximos 30, as notas recebidas desde o último resumo e o que está pendente.
+        </p>
       </div>
+      <div class="card pv-secao__card">
       @if (resumo(); as atual) {
         <form (ngSubmit)="salvar()">
           <div class="card-body pv-resumo">
@@ -83,11 +82,11 @@ export const TODO_DIA_UTIL = 7;
             </p>
           </div>
           <div class="pv-formulario__acoes">
-            <button type="submit" class="btn btn-info" [pvCarregando]="acao() === 'salvar'" [disabled]="acao() !== null">Salvar</button>
             <button type="button" class="btn btn-secundario" [pvCarregando]="acao() === 'teste'" [disabled]="acao() !== null"
                     (click)="enviarTeste()">
               <i class="material-icons" aria-hidden="true">send</i> Enviar para mim agora
             </button>
+            <button type="submit" class="btn btn-info" [pvCarregando]="acao() === 'salvar'" [disabled]="acao() !== null">Salvar</button>
           </div>
         </form>
       } @else if (erro()) {
@@ -96,6 +95,7 @@ export const TODO_DIA_UTIL = 7;
         <div class="card-body"><p class="pv-formulario__ajuda">Carregando...</p></div>
       }
     </div>
+    </section>
   `
 })
 export class ResumoSemanalComponent {

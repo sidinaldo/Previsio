@@ -68,8 +68,10 @@ describe('ResumoSemanalComponent', () => {
     api.enviarResumoSemanalTeste = vi.fn(() => throwError(() =>
       new HttpErrorResponse({ status: 400, error: 'O envio de e-mail não está configurado no servidor (seção Smtp).' })));
     const { fixture, tela } = await montar(api);
-    const botoes = tela.querySelectorAll('.pv-formulario__acoes button');
-    (botoes[1] as HTMLButtonElement).click();
+    // "Enviar para mim agora" fica à esquerda do Salvar
+    const enviar = Array.from(tela.querySelectorAll('.pv-formulario__acoes button'))
+      .find(b => b.textContent?.includes('Enviar para mim agora')) as HTMLButtonElement;
+    enviar.click();
     await fixture.whenStable();
     expect(api.enviarResumoSemanalTeste).toHaveBeenCalledWith(7);
     expect(tela.querySelector('.alert-danger')?.textContent).toContain('seção Smtp');

@@ -3402,3 +3402,178 @@ app-paginacao.pv-paginacao {
   font-size: 13px;
   color: var(--pv-texto-secundario);
 }
+
+// ---------- Configurações (tela própria e Detalhe do cliente) ----------
+// Área mais estreita que o resto do app (1040px), para os formulários não esticarem
+.pv-config {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+// Cada seção: título e descrição à esquerda (4/12), card com os controles à direita (8/12)
+.pv-secao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 24px;
+  margin-bottom: 32px;
+  scroll-margin-top: 16px;
+}
+
+.pv-secao__cabecalho {
+  .pv-card__titulo {
+    margin: 0;
+  }
+
+  .pv-card__descricao {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--pv-texto-secundario);
+  }
+}
+
+@media (min-width: 992px) {
+  .pv-secao {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+
+    .pv-secao__cabecalho {
+      padding-top: 4px;
+    }
+  }
+}
+
+// Card compacto: 20px de respiro, 16px entre os campos, sem linhas entre corpo e rodapé
+.card.pv-secao__card {
+  margin: 0;
+
+  > .card-body,
+  > form > .card-body {
+    padding: 20px 20px 0;
+  }
+
+  .pv-resumo {
+    gap: 16px;
+  }
+
+  // Texto de ajuda colado no campo/checkbox a que se refere (4px), em 12px e cor secundária
+  .pv-formulario__ajuda {
+    font-size: 12px;
+    color: var(--pv-texto-secundario);
+  }
+
+  .form-check + .pv-formulario__ajuda,
+  .pv-resumo__linha + .pv-formulario__ajuda,
+  .pv-config__dependentes + .pv-formulario__ajuda {
+    margin-top: -12px;
+  }
+
+  .pv-formulario__ajuda:last-child {
+    margin-bottom: 0;
+  }
+
+  // Botões à direita, no fim do conteúdo, sem faixa separada
+  .pv-formulario__acoes {
+    justify-content: flex-end;
+    padding: 16px 20px 20px;
+    border-top: 0;
+  }
+
+  // Carregando ou erro: o card inteiro com o mesmo respiro
+  > .card-body:only-child {
+    padding-bottom: 20px;
+  }
+}
+
+.pv-config__acoes {
+  display: flex;
+  justify-content: flex-end;
+
+  .btn {
+    margin: 0;
+  }
+}
+
+// Campos que dependem do checkbox acima: sub-bloco recuado, com fundo e borda sutis
+.pv-config__dependentes {
+  margin: -4px 0 0 28px;
+  padding: 14px;
+  border: 1px solid var(--pv-borda);
+  border-radius: var(--pv-raio-card);
+  background: var(--pv-superficie-hover);
+}
+
+@media (max-width: 575.98px) {
+  .pv-config__dependentes {
+    margin-left: 0;
+  }
+}
+
+// Dois grupos lado a lado (Avisos de vencimento) a partir de 768px
+.pv-config__duas-colunas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px 24px;
+}
+
+.pv-config__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .pv-formulario__ajuda {
+    margin: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .pv-config__duas-colunas {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+// Campos de um mesmo grupo na mesma linha, dividindo a largura do card (sem buracos entre eles);
+// no celular, um embaixo do outro
+.card.pv-secao__card .pv-resumo__linha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  align-items: end;
+
+  > .btn {
+    justify-self: end;
+    margin: 0;
+  }
+
+  > .form-check {
+    align-self: center;
+    margin: 0;
+  }
+
+  .pv-resumo__campo {
+    min-width: 0;
+  }
+
+  .pv-resumo__campo .pv-campo,
+  .pv-resumo__campo .pv-campo-grupo,
+  .pv-resumo__campo .pv-campo.pv-categorias__select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  // Número curto (dias, R$) não estica
+  .pv-alerta__numero {
+    width: 88px;
+  }
+}
+
+// Dentro dos grupos lado a lado, a ajuda fica logo abaixo do campo (sem o recuo negativo)
+.card.pv-secao__card .pv-config__grupo .pv-formulario__ajuda {
+  margin: 0;
+}
+
+// Conferência: o critério (texto longo) ocupa o dobro dos dois números
+@media (min-width: 768px) {
+  .card.pv-secao__card .pv-config__dependentes .pv-resumo__linha {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

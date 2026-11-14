@@ -14,13 +14,12 @@ import { CarregandoDirective } from '../carregando.directive';
   selector: 'app-alertas-vencimento',
   imports: [CarregandoDirective],
   template: `
-    <div class="card">
-      <div class="pv-card__cabecalho">
-        <div>
-          <h2 class="pv-card__titulo">Avisos de vencimento</h2>
-          <p class="pv-card__descricao">Contas em aberto no Bling: as vencidas aparecem no sininho; as de hoje e amanhã vão por e-mail.</p>
-        </div>
+    <section class="pv-secao">
+      <div class="pv-secao__cabecalho">
+        <h2 class="pv-card__titulo">Avisos de vencimento</h2>
+        <p class="pv-card__descricao">Contas em aberto no Bling: as vencidas aparecem no sininho; as de hoje e amanhã vão por e-mail.</p>
       </div>
+      <div class="card pv-secao__card">
       @if (carregado()) {
         <div class="card-body pv-resumo">
           @if (mensagem()) {
@@ -29,6 +28,8 @@ import { CarregandoDirective } from '../carregando.directive';
           @if (erro()) {
             <div class="alert alert-danger" role="alert"><span>{{ erro() }}</span></div>
           }
+          <div class="pv-config__duas-colunas">
+          <div class="pv-config__grupo">
           <div class="pv-resumo__linha">
             <div class="pv-resumo__campo">
               <label class="pv-rotulo" for="alerta-dias">Avisar conta vencida depois de</label>
@@ -42,6 +43,8 @@ import { CarregandoDirective } from '../carregando.directive';
           <p class="pv-formulario__ajuda">
             Com 1, o aviso aparece no dia seguinte ao vencimento e some quando a conta é paga ou baixada no Bling.
           </p>
+          </div>
+          <div class="pv-config__grupo">
           <div class="pv-resumo__linha">
             <div class="form-check">
               <label class="form-check-label">
@@ -62,6 +65,8 @@ import { CarregandoDirective } from '../carregando.directive';
             </div>
           </div>
           <p class="pv-formulario__ajuda">Vai para os usuários da rede, no horário de Brasília. Se não houver nada vencido nem vencendo, o e-mail não sai.</p>
+          </div>
+          </div>
         </div>
         <div class="pv-formulario__acoes">
           <button type="button" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando()" (click)="salvar()">Salvar</button>
@@ -72,6 +77,7 @@ import { CarregandoDirective } from '../carregando.directive';
         <div class="card-body"><p class="pv-formulario__ajuda">Carregando...</p></div>
       }
     </div>
+    </section>
   `
 })
 export class AlertasVencimentoComponent {

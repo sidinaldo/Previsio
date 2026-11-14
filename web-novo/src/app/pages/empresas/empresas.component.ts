@@ -18,12 +18,7 @@ import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
-import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 import { CertificadoEmpresaComponent } from './certificado-empresa.component';
-import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/alertas-vencimento.component';
-import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
-import { FluxoCaixaComponent } from '../../shared/fluxo-caixa/fluxo-caixa.component';
-import { CategoriasComponent } from '../../shared/categorias/categorias.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../../core/ordenacao';
 
 type AcaoConfirmada = 'desativar' | 'desconectar';
@@ -35,7 +30,7 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
 import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
 @Component({
   selector: 'app-empresas',
-  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ResumoSemanalComponent, ProvedorEmailComponent, CertificadoEmpresaComponent, AlertasVencimentoComponent, ConferenciaBlingComponent, FluxoCaixaComponent, CategoriasComponent],
+  imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ProvedorEmailComponent, CertificadoEmpresaComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
@@ -153,28 +148,6 @@ export class EmpresasComponent {
 
     this.carregar();
     this.carregarEmailRede();
-
-    // Do painel ("Configurar categorias"): /pages/empresas#categorias rola até o card Categorias
-    if (this.rota.snapshot.fragment === 'categorias') {
-      afterNextRender(() => this.rolarAteCategorias(0), { injector: this.injector });
-    }
-  }
-
-  // Espera a lista de empresas e o card terminarem de carregar (senão o card muda de lugar depois de rolar)
-  private rolarAteCategorias(tentativa: number): void {
-    const cartao = document.getElementById('categorias');
-    let pronto = false;
-    if (cartao !== null) {
-      const cartaoCarregando = (cartao.textContent ?? '').includes('Carregando...');
-      pronto = tentativa >= 20 || (this.carregada() && !cartaoCarregando);
-    }
-    if (pronto && cartao !== null) {
-      cartao.scrollIntoView({ block: 'start' });
-      return;
-    }
-    if (tentativa < 20) {
-      setTimeout(() => this.rolarAteCategorias(tentativa + 1), 150);
-    }
   }
 
   private carregarEmailRede(): void {

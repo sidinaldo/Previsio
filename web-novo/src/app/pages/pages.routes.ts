@@ -46,6 +46,10 @@ export const PAGES_ROUTES: Routes = [
         loadComponent: () => import('./empresas/empresas.component').then(m => m.EmpresasComponent)
       },
       {
+        path: 'configuracoes',
+        loadComponent: () => import('./configuracoes/configuracoes.component').then(m => m.ConfiguracoesComponent)
+      },
+      {
         path: 'empresas/:id',
         loadComponent: () => import('./empresa-detalhe/empresa-detalhe.component').then(m => m.EmpresaDetalheComponent)
       },

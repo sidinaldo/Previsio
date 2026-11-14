@@ -14,13 +14,12 @@ import { CarregandoDirective } from '../carregando.directive';
   selector: 'app-conferencia-bling',
   imports: [CarregandoDirective],
   template: `
-    <div class="card">
-      <div class="pv-card__cabecalho">
-        <div>
-          <h2 class="pv-card__titulo">Conferência com o Bling</h2>
-          <p class="pv-card__descricao">Evita lançar de novo uma nota que alguém já lançou à mão no Bling.</p>
-        </div>
+    <section class="pv-secao">
+      <div class="pv-secao__cabecalho">
+        <h2 class="pv-card__titulo">Conferência com o Bling</h2>
+        <p class="pv-card__descricao">Evita lançar de novo uma nota que alguém já lançou à mão no Bling.</p>
       </div>
+      <div class="card pv-secao__card">
       @if (dados(); as d) {
         <div class="card-body pv-resumo">
           @if (mensagem()) {
@@ -41,6 +40,7 @@ import { CarregandoDirective } from '../carregando.directive';
             "Lançada manualmente". Achou só algumas: não lança nada e avisa para você conferir.
           </p>
 
+          <div class="pv-config__dependentes">
           <div class="pv-resumo__linha">
             <div class="pv-resumo__campo">
               <label class="pv-rotulo" for="conferencia-criterio">Considerar a mesma conta quando bater</label>
@@ -62,6 +62,7 @@ import { CarregandoDirective } from '../carregando.directive';
                      [value]="d.toleranciaDias" (input)="mudarNumero('toleranciaDias', $event)">
             </div>
           </div>
+          </div>
 
           <div class="form-check">
             <label class="form-check-label">
@@ -81,6 +82,7 @@ import { CarregandoDirective } from '../carregando.directive';
         <div class="card-body"><p class="pv-formulario__ajuda">Carregando...</p></div>
       }
     </div>
+    </section>
   `
 })
 export class ConferenciaBlingComponent {

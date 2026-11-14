@@ -15,16 +15,15 @@ import { CarregandoDirective } from '../carregando.directive';
   selector: 'app-categorias',
   imports: [CarregandoDirective],
   template: `
-    <div class="card">
-      <div class="pv-card__cabecalho">
-        <div>
-          <h2 class="pv-card__titulo">Categorias</h2>
-          <p class="pv-card__descricao">
-            A categoria do Bling que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio
-            repete a categoria da última conta dele no Bling; se ele nunca teve, usa a categoria padrão.
-          </p>
-        </div>
+    <section class="pv-secao">
+      <div class="pv-secao__cabecalho">
+        <h2 class="pv-card__titulo">Categorias</h2>
+        <p class="pv-card__descricao">
+          A categoria do Bling que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio
+          repete a categoria da última conta dele no Bling; se ele nunca teve, usa a categoria padrão.
+        </p>
       </div>
+      <div class="card pv-secao__card">
       @if (dados(); as atual) {
         <div class="card-body pv-resumo">
           @if (mensagem()) {
@@ -56,14 +55,17 @@ import { CarregandoDirective } from '../carregando.directive';
                   </select>
                 </span>
               </div>
-              <button type="button" class="btn btn-info" [pvCarregando]="acao() === 'padrao'" [disabled]="acao() !== null"
-                      (click)="salvarPadrao()">Salvar</button>
             </div>
             @if (atual.padraoAusenteEm.length > 0) {
               <p class="pv-formulario__ajuda pv-categorias__aviso">
                 Não existe no Bling de {{ atual.padraoAusenteEm.join(', ') }}: as notas dessas empresas vão sem categoria.
               </p>
             }
+            <!-- O Salvar vale só para a categoria padrão; as regras valem na hora -->
+            <div class="pv-config__acoes">
+              <button type="button" class="btn btn-info" [pvCarregando]="acao() === 'padrao'" [disabled]="acao() !== null"
+                      (click)="salvarPadrao()">Salvar categoria padrão</button>
+            </div>
 
             <h3 class="pv-categorias__subtitulo">Regras por fornecedor</h3>
             @if (atual.regras.length === 0) {
@@ -134,6 +136,7 @@ import { CarregandoDirective } from '../carregando.directive';
         <div class="card-body"><p class="pv-formulario__ajuda">Carregando...</p></div>
       }
     </div>
+    </section>
   `
 })
 export class CategoriasComponent {

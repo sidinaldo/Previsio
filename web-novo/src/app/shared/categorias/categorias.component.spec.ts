@@ -51,7 +51,7 @@ describe('CategoriasComponent', () => {
   it('salva a categoria padrão', async () => {
     const { fixture, tela, api } = await montar(configuracao());
     escolher(tela, '#categoria-padrao', 'Fretes');
-    (tela.querySelector('.pv-resumo__linha .btn-info') as HTMLButtonElement).click();
+    (tela.querySelector('.pv-config__acoes .btn-info') as HTMLButtonElement).click();
     await fixture.whenStable();
     expect(api.alterarCategoriaPadrao).toHaveBeenCalledWith(7, 'Fretes');
     expect(tela.querySelector('.alert-success')?.textContent).toContain('Categoria padrão salva');
@@ -89,7 +89,7 @@ describe('CategoriasComponent', () => {
     const select = tela.querySelector('#categoria-padrao') as HTMLSelectElement;
     expect(select.value).toBe('');
     expect(select.options[0].textContent).toContain('Automática (Compras de Mercadorias)');
-    (tela.querySelector('.pv-resumo__linha .btn-info') as HTMLButtonElement).click();
+    (tela.querySelector('.pv-config__acoes .btn-info') as HTMLButtonElement).click();
     await fixture.whenStable();
     expect(api.alterarCategoriaPadrao).toHaveBeenCalledWith(7, '');
     expect(tela.querySelector('.alert-success')?.textContent).toContain('vão para Compras de Mercadorias');

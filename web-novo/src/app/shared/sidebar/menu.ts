@@ -38,7 +38,8 @@ export const MENU: GrupoMenu[] = [
     titulo: 'Configuração',
     itens: [
       { path: '/pages/empresas', title: 'Empresas', icone: 'store' },
-      { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteGestao: true }
+      { path: '/pages/usuarios', title: 'Usuários', icone: 'manage_accounts', somenteGestao: true },
+      { path: '/pages/configuracoes', title: 'Configurações', icone: 'tune' }
     ]
   },
   {

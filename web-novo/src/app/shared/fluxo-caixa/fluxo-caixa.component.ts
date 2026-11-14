@@ -12,13 +12,12 @@ import { CarregandoDirective } from '../carregando.directive';
   selector: 'app-fluxo-caixa',
   imports: [CarregandoDirective],
   template: `
-    <div class="card">
-      <div class="pv-card__cabecalho">
-        <div>
-          <h2 class="pv-card__titulo">Fluxo de caixa</h2>
-          <p class="pv-card__descricao">Traz do Bling as contas a receber e mostra no painel o que entra, o que sai e o saldo de cada semana.</p>
-        </div>
+    <section class="pv-secao">
+      <div class="pv-secao__cabecalho">
+        <h2 class="pv-card__titulo">Fluxo de caixa</h2>
+        <p class="pv-card__descricao">Traz do Bling as contas a receber e mostra no painel o que entra, o que sai e o saldo de cada semana.</p>
       </div>
+      <div class="card pv-secao__card">
       @if (carregado()) {
         <div class="card-body pv-resumo">
           @if (mensagem()) {
@@ -48,6 +47,7 @@ import { CarregandoDirective } from '../carregando.directive';
         <div class="card-body"><p class="pv-formulario__ajuda">Carregando...</p></div>
       }
     </div>
+    </section>
   `
 })
 export class FluxoCaixaComponent {

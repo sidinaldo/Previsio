@@ -170,7 +170,7 @@ describe('PainelComponent (visual)', () => {
     const { tela } = await montar(dados);
     const acao = tela.querySelector('.pv-categorias-painel__acao') as HTMLElement;
     expect(acao.textContent).toContain('30% das saídas estão sem categoria');
-    expect(acao.querySelector('a')!.getAttribute('href')).toContain('/pages/empresas#categorias');
+    expect(acao.querySelector('a')!.getAttribute('href')).toContain('/pages/configuracoes#categorias');
   });
 
   it('até 20% sem categoria não mostra o atalho', async () => {
