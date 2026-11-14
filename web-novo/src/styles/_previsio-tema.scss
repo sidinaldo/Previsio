@@ -3385,3 +3385,20 @@ app-paginacao.pv-paginacao {
 .card {
   scroll-margin-top: 16px;
 }
+
+// Busca completa na SEFAZ (área do certificado da empresa)
+.pv-certificado__busca {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pv-borda);
+
+  .pv-formulario__ajuda {
+    margin: 4px 0 0;
+  }
+}
+
+.pv-certificado__situacao {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--pv-texto-secundario);
+}

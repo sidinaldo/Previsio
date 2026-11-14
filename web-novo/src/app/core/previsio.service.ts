@@ -270,6 +270,11 @@ export class PrevisioService {
     return this.http.post<Empresa>(`${this.api}/empresas/${empresaId}/certificado`, dados);
   }
 
+  /** Liga ou desliga a busca completa das NF-e da empresa na SEFAZ. */
+  alterarBuscaSefaz(empresaId: number, ativa: boolean): Observable<Empresa> {
+    return this.http.put<Empresa>(`${this.api}/empresas/${empresaId}/sefaz`, { ativa });
+  }
+
   removerCertificado(empresaId: number): Observable<Empresa> {
     return this.http.delete<Empresa>(`${this.api}/empresas/${empresaId}/certificado`);
   }

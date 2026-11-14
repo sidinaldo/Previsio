@@ -141,10 +141,11 @@
 
           @if (editando(); as e) {
             <details class="pv-opcional" [open]="!!e.certificadoCadastrado">
-              <summary>Certificado digital A1 (notas que chegam só em PDF)</summary>
+              <summary>Certificado digital A1 e busca na SEFAZ</summary>
               <p class="pv-formulario__ajuda">
-                Quando o fornecedor manda só o PDF, o Previsio usa este certificado para baixar o XML na SEFAZ
-                (registrando a Ciência da Operação). O certificado da matriz vale para as filiais com o mesmo CNPJ raiz.
+                Com o certificado, o Previsio baixa na SEFAZ o XML das notas que chegam só em PDF e busca as notas
+                que o fornecedor não mandou por e-mail (registrando a Ciência da Operação).
+                O certificado da matriz vale para as filiais com o mesmo CNPJ raiz.
               </p>
               <app-certificado-empresa [empresa]="e" (alterada)="aoAlterarCertificado($event)" />
             </details>

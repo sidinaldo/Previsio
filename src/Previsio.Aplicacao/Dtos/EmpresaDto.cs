@@ -30,6 +30,10 @@ public class EmpresaDto
     public string? CertificadoTitular { get; set; }
     public DateTime? CertificadoValidoAte { get; set; }
     public string? Uf { get; set; }
+    // Busca completa na SEFAZ: ligada, quando buscou pela última vez e o que aconteceu
+    public bool SefazBuscaAtiva { get; set; }
+    public DateTime? SefazUltimaBuscaEm { get; set; }
+    public string? SefazSituacao { get; set; }
 
     public bool Ativo { get; set; }
 }

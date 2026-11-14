@@ -112,6 +112,11 @@ public class LancamentoNotaService
         {
             return true;
         }
+        // Cancelada pelo emitente na SEFAZ: não vai para o Bling
+        if (nota.Status == StatusNota.CanceladaNaSefaz)
+        {
+            return true;
+        }
 
         Empresa empresa = nota.Empresa;
         string conta = TokenBlingService.IdentificadorConta(empresa);

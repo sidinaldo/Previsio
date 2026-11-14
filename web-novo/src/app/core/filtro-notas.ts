@@ -58,5 +58,8 @@ export function classeDaSituacao(status: string): string {
   if (status === 'Recebida') {
     return 'badge-info';
   }
+  if (status === 'CanceladaNaSefaz') {
+    return 'badge-secondary';
+  }
   return 'badge-warning';
 }

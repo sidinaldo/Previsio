@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.BuscaSefaz;
 using Microsoft.Extensions.DependencyInjection;
 using Previsio.Aplicacao.Autenticacao;
 using Previsio.Aplicacao.Avisos;
@@ -77,6 +78,7 @@ public static class RegistroAplicacao
         servicos.AddScoped<RegistroNotaSoPdf>();
         servicos.AddScoped<NotasSoPdfService>();
         servicos.AddScoped<BuscaXmlSefazService>();
+        servicos.AddScoped<BuscaCompletaSefazService>();
         servicos.AddScoped<CertificadosService>();
         servicos.AddScoped<EmailsIgnoradosService>();
 

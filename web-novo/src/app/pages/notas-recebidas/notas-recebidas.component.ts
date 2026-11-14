@@ -56,7 +56,8 @@ export class NotasRecebidasComponent {
     { valor: 'Erro', texto: descricaoDaSituacao('Erro') },
     { valor: 'EmpresaNaoEncontrada', texto: descricaoDaSituacao('EmpresaNaoEncontrada') },
     { valor: 'BlingDesconectado', texto: descricaoDaSituacao('BlingDesconectado') },
-    { valor: 'SemParcelas', texto: descricaoDaSituacao('SemParcelas') }
+    { valor: 'SemParcelas', texto: descricaoDaSituacao('SemParcelas') },
+    { valor: 'CanceladaNaSefaz', texto: descricaoDaSituacao('CanceladaNaSefaz') }
   ];
 
   readonly empresas = signal<Empresa[]>([]);

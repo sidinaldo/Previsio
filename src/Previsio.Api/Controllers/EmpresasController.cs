@@ -66,6 +66,17 @@ public class EmpresasController : PrevisioControllerBase
         return Responder(await _certificados.SalvarAsync(empresaId, pfx, formulario.Senha ?? "", formulario.Uf ?? "", cancelamento));
     }
 
+    /// <summary>Liga ou desliga a busca completa das NF-e da empresa na SEFAZ.</summary>
+    [HttpPut("{empresaId:int}/sefaz")]
+    public async Task<ActionResult<EmpresaDto>> AlterarBuscaSefaz(int empresaId, BuscaSefazDto dados, CancellationToken cancelamento)
+    {
+        if (!await _acesso.PodeAcessarAsync(User, empresaId, cancelamento))
+        {
+            return NotFound(CertificadosService.MensagemEmpresaNaoEncontrada);
+        }
+        return Responder(await _certificados.AlterarBuscaSefazAsync(empresaId, dados.Ativa, cancelamento));
+    }
+
     [HttpDelete("{empresaId:int}/certificado")]
     public async Task<ActionResult<EmpresaDto>> RemoverCertificado(int empresaId, CancellationToken cancelamento)
     {

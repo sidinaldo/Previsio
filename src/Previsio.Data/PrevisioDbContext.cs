@@ -53,6 +53,9 @@ public class PrevisioDbContext : DbContext
             entidade.Ignore(e => e.TemCertificado);
             entidade.Property(e => e.CertificadoTitular).HasMaxLength(300);
             entidade.Property(e => e.Uf).HasMaxLength(2);
+            entidade.Property(e => e.SefazBuscaAtiva).HasDefaultValue(true);
+            entidade.Property(e => e.SefazUltimoNsu).HasMaxLength(15);
+            entidade.Property(e => e.SefazSituacao).HasMaxLength(500);
 
             entidade.HasOne(e => e.Cliente)
                 .WithMany(c => c.Empresas)

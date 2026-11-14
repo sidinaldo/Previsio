@@ -30,6 +30,9 @@ public static class EmpresaMapeamento
         dto.CertificadoTitular = empresa.CertificadoTitular;
         dto.CertificadoValidoAte = empresa.CertificadoValidoAte;
         dto.Uf = empresa.Uf;
+        dto.SefazBuscaAtiva = empresa.SefazBuscaAtiva;
+        dto.SefazUltimaBuscaEm = empresa.SefazUltimaBuscaEm;
+        dto.SefazSituacao = empresa.SefazSituacao;
         dto.Ativo = empresa.Ativo;
         return dto;
     }

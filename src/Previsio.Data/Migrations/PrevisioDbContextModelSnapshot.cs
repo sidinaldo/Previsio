@@ -522,6 +522,25 @@ namespace Previsio.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("SefazBuscaAtiva")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("SefazProximaBuscaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SefazSituacao")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("SefazUltimaBuscaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SefazUltimoNsu")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
                     b.Property<string>("Uf")
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");

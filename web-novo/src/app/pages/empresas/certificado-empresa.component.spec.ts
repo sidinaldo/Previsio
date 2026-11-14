@@ -77,4 +77,36 @@ describe('CertificadoEmpresaComponent', () => {
     await fixture.whenStable();
     expect(api.removerCertificado).toHaveBeenCalledWith(5);
   });
+
+  it('mostra a última busca na SEFAZ e liga/desliga a busca completa', async () => {
+    const ligada: Empresa = { ...EMPRESA, sefazBuscaAtiva: true, sefazUltimaBuscaEm: '2026-11-14T13:00:00Z', sefazSituacao: '2 notas novas.' };
+    const desligada: Empresa = { ...ligada, sefazBuscaAtiva: false };
+    const api = { alterarBuscaSefaz: vi.fn(() => of(desligada)) };
+    const { fixture, tela } = await montar(ligada, api);
+    const alterada = vi.fn();
+    fixture.componentInstance.alterada.subscribe(alterada);
+
+    expect(tela.querySelector('.pv-certificado__situacao')?.textContent).toContain('2 notas novas.');
+    const caixa = tela.querySelector('#sefaz-busca-5') as HTMLInputElement;
+    expect(caixa.checked).toBe(true);
+    caixa.checked = false;
+    caixa.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect(api.alterarBuscaSefaz).toHaveBeenCalledWith(5, false);
+    expect(alterada).toHaveBeenCalledWith(desligada);
+    expect(tela.querySelector('.pv-certificado__ok')?.textContent).toContain('desligada');
+  });
+
+  it('erro ao ligar a busca volta a caixa e mostra o motivo', async () => {
+    const api = { alterarBuscaSefaz: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404, error: 'Empresa não encontrada.' }))) };
+    const { fixture, tela } = await montar({ ...EMPRESA, sefazBuscaAtiva: false }, api);
+    const caixa = tela.querySelector('#sefaz-busca-5') as HTMLInputElement;
+    caixa.checked = true;
+    caixa.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    expect(caixa.checked).toBe(false);
+    expect(tela.querySelector('.pv-certificado__erro')?.textContent).toContain('Empresa não encontrada.');
+  });
 });

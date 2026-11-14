@@ -10,5 +10,8 @@ public enum StatusNota
     Erro = 5,
 
     // Alguém resolveu o problema e lançou a conta a pagar direto no Bling
-    LancadaManualmente = 6
+    LancadaManualmente = 6,
+
+    // O emitente cancelou a nota na SEFAZ antes de ela ir para o Bling: não é lançada
+    CanceladaNaSefaz = 7
 }

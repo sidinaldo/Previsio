@@ -123,6 +123,32 @@ public class CertificadosService
     }
 
     /// <summary>
+    /// Liga ou desliga a busca completa na SEFAZ da empresa. Religar recomeça de agora em diante
+    /// (as notas emitidas enquanto esteve desligada ficam de fora, como na primeira busca).
+    /// </summary>
+    public async Task<Resultado<EmpresaDto>> AlterarBuscaSefazAsync(int empresaId, bool ativa, CancellationToken cancelamento)
+    {
+        Empresa? empresa = await _empresas.Consultar().Include(e => e.Cliente).FirstOrDefaultAsync(e => e.Id == empresaId, cancelamento);
+        if (empresa == null)
+        {
+            return Resultado<EmpresaDto>.NaoEncontrado(MensagemEmpresaNaoEncontrada);
+        }
+        if (ativa && !empresa.SefazBuscaAtiva)
+        {
+            empresa.SefazUltimoNsu = null;
+            empresa.SefazProximaBuscaEm = null;
+            empresa.SefazSituacao = null;
+        }
+        if (!ativa)
+        {
+            empresa.SefazSituacao = "Busca desligada.";
+        }
+        empresa.SefazBuscaAtiva = ativa;
+        await _empresas.SalvarAsync(cancelamento);
+        return Resultado<EmpresaDto>.Ok(EmpresaMapeamento.ParaDto(empresa));
+    }
+
+    /// <summary>
     /// Abre o certificado guardado da empresa (o chamador descarta). Nulo se não houver ou se não abrir mais.
     /// </summary>
     public X509Certificate2? Abrir(Empresa empresa)

@@ -46,6 +46,17 @@ public class Empresa : ICaixaEmail
     // Sigla da UF da empresa (SP, RN...), exigida pela SEFAZ na consulta
     public string? Uf { get; set; }
 
+    // Busca completa na SEFAZ (distribuição por NSU): toda NF-e emitida contra o CNPJ, mesmo a que
+    // não chega por e-mail. Liga sozinha quando há certificado (da empresa ou da matriz); dá para desligar.
+    public bool SefazBuscaAtiva { get; set; } = true;
+    // Último NSU lido; nulo = a busca ainda não começou (a primeira pula o histórico)
+    public string? SefazUltimoNsu { get; set; }
+    // Antes disso a SEFAZ não é consultada (ela bloqueia por 1 hora quem consulta sem nada novo)
+    public DateTime? SefazProximaBuscaEm { get; set; }
+    public DateTime? SefazUltimaBuscaEm { get; set; }
+    // Resultado da última busca, para a tela ("3 notas novas", "certificado vencido"...)
+    public string? SefazSituacao { get; set; }
+
     public bool Ativo { get; set; } = true;
 
     public bool BlingConectado

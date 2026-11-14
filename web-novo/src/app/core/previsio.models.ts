@@ -131,6 +131,10 @@ export interface Empresa {
   certificadoCadastrado?: boolean;
   certificadoTitular?: string | null;
   certificadoValidoAte?: string | null;
+  /** Busca completa na SEFAZ: ligada, última busca e o que aconteceu nela. */
+  sefazBuscaAtiva?: boolean;
+  sefazUltimaBuscaEm?: string | null;
+  sefazSituacao?: string | null;
   uf?: string | null;
   ativo: boolean;
 }
@@ -521,7 +525,8 @@ export const DESCRICAO_STATUS: { [status: string]: string } = {
   SemParcelas: 'Sem vencimentos no XML',
   EmpresaNaoEncontrada: 'CNPJ não cadastrado',
   BlingDesconectado: 'Bling desconectado',
-  Erro: 'Erro ao lançar'
+  Erro: 'Erro ao lançar',
+  CanceladaNaSefaz: 'Cancelada na SEFAZ'
 };
 
 /** Uma tentativa que falhou ao ler a nota do e-mail ou ao lançá-la no Bling. */

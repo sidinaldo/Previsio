@@ -57,6 +57,30 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
         <i class="material-icons" aria-hidden="true">upload</i> Enviar certificado
       </button>
     </div>
+    <!-- Busca completa: toda NF-e emitida contra o CNPJ, mesmo a que não chega por e-mail -->
+    <div class="pv-certificado__busca">
+      <div class="form-check">
+        <label class="form-check-label">
+          <input class="form-check-input" type="checkbox" [id]="'sefaz-busca-' + empresa().id"
+                 [checked]="empresa().sefazBuscaAtiva" [disabled]="acao() !== null" (change)="alterarBusca($event)">
+          Buscar na SEFAZ todas as notas emitidas para este CNPJ
+          <span class="form-check-sign"><span class="check"></span></span>
+        </label>
+      </div>
+      <p class="pv-formulario__ajuda">
+        Pega a nota mesmo quando o fornecedor não manda por e-mail, de hora em hora, a partir de quando a busca é ligada.
+        Usa o certificado desta empresa ou o da matriz (mesmo CNPJ raiz) e registra a Ciência da Operação para baixar o XML.
+      </p>
+      @if (empresa().sefazBuscaAtiva) {
+        <p class="pv-certificado__situacao" role="status">
+          @if (empresa().sefazUltimaBuscaEm) {
+            Última busca {{ empresa().sefazUltimaBuscaEm | date:'dd/MM HH:mm' }}: {{ empresa().sefazSituacao }}
+          } @else {
+            Aguardando a primeira busca (precisa do certificado desta empresa ou da matriz).
+          }
+        </p>
+      }
+    </div>
     @if (mensagem()) {
       <p class="pv-certificado__ok" role="status">{{ mensagem() }}</p>
     }
@@ -75,7 +99,7 @@ export class CertificadoEmpresaComponent implements OnInit {
   readonly arquivo = signal<File | null>(null);
   readonly senha = signal('');
   readonly uf = signal('');
-  readonly acao = signal<'enviar' | 'remover' | null>(null);
+  readonly acao = signal<'enviar' | 'remover' | 'busca' | null>(null);
   readonly mensagem = signal('');
   readonly erro = signal('');
 
@@ -122,6 +146,29 @@ export class CertificadoEmpresaComponent implements OnInit {
       error: erro => {
         this.acao.set(null);
         this.erro.set(mensagemDaApi(erro, 'Não foi possível cadastrar o certificado.'));
+      }
+    });
+  }
+
+  alterarBusca(evento: Event): void {
+    const ativa = (evento.target as HTMLInputElement).checked;
+    this.mensagem.set('');
+    this.erro.set('');
+    this.acao.set('busca');
+    this.api.alterarBuscaSefaz(this.empresa().id, ativa).subscribe({
+      next: empresa => {
+        this.acao.set(null);
+        if (ativa) {
+          this.mensagem.set('Busca na SEFAZ ligada: as notas emitidas a partir de agora chegam sozinhas.');
+        } else {
+          this.mensagem.set('Busca na SEFAZ desligada.');
+        }
+        this.alterada.emit(empresa);
+      },
+      error: erro => {
+        this.acao.set(null);
+        (evento.target as HTMLInputElement).checked = !ativa;
+        this.erro.set(mensagemDaApi(erro, 'Não foi possível alterar a busca na SEFAZ.'));
       }
     });
   }

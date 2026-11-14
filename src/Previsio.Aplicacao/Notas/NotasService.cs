@@ -338,6 +338,10 @@ public class NotasService
         {
             return Resultado.Invalido("A nota já foi lançada.");
         }
+        if (nota.Status == StatusNota.CanceladaNaSefaz)
+        {
+            return Resultado.Invalido("O emitente cancelou esta nota na SEFAZ: ela não vai para o Bling.");
+        }
         if (nota.EmpresaId == null || nota.Parcelas.Count == 0)
         {
             return Resultado.Invalido("A nota não tem empresa ou parcelas para lançar.");

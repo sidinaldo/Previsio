@@ -37,6 +37,10 @@ public static class TextoSituacaoNota
         {
             return "Erro ao lançar";
         }
+        if (status == StatusNota.CanceladaNaSefaz)
+        {
+            return "Cancelada na SEFAZ";
+        }
         return status.ToString();
     }
 }

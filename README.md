@@ -34,6 +34,7 @@ algo que fala com o mundo de fora vira uma interface em `Aplicacao/Abstracoes` i
 | `leitura-email` | 10 min | Lê e-mails não lidos, extrai XMLs (inclusive em `.zip`), registra notas novas |
 | `lancamento` | 10 min | Cria fornecedor (se preciso) e uma conta a pagar por parcela no Bling |
 | `sincronizacao` | 30 min | Traz as contas a pagar do Bling (inclusive as lançadas à mão) e, com o fluxo de caixa ligado na rede, as contas a receber. Também atualiza as categorias do Bling (uma vez por dia; o botão **Sincronizar com o Bling** busca de novo na hora) e confere a categoria das contas aos poucos |
+| `busca-completa-sefaz` | 15 min | Busca na SEFAZ as NF-e emitidas contra o CNPJ de cada empresa com certificado (cada empresa respeita `BuscaSefaz:IntervaloMinutos`, padrão e mínimo 60) |
 
 Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máquina).
 
@@ -44,6 +45,13 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
 - **Rastreio:** o Bling não tem campo para a chave da NF-e, então ela vai no `historico` da conta a pagar.
 - **Nº do documento:** `48213` (parcela única) ou `48213/2` (segunda parcela).
 - **Nota sem duplicatas no XML:** fica como pendente ("Sem vencimentos no XML") para lançamento manual.
+- **Busca completa na SEFAZ:** com o certificado A1 da empresa (ou da matriz, mesma raiz de CNPJ), o Previsio lê a
+  distribuição de NF-e por NSU e pega a nota que o fornecedor não mandou por e-mail. A primeira busca pula o histórico
+  (só notas de agora em diante); resumo de nota recebe a Ciência da Operação e o XML completo chega na busca seguinte,
+  virando nota pelo mesmo caminho do e-mail (a chave de acesso evita duplicar). Nota cancelada pelo emitente antes de
+  ir para o Bling fica "Cancelada na SEFAZ". Liga e desliga por empresa em **Empresas → Certificado digital A1 e busca
+  na SEFAZ**. Sem nada novo, consultar de novo antes de 1 hora faz a SEFAZ bloquear o CNPJ por 1 hora (656).
+  Teste real: `dotnet run --project tools/Previsio.SondagemSefaz -- <empresaId>` (uma consulta, só leitura).
 - **Categoria da conta:** regra da rede para o fornecedor (pelo nome da categoria) → senão a categoria da última conta
   desse fornecedor no Bling → senão a categoria padrão da rede → senão a automática (`Categorias:PadraoAutomatico`,
   padrão "Compras de Mercadorias"; vazio desliga) → senão vai sem categoria. Configurado no card **Categorias** em Empresas.

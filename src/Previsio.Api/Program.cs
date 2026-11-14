@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.BuscaSefaz;
 using System.Text;
 using System.Threading.RateLimiting;
 using Hangfire;
@@ -56,6 +57,7 @@ builder.Services.AddPrevisioInfra(builder.Configuration);
 builder.Services.AddPrevisioAplicacao();
 builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
 builder.Services.Configure<CategoriasOptions>(builder.Configuration.GetSection(CategoriasOptions.Secao));
+builder.Services.Configure<BuscaSefazOptions>(builder.Configuration.GetSection(BuscaSefazOptions.Secao));
 builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
 builder.Services.AddSingleton(new AmbienteAplicacao(builder.Environment.IsDevelopment()));
 builder.Services.AddSingleton(TimeProvider.System);
@@ -66,6 +68,7 @@ builder.Services.AddScoped<LeituraEmailJob>();
 builder.Services.AddScoped<LancamentoNotaJob>();
 builder.Services.AddScoped<SincronizacaoContasJob>();
 builder.Services.AddScoped<BuscaXmlSefazJob>();
+builder.Services.AddScoped<BuscaCompletaSefazJob>();
 builder.Services.AddScoped<AvisosJob>();
 builder.Services.AddScoped<ResumoSemanalJob>();
 builder.Services.AddScoped<AvisosTesteJob>();
@@ -255,6 +258,9 @@ agenda.AddOrUpdate<SincronizacaoContasJob>(
 // De 5 em 5 minutos: o XML das notas que chegaram só em PDF, na SEFAZ
 agenda.AddOrUpdate<BuscaXmlSefazJob>(
     "busca-xml-sefaz", j => j.ExecutarAsync(CancellationToken.None), "2-59/5 * * * *", opcoesAgenda);
+// De 15 em 15 minutos: busca completa na SEFAZ (cada empresa respeita o próprio intervalo, mínimo 1 hora)
+agenda.AddOrUpdate<BuscaCompletaSefazJob>(
+    "busca-completa-sefaz", j => j.ExecutarAsync(CancellationToken.None), "9-59/15 * * * *", opcoesAgenda);
 // De hora em hora: e-mails do fim do teste grátis (3 dias antes e quando acaba)
 agenda.AddOrUpdate<AvisosTesteJob>(
     "avisos-teste", j => j.ExecutarAsync(CancellationToken.None), "12 * * * *", opcoesAgenda);
