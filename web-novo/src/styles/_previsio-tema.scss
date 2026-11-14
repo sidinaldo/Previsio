@@ -3380,3 +3380,8 @@ app-paginacao.pv-paginacao {
 .pv-categorias-painel__item--naoidentificada .pv-categorias-painel__barra span {
   background: #8b5cf6;
 }
+
+// Âncora da paginação: ao rolar até o card da tabela, deixa um respiro acima dele
+.card {
+  scroll-margin-top: 16px;
+}

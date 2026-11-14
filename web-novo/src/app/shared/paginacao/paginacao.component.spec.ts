@@ -14,6 +14,29 @@ class TelaDeTeste {
   readonly tamanho = signal(10);
 }
 
+@Component({
+  imports: [PaginacaoComponent],
+  template: `<div class="card"><app-paginacao [total]="total()" [(pagina)]="pagina" [(tamanho)]="tamanho" /></div>`
+})
+class TelaComCard {
+  readonly total = signal(250);
+  readonly pagina = signal(1);
+  readonly tamanho = signal(100);
+}
+
+async function montarComCard(topoDoCard: number) {
+  TestBed.configureTestingModule({ imports: [TelaComCard] });
+  const fixture = TestBed.createComponent(TelaComCard);
+  fixture.autoDetectChanges();
+  await fixture.whenStable();
+  const tela = fixture.nativeElement as HTMLElement;
+  const card = tela.querySelector('.card') as HTMLElement;
+  card.getBoundingClientRect = () => ({ top: topoDoCard } as DOMRect);
+  const rolar = vi.fn();
+  card.scrollIntoView = rolar;
+  return { fixture, tela, rolar };
+}
+
 async function montar() {
   TestBed.configureTestingModule({ imports: [TelaDeTeste] });
   const fixture = TestBed.createComponent(TelaDeTeste);
@@ -74,5 +97,26 @@ describe('paginação', () => {
     await fixture.whenStable();
     expect(tela.querySelector('nav')).toBeNull();
     expect(tela.querySelector('app-paginacao')!.classList.contains('pv-paginacao')).toBe(false);
+  });
+
+  it('âncora: trocar de 100 para 10 com o topo da tabela fora da tela rola até o card', async () => {
+    const { tela, rolar } = await montarComCard(-1200);
+    const seletor = tela.querySelector('select') as HTMLSelectElement;
+    seletor.value = '10';
+    seletor.dispatchEvent(new Event('change'));
+    await new Promise(r => setTimeout(r));
+    expect(rolar).toHaveBeenCalledTimes(1);
+    expect(rolar.mock.calls[0][0].block).toBe('start');
+
+    botao(tela, 'Próxima página').click();
+    await new Promise(r => setTimeout(r));
+    expect(rolar).toHaveBeenCalledTimes(2);
+  });
+
+  it('âncora: com o topo da tabela visível não rola', async () => {
+    const { tela, rolar } = await montarComCard(120);
+    botao(tela, 'Próxima página').click();
+    await new Promise(r => setTimeout(r));
+    expect(rolar).not.toHaveBeenCalled();
   });
 });

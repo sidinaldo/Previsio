@@ -1,4 +1,4 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, model } from '@angular/core';
 
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { TAMANHOS_PAGINA, TAMANHO_PAGINA_PADRAO, paginaValida } from '../../core/paginacao';
@@ -61,6 +61,8 @@ let proximoId = 1;
   `
 })
 export class PaginacaoComponent {
+  private readonly elemento = inject(ElementRef);
+
   readonly total = input.required<number>();
   readonly pagina = model(1);
   readonly tamanho = model(TAMANHO_PAGINA_PADRAO);
@@ -94,6 +96,7 @@ export class PaginacaoComponent {
 
   irPara(pagina: number): void {
     this.pagina.set(paginaValida(pagina, this.total(), this.tamanho()));
+    this.trazerTabelaParaATela();
   }
 
   trocarTamanho(evento: Event): void {
@@ -105,5 +108,29 @@ export class PaginacaoComponent {
     this.tamanho.set(valor);
     // Volta para a primeira página: a posição antiga não corresponde mais aos mesmos itens
     this.pagina.set(1);
+    this.trazerTabelaParaATela();
+  }
+
+  /**
+   * Âncora da tabela: quem estava no fim de uma página longa (100 linhas) e troca de página ou
+   * passa para 10 por página ficaria olhando o rodapé. Se o topo do card da tabela saiu da tela,
+   * rola até ele; se já está visível, não mexe.
+   */
+  private trazerTabelaParaATela(): void {
+    const host = this.elemento.nativeElement as HTMLElement;
+    setTimeout(() => {
+      let alvo = host.closest('.card') as HTMLElement | null;
+      if (alvo === null) {
+        alvo = host.parentElement;
+      }
+      if (alvo === null || alvo.getBoundingClientRect().top >= 0) {
+        return;
+      }
+      let suave = true;
+      if (typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        suave = false;
+      }
+      alvo.scrollIntoView({ block: 'start', behavior: suave ? 'smooth' : 'auto' });
+    });
   }
 }
