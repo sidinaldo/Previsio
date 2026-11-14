@@ -30,6 +30,14 @@ public class SefazSoap : ISefaz
         return MensagensSefaz.LerRetornoDistribuicao(resposta);
     }
 
+    public async Task<RetornoSefaz> DistribuirPorNsuAsync(
+        X509Certificate2 certificado, string uf, string cnpj, string ultimoNsu, CancellationToken cancelamento)
+    {
+        string mensagem = MensagensSefaz.DistribuicaoPorNsu(_opcoes.TipoAmbiente, UfIbge.Codigo(uf), cnpj, ultimoNsu);
+        string resposta = await EnviarAsync(certificado, _opcoes.UrlDistribuicao, MensagensSefaz.AcaoDistribuicao, mensagem, cancelamento);
+        return MensagensSefaz.LerRetornoDistribuicao(resposta);
+    }
+
     public async Task<RetornoSefaz> ManifestarCienciaAsync(
         X509Certificate2 certificado, string cnpj, string chave, CancellationToken cancelamento)
     {

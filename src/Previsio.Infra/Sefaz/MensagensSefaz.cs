@@ -42,6 +42,49 @@ public static class MensagensSefaz
     }
 
     /// <summary>
+    /// Distribuição por NSU: tudo depois de "ultimoNsu" (15 dígitos; zero = desde o começo que a SEFAZ guarda).
+    /// </summary>
+    public static string DistribuicaoPorNsu(string tipoAmbiente, string codigoUf, string cnpj, string ultimoNsu)
+    {
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+            + "<soap12:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap12=\"" + Soap + "\">"
+            + "<soap12:Body>"
+            + "<nfeDistDFeInteresse xmlns=\"http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe\">"
+            + "<nfeDadosMsg>"
+            + "<distDFeInt versao=\"1.01\" xmlns=\"" + NamespaceNfe + "\">"
+            + "<tpAmb>" + tipoAmbiente + "</tpAmb>"
+            + "<cUFAutor>" + codigoUf + "</cUFAutor>"
+            + "<CNPJ>" + cnpj + "</CNPJ>"
+            + "<distNSU><ultNSU>" + NsuCompleto(ultimoNsu) + "</ultNSU></distNSU>"
+            + "</distDFeInt>"
+            + "</nfeDadosMsg>"
+            + "</nfeDistDFeInteresse>"
+            + "</soap12:Body>"
+            + "</soap12:Envelope>";
+    }
+
+    /// <summary>NSU com os 15 dígitos que a SEFAZ espera ("" ou nulo = zero).</summary>
+    public static string NsuCompleto(string? nsu)
+    {
+        string digitos = "";
+        if (nsu != null)
+        {
+            foreach (char c in nsu)
+            {
+                if (char.IsDigit(c))
+                {
+                    digitos = digitos + c;
+                }
+            }
+        }
+        if (digitos == "")
+        {
+            digitos = "0";
+        }
+        return digitos.PadLeft(15, '0');
+    }
+
+    /// <summary>
     /// Evento de Ciência da Operação assinado com o certificado da empresa, já no envelope SOAP.
     /// </summary>
     public static string EventoCienciaAssinado(
@@ -132,6 +175,8 @@ public static class MensagensSefaz
         }
         retorno.Status = Texto(ret, "cStat");
         retorno.Motivo = Texto(ret, "xMotivo");
+        retorno.UltimoNsu = Texto(ret, "ultNSU");
+        retorno.MaximoNsu = Texto(ret, "maxNSU");
 
         foreach (XmlNode no in ret.GetElementsByTagName("docZip", NamespaceNfe))
         {
@@ -142,6 +187,7 @@ public static class MensagensSefaz
             }
             var distribuido = new DocumentoDistribuido();
             distribuido.Schema = doc.GetAttribute("schema");
+            distribuido.Nsu = doc.GetAttribute("NSU");
             distribuido.Xml = Descompactar(doc.InnerText.Trim());
             retorno.Documentos.Add(distribuido);
         }

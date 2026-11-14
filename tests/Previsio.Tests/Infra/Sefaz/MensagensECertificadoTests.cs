@@ -72,6 +72,22 @@ public class MensagensECertificadoTests
     }
 
     [Fact]
+    public void Distribuicao_por_nsu_leva_o_ultimo_nsu_com_15_digitos()
+    {
+        string xml = MensagensSefaz.DistribuicaoPorNsu("1", "31", "11222333000181", "1234");
+        var documento = new XmlDocument();
+        documento.LoadXml(xml);
+        var ns = new XmlNamespaceManager(documento.NameTable);
+        ns.AddNamespace("n", MensagensSefaz.NamespaceNfe);
+        XmlNode dist = documento.SelectSingleNode("//n:distDFeInt", ns)!;
+        Assert.Equal("31", dist.SelectSingleNode("n:cUFAutor", ns)!.InnerText);
+        Assert.Equal("000000000001234", dist.SelectSingleNode("n:distNSU/n:ultNSU", ns)!.InnerText);
+        Assert.Null(dist.SelectSingleNode("n:consChNFe", ns));
+        Assert.Equal("000000000000000", MensagensSefaz.NsuCompleto(null));
+        Assert.Equal("000000000000000", MensagensSefaz.NsuCompleto(""));
+    }
+
+    [Fact]
     public void Le_o_retorno_da_distribuicao_e_descompacta_os_documentos()
     {
         string procNFe = "<nfeProc xmlns=\"http://www.portalfiscal.inf.br/nfe\"><NFe/></nfeProc>";
@@ -89,6 +105,24 @@ public class MensagensECertificadoTests
         DocumentoDistribuido documento = Assert.Single(retorno.Documentos);
         Assert.True(documento.NotaCompleta);
         Assert.Equal(procNFe, documento.Xml);
+        Assert.Equal("000000000000101", documento.Nsu);
+    }
+
+    [Fact]
+    public void Le_o_ultimo_e_o_maior_nsu_da_distribuicao()
+    {
+        string resposta = "<?xml version=\"1.0\" encoding=\"utf-8\"?><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\"><soap:Body>"
+            + "<nfeDistDFeInteresseResponse xmlns=\"http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe\"><nfeDistDFeInteresseResult>"
+            + "<retDistDFeInt versao=\"1.01\" xmlns=\"http://www.portalfiscal.inf.br/nfe\"><tpAmb>1</tpAmb><verAplic>1.7.6</verAplic>"
+            + "<cStat>138</cStat><xMotivo>Documento localizado</xMotivo><dhResp>2026-11-14T10:31:00-03:00</dhResp>"
+            + "<ultNSU>000000000000150</ultNSU><maxNSU>000000000000420</maxNSU>"
+            + "</retDistDFeInt></nfeDistDFeInteresseResult></nfeDistDFeInteresseResponse></soap:Body></soap:Envelope>";
+
+        RetornoSefaz retorno = MensagensSefaz.LerRetornoDistribuicao(resposta);
+
+        Assert.Equal("000000000000150", retorno.UltimoNsu);
+        Assert.Equal("000000000000420", retorno.MaximoNsu);
+        Assert.True(retorno.TemMais);
     }
 
     [Fact]

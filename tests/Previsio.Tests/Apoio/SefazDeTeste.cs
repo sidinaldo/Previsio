@@ -16,6 +16,11 @@ public class SefazDeTeste : ISefaz
 
     public List<string> Chamadas { get; } = new List<string>();
 
+    // Respostas da distribuição por NSU, por CNPJ, na ordem (depois da última: 137, nada novo, com o mesmo NSU)
+    public Dictionary<string, Queue<RetornoSefaz>> Distribuicoes { get; } = new Dictionary<string, Queue<RetornoSefaz>>();
+    // Chaves que receberam ciência, na ordem
+    public List<string> Ciencias { get; } = new List<string>();
+
     public static RetornoSefaz Retorno(string status, string motivo)
     {
         var retorno = new RetornoSefaz();
@@ -63,10 +68,34 @@ public class SefazDeTeste : ISefaz
         return Task.FromResult(fila.Peek());
     }
 
+    public void ResponderDistribuicao(string cnpj, params RetornoSefaz[] respostas)
+    {
+        Distribuicoes[cnpj] = new Queue<RetornoSefaz>(respostas);
+    }
+
+    public Task<RetornoSefaz> DistribuirPorNsuAsync(
+        X509Certificate2 certificado, string uf, string cnpj, string ultimoNsu, CancellationToken cancelamento)
+    {
+        Chamadas.Add("nsu " + cnpj + " " + ultimoNsu);
+        if (FalharConexao)
+        {
+            throw new HttpRequestException("Conexão recusada");
+        }
+        if (Distribuicoes.ContainsKey(cnpj) && Distribuicoes[cnpj].Count > 0)
+        {
+            return Task.FromResult(Distribuicoes[cnpj].Dequeue());
+        }
+        RetornoSefaz nada = Retorno("137", "Nenhum documento localizado");
+        nada.UltimoNsu = ultimoNsu;
+        nada.MaximoNsu = ultimoNsu;
+        return Task.FromResult(nada);
+    }
+
     public Task<RetornoSefaz> ManifestarCienciaAsync(
         X509Certificate2 certificado, string cnpj, string chave, CancellationToken cancelamento)
     {
         Chamadas.Add("ciencia " + cnpj);
+        Ciencias.Add(chave);
         return Task.FromResult(RespostaCiencia);
     }
 }

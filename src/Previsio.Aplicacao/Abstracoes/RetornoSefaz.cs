@@ -11,6 +11,21 @@ public class RetornoSefaz
     public string Motivo { get; set; } = "";
     public List<DocumentoDistribuido> Documentos { get; set; } = new List<DocumentoDistribuido>();
 
+    // Distribuição por NSU: último NSU devolvido nesta chamada e o maior que existe para o CNPJ.
+    // Quando são iguais, não há mais nada; a próxima consulta só depois de 1 hora (senão 656)
+    public string UltimoNsu { get; set; } = "";
+    public string MaximoNsu { get; set; } = "";
+
+    public bool NenhumDocumento
+    {
+        get { return Status == "137"; }
+    }
+
+    public bool TemMais
+    {
+        get { return UltimoNsu != "" && MaximoNsu != "" && string.CompareOrdinal(UltimoNsu, MaximoNsu) < 0; }
+    }
+
     public bool DocumentoLocalizado
     {
         get { return Status == "138"; }

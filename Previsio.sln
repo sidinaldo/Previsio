@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{1C3B399F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Previsio.SondagemBling", "tools\Previsio.SondagemBling\Previsio.SondagemBling.csproj", "{5CC80B2C-5142-4D55-B25F-C284FBB5B473}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Previsio.SondagemSefaz", "tools\Previsio.SondagemSefaz\Previsio.SondagemSefaz.csproj", "{FA869020-D00D-4A5E-98FC-910B939467F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +133,18 @@ Global
 		{5CC80B2C-5142-4D55-B25F-C284FBB5B473}.Release|x64.Build.0 = Release|Any CPU
 		{5CC80B2C-5142-4D55-B25F-C284FBB5B473}.Release|x86.ActiveCfg = Release|Any CPU
 		{5CC80B2C-5142-4D55-B25F-C284FBB5B473}.Release|x86.Build.0 = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|x64.Build.0 = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Debug|x86.Build.0 = Debug|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|x64.ActiveCfg = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|x64.Build.0 = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|x86.ActiveCfg = Release|Any CPU
+		{FA869020-D00D-4A5E-98FC-910B939467F5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -144,5 +158,6 @@ Global
 		{18E5F205-BC57-4372-A528-9F6FB3C8C607} = {093690D8-B270-4B97-A003-3026EE431F5D}
 		{8FD4E8EF-4B6B-44D4-8F62-DAF57E42D50E} = {23A023DC-F8C3-4050-ACE7-631D82932CD2}
 		{5CC80B2C-5142-4D55-B25F-C284FBB5B473} = {1C3B399F-246D-4071-8F6F-575330AD6195}
+		{FA869020-D00D-4A5E-98FC-910B939467F5} = {1C3B399F-246D-4071-8F6F-575330AD6195}
 	EndGlobalSection
 EndGlobal
