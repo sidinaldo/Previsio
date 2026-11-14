@@ -92,7 +92,7 @@ export class ContasPagarComponent {
 
   constructor() {
     this.aplicar(lerFiltroContas(this.sessao.clienteId(), new Date()));
-    this.aplicarDoPainel(inject(ActivatedRoute).snapshot.queryParamMap);
+    this.aplicarDoEndereco(inject(ActivatedRoute).snapshot.queryParamMap);
     this.previsio.listarEmpresas().subscribe({
       next: empresas => this.empresas.set(empresas),
       error: () => this.empresas.set([])
@@ -198,21 +198,32 @@ export class ContasPagarComponent {
     });
   }
 
-  /** Do painel: as contas em aberto da categoria, no período do painel. */
-  private aplicarDoPainel(parametros: ParamMap): void {
+  /**
+   * Filtro que veio no endereço (atalho do Painel ou link do e-mail de vencimentos):
+   * categoria, situação (Abertas, Vencidas...) e período de vencimento. Sem nada disso, vale o filtro guardado.
+   */
+  private aplicarDoEndereco(parametros: ParamMap): void {
     const categoria = (parametros.get('categoria') ?? '').trim();
-    if (categoria === '') {
-      return;
-    }
-    this.categoria.set(categoria);
-    this.situacao.set('Abertas');
-    this.empresaId.set(null);
-    this.origem.set('');
+    const situacao = parametros.get('situacao') ?? '';
+    const situacaoValida = this.situacoes.some(s => s.valor === situacao);
     const de = parametros.get('de') ?? '';
     const ate = parametros.get('ate') ?? '';
-    if (DATA_ISO.test(de) && DATA_ISO.test(ate)) {
+    const periodoValido = DATA_ISO.test(de) && DATA_ISO.test(ate);
+    if (categoria === '' && !situacaoValida && !periodoValido) {
+      return;
+    }
+    // Link: começa só com o que veio nele (empresa e origem em "Todas")
+    this.categoria.set(categoria);
+    this.situacao.set(situacaoValida ? situacao : 'Abertas');
+    this.empresaId.set(null);
+    this.origem.set('');
+    if (periodoValido) {
       this.de.set(de);
       this.ate.set(ate);
+    } else if (situacao === 'Vencidas') {
+      // Todas as vencidas, de qualquer data
+      this.de.set('');
+      this.ate.set('');
     }
   }
 

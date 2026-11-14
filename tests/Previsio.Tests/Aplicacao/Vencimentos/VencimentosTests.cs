@@ -56,7 +56,7 @@ public class VencimentosTests
         return empresa;
     }
 
-    private void Conta(Empresa empresa, int dias, decimal valor, int situacao = SituacaoContaBling.EmAberto)
+    private void Conta(Empresa empresa, int dias, decimal valor, int situacao = SituacaoContaBling.EmAberto, string? fornecedor = null)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
@@ -64,6 +64,7 @@ public class VencimentosTests
         conta.Vencimento = new DateTime(2026, 11, 11).AddDays(dias);
         conta.Valor = valor;
         conta.Situacao = situacao;
+        conta.FornecedorNome = fornecedor;
         _db.ContasPagar.Add(conta);
     }
 
@@ -118,10 +119,10 @@ public class VencimentosTests
     public async Task Alerta_diario_traz_hoje_amanha_e_vencidas_e_sai_uma_vez_por_dia_na_hora()
     {
         await CadastrarRede();
-        Conta(_norte, 0, 1000m);
-        Conta(_centro, 0, 840.50m);
+        Conta(_norte, 0, 1000m, fornecedor: "ALFA DISTRIBUIDORA");
+        Conta(_centro, 0, 840.50m, fornecedor: "BETA LUBRIFICANTES");
         Conta(_centro, 1, 200m);
-        Conta(_norte, -2, 99m);
+        Conta(_norte, -2, 99m, fornecedor: "GAMA PNEUS");
         Conta(_norte, 2, 5000m);
         await _db.SaveChangesAsync();
         Cliente rede = _db.Clientes.Single(c => c.Id == _rede.Id);
@@ -135,16 +136,51 @@ public class VencimentosTests
         Assert.Equal("ana@autocenter.com.br", email.Para);
         Assert.Equal("Previsio: hoje vencem R$ 1.840,50 em 2 contas · Rede Auto Center", email.Assunto);
         Assert.Contains("Olá, Ana.", email.Texto);
-        Assert.Contains("VENCEM HOJE: R$ 1.840,50", email.Texto);
-        Assert.Contains("Auto Center Centro · 1 conta · R$ 840,50", email.Texto);
-        Assert.Contains("VENCEM AMANHÃ: R$ 200,00", email.Texto);
+        Assert.Contains("VENCEM HOJE: R$ 1.840,50 (2 contas)", email.Texto);
+        Assert.Contains("Por loja: Auto Center Centro R$ 840,50 · Auto Center Zona Norte R$ 1.000,00", email.Texto);
+        // Lista das contas: a maior primeiro
+        int alfa = email.Texto.IndexOf("- ALFA DISTRIBUIDORA · Auto Center Zona Norte · R$ 1.000,00");
+        int beta = email.Texto.IndexOf("- BETA LUBRIFICANTES · Auto Center Centro · R$ 840,50");
+        Assert.True(alfa > 0 && beta > alfa);
+        Assert.Contains("VENCEM AMANHÃ: R$ 200,00 (1 conta)", email.Texto);
+        Assert.Contains("- Fornecedor não identificado · Auto Center Centro · R$ 200,00", email.Texto);
         Assert.Contains("1 conta vencida em aberto no Bling, somando R$ 99,00", email.Texto);
+        Assert.Contains("- GAMA PNEUS · Auto Center Zona Norte · R$ 99,00 · 2 dias de atraso", email.Texto);
+        // Links já filtrados em Contas a pagar
+        Assert.Contains("Ver no Previsio: http://localhost:4200/#/pages/contas-pagar?situacao=Abertas&de=2026-11-11&ate=2026-11-11", email.Texto);
+        Assert.Contains("Ver no Previsio: http://localhost:4200/#/pages/contas-pagar?situacao=Abertas&de=2026-11-12&ate=2026-11-12", email.Texto);
+        Assert.Contains("Ver no Previsio: http://localhost:4200/#/pages/contas-pagar?situacao=Vencidas", email.Texto);
+        Assert.Contains("situacao=Abertas&amp;de=2026-11-11", email.Html);
+        Assert.Contains("escolhida na tela Configurações", email.Html);
         Assert.DoesNotContain("5.000", email.Texto);
 
         // No dia seguinte, antes da hora escolhida, não manda
         _relogio.Agora = new DateTimeOffset(2026, 11, 12, 10, 0, 0, TimeSpan.Zero);
         await Alertas().EnviarDevidosAsync(CancellationToken.None);
         Assert.Single(_email.Enviados);
+    }
+
+    [Fact]
+    public async Task Lista_ate_o_maximo_por_bloco_e_aponta_para_o_resto()
+    {
+        await CadastrarRede();
+        for (int i = 1; i <= 12; i++)
+        {
+            Conta(_norte, 0, 100m + i, fornecedor: "FORNECEDOR " + i);
+        }
+        await _db.SaveChangesAsync();
+
+        MensagemEmail? email = await Alertas().MontarAsync(_db.Clientes.Single(c => c.Id == _rede.Id), new DateTime(2026, 11, 11), CancellationToken.None);
+
+        Assert.NotNull(email);
+        Assert.Equal(10, email!.Texto.Split('\n').Count(l => l.StartsWith("  - FORNECEDOR")));
+        // As 2 menores ficam de fora
+        Assert.DoesNotContain("FORNECEDOR 1 ·", email.Texto);
+        Assert.DoesNotContain("FORNECEDOR 2 ·", email.Texto);
+        Assert.Contains("e mais 2 contas", email.Texto);
+        Assert.Contains("Ver todas no Previsio:", email.Texto);
+        // Uma loja só: sem a linha "Por loja"
+        Assert.DoesNotContain("Por loja", email.Texto);
     }
 
     [Fact]
@@ -194,6 +230,8 @@ public class VencimentosTests
         ResumoSemanal resumo = await resumoService.MontarAsync(_db.Clientes.Single(c => c.Id == _rede.Id), CancellationToken.None);
         Assert.Equal(2, resumo.Vencidas);
         Assert.Equal(150.50m, resumo.TotalVencidas);
-        Assert.Contains("2 contas vencidas em aberto no Bling, somando R$ 150,50", ModeloEmailResumo.Montar(resumo, _db.Usuarios.First(), "https://x/#").Texto);
+        MensagemEmail resumoEmail = ModeloEmailResumo.Montar(resumo, _db.Usuarios.First(), "https://x/#");
+        Assert.Contains("2 contas vencidas em aberto no Bling, somando R$ 150,50", resumoEmail.Texto);
+        Assert.Contains("Ver as vencidas: https://x/#/pages/contas-pagar?situacao=Vencidas", resumoEmail.Texto);
     }
 }

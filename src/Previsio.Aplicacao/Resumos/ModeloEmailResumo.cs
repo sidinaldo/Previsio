@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Vencimentos;
 using System.Globalization;
 using System.Net;
 using System.Text;
@@ -53,9 +54,11 @@ public static class ModeloEmailResumo
         {
             string vencidas = Quantidade(resumo.Vencidas, "conta vencida", "contas vencidas") + " em aberto no Bling, somando "
                 + Dinheiro(resumo.TotalVencidas) + ". Pague ou dê baixa no Bling.";
+            string link = AlertaVencimentosService.LinkVencidas(urlFront);
             html.Append("<p style=\"margin:0 0 24px;padding:12px 16px;border:1px solid #FCA5A5;border-radius:8px;background:#FEF2F2\">"
-                + "<strong style=\"color:#B91C1C\">Atenção:</strong> " + Html(vencidas) + "</p>");
-            texto.Append("ATENÇÃO: " + vencidas + "\n\n");
+                + "<strong style=\"color:#B91C1C\">Atenção:</strong> " + Html(vencidas)
+                + " <a href=\"" + Html(link) + "\" style=\"color:#B91C1C;font-weight:600\">Ver as vencidas</a></p>");
+            texto.Append("ATENÇÃO: " + vencidas + "\nVer as vencidas: " + link + "\n\n");
         }
 
         // Vencimentos da semana, dia a dia e por empresa

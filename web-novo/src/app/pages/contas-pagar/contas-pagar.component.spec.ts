@@ -120,4 +120,30 @@ describe('ContasPagarComponent', () => {
     expect(ultimo.pagina).toBe(1);
     expect(localStorage.getItem('previsio.por-pagina.contas-pagar')).toBe('10');
   });
+
+  it('link do e-mail: vencidas de qualquer data, sem empresa nem origem guardadas', async () => {
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '2026-11-01', ate: '2026-11-30', datasPadrao: false }));
+    const { api } = await montar({ situacao: 'Vencidas' });
+    const filtro = api.obterContasPagar.mock.calls[0][0];
+    expect(filtro.situacao).toBe('Vencidas');
+    expect(filtro.de).toBe('');
+    expect(filtro.ate).toBe('');
+    expect(filtro.empresaId).toBeNull();
+    expect(filtro.origem).toBe('');
+    expect(filtro.categoria).toBe('');
+  });
+
+  it('link do e-mail: as em aberto que vencem no dia', async () => {
+    const { api } = await montar({ situacao: 'Abertas', de: '2026-11-14', ate: '2026-11-14' });
+    const filtro = api.obterContasPagar.mock.calls[0][0];
+    expect(filtro.situacao).toBe('Abertas');
+    expect(filtro.de).toBe('2026-11-14');
+    expect(filtro.ate).toBe('2026-11-14');
+  });
+
+  it('situação inválida no endereço é ignorada e vale o filtro guardado', async () => {
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '', ate: '', datasPadrao: true }));
+    const { api } = await montar({ situacao: 'Qualquer' });
+    expect(api.obterContasPagar.mock.calls[0][0].situacao).toBe('Pagas');
+  });
 });

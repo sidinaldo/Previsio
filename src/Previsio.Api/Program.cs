@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Vencimentos;
 using Previsio.Aplicacao.BuscaSefaz;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -58,6 +59,7 @@ builder.Services.AddPrevisioAplicacao();
 builder.Services.Configure<SincronizacaoOptions>(builder.Configuration.GetSection(SincronizacaoOptions.Secao));
 builder.Services.Configure<CategoriasOptions>(builder.Configuration.GetSection(CategoriasOptions.Secao));
 builder.Services.Configure<BuscaSefazOptions>(builder.Configuration.GetSection(BuscaSefazOptions.Secao));
+builder.Services.Configure<AlertaVencimentosOptions>(builder.Configuration.GetSection(AlertaVencimentosOptions.Secao));
 builder.Services.Configure<LeituraEmailOptions>(builder.Configuration.GetSection(LeituraEmailOptions.Secao));
 builder.Services.AddSingleton(new AmbienteAplicacao(builder.Environment.IsDevelopment()));
 builder.Services.AddSingleton(TimeProvider.System);

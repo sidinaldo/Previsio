@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.Contratos;
@@ -33,6 +34,7 @@ public class AlertaVencimentosService
     private readonly IConfiguration _configuracao;
     private readonly TimeProvider _relogio;
     private readonly ILogger<AlertaVencimentosService> _logger;
+    private readonly AlertaVencimentosOptions _opcoes;
 
     public AlertaVencimentosService(
         IRepositorio<Cliente> clientes,
@@ -42,8 +44,10 @@ public class AlertaVencimentosService
         IEnvioEmail email,
         IConfiguration configuracao,
         TimeProvider relogio,
-        ILogger<AlertaVencimentosService> logger)
+        ILogger<AlertaVencimentosService> logger,
+        IOptions<AlertaVencimentosOptions> opcoes)
     {
+        _opcoes = opcoes.Value;
         _clientes = clientes;
         _usuarios = usuarios;
         _empresas = empresas;
@@ -171,6 +175,7 @@ public class AlertaVencimentosService
         }
 
         string urlFront = (_configuracao["Front:Url"] ?? "http://localhost:4200/#").TrimEnd('/');
+        Dictionary<int, string> nomes = empresas.ToDictionary(e => e.Id, e => e.Nome);
         var html = new StringBuilder();
         var texto = new StringBuilder();
         html.Append("<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#0F172A;max-width:600px\">");
@@ -179,20 +184,25 @@ public class AlertaVencimentosService
         html.Append("<p>Olá, {nome}.</p>");
         texto.Append("Previsio · Vencimentos · " + cliente.Nome + " · " + hoje.ToString("dd/MM/yyyy", Brasil) + "\n\nOlá, {nome}.\n\n");
 
-        Bloco(html, texto, "Vencem hoje", deHoje, empresas.ToDictionary(e => e.Id, e => e.Nome));
-        Bloco(html, texto, "Vencem amanhã", deAmanha, empresas.ToDictionary(e => e.Id, e => e.Nome));
+        int maximo = _opcoes.MaximoContasPorBlocoValido();
+        // Hoje e amanhã: as maiores primeiro; vencidas: as mais antigas primeiro
+        Bloco(html, texto, "Vencem hoje", deHoje.OrderByDescending(c => c.Valor).ToList(), nomes,
+            LinkDoDia(urlFront, hoje), hoje, maximo, false);
+        Bloco(html, texto, "Vencem amanhã", deAmanha.OrderByDescending(c => c.Valor).ToList(), nomes,
+            LinkDoDia(urlFront, amanha), hoje, maximo, false);
         if (vencidas.Count > 0)
         {
             string linha = Quantidade(vencidas.Count, "conta vencida", "contas vencidas") + " em aberto no Bling, somando "
                 + ModeloEmailResumo.Dinheiro(vencidas.Sum(c => c.Valor)) + ". Pague ou dê baixa no Bling.";
-            html.Append("<p style=\"padding:12px 16px;border:1px solid #FCA5A5;border-radius:8px;background:#FEF2F2\"><strong style=\"color:#B91C1C\">Atenção:</strong> "
+            html.Append("<p style=\"padding:12px 16px;border:1px solid #FCA5A5;border-radius:8px;background:#FEF2F2;margin:16px 0 6px\"><strong style=\"color:#B91C1C\">Atenção:</strong> "
                 + WebUtility.HtmlEncode(linha) + "</p>");
-            texto.Append("ATENÇÃO: " + linha + "\n\n");
+            texto.Append("ATENÇÃO: " + linha + "\n");
+            Linhas(html, texto, vencidas.OrderBy(c => c.Vencimento).ThenByDescending(c => c.Valor).ToList(), nomes,
+                LinkVencidas(urlFront), hoje, maximo, true);
         }
         html.Append("<p><a href=\"" + WebUtility.HtmlEncode(urlFront + "/pages/painel") + "\" style=\"color:#1D4ED8;font-weight:600\">Abrir o painel</a></p>");
-        html.Append("<p style=\"color:#5E6E85;font-size:12px\">Contas em aberto no Bling, sincronizadas pelo Previsio. A hora deste e-mail é escolhida na tela Empresas.</p></div>");
+        html.Append("<p style=\"color:#5E6E85;font-size:12px\">Contas em aberto no Bling, sincronizadas pelo Previsio. A hora deste e-mail é escolhida na tela Configurações.</p></div>");
         texto.Append("Abrir o painel: " + urlFront + "/pages/painel\n");
-
         decimal totalHoje = deHoje.Sum(c => c.Valor);
         string assunto;
         if (deHoje.Count > 0)
@@ -215,25 +225,95 @@ public class AlertaVencimentosService
         return mensagem;
     }
 
-    private static void Bloco(StringBuilder html, StringBuilder texto, string titulo, List<ContaPagarSincronizada> contas, Dictionary<int, string> empresas)
+    /// <summary>Contas a pagar em aberto que vencem no dia, já filtradas na tela.</summary>
+    public static string LinkDoDia(string urlFront, DateTime dia)
+    {
+        string data = dia.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        return urlFront + "/pages/contas-pagar?situacao=Abertas&de=" + data + "&ate=" + data;
+    }
+
+    /// <summary>Contas a pagar vencidas e em aberto, já filtradas na tela.</summary>
+    public static string LinkVencidas(string urlFront)
+    {
+        return urlFront + "/pages/contas-pagar?situacao=Vencidas";
+    }
+
+    // Título com o total e, com mais de uma loja, o total de cada uma; depois a lista das contas
+    private static void Bloco(
+        StringBuilder html, StringBuilder texto, string titulo, List<ContaPagarSincronizada> contas,
+        Dictionary<int, string> empresas, string link, DateTime hoje, int maximo, bool atraso)
     {
         if (contas.Count == 0)
         {
             return;
         }
-        decimal total = contas.Sum(c => c.Valor);
-        html.Append("<p style=\"font-size:15px;font-weight:600;margin:16px 0 6px\">" + WebUtility.HtmlEncode(titulo) + ": "
-            + WebUtility.HtmlEncode(ModeloEmailResumo.Dinheiro(total)) + "</p><ul style=\"padding-left:20px;margin:0 0 12px\">");
-        texto.Append(titulo.ToUpper(Brasil) + ": " + ModeloEmailResumo.Dinheiro(total) + "\n");
-        foreach (var grupo in contas.GroupBy(c => c.EmpresaId).OrderBy(g => empresas.ContainsKey(g.Key) ? empresas[g.Key] : ""))
+        string total = ModeloEmailResumo.Dinheiro(contas.Sum(c => c.Valor)) + " (" + Quantidade(contas.Count, "conta", "contas") + ")";
+        html.Append("<p style=\"font-size:15px;font-weight:600;margin:16px 0 2px\">" + WebUtility.HtmlEncode(titulo) + ": "
+            + WebUtility.HtmlEncode(total) + "</p>");
+        texto.Append(titulo.ToUpper(Brasil) + ": " + total + "\n");
+
+        var porLoja = new List<string>();
+        foreach (var grupo in contas.GroupBy(c => c.EmpresaId).OrderBy(g => NomeDaLoja(empresas, g.Key)))
         {
-            string nome = empresas.ContainsKey(grupo.Key) ? empresas[grupo.Key] : "";
-            string linha = nome + " · " + Quantidade(grupo.Count(), "conta", "contas") + " · " + ModeloEmailResumo.Dinheiro(grupo.Sum(c => c.Valor));
-            html.Append("<li>" + WebUtility.HtmlEncode(linha) + "</li>");
-            texto.Append("  " + linha + "\n");
+            porLoja.Add(NomeDaLoja(empresas, grupo.Key) + " " + ModeloEmailResumo.Dinheiro(grupo.Sum(c => c.Valor)));
         }
-        html.Append("</ul>");
-        texto.Append("\n");
+        if (porLoja.Count > 1)
+        {
+            string lojas = "Por loja: " + string.Join(" · ", porLoja);
+            html.Append("<p style=\"color:#5E6E85;font-size:12px;margin:0 0 6px\">" + WebUtility.HtmlEncode(lojas) + "</p>");
+            texto.Append("  " + lojas + "\n");
+        }
+        Linhas(html, texto, contas, empresas, link, hoje, maximo, atraso);
+    }
+
+    // Tabela de até "maximo" contas (fornecedor, loja, valor e, nas vencidas, os dias de atraso) e o link filtrado
+    private static void Linhas(
+        StringBuilder html, StringBuilder texto, List<ContaPagarSincronizada> contas,
+        Dictionary<int, string> empresas, string link, DateTime hoje, int maximo, bool atraso)
+    {
+        string celula = "padding:4px 8px 4px 0;border-bottom:1px solid #E3E8EF;vertical-align:top";
+        html.Append("<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 6px\">");
+        foreach (ContaPagarSincronizada conta in contas.Take(maximo))
+        {
+            string fornecedor = string.IsNullOrWhiteSpace(conta.FornecedorNome) ? "Fornecedor não identificado" : conta.FornecedorNome!;
+            string loja = NomeDaLoja(empresas, conta.EmpresaId);
+            string valor = ModeloEmailResumo.Dinheiro(conta.Valor);
+            html.Append("<tr><td style=\"" + celula + "\">" + WebUtility.HtmlEncode(fornecedor) + "</td>"
+                + "<td style=\"" + celula + ";color:#5E6E85\">" + WebUtility.HtmlEncode(loja) + "</td>");
+            string linha = "  - " + fornecedor + " · " + loja + " · " + valor;
+            if (atraso)
+            {
+                int dias = (hoje - conta.Vencimento.Date).Days;
+                string textoAtraso = Quantidade(dias, "dia", "dias") + " de atraso";
+                html.Append("<td style=\"" + celula + ";color:#B91C1C;white-space:nowrap\">" + WebUtility.HtmlEncode(textoAtraso) + "</td>");
+                linha = linha + " · " + textoAtraso;
+            }
+            html.Append("<td style=\"" + celula + ";text-align:right;white-space:nowrap;font-weight:600\">" + WebUtility.HtmlEncode(valor) + "</td></tr>");
+            texto.Append(linha + "\n");
+        }
+        html.Append("</table>");
+
+        string verTudo = "Ver no Previsio";
+        if (contas.Count > maximo)
+        {
+            int resto = contas.Count - maximo;
+            string mais = "e mais " + Quantidade(resto, "conta", "contas");
+            html.Append("<p style=\"color:#5E6E85;font-size:12px;margin:0 0 2px\">" + WebUtility.HtmlEncode(mais) + "</p>");
+            texto.Append("  " + mais + "\n");
+            verTudo = "Ver todas no Previsio";
+        }
+        html.Append("<p style=\"margin:0 0 12px\"><a href=\"" + WebUtility.HtmlEncode(link) + "\" style=\"color:#1D4ED8;font-weight:600\">"
+            + verTudo + "</a></p>");
+        texto.Append("  " + verTudo + ": " + link + "\n\n");
+    }
+
+    private static string NomeDaLoja(Dictionary<int, string> empresas, int empresaId)
+    {
+        if (empresas.ContainsKey(empresaId))
+        {
+            return empresas[empresaId];
+        }
+        return "";
     }
 
     private static string Quantidade(int quantidade, string singular, string plural)

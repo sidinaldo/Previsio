@@ -45,6 +45,10 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
 - **Rastreio:** o Bling não tem campo para a chave da NF-e, então ela vai no `historico` da conta a pagar.
 - **Nº do documento:** `48213` (parcela única) ou `48213/2` (segunda parcela).
 - **Nota sem duplicatas no XML:** fica como pendente ("Sem vencimentos no XML") para lançamento manual.
+- **E-mail diário de vencimentos:** em cada bloco (hoje, amanhã, vencidas) lista as contas, com fornecedor, loja,
+  valor e, nas vencidas, os dias de atraso, até `AlertaVencimentos:MaximoContasPorBloco` (padrão 10; o resto vira
+  "e mais N contas"). Cada bloco tem o link para Contas a pagar já filtrada (`?situacao=Abertas&de=&ate=` ou
+  `?situacao=Vencidas`); quem não está logado entra e volta direto para a lista.
 - **Busca completa na SEFAZ:** com o certificado A1 da empresa (ou da matriz, mesma raiz de CNPJ), o Previsio lê a
   distribuição de NF-e por NSU e pega a nota que o fornecedor não mandou por e-mail. A primeira busca pula o histórico
   (só notas de agora em diante); resumo de nota recebe a Ciência da Operação e o XML completo chega na busca seguinte,

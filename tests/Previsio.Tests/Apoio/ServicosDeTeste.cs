@@ -208,7 +208,8 @@ public static class ServicosDeTeste
             email,
             configuracao,
             relogio,
-            logger);
+            logger,
+            Options.Create(new AlertaVencimentosOptions()));
     }
 
     public static LancamentoNotaService LancamentoNotaService(
