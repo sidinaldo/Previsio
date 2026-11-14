@@ -73,7 +73,7 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-2 col-sm-4">
+            <div class="col-md-3 col-sm-6">
               <label for="contas-origem" class="col-form-label pt-0">Origem</label>
               <div class="form-group">
                 <select id="contas-origem" class="form-control" name="origem"
@@ -84,14 +84,25 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-2 col-sm-4">
+            <div class="col-md-3 col-sm-6">
+              <label for="contas-forma" class="col-form-label pt-0">Forma de pagamento</label>
+              <div class="form-group">
+                <select id="contas-forma" class="form-control" name="forma"
+                        [ngModel]="forma()" (ngModelChange)="forma.set($event)">
+                  @for (opcao of formas; track opcao.valor) {
+                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
               <label for="contas-de" class="col-form-label pt-0">Vencimento de</label>
               <div class="form-group">
                 <input id="contas-de" type="date" class="form-control" name="de"
                        [ngModel]="de()" (ngModelChange)="de.set($event)">
               </div>
             </div>
-            <div class="col-md-2 col-sm-4">
+            <div class="col-md-3 col-sm-6">
               <label for="contas-ate" class="col-form-label pt-0">Até</label>
               <div class="form-group">
                 <input id="contas-ate" type="date" class="form-control" name="ate"
@@ -147,6 +158,7 @@
                 <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Vencimento</th>
                 <th pvColuna="fornecedor" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Fornecedor</th>
                 <th>Categoria</th>
+                <th>Forma</th>
                 <th pvColuna="empresa" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Empresa</th>
                 <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
                 <th>Situação</th>
@@ -167,6 +179,18 @@
                   <td>
                     @if (conta.categoria) {
                       {{ conta.categoria }}
+                    } @else {
+                      <span class="pv-tabela__auxiliar">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (conta.formaPagamento) {
+                      {{ conta.formaPagamento }}
+                      @if (conta.saiSozinho) {
+                        <span class="pv-tabela__auxiliar pv-forma__sozinho" title="Debitado na conta: ninguém precisa pagar">sai sozinho da conta</span>
+                      }
+                    } @else if (conta.formaGrupo === 'outras') {
+                      <span class="pv-tabela__auxiliar" title="Forma criada no Bling depois da última sincronização">Forma não identificada</span>
                     } @else {
                       <span class="pv-tabela__auxiliar">—</span>
                     }

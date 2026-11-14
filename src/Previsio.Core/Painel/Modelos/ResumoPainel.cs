@@ -26,6 +26,12 @@ public class ResumoPainel
     public List<TotalSemana> Semanas { get; set; } = new List<TotalSemana>();
     // Saídas do período por categoria: as maiores, Outras, Sem categoria e A conferir
     public List<TotalCategoria> Categorias { get; set; } = new List<TotalCategoria>();
+    // Saídas em aberto do período por grupo de forma de pagamento, e o total do que precisa pagar × sai sozinho
+    public List<TotalFormaPagamento> Formas { get; set; } = new List<TotalFormaPagamento>();
+    public decimal TotalPrecisaPagar { get; set; }
+    public int QuantidadePrecisaPagar { get; set; }
+    public decimal TotalSaiSozinho { get; set; }
+    public int QuantidadeSaiSozinho { get; set; }
     public List<TotalEmpresa> Empresas { get; set; } = new List<TotalEmpresa>();
     // As notas pendentes mais urgentes (até CalculadoraPainel.MaximoNotasParaResolver)
     public List<NotaParaResolver> NotasParaResolver { get; set; } = new List<NotaParaResolver>();

@@ -52,6 +52,9 @@ public class Cliente : ICaixaEmail
 
     // Categoria (nome) das notas de fornecedor sem regra e sem histórico no Bling; vazio = sem categoria
     public string? CategoriaPadrao { get; set; }
+    // Forma de pagamento (nome) das notas de fornecedor sem regra, sem histórico e sem tipo útil no XML;
+    // vazio = a automática do appsettings (FormasPagamento:PadraoAutomatico)
+    public string? FormaPagamentoPadrao { get; set; }
     public bool ConferenciaExigeNumeroNota { get; set; }
     public decimal ConferenciaToleranciaValor { get; set; } = 0.10m;
     public int ConferenciaToleranciaDias { get; set; }

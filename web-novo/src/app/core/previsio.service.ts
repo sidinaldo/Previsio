@@ -27,7 +27,9 @@ import {
   PaginaContasReceber,
   FluxoCaixa,
   ConfiguracaoCategorias,
+  ConfiguracaoFormasPagamento,
   NovaRegraCategoria,
+  NovaRegraFormaPagamento,
   SituacaoSincronizacao,
   PaginaFalhas,
   PaginaNotas,
@@ -152,6 +154,24 @@ export class PrevisioService {
 
   removerRegraCategoria(clienteId: number, regraId: number): Observable<ConfiguracaoCategorias> {
     return this.http.delete<ConfiguracaoCategorias>(`${this.api}/clientes/${clienteId}/categorias/regras/${regraId}`);
+  }
+
+  obterFormasPagamento(clienteId: number): Observable<ConfiguracaoFormasPagamento> {
+    return this.http.get<ConfiguracaoFormasPagamento>(`${this.api}/clientes/${clienteId}/formas-pagamento`);
+  }
+
+  /** Forma de pagamento padrão da rede pelo nome (vazio volta para a automática). */
+  alterarFormaPagamentoPadrao(clienteId: number, forma: string): Observable<ConfiguracaoFormasPagamento> {
+    return this.http.put<ConfiguracaoFormasPagamento>(`${this.api}/clientes/${clienteId}/formas-pagamento/padrao`, { forma });
+  }
+
+  /** Cria a regra do fornecedor ou troca a forma da que já existe. */
+  salvarRegraFormaPagamento(clienteId: number, regra: NovaRegraFormaPagamento): Observable<ConfiguracaoFormasPagamento> {
+    return this.http.post<ConfiguracaoFormasPagamento>(`${this.api}/clientes/${clienteId}/formas-pagamento/regras`, regra);
+  }
+
+  removerRegraFormaPagamento(clienteId: number, regraId: number): Observable<ConfiguracaoFormasPagamento> {
+    return this.http.delete<ConfiguracaoFormasPagamento>(`${this.api}/clientes/${clienteId}/formas-pagamento/regras/${regraId}`);
   }
 
   /** Planilha das contas a pagar em aberto no Bling dos próximos N dias (as do painel). */

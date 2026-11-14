@@ -3577,3 +3577,87 @@ app-paginacao.pv-paginacao {
     grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 }
+
+// Formas de pagamento: o que precisa pagar × o que sai sozinho da conta (débito automático)
+.pv-forma__sozinho {
+  display: block;
+  color: var(--pv-horizonte);
+}
+
+.pv-forma__selo {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.pv-formas-painel__totais {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+
+  @media (max-width: 575px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pv-formas-painel__total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+  border: 1px solid var(--pv-borda);
+  border-left: 4px solid var(--pv-primaria);
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--pv-primaria-suave);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  strong {
+    font-size: 1.35rem;
+  }
+
+  small {
+    color: #888;
+  }
+}
+
+.pv-formas-painel__total--sozinho {
+  border-left-color: var(--pv-horizonte);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--pv-horizonte-suave);
+  }
+}
+
+.pv-formas-painel__rotulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pv-texto-auxiliar);
+}
+
+.pv-formas-painel__item--debito-automatico .pv-categorias-painel__barra span {
+  background: var(--pv-horizonte);
+}
+
+.pv-formas-painel__item--sem .pv-categorias-painel__barra span {
+  background: #ff9800;
+}
+
+.pv-formas-painel__item--outras .pv-categorias-painel__barra span {
+  background: #7b8a99;
+}
+
+.pv-formas-painel .pv-categorias-painel__nome .pv-forma__sozinho {
+  display: inline;
+  margin-left: 6px;
+  font-weight: 400;
+}

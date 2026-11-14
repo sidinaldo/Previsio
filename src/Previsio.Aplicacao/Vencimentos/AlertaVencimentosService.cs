@@ -12,6 +12,7 @@ using Previsio.Aplicacao.Abstracoes;
 using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Resumos;
 using Previsio.Aplicacao.Dtos;
+using Previsio.Aplicacao.FormasPagamento;
 
 namespace Previsio.Aplicacao.Vencimentos;
 
@@ -35,6 +36,8 @@ public class AlertaVencimentosService
     private readonly TimeProvider _relogio;
     private readonly ILogger<AlertaVencimentosService> _logger;
     private readonly AlertaVencimentosOptions _opcoes;
+    private readonly IRepositorio<FormaPagamento> _formas;
+    private readonly FormasPagamentoOptions _opcoesFormas;
 
     public AlertaVencimentosService(
         IRepositorio<Cliente> clientes,
@@ -45,8 +48,12 @@ public class AlertaVencimentosService
         IConfiguration configuracao,
         TimeProvider relogio,
         ILogger<AlertaVencimentosService> logger,
-        IOptions<AlertaVencimentosOptions> opcoes)
+        IOptions<AlertaVencimentosOptions> opcoes,
+        IRepositorio<FormaPagamento> formas,
+        IOptions<FormasPagamentoOptions> opcoesFormas)
     {
+        _formas = formas;
+        _opcoesFormas = opcoesFormas.Value;
         _opcoes = opcoes.Value;
         _clientes = clientes;
         _usuarios = usuarios;
@@ -174,6 +181,11 @@ public class AlertaVencimentosService
             return null;
         }
 
+        List<FormaPagamento> formasDaRede = await _formas.ConsultarSomenteLeitura()
+            .Where(f => ids.Contains(f.EmpresaId))
+            .ToListAsync(cancelamento);
+        var formas = new FormasDasContas(formasDaRede, _opcoesFormas.GruposSaiSozinhoValidos());
+
         string urlFront = (_configuracao["Front:Url"] ?? "http://localhost:4200/#").TrimEnd('/');
         Dictionary<int, string> nomes = empresas.ToDictionary(e => e.Id, e => e.Nome);
         var html = new StringBuilder();
@@ -186,9 +198,9 @@ public class AlertaVencimentosService
 
         int maximo = _opcoes.MaximoContasPorBlocoValido();
         // Hoje e amanhã: as maiores primeiro; vencidas: as mais antigas primeiro
-        Bloco(html, texto, "Vencem hoje", deHoje.OrderByDescending(c => c.Valor).ToList(), nomes,
+        Bloco(html, texto, "Vencem hoje", deHoje.OrderByDescending(c => c.Valor).ToList(), nomes, formas,
             LinkDoDia(urlFront, hoje), hoje, maximo, false);
-        Bloco(html, texto, "Vencem amanhã", deAmanha.OrderByDescending(c => c.Valor).ToList(), nomes,
+        Bloco(html, texto, "Vencem amanhã", deAmanha.OrderByDescending(c => c.Valor).ToList(), nomes, formas,
             LinkDoDia(urlFront, amanha), hoje, maximo, false);
         if (vencidas.Count > 0)
         {
@@ -197,7 +209,7 @@ public class AlertaVencimentosService
             html.Append("<p style=\"padding:12px 16px;border:1px solid #FCA5A5;border-radius:8px;background:#FEF2F2;margin:16px 0 6px\"><strong style=\"color:#B91C1C\">Atenção:</strong> "
                 + WebUtility.HtmlEncode(linha) + "</p>");
             texto.Append("ATENÇÃO: " + linha + "\n");
-            Linhas(html, texto, vencidas.OrderBy(c => c.Vencimento).ThenByDescending(c => c.Valor).ToList(), nomes,
+            Linhas(html, texto, vencidas.OrderBy(c => c.Vencimento).ThenByDescending(c => c.Valor).ToList(), nomes, formas,
                 LinkVencidas(urlFront), hoje, maximo, true);
         }
         html.Append("<p><a href=\"" + WebUtility.HtmlEncode(urlFront + "/pages/painel") + "\" style=\"color:#1D4ED8;font-weight:600\">Abrir o painel</a></p>");
@@ -238,10 +250,11 @@ public class AlertaVencimentosService
         return urlFront + "/pages/contas-pagar?situacao=Vencidas";
     }
 
-    // Título com o total e, com mais de uma loja, o total de cada uma; depois a lista das contas
+    // Título com o total; com mais de uma loja, o total de cada uma; com débito automático, quanto
+    // precisa pagar e quanto sai sozinho; depois a lista das contas
     private static void Bloco(
         StringBuilder html, StringBuilder texto, string titulo, List<ContaPagarSincronizada> contas,
-        Dictionary<int, string> empresas, string link, DateTime hoje, int maximo, bool atraso)
+        Dictionary<int, string> empresas, FormasDasContas formas, string link, DateTime hoje, int maximo, bool atraso)
     {
         if (contas.Count == 0)
         {
@@ -263,13 +276,23 @@ public class AlertaVencimentosService
             html.Append("<p style=\"color:#5E6E85;font-size:12px;margin:0 0 6px\">" + WebUtility.HtmlEncode(lojas) + "</p>");
             texto.Append("  " + lojas + "\n");
         }
-        Linhas(html, texto, contas, empresas, link, hoje, maximo, atraso);
+        List<ContaPagarSincronizada> sozinhas = contas.Where(c => formas.SaiSozinho(c)).ToList();
+        if (sozinhas.Count > 0)
+        {
+            decimal aPagar = contas.Sum(c => c.Valor) - sozinhas.Sum(c => c.Valor);
+            string separacao = "Precisa pagar " + ModeloEmailResumo.Dinheiro(aPagar)
+                + " · Sai sozinho da conta (débito automático) " + ModeloEmailResumo.Dinheiro(sozinhas.Sum(c => c.Valor));
+            html.Append("<p style=\"color:#5E6E85;font-size:12px;margin:0 0 6px\">" + WebUtility.HtmlEncode(separacao) + "</p>");
+            texto.Append("  " + separacao + "\n");
+        }
+        Linhas(html, texto, contas, empresas, formas, link, hoje, maximo, atraso);
     }
 
-    // Tabela de até "maximo" contas (fornecedor, loja, valor e, nas vencidas, os dias de atraso) e o link filtrado
+    // Tabela de até "maximo" contas (fornecedor, loja, forma de pagamento, valor e, nas vencidas, os dias
+    // de atraso) e o link filtrado
     private static void Linhas(
         StringBuilder html, StringBuilder texto, List<ContaPagarSincronizada> contas,
-        Dictionary<int, string> empresas, string link, DateTime hoje, int maximo, bool atraso)
+        Dictionary<int, string> empresas, FormasDasContas formas, string link, DateTime hoje, int maximo, bool atraso)
     {
         string celula = "padding:4px 8px 4px 0;border-bottom:1px solid #E3E8EF;vertical-align:top";
         html.Append("<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 6px\">");
@@ -280,7 +303,9 @@ public class AlertaVencimentosService
             string valor = ModeloEmailResumo.Dinheiro(conta.Valor);
             html.Append("<tr><td style=\"" + celula + "\">" + WebUtility.HtmlEncode(fornecedor) + "</td>"
                 + "<td style=\"" + celula + ";color:#5E6E85\">" + WebUtility.HtmlEncode(loja) + "</td>");
-            string linha = "  - " + fornecedor + " · " + loja + " · " + valor;
+            string forma = formas.Nome(conta);
+            html.Append("<td style=\"" + celula + ";color:#5E6E85;white-space:nowrap\">" + WebUtility.HtmlEncode(forma) + "</td>");
+            string linha = "  - " + fornecedor + " · " + loja + " · " + forma + " · " + valor;
             if (atraso)
             {
                 int dias = (hoje - conta.Vencimento.Date).Days;

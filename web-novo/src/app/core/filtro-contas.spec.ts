@@ -14,7 +14,7 @@ describe('filtro de contas a pagar', () => {
 
   it('não envia filtros vazios e envia os preenchidos', () => {
     expect(parametrosDasContas({ empresaId: null, situacao: '', origem: '', de: '', ate: '', busca: '  ', pagina: 1 }).keys()).toEqual([]);
-    const params = parametrosDasContas({ empresaId: 3, situacao: 'Vencidas', origem: 'Bling', de: '2026-11-01', ate: '2026-11-30', busca: ' silva ', ordem: '-valor', pagina: 2 });
+    const params = parametrosDasContas({ empresaId: 3, situacao: 'Vencidas', origem: 'Bling', de: '2026-11-01', ate: '2026-11-30', busca: ' silva ', ordem: '-valor', pagina: 2, forma: 'sai-sozinho' });
     expect(params.get('empresaId')).toBe('3');
     expect(params.get('situacao')).toBe('Vencidas');
     expect(params.get('origem')).toBe('Bling');
@@ -23,18 +23,20 @@ describe('filtro de contas a pagar', () => {
     expect(params.get('busca')).toBe('silva');
     expect(params.get('ordem')).toBe('-valor');
     expect(params.get('pagina')).toBe('2');
+    expect(params.get('forma')).toBe('sai-sozinho');
   });
 
   it('padrão: em aberto, vencendo até hoje + 30 dias, sem data inicial', () => {
     expect(filtroPadraoContas(new Date(2026, 10, 11))).toEqual(
-      { empresaId: null, situacao: 'Abertas', origem: '', de: '', ate: '2026-12-11', busca: '' });
+      { empresaId: null, situacao: 'Abertas', origem: '', forma: '', de: '', ate: '2026-12-11', busca: '' });
   });
 
   it('guarda o último filtro por cliente; o período padrão anda com o dia e a busca não fica', () => {
     const hoje = new Date(2026, 10, 11);
-    salvarFiltroContas(2, { ...filtroPadraoContas(hoje), empresaId: 7, origem: 'Bling', busca: 'x' }, hoje);
+    salvarFiltroContas(2, { ...filtroPadraoContas(hoje), empresaId: 7, origem: 'Bling', forma: 'boleto', busca: 'x' }, hoje);
     const amanha = lerFiltroContas(2, new Date(2026, 10, 12));
     expect(amanha.empresaId).toBe(7);
+    expect(amanha.forma).toBe('boleto');
     expect(amanha.origem).toBe('Bling');
     expect(amanha.ate).toBe('2026-12-12');
     expect(amanha.busca).toBe('');
@@ -44,6 +46,10 @@ describe('filtro de contas a pagar', () => {
     expect(escolhido.situacao).toBe('Pagas');
     expect(escolhido.de).toBe('2026-10-01');
     expect(escolhido.ate).toBe('2026-10-31');
+
+    // Filtro guardado antes da forma de pagamento
+    localStorage.setItem('previsio.filtro-contas.3', JSON.stringify({ empresaId: null, situacao: 'Todas', origem: '', de: '', ate: '', datasPadrao: false }));
+    expect(lerFiltroContas(3, hoje).forma).toBe('');
 
     expect(lerFiltroContas(5, hoje)).toEqual(filtroPadraoContas(hoje));
     localStorage.setItem('previsio.filtro-contas.2', '{quebrado');

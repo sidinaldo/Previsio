@@ -89,12 +89,48 @@ public class LeitorNFe
             }
         }
 
+        nota.TipoPagamento = LerTipoPagamento(infNFe);
+
         if (nota.ChaveAcesso.Length != 44 || nota.CnpjDestinatario == "")
         {
             return null;
         }
 
         return nota;
+    }
+
+    /// <summary>
+    /// O meio de pagamento (tPag) de maior valor em pag/detPag. 90 (sem pagamento) e 99 (outros)
+    /// não dizem como pagar e ficam de fora.
+    /// </summary>
+    private static int? LerTipoPagamento(XElement infNFe)
+    {
+        XElement? pag = Filho(infNFe, "pag");
+        if (pag == null)
+        {
+            return null;
+        }
+        int? escolhido = null;
+        decimal maiorValor = -1m;
+        foreach (XElement detalhe in pag.Elements().Where(e => e.Name.LocalName == "detPag"))
+        {
+            int tipo;
+            if (!int.TryParse(TextoFilho(detalhe, "tPag"), NumberStyles.Integer, Invariante, out tipo))
+            {
+                continue;
+            }
+            if (tipo == 90 || tipo == 99)
+            {
+                continue;
+            }
+            decimal valor = LerDecimal(TextoFilho(detalhe, "vPag"));
+            if (valor > maiorValor)
+            {
+                maiorValor = valor;
+                escolhido = tipo;
+            }
+        }
+        return escolhido;
     }
 
     private static string ObterChave(XElement? raiz, XElement infNFe)

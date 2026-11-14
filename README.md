@@ -58,7 +58,20 @@ Painel do Hangfire: `http://localhost:5080/hangfire` (abre só na própria máqu
   Teste real: `dotnet run --project tools/Previsio.SondagemSefaz -- <empresaId>` (uma consulta, só leitura).
 - **Categoria da conta:** regra da rede para o fornecedor (pelo nome da categoria) → senão a categoria da última conta
   desse fornecedor no Bling → senão a categoria padrão da rede → senão a automática (`Categorias:PadraoAutomatico`,
-  padrão "Compras de Mercadorias"; vazio desliga) → senão vai sem categoria. Configurado no card **Categorias** em Empresas.
+  padrão "Compras de Mercadorias"; vazio desliga) → senão vai sem categoria. Configurado na seção **Categorias** em Configurações.
+- **Forma de pagamento da conta:** regra da rede para o fornecedor (pelo nome da forma) → senão a forma da última conta
+  desse fornecedor no Bling → senão o meio de pagamento do XML (`<pag><detPag><tPag>`, o de maior valor; 90 e 99 não
+  contam), pela forma do Bling com o mesmo tipo (débito automático nunca é escolhido pelo XML) → senão a forma padrão da
+  rede → senão a automática (`FormasPagamento:PadraoAutomatico`, padrão "Boleto"; vazio desliga) → senão vai sem forma.
+  Só valem formas ativas no Bling da empresa; se um passo não acha a forma lá, tenta o seguinte. Configurado na seção
+  **Formas de pagamento** em Configurações. A lista de formas de cada empresa é renovada uma vez por dia (e no
+  "Sincronizar com o Bling"); a forma de cada conta vem na própria lista de contas do Bling.
+- **Precisa pagar × sai sozinho:** cada forma do Bling cai num grupo pelo tipo (boleto, Pix, transferência/depósito,
+  cartão, dinheiro, outras). Débito automático vem do nome: contém um dos `FormasPagamento:TermosDebitoAutomatico`
+  (padrão "debito automatico" e "debito em conta", sem acento). Os grupos de `FormasPagamento:GruposSaiSozinho` (padrão
+  só `debito-automatico`) contam como "sai sozinho da conta"; o resto, como "precisa pagar". Aparece no card **Como as
+  contas saem** do painel, no filtro e na coluna Forma de Contas a pagar (`?forma=boleto`, `sem`, `precisa-pagar`,
+  `sai-sozinho`...), na planilha e no e-mail de vencimentos.
 - **Categoria das contas do Bling:** a lista de contas do Bling não traz a categoria, só o detalhe de cada conta. Por isso a
   sincronização busca o detalhe aos poucos: primeiro as contas novas ou que mudaram, depois as conferidas há mais tempo,
   até `Sincronizacao:MaximoDetalhesPorExecucao` contas por empresa a cada execução (padrão 50). Conta já conferida é
@@ -250,6 +263,9 @@ npm start
 | GET | `/api/clientes/{id}/categorias` | Card Categorias: padrão, opções do Bling, regras por fornecedor e avisos |
 | PUT | `/api/clientes/{id}/categorias/padrao` | Categoria padrão da rede pelo nome (`{ "categoria": "" }` tira) |
 | POST/DELETE | `/api/clientes/{id}/categorias/regras[/{regraId}]` | Criar (ou trocar a categoria) / remover a regra de um fornecedor |
+| GET | `/api/clientes/{id}/formas-pagamento` | Seção Formas de pagamento: padrão, formas do Bling com o grupo, regras e avisos |
+| PUT | `/api/clientes/{id}/formas-pagamento/padrao` | Forma padrão da rede pelo nome (`{ "forma": "" }` volta para a automática) |
+| POST/DELETE | `/api/clientes/{id}/formas-pagamento/regras[/{regraId}]` | Criar (ou trocar a forma) / remover a regra de um fornecedor |
 
 `GET/POST /api/clientes` também são só para admin.
 

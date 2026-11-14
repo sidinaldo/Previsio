@@ -1,4 +1,5 @@
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 using Previsio.Core.Painel;
 using Previsio.Core.Painel.Modelos;
 using Xunit;
@@ -252,5 +253,46 @@ public class CalculadoraPainelTests
         Assert.Equal(new[] { "Compras", "Sem categoria", TotalCategoria.NomeNaoIdentificada }, resumo.Categorias.Select(c => c.Nome).ToArray());
         Assert.Equal(TotalCategoria.TipoNaoIdentificada, resumo.Categorias[2].Tipo);
         Assert.Equal(40m, resumo.Categorias[2].Valor);
+    }
+
+    [Fact]
+    public void Formas_separam_o_que_precisa_pagar_do_que_sai_sozinho()
+    {
+        ContaPagarSincronizada boleto = Conta(1, 2, 100m, SituacaoContaBling.EmAberto);
+        boleto.FormaPagamentoBlingId = 31;
+        ContaPagarSincronizada boletoOutraLoja = Conta(2, 3, 50m, SituacaoContaBling.EmAberto);
+        boletoOutraLoja.FormaPagamentoBlingId = 41;
+        ContaPagarSincronizada debito = Conta(1, 4, 300m, SituacaoContaBling.EmAberto);
+        debito.FormaPagamentoBlingId = 32;
+        ContaPagarSincronizada pix = Conta(1, 5, 20m, SituacaoContaBling.ParcialmentePago);
+        pix.FormaPagamentoBlingId = 33;
+        ContaPagarSincronizada desconhecida = Conta(1, 6, 7m, SituacaoContaBling.EmAberto);
+        desconhecida.FormaPagamentoBlingId = 99;
+        ContaPagarSincronizada sem = Conta(1, 7, 500m, SituacaoContaBling.EmAberto);
+        // Paga e fora do período não contam
+        ContaPagarSincronizada paga = Conta(1, 8, 1000m, SituacaoContaBling.Pago);
+        paga.FormaPagamentoBlingId = 31;
+        ContaPagarSincronizada depois = Conta(1, 60, 1000m, SituacaoContaBling.EmAberto);
+        var pagar = new List<ContaPagarSincronizada> { boleto, boletoOutraLoja, debito, pix, desconhecida, sem, paga, depois };
+        var grupos = new Dictionary<string, string>
+        {
+            { "1:31", GruposFormaPagamento.Boleto },
+            { "2:41", GruposFormaPagamento.Boleto },
+            { "1:32", GruposFormaPagamento.DebitoAutomatico },
+            { "1:33", GruposFormaPagamento.Pix }
+        };
+
+        var calculadora = new CalculadoraPainel();
+        ResumoPainel resumo = calculadora.Calcular(Hoje, 30, new List<Empresa>(), pagar, new List<NotaFiscal>());
+        calculadora.AplicarFormas(resumo, pagar, grupos, new List<string> { GruposFormaPagamento.DebitoAutomatico });
+
+        Assert.Equal(new[] { "Boleto", "Pix", "Outras", "Sem forma", "Débito automático" }, resumo.Formas.Select(f => f.Nome).ToArray());
+        Assert.Equal(150m, resumo.Formas[0].Valor);
+        Assert.Equal(2, resumo.Formas[0].Quantidade);
+        Assert.True(resumo.Formas[4].SaiSozinho);
+        Assert.Equal(677m, resumo.TotalPrecisaPagar);
+        Assert.Equal(5, resumo.QuantidadePrecisaPagar);
+        Assert.Equal(300m, resumo.TotalSaiSozinho);
+        Assert.Equal(1, resumo.QuantidadeSaiSozinho);
     }
 }

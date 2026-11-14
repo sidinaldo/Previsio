@@ -299,6 +299,35 @@ public class BlingClient
     }
 
     /// <summary>
+    /// Todas as formas de pagamento da conta Bling (todas as páginas).
+    /// </summary>
+    public async Task<List<FormaPagamentoBling>> ListarFormasPagamentoAsync(
+        string conta, string accessToken, CancellationToken cancelamento)
+    {
+        var todas = new List<FormaPagamentoBling>();
+        int pagina = 1;
+        const int limite = 100;
+
+        while (true)
+        {
+            string url = "formas-pagamentos?pagina=" + pagina + "&limite=" + limite;
+            RespostaLista<FormaPagamentoBling>? resposta =
+                await EnviarAsync<RespostaLista<FormaPagamentoBling>>(conta, accessToken, HttpMethod.Get, url, null, cancelamento);
+            if (resposta == null || resposta.Data.Count == 0)
+            {
+                break;
+            }
+            todas.AddRange(resposta.Data);
+            if (resposta.Data.Count < limite)
+            {
+                break;
+            }
+            pagina++;
+        }
+        return todas;
+    }
+
+    /// <summary>
     /// Detalhe de uma conta a pagar (traz o número do documento e o histórico).
     /// </summary>
     public async Task<ContaPagarBling?> ObterContaPagarAsync(

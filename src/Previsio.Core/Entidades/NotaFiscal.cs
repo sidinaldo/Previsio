@@ -20,6 +20,8 @@ public class NotaFiscal
     public string CnpjDestinatario { get; set; } = "";
     public string CnpjFornecedor { get; set; } = "";
     public string NomeFornecedor { get; set; } = "";
+    // Meio de pagamento do XML (tPag de <pag>): 15 = boleto, 17 = Pix...; nulo quando a nota não diz
+    public int? TipoPagamento { get; set; }
 
     public StatusNota Status { get; set; } = StatusNota.Recebida;
     public string? MensagemErro { get; set; }

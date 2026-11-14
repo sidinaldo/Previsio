@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Previsio.Aplicacao.FormasPagamento;
 using Previsio.Core.Entidades;
 using Previsio.Core.Painel;
 using Previsio.Core.Painel.Modelos;
@@ -24,7 +26,9 @@ public class PainelService
     private readonly IRepositorio<ContaReceberSincronizada> _contasReceber;
     private readonly IRepositorio<Cliente> _clientes;
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
+    private readonly IRepositorio<FormaPagamento> _formas;
     private readonly CalculadoraPainel _calculadora;
+    private readonly FormasPagamentoOptions _opcoesFormas;
 
     public PainelService(
         IRepositorio<Empresa> empresas,
@@ -33,8 +37,12 @@ public class PainelService
         IRepositorio<ContaReceberSincronizada> contasReceber,
         IRepositorio<Cliente> clientes,
         IRepositorio<CategoriaFinanceira> categorias,
-        CalculadoraPainel calculadora)
+        IRepositorio<FormaPagamento> formas,
+        CalculadoraPainel calculadora,
+        IOptions<FormasPagamentoOptions> opcoesFormas)
     {
+        _formas = formas;
+        _opcoesFormas = opcoesFormas.Value;
         _empresas = empresas;
         _contas = contas;
         _notas = notas;
@@ -95,6 +103,18 @@ public class PainelService
             nomesCategorias[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao;
         }
         _calculadora.AplicarCategorias(resumo, contas, nomesCategorias);
+
+        // Como as contas saem: grupo da forma de pagamento no Bling de cada empresa
+        var gruposFormas = new Dictionary<string, string>();
+        var formas = await _formas.ConsultarSomenteLeitura()
+            .Where(f => idsEmpresas.Contains(f.EmpresaId))
+            .Select(f => new { f.EmpresaId, f.BlingId, f.Grupo })
+            .ToListAsync(cancelamento);
+        foreach (var forma in formas)
+        {
+            gruposFormas[forma.EmpresaId + ":" + forma.BlingId] = forma.Grupo;
+        }
+        _calculadora.AplicarFormas(resumo, contas, gruposFormas, _opcoesFormas.GruposSaiSozinhoValidos());
 
         // Vencidas em aberto (a sincronização traz os últimos 30 dias)
         List<ContaPagarSincronizada> vencidas = await _contas.ConsultarSomenteLeitura()

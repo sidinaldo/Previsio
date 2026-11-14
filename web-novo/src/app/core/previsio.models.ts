@@ -48,6 +48,22 @@ export interface ResumoPainel {
   notasParaResolver?: NotaParaResolver[];
   /** Saídas do período por categoria do Bling: as 6 maiores, Outras, Sem categoria e A conferir. */
   categorias?: TotalCategoria[];
+  /** Saídas em aberto do período por grupo de forma de pagamento: primeiro o que precisa pagar. */
+  formas?: TotalFormaPagamento[];
+  totalPrecisaPagar?: number;
+  quantidadePrecisaPagar?: number;
+  /** O que sai sozinho da conta (débito automático). */
+  totalSaiSozinho?: number;
+  quantidadeSaiSozinho?: number;
+}
+
+/** grupo: 'boleto', 'pix', 'transferencia', 'cartao', 'dinheiro', 'debito-automatico', 'outras' ou 'sem'. */
+export interface TotalFormaPagamento {
+  grupo: string;
+  nome: string;
+  saiSozinho: boolean;
+  valor: number;
+  quantidade: number;
 }
 
 /**
@@ -382,6 +398,12 @@ export interface ContaPagar {
   numeroParcela: string | null;
   /** Nome da categoria no Bling; nulo = sem categoria ou ainda não conferida. */
   categoria?: string | null;
+  /** Forma de pagamento no Bling; nulo = sem forma (ou fora da lista da empresa). */
+  formaPagamento?: string | null;
+  formaGrupo?: string;
+  formaGrupoNome?: string;
+  /** Sai sozinha da conta (débito automático): ninguém precisa pagar. */
+  saiSozinho?: boolean;
 }
 
 export interface PaginaContasPagar {
@@ -461,6 +483,45 @@ export interface NovaRegraCategoria {
   categoria: string;
 }
 
+/** Seção Formas de pagamento da rede: forma padrão e regras "fornecedor → forma" do lançamento. */
+export interface ConfiguracaoFormasPagamento {
+  /** Escolhida pela rede; nulo = usa a automática. */
+  formaPadrao: string | null;
+  /** Usada quando a rede não escolhe (appsettings FormasPagamento:PadraoAutomatico); nulo = desligada. */
+  padraoAutomatico: string | null;
+  /** Empresas cujo Bling não tem a forma padrão em uso. */
+  padraoAusenteEm: string[];
+  /** Formas ativas no Bling das empresas da rede, com o grupo do Previsio. */
+  opcoes: OpcaoFormaPagamento[];
+  regras: RegraFormaPagamento[];
+  fornecedores: FornecedorDaRede[];
+  /** Empresas conectadas sem nenhuma forma guardada. */
+  empresasSemFormas: string[];
+  /** Nomes dos grupos que saem sozinhos da conta. */
+  gruposSaiSozinho: string[];
+}
+
+export interface OpcaoFormaPagamento {
+  nome: string;
+  grupo: string;
+  grupoNome: string;
+  saiSozinho: boolean;
+}
+
+export interface RegraFormaPagamento {
+  id: number;
+  cnpjFornecedor: string;
+  fornecedorNome: string | null;
+  forma: string;
+  /** Empresas cujo Bling não tem essa forma. */
+  ausenteEm: string[];
+}
+
+export interface NovaRegraFormaPagamento {
+  cnpjFornecedor: string;
+  forma: string;
+}
+
 /** Filtros da tela Contas a pagar. Datas de vencimento no formato yyyy-MM-dd. */
 export interface FiltroContas {
   empresaId?: number | null;
@@ -474,6 +535,8 @@ export interface FiltroContas {
   busca?: string;
   // Nome da categoria do Bling ou 'Sem categoria' (só contas a pagar)
   categoria?: string;
+  // Grupo da forma de pagamento (boleto, pix, sem...), 'precisa-pagar' ou 'sai-sozinho' (só contas a pagar)
+  forma?: string;
   ordem?: string;
   pagina?: number;
   /** Itens por página (10 a 100); sem ele a API usa 25. */

@@ -29,4 +29,9 @@ public class NovaContaPagarBling
     [JsonPropertyName("categoria")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Referencia? Categoria { get; set; }
+
+    // Forma de pagamento do Bling desta conta (boleto, Pix...); sem forma, o campo não vai
+    [JsonPropertyName("formaPagamento")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Referencia? FormaPagamento { get; set; }
 }

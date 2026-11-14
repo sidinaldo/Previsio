@@ -227,4 +227,39 @@ describe('PainelComponent (visual)', () => {
     expect(itens[1].querySelector('a')!.getAttribute('href')).toContain('categoria=Categoria%20n%C3%A3o%20identificada');
     expect(tela.querySelector('.pv-categorias-painel__acao')).toBeNull();
   });
+  it('como as contas saem: precisa pagar × sai sozinho, com link para o filtro de cada forma', async () => {
+    const dados = resumo([1000, 2500, 0], 0);
+    dados.formas = [
+      { grupo: 'boleto', nome: 'Boleto', saiSozinho: false, valor: 2000, quantidade: 3 },
+      { grupo: 'sem', nome: 'Sem forma', saiSozinho: false, valor: 500, quantidade: 1 },
+      { grupo: 'debito-automatico', nome: 'Débito automático', saiSozinho: true, valor: 1000, quantidade: 2 }
+    ];
+    dados.totalPrecisaPagar = 2500;
+    dados.quantidadePrecisaPagar = 4;
+    dados.totalSaiSozinho = 1000;
+    dados.quantidadeSaiSozinho = 2;
+    const { tela } = await montar(dados);
+    const card = tela.querySelector('.pv-formas-painel') as HTMLElement;
+    expect(card.querySelector('.pv-card__titulo')?.textContent).toContain('Como as contas saem');
+    const totais = card.querySelectorAll('.pv-formas-painel__total');
+    expect(totais[0].textContent).toContain('Precisa pagar');
+    expect(totais[0].textContent).toMatch(/2[.,]500/);
+    expect(totais[0].textContent).toContain('4 contas');
+    expect(totais[0].getAttribute('href')).toContain('forma=precisa-pagar&situacao=Abertas&de=2026-11-10&ate=2026-12-09');
+    expect(totais[1].textContent).toContain('Sai sozinho da conta');
+    expect(totais[1].getAttribute('href')).toContain('forma=sai-sozinho');
+    const itens = card.querySelectorAll('.pv-categorias-painel li');
+    expect(itens.length).toBe(3);
+    expect(itens[0].querySelector('a')!.getAttribute('href')).toContain('forma=boleto');
+    expect(itens[2].textContent).toContain('sai sozinho');
+    expect(itens[0].textContent).toContain('57%');
+    // 14% sem forma: atalho para configurar
+    expect(card.textContent).toContain('14% das saídas estão sem forma de pagamento');
+    expect(card.querySelector('a[href*="formas-pagamento"]')).not.toBeNull();
+  });
+
+  it('sem formas no resumo o card de formas não aparece', async () => {
+    const { tela } = await montar(resumo([1000, 2500, 0], 0));
+    expect(tela.querySelector('.pv-formas-painel')).toBeNull();
+  });
 });

@@ -1,4 +1,5 @@
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 
 namespace Previsio.Aplicacao.Contas;
 
@@ -13,6 +14,31 @@ public class LinhaContaPagar
     // Nome da categoria na lista da empresa (preenchido na consulta)
     public string? CategoriaNome { get; set; }
     public ParcelaDaConta? Parcela { get; set; }
+    // Forma de pagamento na lista da empresa (preenchido na consulta)
+    public string? FormaNome { get; set; }
+    public string? FormaGrupoGuardado { get; set; }
+    // Se o grupo da forma sai sozinho da conta (preenchido pelo serviço, com o appsettings)
+    public bool SaiSozinho { get; set; }
+
+    /// <summary>
+    /// Grupo da forma (GruposFormaPagamento). Conta com forma que não está na lista da empresa
+    /// conta como "outras"; sem forma, "sem".
+    /// </summary>
+    public string FormaGrupo
+    {
+        get
+        {
+            if (FormaGrupoGuardado != null)
+            {
+                return FormaGrupoGuardado;
+            }
+            if (Conta.FormaPagamentoBlingId.HasValue)
+            {
+                return GruposFormaPagamento.Outras;
+            }
+            return GruposFormaPagamento.Sem;
+        }
+    }
 
     /// <summary>
     /// O que mostrar na coluna Categoria: o nome; "Categoria não identificada" quando a conta tem

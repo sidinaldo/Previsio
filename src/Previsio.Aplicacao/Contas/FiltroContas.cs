@@ -25,6 +25,15 @@ public class FiltroContas
     // Contas com categoria no Bling que não está na lista da empresa no Previsio
     public const string CategoriaNaoIdentificada = "Categoria não identificada";
 
+    // Grupo da forma de pagamento (GruposFormaPagamento: boleto, pix, debito-automatico, sem...),
+    // ou FiltroContas.PrecisaPagar / FiltroContas.SaiSozinho
+    public string? Forma { get; set; }
+
+    // Contas que alguém precisa pagar (tudo menos os grupos que saem sozinhos da conta)
+    public const string PrecisaPagar = "precisa-pagar";
+    // Contas que saem sozinhas da conta (débito automático; FormasPagamento:GruposSaiSozinho)
+    public const string SaiSozinho = "sai-sozinho";
+
     // vencimento, valor, fornecedor ou empresa ("-" na frente = decrescente)
     public string? Ordem { get; set; }
 }

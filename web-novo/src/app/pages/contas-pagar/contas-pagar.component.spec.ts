@@ -11,7 +11,8 @@ import { ContasPagarComponent } from './contas-pagar.component';
 const CONTAS: ContaPagar[] = [
   { id: 1, blingId: 9001, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-05T00:00:00', valor: 1250,
     situacao: 1, situacaoTexto: 'Em aberto', vencida: true, fornecedor: 'Contabilidade Silva', origem: 'Bling',
-    notaFiscalId: null, numeroNota: null, numeroParcela: null },
+    notaFiscalId: null, numeroNota: null, numeroParcela: null,
+    formaPagamento: 'Débito em conta', formaGrupo: 'debito-automatico', formaGrupoNome: 'Débito automático', saiSozinho: true },
   { id: 2, blingId: 9002, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-20T00:00:00', valor: 3240,
     situacao: 1, situacaoTexto: 'Em aberto', vencida: false, fornecedor: 'ALFA DISTRIBUIDORA', origem: 'Previsio',
     notaFiscalId: 5, numeroNota: '48213', numeroParcela: '001' },
@@ -145,5 +146,28 @@ describe('ContasPagarComponent', () => {
     localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '', ate: '', datasPadrao: true }));
     const { api } = await montar({ situacao: 'Qualquer' });
     expect(api.obterContasPagar.mock.calls[0][0].situacao).toBe('Pagas');
+  });
+  it('mostra a forma de pagamento e filtra pelo que sai sozinho; o link do painel traz a forma', async () => {
+    const { fixture, tela, api } = await montar();
+    const linhas = tela.querySelectorAll('tbody tr');
+    expect(linhas[0].textContent).toContain('Débito em conta');
+    expect(linhas[0].textContent).toContain('sai sozinho da conta');
+    expect(linhas[1].textContent).not.toContain('sai sozinho');
+
+    fixture.componentInstance.forma.set('sai-sozinho');
+    fixture.componentInstance.filtrar();
+    expect(api.obterContasPagar.mock.calls[1][0].forma).toBe('sai-sozinho');
+    expect(JSON.parse(localStorage.getItem('previsio.filtro-contas.2')!).forma).toBe('sai-sozinho');
+
+    TestBed.resetTestingModule();
+    const doPainel = await montar({ forma: 'boleto', situacao: 'Abertas', de: '2026-11-11', ate: '2026-12-11' });
+    const filtro = doPainel.api.obterContasPagar.mock.calls[0][0];
+    expect(filtro.forma).toBe('boleto');
+    expect(filtro.de).toBe('2026-11-11');
+
+    TestBed.resetTestingModule();
+    // Forma inválida no endereço: vale o último filtro guardado (o do link do painel)
+    const invalida = await montar({ forma: 'cheque' });
+    expect(invalida.api.obterContasPagar.mock.calls[0][0].forma).toBe('boleto');
   });
 });

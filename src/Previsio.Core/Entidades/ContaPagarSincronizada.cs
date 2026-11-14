@@ -26,4 +26,7 @@ public class ContaPagarSincronizada
     public long? CategoriaBlingId { get; set; }
     // Quando a categoria foi conferida no Bling; nulo = ainda não conferida (ou a conta mudou)
     public DateTime? CategoriaConferidaEm { get; set; }
+
+    // Forma de pagamento no Bling (vem na lista de contas); nulo = sem forma
+    public long? FormaPagamentoBlingId { get; set; }
 }

@@ -372,6 +372,62 @@
           </div>
         }
 
+        <!-- Como as contas saem: o que alguém precisa pagar (boleto, Pix...) e o que sai sozinho (débito automático) -->
+        @if (formas().length > 0) {
+          <div class="card pv-formas-painel">
+            <div class="pv-card__cabecalho">
+              <div>
+                <h2 class="pv-card__titulo">Como as contas saem</h2>
+                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela forma de pagamento do Bling</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="pv-formas-painel__totais">
+                <a class="pv-formas-painel__total" routerLink="/pages/contas-pagar" [queryParams]="linkForma('precisa-pagar', r)">
+                  <span class="pv-formas-painel__rotulo">Precisa pagar</span>
+                  <strong class="pv-numero">{{ (r.totalPrecisaPagar ?? 0) | currency:'BRL':'symbol':'1.0-0' }}</strong>
+                  <small>{{ textoContas(r.quantidadePrecisaPagar ?? 0) }} · boleto, Pix, transferência...</small>
+                </a>
+                <a class="pv-formas-painel__total pv-formas-painel__total--sozinho" routerLink="/pages/contas-pagar"
+                   [queryParams]="linkForma('sai-sozinho', r)">
+                  <span class="pv-formas-painel__rotulo">Sai sozinho da conta</span>
+                  <strong class="pv-numero">{{ (r.totalSaiSozinho ?? 0) | currency:'BRL':'symbol':'1.0-0' }}</strong>
+                  <small>{{ textoContas(r.quantidadeSaiSozinho ?? 0) }} · débito automático</small>
+                </a>
+              </div>
+              <ul class="pv-categorias-painel">
+                @for (forma of formas(); track forma.grupo) {
+                  <li [class]="'pv-categorias-painel__item pv-formas-painel__item--' + forma.grupo">
+                    <div class="pv-categorias-painel__linha">
+                      <a class="pv-categorias-painel__nome" routerLink="/pages/contas-pagar" [queryParams]="linkForma(forma.grupo, r)">
+                        {{ forma.nome }}
+                        @if (forma.saiSozinho) {
+                          <small class="pv-forma__sozinho">sai sozinho</small>
+                        }
+                      </a>
+                      <span class="pv-categorias-painel__valor pv-numero">
+                        {{ forma.valor | currency:'BRL':'symbol':'1.0-0' }}
+                        <small>{{ percentualForma(forma) }}%</small>
+                      </span>
+                    </div>
+                    <div class="pv-categorias-painel__barra" aria-hidden="true">
+                      <span [style.width.%]="larguraForma(forma)"></span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+            @if (percentualSemForma() > 0) {
+              <div class="pv-categorias-painel__acao">
+                <span>{{ percentualSemForma() }}% das saídas estão sem forma de pagamento no Bling.</span>
+                <a class="btn btn-secundario btn-sm" routerLink="/pages/configuracoes" fragment="formas-pagamento">
+                  <i class="material-icons" aria-hidden="true">tune</i> Configurar formas de pagamento
+                </a>
+              </div>
+            }
+          </div>
+        }
+
         <!-- Por empresa -->
         <div class="card">
           <div class="pv-card__cabecalho">

@@ -10,6 +10,7 @@ using Previsio.Aplicacao.Bling;
 using Previsio.Aplicacao.Conferencia;
 
 using Previsio.Aplicacao.Categorias;
+using Previsio.Aplicacao.FormasPagamento;
 
 namespace Previsio.Aplicacao.Notas;
 
@@ -27,6 +28,7 @@ public class LancamentoNotaService
     private readonly IRepositorio<FalhaProcessamento> _falhas;
     private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly CategoriaLancamentoService _categoria;
+    private readonly FormaPagamentoLancamentoService _forma;
     private readonly BlingClient _bling;
     private readonly TokenBlingService _tokens;
     private readonly ConferenciaBlingService _conferencia;
@@ -38,6 +40,7 @@ public class LancamentoNotaService
         IRepositorio<FalhaProcessamento> falhas,
         IRepositorio<ContaPagarSincronizada> contas,
         CategoriaLancamentoService categoria,
+        FormaPagamentoLancamentoService forma,
         BlingClient bling,
         TokenBlingService tokens,
         ConferenciaBlingService conferencia,
@@ -48,6 +51,7 @@ public class LancamentoNotaService
         _falhas = falhas;
         _contas = contas;
         _categoria = categoria;
+        _forma = forma;
         _bling = bling;
         _tokens = tokens;
         _conferencia = conferencia;
@@ -173,7 +177,7 @@ public class LancamentoNotaService
                         ConferenciaBlingService.MarcarEncontrada(nota, resultado);
                         foreach (ParcelaNota encontrada in nota.Parcelas)
                         {
-                            await GravarContaNoPrevisioAsync(nota, empresa.Id, encontrada, contatoId, null, false, cancelamento);
+                            await GravarContaNoPrevisioAsync(nota, empresa.Id, encontrada, contatoId, null, null, false, cancelamento);
                         }
                         await _notas.SalvarAsync(cancelamento);
                         _logger.LogInformation("NF {Numero} já estava lançada no Bling (contas {Contas}): não lançada de novo",
@@ -195,6 +199,7 @@ public class LancamentoNotaService
             etapa = EtapaFalha.LancamentoContaPagar;
             int totalParcelas = nota.Parcelas.Count;
             long? categoriaId = await _categoria.EscolherAsync(nota, empresa, contatoId, conta, token, cancelamento);
+            long? formaId = await _forma.EscolherAsync(nota, empresa, contatoId, conta, token, cancelamento);
             foreach (ParcelaNota parcela in nota.Parcelas.OrderBy(p => p.Vencimento))
             {
                 // Em caso de retentativa, não recria parcelas que já foram lançadas
@@ -204,9 +209,9 @@ public class LancamentoNotaService
                 }
 
                 parcelaAtual = parcela;
-                NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId, categoriaId);
+                NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId, categoriaId, formaId);
                 parcela.BlingContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
-                await GravarContaNoPrevisioAsync(nota, empresa.Id, parcela, contatoId, categoriaId, true, cancelamento);
+                await GravarContaNoPrevisioAsync(nota, empresa.Id, parcela, contatoId, categoriaId, formaId, true, cancelamento);
 
                 // Salva parcela a parcela: se cair no meio, a próxima tentativa continua de onde parou
                 await _notas.SalvarAsync(cancelamento);
@@ -284,7 +289,7 @@ public class LancamentoNotaService
     /// e ainda não estava na previsão). A sincronização depois confere com o Bling e corrige.
     /// </summary>
     private async Task GravarContaNoPrevisioAsync(
-        NotaFiscal nota, int empresaId, ParcelaNota parcela, long contatoId, long? categoriaId, bool categoriaDefinida,
+        NotaFiscal nota, int empresaId, ParcelaNota parcela, long contatoId, long? categoriaId, long? formaId, bool categoriaDefinida,
         CancellationToken cancelamento)
     {
         if (!parcela.BlingContaPagarId.HasValue)
@@ -314,18 +319,23 @@ public class LancamentoNotaService
         {
             contaLocal.CategoriaBlingId = categoriaId;
             contaLocal.CategoriaConferidaEm = DateTime.UtcNow;
+            contaLocal.FormaPagamentoBlingId = formaId;
         }
         _contas.Adicionar(contaLocal);
     }
 
     private static NovaContaPagarBling MontarContaPagar(
-        NotaFiscal nota, ParcelaNota parcela, int totalParcelas, long contatoId, long? categoriaId)
+        NotaFiscal nota, ParcelaNota parcela, int totalParcelas, long contatoId, long? categoriaId, long? formaId)
     {
         var conta = new NovaContaPagarBling();
         conta.Contato = new Referencia { Id = contatoId };
         if (categoriaId.HasValue)
         {
             conta.Categoria = new Referencia { Id = categoriaId.Value };
+        }
+        if (formaId.HasValue)
+        {
+            conta.FormaPagamento = new Referencia { Id = formaId.Value };
         }
         conta.Valor = parcela.Valor;
         conta.Vencimento = BlingClient.FormatarData(parcela.Vencimento);

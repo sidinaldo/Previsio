@@ -29,4 +29,8 @@ public class ContaPagarBling
     // Só vem no detalhe (GET /contas/pagar/{id}); id 0 = sem categoria
     [JsonPropertyName("categoria")]
     public Referencia? Categoria { get; set; }
+
+    // Vem na lista e no detalhe; id 0 = sem forma de pagamento
+    [JsonPropertyName("formaPagamento")]
+    public Referencia? FormaPagamento { get; set; }
 }

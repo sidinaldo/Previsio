@@ -17,6 +17,11 @@ public class ContaPagarDto
     public string? Fornecedor { get; set; }
     // Nome da categoria no Bling (nulo = sem categoria ou ainda não conferida)
     public string? Categoria { get; set; }
+    // Forma de pagamento no Bling (nulo = sem forma), o grupo do Previsio e se sai sozinha da conta
+    public string? FormaPagamento { get; set; }
+    public string FormaGrupo { get; set; } = "";
+    public string FormaGrupoNome { get; set; } = "";
+    public bool SaiSozinho { get; set; }
 
     // "Previsio" ou "Bling"
     public string Origem { get; set; } = "";

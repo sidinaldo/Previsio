@@ -7,15 +7,19 @@ import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/aler
 import { CategoriasComponent } from '../../shared/categorias/categorias.component';
 import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
 import { FluxoCaixaComponent } from '../../shared/fluxo-caixa/fluxo-caixa.component';
+import { FormasPagamentoComponent } from '../../shared/formas-pagamento/formas-pagamento.component';
 import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-semanal.component';
 
 /**
  * Configurações da rede escolhida no topo: conferência com o Bling, fluxo de caixa, categorias,
- * avisos de vencimento e resumo por e-mail. Cada seção salva sozinha.
+ * formas de pagamento, avisos de vencimento e resumo por e-mail. Cada seção salva sozinha.
  */
 @Component({
   selector: 'app-configuracoes',
-  imports: [ConferenciaBlingComponent, FluxoCaixaComponent, CategoriasComponent, AlertasVencimentoComponent, ResumoSemanalComponent],
+  imports: [
+    ConferenciaBlingComponent, FluxoCaixaComponent, CategoriasComponent, FormasPagamentoComponent, AlertasVencimentoComponent,
+    ResumoSemanalComponent
+  ],
   template: `
     <div class="main-content">
       <div class="container-fluid">
@@ -30,6 +34,7 @@ import { ResumoSemanalComponent } from '../../shared/resumo-semanal/resumo-seman
             <app-conferencia-bling [clienteId]="id" />
             <app-fluxo-caixa [clienteId]="id" />
             <app-categorias id="categorias" [clienteId]="id" />
+            <app-formas-pagamento id="formas-pagamento" [clienteId]="id" />
             <app-alertas-vencimento [clienteId]="id" />
             <app-resumo-semanal [clienteId]="id" />
           } @else {

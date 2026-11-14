@@ -40,6 +40,9 @@ export function parametrosDasContas(filtro: FiltroContas): HttpParams {
   if (filtro.categoria) {
     params = params.set('categoria', filtro.categoria);
   }
+  if (filtro.forma) {
+    params = params.set('forma', filtro.forma);
+  }
   if (filtro.ordem) {
     params = params.set('ordem', filtro.ordem);
   }
@@ -62,7 +65,7 @@ export function dataIso(data: Date): string {
 /** Filtro ao abrir a tela: em aberto (as vencidas entram), vencendo até hoje + 30 dias. */
 export function filtroPadraoContas(hoje: Date): FiltroContas {
   const ate = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + DIAS_PADRAO_CONTAS);
-  return { empresaId: null, situacao: 'Abertas', origem: '', de: '', ate: dataIso(ate), busca: '' };
+  return { empresaId: null, situacao: 'Abertas', origem: '', forma: '', de: '', ate: dataIso(ate), busca: '' };
 }
 
 /** O que fica guardado no navegador. Com datasPadrao, o período é recalculado a cada dia. */
@@ -70,6 +73,8 @@ interface FiltroSalvo {
   empresaId: number | null;
   situacao: string;
   origem: string;
+  // Guardado a partir da forma de pagamento; filtro antigo não tem
+  forma?: string;
   de: string;
   ate: string;
   datasPadrao: boolean;
@@ -85,6 +90,7 @@ export function salvarFiltroContas(clienteId: number | null, filtro: FiltroConta
     empresaId: filtro.empresaId ?? null,
     situacao: filtro.situacao ?? '',
     origem: filtro.origem ?? '',
+    forma: filtro.forma ?? '',
     de: filtro.de ?? '',
     ate: filtro.ate ?? '',
     datasPadrao: (filtro.de ?? '') === padrao.de && (filtro.ate ?? '') === padrao.ate
@@ -117,6 +123,7 @@ export function lerFiltroContas(clienteId: number | null, hoje: Date): FiltroCon
       empresaId: typeof salvo.empresaId === 'number' ? salvo.empresaId : null,
       situacao: typeof salvo.situacao === 'string' ? salvo.situacao : padrao.situacao,
       origem: typeof salvo.origem === 'string' ? salvo.origem : '',
+      forma: typeof salvo.forma === 'string' ? salvo.forma : '',
       de: typeof salvo.de === 'string' ? salvo.de : '',
       ate: typeof salvo.ate === 'string' ? salvo.ate : '',
       busca: ''
@@ -130,6 +137,21 @@ export function lerFiltroContas(clienteId: number | null, hoje: Date): FiltroCon
     return padrao;
   }
 }
+
+/** Opções do filtro de forma de pagamento (os valores são os grupos da API). */
+export const FORMAS_FILTRO: { valor: string; texto: string }[] = [
+  { valor: '', texto: 'Todas' },
+  { valor: 'precisa-pagar', texto: 'Precisam ser pagas' },
+  { valor: 'sai-sozinho', texto: 'Saem sozinhas da conta' },
+  { valor: 'boleto', texto: 'Boleto' },
+  { valor: 'pix', texto: 'Pix' },
+  { valor: 'transferencia', texto: 'Transferência/depósito' },
+  { valor: 'cartao', texto: 'Cartão' },
+  { valor: 'dinheiro', texto: 'Dinheiro' },
+  { valor: 'debito-automatico', texto: 'Débito automático' },
+  { valor: 'outras', texto: 'Outras' },
+  { valor: 'sem', texto: 'Sem forma no Bling' }
+];
 
 /** Cor do badge da situação da conta. */
 export function classeDaConta(conta: SituacaoDaConta): string {

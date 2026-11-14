@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Tests.Apoio;
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
@@ -56,7 +57,9 @@ public class VencimentosTests
         return empresa;
     }
 
-    private void Conta(Empresa empresa, int dias, decimal valor, int situacao = SituacaoContaBling.EmAberto, string? fornecedor = null)
+    private void Conta(
+        Empresa empresa, int dias, decimal valor, int situacao = SituacaoContaBling.EmAberto, string? fornecedor = null,
+        long? forma = null)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
@@ -65,6 +68,7 @@ public class VencimentosTests
         conta.Valor = valor;
         conta.Situacao = situacao;
         conta.FornecedorNome = fornecedor;
+        conta.FormaPagamentoBlingId = forma;
         _db.ContasPagar.Add(conta);
     }
 
@@ -119,8 +123,17 @@ public class VencimentosTests
     public async Task Alerta_diario_traz_hoje_amanha_e_vencidas_e_sai_uma_vez_por_dia_na_hora()
     {
         await CadastrarRede();
-        Conta(_norte, 0, 1000m, fornecedor: "ALFA DISTRIBUIDORA");
-        Conta(_centro, 0, 840.50m, fornecedor: "BETA LUBRIFICANTES");
+        _db.FormasPagamento.Add(new FormaPagamento
+        {
+            EmpresaId = _norte.Id, BlingId = 71, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1,
+            Grupo = GruposFormaPagamento.DebitoAutomatico
+        });
+        _db.FormasPagamento.Add(new FormaPagamento
+        {
+            EmpresaId = _centro.Id, BlingId = 72, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto
+        });
+        Conta(_norte, 0, 1000m, fornecedor: "ALFA DISTRIBUIDORA", forma: 71);
+        Conta(_centro, 0, 840.50m, fornecedor: "BETA LUBRIFICANTES", forma: 72);
         Conta(_centro, 1, 200m);
         Conta(_norte, -2, 99m, fornecedor: "GAMA PNEUS");
         Conta(_norte, 2, 5000m);
@@ -138,14 +151,18 @@ public class VencimentosTests
         Assert.Contains("Olá, Ana.", email.Texto);
         Assert.Contains("VENCEM HOJE: R$ 1.840,50 (2 contas)", email.Texto);
         Assert.Contains("Por loja: Auto Center Centro R$ 840,50 · Auto Center Zona Norte R$ 1.000,00", email.Texto);
-        // Lista das contas: a maior primeiro
-        int alfa = email.Texto.IndexOf("- ALFA DISTRIBUIDORA · Auto Center Zona Norte · R$ 1.000,00");
-        int beta = email.Texto.IndexOf("- BETA LUBRIFICANTES · Auto Center Centro · R$ 840,50");
+        // Quanto precisa pagar e quanto sai sozinho da conta
+        Assert.Contains("Precisa pagar R$ 840,50 · Sai sozinho da conta (débito automático) R$ 1.000,00", email.Texto);
+        // Lista das contas, com a forma de pagamento: a maior primeiro
+        int alfa = email.Texto.IndexOf("- ALFA DISTRIBUIDORA · Auto Center Zona Norte · Débito automático · R$ 1.000,00");
+        int beta = email.Texto.IndexOf("- BETA LUBRIFICANTES · Auto Center Centro · Boleto · R$ 840,50");
         Assert.True(alfa > 0 && beta > alfa);
         Assert.Contains("VENCEM AMANHÃ: R$ 200,00 (1 conta)", email.Texto);
-        Assert.Contains("- Fornecedor não identificado · Auto Center Centro · R$ 200,00", email.Texto);
+        Assert.Contains("- Fornecedor não identificado · Auto Center Centro · Sem forma · R$ 200,00", email.Texto);
+        // Bloco sem débito automático não mostra a separação
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(email.Texto, "Precisa pagar"));
         Assert.Contains("1 conta vencida em aberto no Bling, somando R$ 99,00", email.Texto);
-        Assert.Contains("- GAMA PNEUS · Auto Center Zona Norte · R$ 99,00 · 2 dias de atraso", email.Texto);
+        Assert.Contains("- GAMA PNEUS · Auto Center Zona Norte · Sem forma · R$ 99,00 · 2 dias de atraso", email.Texto);
         // Links já filtrados em Contas a pagar
         Assert.Contains("Ver no Previsio: http://localhost:4200/#/pages/contas-pagar?situacao=Abertas&de=2026-11-11&ate=2026-11-11", email.Texto);
         Assert.Contains("Ver no Previsio: http://localhost:4200/#/pages/contas-pagar?situacao=Abertas&de=2026-11-12&ate=2026-11-12", email.Texto);

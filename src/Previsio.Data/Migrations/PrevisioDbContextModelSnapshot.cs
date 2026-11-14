@@ -175,6 +175,10 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("FormaPagamentoPadrao")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("ImapHost")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -267,6 +271,9 @@ namespace Previsio.Data.Migrations
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("FormaPagamentoBlingId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("FornecedorNome")
                         .HasMaxLength(200)
@@ -652,6 +659,47 @@ namespace Previsio.Data.Migrations
                     b.ToTable("falhas_processamento", (string)null);
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.FormaPagamento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("BlingId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Grupo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("Situacao")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TipoPagamento")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId", "BlingId")
+                        .IsUnique();
+
+                    b.ToTable("formas_pagamento", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
                 {
                     b.Property<int>("Id")
@@ -768,6 +816,9 @@ namespace Previsio.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("Tentativas")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TipoPagamento")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("ValorTotal")
@@ -959,6 +1010,38 @@ namespace Previsio.Data.Migrations
                     b.ToTable("regras_categoria", (string)null);
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.RegraFormaPagamento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CnpjFornecedor")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)");
+
+                    b.Property<DateTime>("CriadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Forma")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId", "CnpjFornecedor")
+                        .IsUnique();
+
+                    b.ToTable("regras_forma_pagamento", (string)null);
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.Usuario", b =>
                 {
                     b.Property<int>("Id")
@@ -1118,6 +1201,17 @@ namespace Previsio.Data.Migrations
                     b.Navigation("Empresa");
                 });
 
+            modelBuilder.Entity("Previsio.Core.Entidades.FormaPagamento", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+                });
+
             modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
                 {
                     b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
@@ -1175,6 +1269,17 @@ namespace Previsio.Data.Migrations
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.RegraCategoria", b =>
+                {
+                    b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
+                });
+
+            modelBuilder.Entity("Previsio.Core.Entidades.RegraFormaPagamento", b =>
                 {
                     b.HasOne("Previsio.Core.Entidades.Cliente", "Cliente")
                         .WithMany()

@@ -17,6 +17,8 @@ public class PrevisioDbContext : DbContext
     public DbSet<ContaReceberSincronizada> ContasReceber => Set<ContaReceberSincronizada>();
     public DbSet<CategoriaFinanceira> Categorias => Set<CategoriaFinanceira>();
     public DbSet<RegraCategoria> RegrasCategoria => Set<RegraCategoria>();
+    public DbSet<FormaPagamento> FormasPagamento => Set<FormaPagamento>();
+    public DbSet<RegraFormaPagamento> RegrasFormaPagamento => Set<RegraFormaPagamento>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
@@ -36,6 +38,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.ImapUltimoErroConexao).HasMaxLength(500);
             entidade.Property(c => c.BlingClientId).HasMaxLength(200);
             entidade.Property(c => c.CategoriaPadrao).HasMaxLength(200);
+            entidade.Property(c => c.FormaPagamentoPadrao).HasMaxLength(200);
         });
 
         modelBuilder.Entity<Empresa>(entidade =>
@@ -155,6 +158,30 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("regras_categoria");
             entidade.Property(r => r.CnpjFornecedor).HasMaxLength(14);
             entidade.Property(r => r.Categoria).HasMaxLength(200);
+            entidade.HasIndex(r => new { r.ClienteId, r.CnpjFornecedor }).IsUnique();
+
+            entidade.HasOne(r => r.Cliente)
+                .WithMany()
+                .HasForeignKey(r => r.ClienteId);
+        });
+
+        modelBuilder.Entity<FormaPagamento>(entidade =>
+        {
+            entidade.ToTable("formas_pagamento");
+            entidade.Property(f => f.Descricao).HasMaxLength(200);
+            entidade.Property(f => f.Grupo).HasMaxLength(30);
+            entidade.HasIndex(f => new { f.EmpresaId, f.BlingId }).IsUnique();
+
+            entidade.HasOne(f => f.Empresa)
+                .WithMany()
+                .HasForeignKey(f => f.EmpresaId);
+        });
+
+        modelBuilder.Entity<RegraFormaPagamento>(entidade =>
+        {
+            entidade.ToTable("regras_forma_pagamento");
+            entidade.Property(r => r.CnpjFornecedor).HasMaxLength(14);
+            entidade.Property(r => r.Forma).HasMaxLength(200);
             entidade.HasIndex(r => new { r.ClienteId, r.CnpjFornecedor }).IsUnique();
 
             entidade.HasOne(r => r.Cliente)

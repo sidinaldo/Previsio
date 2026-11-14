@@ -3,7 +3,7 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { classeDaConta, filtroPadraoContas, lerFiltroContas, salvarFiltroContas, textoDaConta } from '../../core/filtro-contas';
+import { FORMAS_FILTRO, classeDaConta, filtroPadraoContas, lerFiltroContas, salvarFiltroContas, textoDaConta } from '../../core/filtro-contas';
 import { totalDePaginas } from '../../core/filtro-falhas';
 import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
 import { TAMANHOS_PAGINA_API, lerTamanhoPagina, salvarTamanhoPagina } from '../../core/paginacao';
@@ -55,12 +55,16 @@ export class ContasPagarComponent {
     { valor: 'Bling', texto: 'Lançadas direto no Bling' }
   ];
 
+  readonly formas: Opcao[] = FORMAS_FILTRO;
+
   readonly empresas = signal<Empresa[]>([]);
 
   // Filtros
   readonly empresaId = signal<number | null>(null);
   readonly situacao = signal('Abertas');
   readonly origem = signal('');
+  // Grupo da forma de pagamento, 'precisa-pagar' ou 'sai-sozinho'
+  readonly forma = signal('');
   readonly de = signal('');
   readonly ate = signal('');
   readonly busca = signal('');
@@ -166,6 +170,7 @@ export class ContasPagarComponent {
       empresaId: this.empresaId(),
       situacao: this.situacao(),
       origem: this.origem(),
+      forma: this.forma(),
       de: this.de(),
       ate: this.ate(),
       busca: this.busca(),
@@ -200,20 +205,24 @@ export class ContasPagarComponent {
 
   /**
    * Filtro que veio no endereço (atalho do Painel ou link do e-mail de vencimentos):
-   * categoria, situação (Abertas, Vencidas...) e período de vencimento. Sem nada disso, vale o filtro guardado.
+   * categoria, forma de pagamento, situação (Abertas, Vencidas...) e período de vencimento. Sem nada disso,
+   * vale o filtro guardado.
    */
   private aplicarDoEndereco(parametros: ParamMap): void {
     const categoria = (parametros.get('categoria') ?? '').trim();
+    const forma = parametros.get('forma') ?? '';
+    const formaValida = forma !== '' && this.formas.some(f => f.valor === forma);
     const situacao = parametros.get('situacao') ?? '';
     const situacaoValida = this.situacoes.some(s => s.valor === situacao);
     const de = parametros.get('de') ?? '';
     const ate = parametros.get('ate') ?? '';
     const periodoValido = DATA_ISO.test(de) && DATA_ISO.test(ate);
-    if (categoria === '' && !situacaoValida && !periodoValido) {
+    if (categoria === '' && !formaValida && !situacaoValida && !periodoValido) {
       return;
     }
-    // Link: começa só com o que veio nele (empresa e origem em "Todas")
+    // Link: começa só com o que veio nele (empresa, origem e forma em "Todas")
     this.categoria.set(categoria);
+    this.forma.set(formaValida ? forma : '');
     this.situacao.set(situacaoValida ? situacao : 'Abertas');
     this.empresaId.set(null);
     this.origem.set('');
@@ -231,6 +240,7 @@ export class ContasPagarComponent {
     this.empresaId.set(filtro.empresaId ?? null);
     this.situacao.set(filtro.situacao || 'Abertas');
     this.origem.set(filtro.origem ?? '');
+    this.forma.set(filtro.forma ?? '');
     this.de.set(filtro.de ?? '');
     this.ate.set(filtro.ate ?? '');
   }

@@ -9,6 +9,7 @@ using Previsio.Core.Comum;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Bling;
 using Previsio.Aplicacao.Categorias;
+using Previsio.Aplicacao.FormasPagamento;
 using Previsio.Aplicacao.Conferencia;
 
 namespace Previsio.Aplicacao.Sincronizacao;
@@ -32,6 +33,7 @@ public class SincronizacaoContasService
     private readonly ConferenciaBlingService _conferencia;
     private readonly ContasReceberBlingService _receber;
     private readonly CategoriasBlingService _categorias;
+    private readonly FormasPagamentoBlingService _formas;
     private readonly ILogger<SincronizacaoContasService> _logger;
 
     public SincronizacaoContasService(
@@ -47,6 +49,7 @@ public class SincronizacaoContasService
         ConferenciaBlingService conferencia,
         ContasReceberBlingService receber,
         CategoriasBlingService categorias,
+        FormasPagamentoBlingService formas,
         ILogger<SincronizacaoContasService> logger)
     {
         _clientes = clientes;
@@ -61,6 +64,7 @@ public class SincronizacaoContasService
         _conferencia = conferencia;
         _receber = receber;
         _categorias = categorias;
+        _formas = formas;
         _logger = logger;
     }
 
@@ -213,6 +217,11 @@ public class SincronizacaoContasService
             {
                 local.BlingContatoId = remota.Contato.Id;
             }
+            local.FormaPagamentoBlingId = null;
+            if (remota.FormaPagamento != null && remota.FormaPagamento.Id > 0)
+            {
+                local.FormaPagamentoBlingId = remota.FormaPagamento.Id;
+            }
             local.SincronizadaEm = agora;
             atuais.Add(local);
         }
@@ -228,6 +237,8 @@ public class SincronizacaoContasService
 
         // Categorias: a lista da empresa (1 vez por dia) e a categoria das contas, aos poucos
         await _categorias.AtualizarAsync(empresa, conta, token, agora, renovarCategorias, cancelamento);
+        // Formas de pagamento: a lista da empresa (1 vez por dia ou na sincronização pedida pelo usuário)
+        await _formas.AtualizarAsync(empresa, conta, token, agora, renovarCategorias, cancelamento);
         int detalhes = await _categorias.ConferirCategoriasAsync(
             empresa, conta, token, atuais, _opcoes.MaximoDetalhesPorExecucaoValido(), _opcoes.DiasReconferirCategoriaValidos(),
             agora, cancelamento);

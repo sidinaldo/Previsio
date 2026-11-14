@@ -239,7 +239,7 @@ public class ConferenciaBlingTests
             {
                 return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
             }
-            if (url.Contains("categorias"))
+            if (url.Contains("categorias") || url.Contains("formas-pagamentos"))
             {
                 return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
             }
@@ -294,6 +294,45 @@ public class ConferenciaBlingTests
             Assert.Equal(11, conta.CategoriaBlingId);
             Assert.NotNull(conta.CategoriaConferidaEm);
         });
+    }
+
+    [Fact]
+    public async Task Ao_lancar_manda_a_forma_de_pagamento_do_xml_e_guarda_na_conta()
+    {
+        NotaFiscal nota = await CadastrarNota(false);
+        nota.TipoPagamento = 17;
+        await _db.SaveChangesAsync();
+        var corpos = new List<string>();
+        int proximoId = 9000;
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (requisicao.Method == HttpMethod.Get && url.Contains("contatos"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[{\"id\":555,\"nome\":\"ROTA SUL\"}]}");
+            }
+            if (url.Contains("formas-pagamentos"))
+            {
+                // A empresa ainda não tinha a lista: busca no Bling na hora
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":["
+                    + "{\"id\":31,\"descricao\":\"Boleto\",\"tipoPagamento\":15,\"situacao\":1},"
+                    + "{\"id\":32,\"descricao\":\"Pix\",\"tipoPagamento\":17,\"situacao\":1}]}");
+            }
+            if (requisicao.Method == HttpMethod.Post && url.Contains("contas/pagar"))
+            {
+                corpos.Add(requisicao.Content!.ReadAsStringAsync().Result);
+                proximoId = proximoId + 1;
+                return RespostasFixas.Json(HttpStatusCode.Created, "{\"data\":{\"id\":" + proximoId + "}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await Job(respostas).LancarAsync(nota.Id, CancellationToken.None);
+
+        Assert.Equal(2, corpos.Count);
+        Assert.All(corpos, corpo => Assert.Contains("\"formaPagamento\":{\"id\":32}", corpo));
+        Assert.All(_db.ContasPagar.ToList(), conta => Assert.Equal(32, conta.FormaPagamentoBlingId));
+        Assert.Equal(2, _db.FormasPagamento.Count());
     }
 
     // ---------- Token revogado pelo Bling antes de vencer ----------

@@ -45,6 +45,7 @@ public class RegistroNotaService
         nota.CnpjDestinatario = xml.CnpjDestinatario;
         nota.CnpjFornecedor = xml.CnpjFornecedor;
         nota.NomeFornecedor = Limitar(xml.NomeFornecedor, 200);
+        nota.TipoPagamento = xml.TipoPagamento;
         nota.OrigemEmail = Limitar(origemEmail, 300);
         nota.EmpresaCaixaId = empresaDaCaixaId;
         nota.RecebidaEm = DateTime.UtcNow;

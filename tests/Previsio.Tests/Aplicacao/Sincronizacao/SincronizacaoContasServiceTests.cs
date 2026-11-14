@@ -8,6 +8,7 @@ using Previsio.Aplicacao.Sincronizacao;
 using Previsio.Bling;
 using Previsio.Core.Comum;
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 using Previsio.Data;
 using Previsio.Infra.Seguranca;
 using Xunit;
@@ -340,6 +341,41 @@ public class SincronizacaoContasServiceTests
         RespostasFixas botao = BlingComContas("");
         await CriarServico(botao).ExecutarRedeAsync(rede.Id, CancellationToken.None);
         Assert.Contains(botao.Chamadas, c => c.Contains("categorias"));
+    }
+
+    [Fact]
+    public async Task Sincronizar_guarda_a_forma_de_pagamento_das_contas_e_a_lista_de_formas()
+    {
+        Cliente rede = await CadastrarRede(true);
+        Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
+        string contas = "{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":130,\"contato\":{\"id\":555},\"formaPagamento\":{\"id\":41}},"
+            + "{\"id\":11,\"situacao\":1,\"vencimento\":\"" + Data(6) + "\",\"valor\":50,\"contato\":{\"id\":555},\"formaPagamento\":{\"id\":0}}";
+        var respostas = new RespostasFixas(requisicao =>
+        {
+            string url = requisicao.RequestUri!.ToString();
+            if (url.Contains("contas/pagar?"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[" + contas + "]}");
+            }
+            if (url.Contains("formas-pagamentos"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":["
+                    + "{\"id\":41,\"descricao\":\"Débito em conta\",\"tipoPagamento\":99,\"situacao\":1},"
+                    + "{\"id\":42,\"descricao\":\"Boleto\",\"tipoPagamento\":15,\"situacao\":1}]}");
+            }
+            if (url.Contains("contatos/"))
+            {
+                return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":{\"id\":555,\"nome\":\"Fornecedor Beta\"}}");
+            }
+            return RespostasFixas.Json(HttpStatusCode.OK, "{\"data\":[]}");
+        });
+
+        await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
+
+        Assert.Equal(41, _db.ContasPagar.Single(c => c.BlingId == 10).FormaPagamentoBlingId);
+        Assert.Null(_db.ContasPagar.Single(c => c.BlingId == 11).FormaPagamentoBlingId);
+        Assert.Equal(GruposFormaPagamento.DebitoAutomatico, _db.FormasPagamento.Single(f => f.BlingId == 41).Grupo);
+        Assert.Equal(GruposFormaPagamento.Boleto, _db.FormasPagamento.Single(f => f.BlingId == 42).Grupo);
     }
 
     [Fact]

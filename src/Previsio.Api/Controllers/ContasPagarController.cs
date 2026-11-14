@@ -20,7 +20,8 @@ public class ContasPagarController : PrevisioControllerBase
 
     /// <summary>
     /// Filtros: empresa, vencimento de/até, situação (Abertas, Vencidas, Pagas, Canceladas, Todas),
-    /// origem (Previsio ou Bling) e busca por fornecedor, NF ou empresa.
+    /// origem (Previsio ou Bling), busca por fornecedor, NF ou empresa, categoria e forma de pagamento
+    /// (grupo, precisa-pagar ou sai-sozinho).
     /// </summary>
     [HttpGet("api/clientes/{clienteId:int}/contas-pagar")]
     public async Task<ActionResult<PaginaContasPagarDto>> Listar(
@@ -33,6 +34,7 @@ public class ContasPagarController : PrevisioControllerBase
         [FromQuery] string? busca,
         [FromQuery] string? ordem,
         [FromQuery] string? categoria,
+        [FromQuery] string? forma,
         [FromQuery] int pagina,
         [FromQuery] int? tamanho,
         CancellationToken cancelamento)
@@ -41,13 +43,13 @@ public class ContasPagarController : PrevisioControllerBase
         {
             return Forbid();
         }
-        FiltroContas filtro = Filtro(empresaId, de, ate, situacao, origem, busca, ordem, categoria);
+        FiltroContas filtro = Filtro(empresaId, de, ate, situacao, origem, busca, ordem, categoria, forma);
         return Responder(await _contas.ListarAsync(clienteId, filtro, pagina, tamanho, cancelamento));
     }
 
     public static FiltroContas Filtro(
         int? empresaId, DateTime? de, DateTime? ate, string? situacao, string? origem, string? busca, string? ordem,
-        string? categoria = null)
+        string? categoria = null, string? forma = null)
     {
         var filtro = new FiltroContas();
         filtro.EmpresaId = empresaId;
@@ -58,6 +60,7 @@ public class ContasPagarController : PrevisioControllerBase
         filtro.Busca = busca;
         filtro.Ordem = ordem;
         filtro.Categoria = categoria;
+        filtro.Forma = forma;
         return filtro;
     }
 }

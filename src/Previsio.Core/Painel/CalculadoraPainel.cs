@@ -1,4 +1,5 @@
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 using Previsio.Core.Painel.Modelos;
 
 namespace Previsio.Core.Painel;
@@ -236,6 +237,67 @@ public class CalculadoraPainel
             lista.Add(aConferir);
         }
         resumo.Categorias = lista;
+    }
+
+    /// <summary>
+    /// Saídas em aberto do período por grupo de forma de pagamento. "grupos" leva a chave EmpresaId:BlingId
+    /// da forma ao grupo dela; conta com forma fora da lista conta como "outras" e sem forma, "sem forma".
+    /// Os grupos de "gruposSaiSozinho" somam no que sai sozinho da conta; o resto, no que precisa pagar.
+    /// Ordem: primeiro o que precisa pagar, do maior para o menor; "sem forma" no fim dele.
+    /// </summary>
+    public void AplicarFormas(
+        ResumoPainel resumo, IList<ContaPagarSincronizada> contas, IDictionary<string, string> grupos,
+        IList<string> gruposSaiSozinho)
+    {
+        DateTime inicio = resumo.Inicio.Date;
+        DateTime fim = resumo.Fim.Date;
+        var porGrupo = new Dictionary<string, TotalFormaPagamento>();
+
+        foreach (ContaPagarSincronizada conta in contas)
+        {
+            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            if (!emAberto || conta.Vencimento.Date < inicio || conta.Vencimento.Date > fim)
+            {
+                continue;
+            }
+
+            string grupo = GruposFormaPagamento.Sem;
+            if (conta.FormaPagamentoBlingId.HasValue)
+            {
+                string? guardado;
+                if (grupos.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoBlingId.Value, out guardado))
+                {
+                    grupo = guardado;
+                }
+                else
+                {
+                    grupo = GruposFormaPagamento.Outras;
+                }
+            }
+
+            TotalFormaPagamento? total;
+            if (!porGrupo.TryGetValue(grupo, out total))
+            {
+                total = new TotalFormaPagamento();
+                total.Grupo = grupo;
+                total.Nome = GruposFormaPagamento.Nome(grupo);
+                total.SaiSozinho = gruposSaiSozinho.Contains(grupo);
+                porGrupo[grupo] = total;
+            }
+            total.Valor = total.Valor + conta.Valor;
+            total.Quantidade = total.Quantidade + 1;
+        }
+
+        resumo.Formas = porGrupo.Values
+            .OrderBy(f => f.SaiSozinho ? 1 : 0)
+            .ThenBy(f => f.Grupo == GruposFormaPagamento.Sem ? 1 : 0)
+            .ThenByDescending(f => f.Valor)
+            .ThenBy(f => f.Nome)
+            .ToList();
+        resumo.TotalPrecisaPagar = resumo.Formas.Where(f => !f.SaiSozinho).Sum(f => f.Valor);
+        resumo.QuantidadePrecisaPagar = resumo.Formas.Where(f => !f.SaiSozinho).Sum(f => f.Quantidade);
+        resumo.TotalSaiSozinho = resumo.Formas.Where(f => f.SaiSozinho).Sum(f => f.Valor);
+        resumo.QuantidadeSaiSozinho = resumo.Formas.Where(f => f.SaiSozinho).Sum(f => f.Quantidade);
     }
 
     /// <summary>

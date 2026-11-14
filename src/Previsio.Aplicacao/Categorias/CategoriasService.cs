@@ -15,7 +15,6 @@ namespace Previsio.Aplicacao.Categorias;
 public class CategoriasService
 {
     public const string MensagemRegraNaoEncontrada = "Regra não encontrada.";
-    private const int MaximoFornecedores = 500;
 
     private readonly IRepositorio<Cliente> _clientes;
     private readonly IRepositorio<Empresa> _empresas;
@@ -68,7 +67,7 @@ public class CategoriasService
         List<RegraCategoria> regras = await _regras.ConsultarSomenteLeitura()
             .Where(r => r.ClienteId == clienteId)
             .ToListAsync(cancelamento);
-        List<FornecedorDaRedeDto> fornecedores = await FornecedoresAsync(clienteId, cancelamento);
+        List<FornecedorDaRedeDto> fornecedores = await FornecedoresDaRede.ListarAsync(_notas.ConsultarSomenteLeitura(), clienteId, cancelamento);
         var nomesFornecedores = new Dictionary<string, string>();
         foreach (FornecedorDaRedeDto fornecedor in fornecedores)
         {
@@ -195,27 +194,5 @@ public class CategoriasService
             .ThenBy(k => k.BlingId)
             .ToListAsync(cancelamento);
         return new CategoriasDaRede(empresas, categorias);
-    }
-
-    private async Task<List<FornecedorDaRedeDto>> FornecedoresAsync(int clienteId, CancellationToken cancelamento)
-    {
-        var notas = await _notas.ConsultarSomenteLeitura()
-            .Where(n => n.ClienteId == clienteId && n.CnpjFornecedor != "")
-            .OrderByDescending(n => n.RecebidaEm)
-            .Select(n => new { n.CnpjFornecedor, n.NomeFornecedor })
-            .Take(5000)
-            .ToListAsync(cancelamento);
-
-        var porCnpj = new Dictionary<string, FornecedorDaRedeDto>();
-        foreach (var nota in notas)
-        {
-            string cnpj = RegrasCategoria.ApenasDigitos(nota.CnpjFornecedor);
-            if (cnpj == "" || porCnpj.ContainsKey(cnpj))
-            {
-                continue;
-            }
-            porCnpj[cnpj] = new FornecedorDaRedeDto { Cnpj = cnpj, Nome = nota.NomeFornecedor };
-        }
-        return porCnpj.Values.OrderBy(f => f.Nome).Take(MaximoFornecedores).ToList();
     }
 }

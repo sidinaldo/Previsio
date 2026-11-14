@@ -14,6 +14,7 @@ using Previsio.Core.NFe;
 using Previsio.Aplicacao.Empresas;
 using Previsio.Aplicacao.Bling;
 using Previsio.Aplicacao.Categorias;
+using Previsio.Aplicacao.FormasPagamento;
 using Previsio.Aplicacao.Clientes;
 using Previsio.Aplicacao.Falhas;
 using Previsio.Aplicacao.Notas;
@@ -79,7 +80,9 @@ public static class ServicosDeTeste
             new Repositorio<ContaReceberSincronizada>(db),
             new Repositorio<Cliente>(db),
             new Repositorio<CategoriaFinanceira>(db),
-            new CalculadoraPainel());
+            new Repositorio<FormaPagamento>(db),
+            new CalculadoraPainel(),
+            Options.Create(new FormasPagamentoOptions()));
     }
 
     public static NotasService Notas(PrevisioDbContext db, IFilaJobs fila)
@@ -130,8 +133,10 @@ public static class ServicosDeTeste
             new Repositorio<ParcelaNota>(db),
             new Repositorio<Empresa>(db),
             new Repositorio<CategoriaFinanceira>(db),
+            new Repositorio<FormaPagamento>(db),
             relogio,
-            opcoes);
+            opcoes,
+            Options.Create(new FormasPagamentoOptions()));
     }
 
     public static ContasReceberService ContasReceberService(
@@ -209,7 +214,9 @@ public static class ServicosDeTeste
             configuracao,
             relogio,
             logger,
-            Options.Create(new AlertaVencimentosOptions()));
+            Options.Create(new AlertaVencimentosOptions()),
+            new Repositorio<FormaPagamento>(db),
+            Options.Create(new FormasPagamentoOptions()));
     }
 
     public static LancamentoNotaService LancamentoNotaService(
@@ -230,6 +237,7 @@ public static class ServicosDeTeste
                 new Repositorio<CategoriaFinanceira>(db),
                 new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(db), bling, NullLogger<CategoriasBlingService>.Instance),
                 Options.Create(new CategoriasOptions())),
+            FormaPagamentoLancamento(db, bling),
             bling,
             tokens,
             conferencia,
@@ -259,7 +267,39 @@ public static class ServicosDeTeste
                 FornecedoresBlingService(db, bling, NullLogger<FornecedoresBlingService>.Instance),
                 NullLogger<ContasReceberBlingService>.Instance),
             new CategoriasBlingService(new Repositorio<CategoriaFinanceira>(db), bling, NullLogger<CategoriasBlingService>.Instance),
+            FormasPagamentoBling(db, bling),
             NullLogger<SincronizacaoContasService>.Instance);
+    }
+
+    public static FormasPagamentoBlingService FormasPagamentoBling(PrevisioDbContext db, BlingClient bling)
+    {
+        return new FormasPagamentoBlingService(
+            new Repositorio<FormaPagamento>(db),
+            bling,
+            Options.Create(new FormasPagamentoOptions()),
+            NullLogger<FormasPagamentoBlingService>.Instance);
+    }
+
+    public static FormaPagamentoLancamentoService FormaPagamentoLancamento(PrevisioDbContext db, BlingClient bling)
+    {
+        return new FormaPagamentoLancamentoService(
+            new Repositorio<RegraFormaPagamento>(db),
+            new Repositorio<Cliente>(db),
+            new Repositorio<ContaPagarSincronizada>(db),
+            new Repositorio<FormaPagamento>(db),
+            FormasPagamentoBling(db, bling),
+            Options.Create(new FormasPagamentoOptions()));
+    }
+
+    public static FormasPagamentoService FormasPagamentoService(PrevisioDbContext db)
+    {
+        return new FormasPagamentoService(
+            new Repositorio<Cliente>(db),
+            new Repositorio<Empresa>(db),
+            new Repositorio<FormaPagamento>(db),
+            new Repositorio<RegraFormaPagamento>(db),
+            new Repositorio<NotaFiscal>(db),
+            Options.Create(new FormasPagamentoOptions()));
     }
 
     public static ContasAntigasEmAberto ContasAntigasEmAberto(

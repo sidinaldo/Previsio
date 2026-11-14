@@ -17,7 +17,7 @@ describe('ConfiguracoesComponent', () => {
     }));
   });
 
-  it('mostra as 5 seções da rede escolhida, cada uma com título fora do card', async () => {
+  it('mostra as 6 seções da rede escolhida, cada uma com título fora do card', async () => {
     TestBed.configureTestingModule({
       imports: [ConfiguracoesComponent],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
@@ -29,13 +29,17 @@ describe('ConfiguracoesComponent', () => {
     api.expectOne(`${API}/clientes/7/conferencia-bling`).flush({ conferirAntesDeLancar: true, exigeNumeroNota: false, toleranciaValor: 0.1, toleranciaDias: 0, fecharPendentes: true });
     api.expectOne(`${API}/clientes/7/fluxo-caixa`).flush({ ativo: true });
     api.expectOne(`${API}/clientes/7/categorias`).flush({ categoriaPadrao: null, padraoAusenteEm: [], opcoes: ['Compras'], regras: [], fornecedores: [], empresasSemCategorias: [] });
+    api.expectOne(`${API}/clientes/7/formas-pagamento`).flush({
+      formaPadrao: null, padraoAutomatico: 'Boleto', padraoAusenteEm: [], opcoes: [], regras: [], fornecedores: [],
+      empresasSemFormas: [], gruposSaiSozinho: ['Débito automático']
+    });
     api.expectOne(`${API}/clientes/7/alertas-vencimento`).flush({ avisoVencidasDias: 1, alertaDiarioAtivo: true, alertaDiarioHora: 7 });
     api.expectOne(`${API}/clientes/7/resumo-semanal`).flush({ ativo: true, dia: 1, hora: 7, ultimoEnvioEm: null, destinatarios: 1 });
     await fixture.whenStable();
     const tela = fixture.nativeElement as HTMLElement;
 
     const titulos = Array.from(tela.querySelectorAll('.pv-secao__cabecalho h2')).map(h => h.textContent!.trim());
-    expect(titulos).toEqual(['Conferência com o Bling', 'Fluxo de caixa', 'Categorias', 'Avisos de vencimento', 'Resumo por e-mail']);
+    expect(titulos).toEqual(['Conferência com o Bling', 'Fluxo de caixa', 'Categorias', 'Formas de pagamento', 'Avisos de vencimento', 'Resumo por e-mail']);
     // Título e descrição ficam fora do card
     expect(tela.querySelector('.pv-secao__card .pv-card__titulo')).toBeNull();
     expect(tela.querySelector('#categorias .pv-secao')).not.toBeNull();

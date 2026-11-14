@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { PrevisioService } from '../../core/previsio.service';
-import { NotaParaResolver, ResumoPainel, TotalCategoria, TotalSemana } from '../../core/previsio.models';
+import { NotaParaResolver, ResumoPainel, TotalCategoria, TotalFormaPagamento, TotalSemana } from '../../core/previsio.models';
 import { descricaoDaSituacao } from '../../core/filtro-notas';
 import { UrgenciaNota, urgenciaDaNota } from './notas-para-resolver';
 
@@ -51,6 +51,20 @@ export class PainelComponent {
   readonly categorias = computed<TotalCategoria[]>(() => this.resumo()?.categorias ?? []);
   private readonly maiorCategoria = computed(() => Math.max(0, ...this.categorias().map(c => c.valor)));
   private readonly totalCategorias = computed(() => this.categorias().reduce((soma, c) => soma + c.valor, 0));
+
+  /** Card "Como as contas saem": só aparece quando há contas no período. */
+  readonly formas = computed<TotalFormaPagamento[]>(() => this.resumo()?.formas ?? []);
+  private readonly maiorForma = computed(() => Math.max(0, ...this.formas().map(f => f.valor)));
+  private readonly totalFormas = computed(() => this.formas().reduce((soma, f) => soma + f.valor, 0));
+
+  /** Parte das saídas sem forma de pagamento no Bling (0 a 100). */
+  readonly percentualSemForma = computed(() => {
+    const sem = this.formas().find(f => f.grupo === 'sem');
+    if (!sem) {
+      return 0;
+    }
+    return this.percentualForma(sem);
+  });
 
   /** Parte das saídas sem categoria no Bling (0 a 100). */
   readonly percentualSemCategoria = computed(() => {
@@ -125,6 +139,34 @@ export class PainelComponent {
       return 0;
     }
     return Math.round((categoria.valor / total) * 100);
+  }
+
+  larguraForma(forma: TotalFormaPagamento): number {
+    const maior = this.maiorForma();
+    if (maior <= 0) {
+      return 0;
+    }
+    return Math.max(2, Math.round((forma.valor / maior) * 100));
+  }
+
+  percentualForma(forma: TotalFormaPagamento): number {
+    const total = this.totalFormas();
+    if (total <= 0) {
+      return 0;
+    }
+    return Math.round((forma.valor / total) * 100);
+  }
+
+  /** Contas a pagar em aberto do período com a forma (grupo, 'precisa-pagar' ou 'sai-sozinho'). */
+  linkForma(forma: string, resumo: ResumoPainel): Record<string, string> {
+    return { forma: forma, situacao: 'Abertas', de: resumo.inicio.substring(0, 10), ate: resumo.fim.substring(0, 10) };
+  }
+
+  textoContas(quantidade: number): string {
+    if (quantidade === 1) {
+      return '1 conta';
+    }
+    return quantidade + ' contas';
   }
 
   /** Filtro de Contas a pagar da categoria; Outras e A conferir não têm. */

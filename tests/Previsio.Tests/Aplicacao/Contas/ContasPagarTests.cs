@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Previsio.Tests.Apoio;
 using Previsio.Core.Entidades;
+using Previsio.Core.Pagamento;
 using Previsio.Data;
 using Xunit;
 using Previsio.Aplicacao.Comum;
@@ -295,5 +296,51 @@ public class ContasPagarTests
         PaginaContasPagarDto naoIdentificada = await Listar(new FiltroContas { Categoria = FiltroContas.CategoriaNaoIdentificada });
         Assert.Equal(new long[] { 5 }, naoIdentificada.Itens.Select(i => i.BlingId).ToArray());
         Assert.Equal(FiltroContas.CategoriaNaoIdentificada, naoIdentificada.Itens[0].Categoria);
+    }
+
+    [Fact]
+    public async Task Filtra_pela_forma_de_pagamento_e_separa_o_que_sai_sozinho()
+    {
+        await CadastrarRede();
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 31, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _norte.Id, BlingId = 41, Descricao = "Boleto Itaú", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 32, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.DebitoAutomatico });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 33, Descricao = "Outros", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.Outras });
+        Conta(_centro, 1, 20, 100m).FormaPagamentoBlingId = 31;
+        Conta(_norte, 2, 21, 200m).FormaPagamentoBlingId = 41;
+        Conta(_centro, 3, 22, 300m).FormaPagamentoBlingId = 32;
+        // Sem forma no Bling
+        Conta(_centro, 4, 23, 400m);
+        // Forma que não está na lista da empresa: conta como "outras"
+        Conta(_centro, 5, 24, 500m).FormaPagamentoBlingId = 77;
+        Conta(_centro, 6, 25, 600m).FormaPagamentoBlingId = 33;
+        await _db.SaveChangesAsync();
+
+        PaginaContasPagarDto boletos = await Listar(new FiltroContas { Forma = "BOLETO", Ordem = "vencimento" });
+        Assert.Equal(new long[] { 1, 2 }, boletos.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal("Boleto Itaú", boletos.Itens[1].FormaPagamento);
+        Assert.Equal("Boleto", boletos.Itens[1].FormaGrupoNome);
+        Assert.False(boletos.Itens[1].SaiSozinho);
+
+        PaginaContasPagarDto sozinho = await Listar(new FiltroContas { Forma = FiltroContas.SaiSozinho });
+        ContaPagarDto debito = Assert.Single(sozinho.Itens);
+        Assert.Equal(3, debito.BlingId);
+        Assert.True(debito.SaiSozinho);
+        Assert.Equal(GruposFormaPagamento.DebitoAutomatico, debito.FormaGrupo);
+
+        PaginaContasPagarDto aPagar = await Listar(new FiltroContas { Forma = FiltroContas.PrecisaPagar, Ordem = "vencimento" });
+        Assert.Equal(new long[] { 1, 2, 4, 5, 6 }, aPagar.Itens.Select(i => i.BlingId).ToArray());
+
+        PaginaContasPagarDto sem = await Listar(new FiltroContas { Forma = GruposFormaPagamento.Sem });
+        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Null(sem.Itens[0].FormaPagamento);
+        Assert.Equal("Sem forma", sem.Itens[0].FormaGrupoNome);
+
+        PaginaContasPagarDto outras = await Listar(new FiltroContas { Forma = GruposFormaPagamento.Outras, Ordem = "vencimento" });
+        Assert.Equal(new long[] { 5, 6 }, outras.Itens.Select(i => i.BlingId).ToArray());
+
+        Resultado<PaginaContasPagarDto> invalida = await Servico().ListarAsync(_rede.Id, new FiltroContas { Forma = "cheque" }, 1, CancellationToken.None);
+        Assert.False(invalida.Sucesso);
+        Assert.Equal(ContasPagarService.MensagemFormaInvalida, invalida.Mensagem);
     }
 }

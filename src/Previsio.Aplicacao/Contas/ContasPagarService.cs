@@ -6,6 +6,8 @@ using Previsio.Core.Comum;
 using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Sincronizacao;
 using Previsio.Aplicacao.Dtos;
+using Previsio.Aplicacao.FormasPagamento;
+using Previsio.Core.Pagamento;
 
 namespace Previsio.Aplicacao.Contas;
 
@@ -27,17 +29,23 @@ public class ContasPagarService
     private readonly IRepositorio<ParcelaNota> _parcelas;
     private readonly IRepositorio<Empresa> _empresas;
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
+    private readonly IRepositorio<FormaPagamento> _formas;
     private readonly TimeProvider _relogio;
     private readonly SincronizacaoOptions _opcoes;
+    private readonly List<string> _gruposSaiSozinho;
 
     public ContasPagarService(
         IRepositorio<ContaPagarSincronizada> contasPagar,
         IRepositorio<ParcelaNota> parcelas,
         IRepositorio<Empresa> empresas,
         IRepositorio<CategoriaFinanceira> categorias,
+        IRepositorio<FormaPagamento> formas,
         TimeProvider relogio,
-        IOptions<SincronizacaoOptions> opcoes)
+        IOptions<SincronizacaoOptions> opcoes,
+        IOptions<FormasPagamentoOptions> opcoesFormas)
     {
+        _formas = formas;
+        _gruposSaiSozinho = opcoesFormas.Value.GruposSaiSozinhoValidos();
         _contasPagar = contasPagar;
         _parcelas = parcelas;
         _empresas = empresas;
@@ -82,6 +90,7 @@ public class ContasPagarService
             .Skip((pagina - 1) * tamanhoPagina)
             .Take(tamanhoPagina);
         List<LinhaContaPagar> linhas = await Projetar(daPagina).ToListAsync(cancelamento);
+        MarcarSaiSozinho(linhas);
 
         DateTime hoje = Hoje();
         var resposta = new PaginaContasPagarDto();
@@ -124,6 +133,7 @@ public class ContasPagarService
         }
 
         List<LinhaContaPagar> linhas = await Projetar(ordenada.Valor!.ThenBy(c => c.Id)).ToListAsync(cancelamento);
+        MarcarSaiSozinho(linhas);
         return Resultado<List<LinhaContaPagar>>.Ok(linhas);
     }
 
@@ -226,6 +236,13 @@ public class ContasPagarService
                 .Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId && k.Descricao.ToLower() == nome));
         }
 
+        Resultado<IQueryable<ContaPagarSincronizada>> porForma = FiltrarForma(consulta, filtro.Forma);
+        if (!porForma.Sucesso)
+        {
+            return porForma;
+        }
+        consulta = porForma.Valor!;
+
         BuscaTexto? termo = BuscaTexto.Ler(filtro.Busca);
         if (termo != null)
         {
@@ -241,6 +258,53 @@ public class ContasPagarService
         return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta);
     }
 
+    public const string MensagemFormaInvalida =
+        "Forma de pagamento inválida. Use boleto, pix, transferencia, cartao, dinheiro, debito-automatico, outras, sem, precisa-pagar ou sai-sozinho.";
+
+    private Resultado<IQueryable<ContaPagarSincronizada>> FiltrarForma(IQueryable<ContaPagarSincronizada> consulta, string? forma)
+    {
+        string grupo = (forma ?? "").Trim().ToLowerInvariant();
+        if (grupo == "")
+        {
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta);
+        }
+        List<string> saiSozinho = _gruposSaiSozinho;
+        if (grupo == FiltroContas.SaiSozinho)
+        {
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => _formas.Consultar()
+                .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && saiSozinho.Contains(f.Grupo))));
+        }
+        if (grupo == FiltroContas.PrecisaPagar)
+        {
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => !_formas.Consultar()
+                .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && saiSozinho.Contains(f.Grupo))));
+        }
+        if (!GruposFormaPagamento.Valido(grupo))
+        {
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Invalido(MensagemFormaInvalida);
+        }
+        if (grupo == GruposFormaPagamento.Sem)
+        {
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoBlingId == null));
+        }
+        if (grupo == GruposFormaPagamento.Outras)
+        {
+            // Outras inclui a forma que não está na lista da empresa no Previsio
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoBlingId != null
+                && !_formas.Consultar().Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && f.Grupo != grupo)));
+        }
+        return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => _formas.Consultar()
+            .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && f.Grupo == grupo)));
+    }
+
+    private void MarcarSaiSozinho(List<LinhaContaPagar> linhas)
+    {
+        foreach (LinhaContaPagar linha in linhas)
+        {
+            linha.SaiSozinho = _gruposSaiSozinho.Contains(linha.FormaGrupo);
+        }
+    }
+
     /// <summary>
     /// Junta a empresa e a parcela de nota que gerou a conta (quando houver). Chamado depois de ordenar e paginar.
     /// </summary>
@@ -254,6 +318,14 @@ public class ContasPagarService
             CategoriaNome = _categorias.Consultar()
                 .Where(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)
                 .Select(k => k.Descricao)
+                .FirstOrDefault(),
+            FormaNome = _formas.Consultar()
+                .Where(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId)
+                .Select(f => f.Descricao)
+                .FirstOrDefault(),
+            FormaGrupoGuardado = _formas.Consultar()
+                .Where(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId)
+                .Select(f => f.Grupo)
                 .FirstOrDefault(),
             Parcela = _parcelas.Consultar()
                 .Where(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId)
@@ -339,6 +411,10 @@ public class ContasPagarService
         dto.Vencida = TextoSituacaoConta.EmAberto(conta.Situacao) && conta.Vencimento.Date < hoje;
         dto.Fornecedor = linha.Fornecedor;
         dto.Categoria = linha.Categoria;
+        dto.FormaPagamento = linha.FormaNome;
+        dto.FormaGrupo = linha.FormaGrupo;
+        dto.FormaGrupoNome = GruposFormaPagamento.Nome(linha.FormaGrupo);
+        dto.SaiSozinho = linha.SaiSozinho;
         dto.Origem = linha.Origem;
         if (linha.Parcela != null)
         {
