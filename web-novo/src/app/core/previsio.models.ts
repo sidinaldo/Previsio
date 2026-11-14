@@ -336,6 +336,12 @@ export interface NotaRecebida extends ResolucaoManual {
   mensagemErro: string | null;
   recebidaEm: string;
   lancadaEm: string | null;
+  /**
+   * Categoria das contas da nota no Bling; nulo enquanto não foi lançada. categoriaTipo: 'categoria', 'sem',
+   * 'conferir', 'naoidentificada' ou 'varias' (parcelas com categorias diferentes).
+   */
+  categoria?: string | null;
+  categoriaTipo?: string | null;
   parcelas: ParcelaNota[];
   /**
    * Nome da empresa dona da caixa em que a nota chegou, quando não é a do CNPJ da nota

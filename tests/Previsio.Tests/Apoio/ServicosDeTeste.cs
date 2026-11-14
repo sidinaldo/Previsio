@@ -87,7 +87,7 @@ public static class ServicosDeTeste
 
     public static NotasService Notas(PrevisioDbContext db, IFilaJobs fila)
     {
-        return new NotasService(new Repositorio<NotaFiscal>(db), fila);
+        return new NotasService(new Repositorio<NotaFiscal>(db), fila, new Repositorio<ContaPagarSincronizada>(db), new Repositorio<CategoriaFinanceira>(db));
     }
 
     public static FalhasService Falhas(PrevisioDbContext db)

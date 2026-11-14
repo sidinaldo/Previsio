@@ -125,6 +125,7 @@
                 <th pvColuna="emissao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Emissão</th>
                 <th pvColuna="valor" class="text-right" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Valor</th>
                 <th pvColuna="vencimento" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">1º vencimento</th>
+                <th>Categoria</th>
                 <th pvColuna="situacao" [ordenacao]="ordenacao()" (ordenar)="ordenarPor($event)">Situação</th>
                 <th class="text-right">Detalhes</th>
               </tr>
@@ -150,6 +151,18 @@
                       {{ nota.primeiroVencimento | date:'dd/MM/yyyy' }}
                     } @else {
                       —
+                    }
+                  </td>
+                  <td>
+                    @if (nota.categoriaTipo === 'categoria') {
+                      <a routerLink="/pages/contas-pagar" [queryParams]="{ categoria: nota.categoria }"
+                         title="Ver as contas a pagar desta categoria">{{ nota.categoria }}</a>
+                    } @else if (nota.categoriaTipo === 'conferir') {
+                      <span class="pv-tabela__auxiliar" title="A categoria é conferida no Bling nas próximas sincronizações">A conferir</span>
+                    } @else if (nota.categoriaTipo) {
+                      <span class="pv-tabela__auxiliar">{{ nota.categoria }}</span>
+                    } @else {
+                      <span class="pv-tabela__auxiliar" title="A categoria aparece quando a nota vai para o Bling">—</span>
                     }
                   </td>
                   <td><span class="badge" [class]="classe(nota.status)">{{ descricao(nota.status) }}</span></td>
@@ -191,7 +204,7 @@
 
                 @if (resolvendoId() === nota.id) {
                   <tr class="pv-tabela__detalhe">
-                    <td colspan="9">
+                    <td colspan="10">
                       <app-resolucao-manual [notaId]="nota.id" [numero]="nota.numero"
                                             (concluido)="aoResolver(nota)" (cancelado)="fecharResolucao()" />
                     </td>
@@ -200,7 +213,7 @@
 
                 @if (abertaId() === nota.id) {
                   <tr class="pv-tabela__detalhe">
-                    <td colspan="9">
+                    <td colspan="10">
                       <div class="row">
                         <div class="col-lg-7">
                           <h3 class="pv-detalhe__titulo">Parcelas</h3>

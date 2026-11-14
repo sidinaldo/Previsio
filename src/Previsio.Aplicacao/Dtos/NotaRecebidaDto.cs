@@ -22,6 +22,11 @@ public class NotaRecebidaDto
     public DateTime? LancadaEm { get; set; }
     public List<ParcelaNotaDto> Parcelas { get; set; } = new List<ParcelaNotaDto>();
 
+    // Categoria das contas da nota no Bling; nulo enquanto a nota não foi lançada. CategoriaTipo:
+    // "categoria", "sem" (sem categoria), "conferir" (ainda não conferida), "naoidentificada" ou "varias"
+    public string? Categoria { get; set; }
+    public string? CategoriaTipo { get; set; }
+
     // Nome da empresa dona da caixa em que a nota chegou, só quando não é a empresa do CNPJ da nota
     // (o fornecedor mandou para o e-mail de outra loja). Nulo quando chegou na caixa da rede.
     public string? CaixaDeOutraEmpresa { get; set; }

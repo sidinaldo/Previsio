@@ -179,4 +179,75 @@ public class NotasServiceTests
         Assert.Equal(TipoResultado.Invalido, resultado.Tipo);
         Assert.Empty(_fila.Enfileirados);
     }
+
+    private NotaFiscal NotaLancada(Empresa empresa, string numero, params long?[] contas)
+    {
+        var nota = new NotaFiscal();
+        nota.ClienteId = 1;
+        nota.EmpresaId = empresa.Id;
+        nota.Numero = numero;
+        nota.ChaveAcesso = numero.PadLeft(44, '9');
+        nota.Status = StatusNota.Lancada;
+        int n = 1;
+        foreach (long? conta in contas)
+        {
+            nota.Parcelas.Add(new ParcelaNota { NumeroParcela = n.ToString("000"), Vencimento = DateTime.Today.AddDays(n), Valor = 10m, BlingContaPagarId = conta });
+            n++;
+        }
+        _db.NotasFiscais.Add(nota);
+        return nota;
+    }
+
+    private void Conta(Empresa empresa, long blingId, long? categoria, bool conferida)
+    {
+        _db.ContasPagar.Add(new ContaPagarSincronizada
+        {
+            EmpresaId = empresa.Id, BlingId = blingId, CategoriaBlingId = categoria,
+            CategoriaConferidaEm = conferida ? DateTime.UtcNow : null
+        });
+    }
+
+    [Fact]
+    public async Task Notas_recebidas_trazem_a_categoria_das_contas_no_Bling()
+    {
+        var empresa = new Empresa { ClienteId = 1, Nome = "Matriz", Cnpj = "11222333000181" };
+        _db.Empresas.Add(empresa);
+        await _db.SaveChangesAsync();
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 7, Descricao = "Compras de Mercadorias", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 8, Descricao = "Fretes", Tipo = 1 });
+        Conta(empresa, 101, 7, true);
+        Conta(empresa, 102, 7, true);
+        Conta(empresa, 201, null, true);
+        Conta(empresa, 301, 7, false);
+        Conta(empresa, 401, 7, true);
+        Conta(empresa, 402, 8, true);
+        Conta(empresa, 501, 99, true);
+        NotaLancada(empresa, "1", 101, 102);
+        NotaLancada(empresa, "2", 201);
+        NotaLancada(empresa, "3", 301);
+        NotaLancada(empresa, "4", 401, 402);
+        NotaLancada(empresa, "5", 501);
+        // Lançada, mas a conta ainda não chegou na sincronização
+        NotaLancada(empresa, "6", 601);
+        // Ainda não foi para o Bling
+        NotaFiscal pendente = NotaLancada(empresa, "7", new long?[] { null });
+        pendente.Status = StatusNota.Erro;
+        await _db.SaveChangesAsync();
+
+        var pagina = (await ServicosDeTeste.Notas(_db, _fila).ListarAsync(1, null, null, null, null, null, null, 1, 50, CancellationToken.None)).Valor!;
+
+        var porNumero = pagina.Itens.ToDictionary(n => n.Numero);
+        Assert.Equal("Compras de Mercadorias", porNumero["1"].Categoria);
+        Assert.Equal("categoria", porNumero["1"].CategoriaTipo);
+        Assert.Equal("Sem categoria", porNumero["2"].Categoria);
+        Assert.Equal("sem", porNumero["2"].CategoriaTipo);
+        Assert.Equal("A conferir", porNumero["3"].Categoria);
+        Assert.Equal("conferir", porNumero["3"].CategoriaTipo);
+        Assert.Equal("Várias categorias", porNumero["4"].Categoria);
+        Assert.Equal("varias", porNumero["4"].CategoriaTipo);
+        Assert.Equal("naoidentificada", porNumero["5"].CategoriaTipo);
+        Assert.Equal("conferir", porNumero["6"].CategoriaTipo);
+        Assert.Null(porNumero["7"].Categoria);
+        Assert.Null(porNumero["7"].CategoriaTipo);
+    }
 }

@@ -7,6 +7,7 @@ using Previsio.Aplicacao.Comum;
 using Previsio.Aplicacao.Abstracoes;
 using Previsio.Aplicacao.Mapeamentos;
 using Previsio.Aplicacao.Dtos;
+using Previsio.Core.Painel.Modelos;
 using Previsio.Aplicacao.Autenticacao;
 
 namespace Previsio.Aplicacao.Notas;
@@ -25,13 +26,26 @@ public class NotasService
 
     public const int TamanhoMaximoObservacao = 500;
 
+    public const string TipoCategoriaVarias = "varias";
+    public const string NomeCategoriaVarias = "Várias categorias";
+    public const string NomeSemCategoria = "Sem categoria";
+    public const string NomeCategoriaAConferir = "A conferir";
+
     private readonly IRepositorio<NotaFiscal> _notas;
     private readonly IFilaJobs _jobs;
+    private readonly IRepositorio<ContaPagarSincronizada> _contas;
+    private readonly IRepositorio<CategoriaFinanceira> _categorias;
 
-    public NotasService(IRepositorio<NotaFiscal> notas, IFilaJobs jobs)
+    public NotasService(
+        IRepositorio<NotaFiscal> notas,
+        IFilaJobs jobs,
+        IRepositorio<ContaPagarSincronizada> contas,
+        IRepositorio<CategoriaFinanceira> categorias)
     {
         _notas = notas;
         _jobs = jobs;
+        _contas = contas;
+        _categorias = categorias;
     }
 
     /// <summary>
@@ -137,6 +151,7 @@ public class NotasService
         {
             resposta.Itens.Add(NotaMapeamento.ParaNotaRecebidaDto(nota));
         }
+        await PreencherCategoriasAsync(notas, resposta.Itens, cancelamento);
         return Resultado<PaginaNotasDto>.Ok(resposta);
     }
 
@@ -396,5 +411,122 @@ public class NotasService
 
         await _notas.SalvarAsync(cancelamento);
         return Resultado.Ok();
+    }
+
+    /// <summary>
+    /// Categoria das contas que a nota gerou no Bling (pelas parcelas lançadas). Conta que ainda não foi
+    /// sincronizada ou não teve a categoria conferida fica "A conferir"; parcelas com categorias diferentes,
+    /// "Várias categorias". Nota sem parcela lançada fica sem categoria na tela ("—").
+    /// </summary>
+    private async Task PreencherCategoriasAsync(List<NotaFiscal> notas, List<NotaRecebidaDto> itens, CancellationToken cancelamento)
+    {
+        var empresas = new List<int>();
+        var idsContas = new List<long>();
+        foreach (NotaFiscal nota in notas)
+        {
+            if (!nota.EmpresaId.HasValue)
+            {
+                continue;
+            }
+            foreach (ParcelaNota parcela in nota.Parcelas)
+            {
+                if (parcela.BlingContaPagarId.HasValue)
+                {
+                    idsContas.Add(parcela.BlingContaPagarId.Value);
+                    if (!empresas.Contains(nota.EmpresaId.Value))
+                    {
+                        empresas.Add(nota.EmpresaId.Value);
+                    }
+                }
+            }
+        }
+        if (idsContas.Count == 0)
+        {
+            return;
+        }
+
+        var contas = await _contas.ConsultarSomenteLeitura()
+            .Where(c => empresas.Contains(c.EmpresaId) && idsContas.Contains(c.BlingId))
+            .Select(c => new { c.EmpresaId, c.BlingId, c.CategoriaBlingId, c.CategoriaConferidaEm })
+            .ToListAsync(cancelamento);
+        var contasPorChave = new Dictionary<string, (long? Categoria, bool Conferida)>();
+        foreach (var conta in contas)
+        {
+            contasPorChave[conta.EmpresaId + ":" + conta.BlingId] = (conta.CategoriaBlingId, conta.CategoriaConferidaEm.HasValue);
+        }
+
+        var categorias = await _categorias.ConsultarSomenteLeitura()
+            .Where(c => empresas.Contains(c.EmpresaId))
+            .Select(c => new { c.EmpresaId, c.BlingId, c.Descricao })
+            .ToListAsync(cancelamento);
+        var nomes = new Dictionary<string, string>();
+        foreach (var categoria in categorias)
+        {
+            nomes[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao.Trim();
+        }
+
+        for (int i = 0; i < notas.Count; i++)
+        {
+            NotaFiscal nota = notas[i];
+            if (!nota.EmpresaId.HasValue)
+            {
+                continue;
+            }
+            var tipos = new List<string>();
+            var nomesDaNota = new List<string>();
+            foreach (ParcelaNota parcela in nota.Parcelas)
+            {
+                if (!parcela.BlingContaPagarId.HasValue)
+                {
+                    continue;
+                }
+                string tipo;
+                string nome;
+                (long? Categoria, bool Conferida) conta;
+                if (!contasPorChave.TryGetValue(nota.EmpresaId.Value + ":" + parcela.BlingContaPagarId.Value, out conta) || !conta.Conferida)
+                {
+                    tipo = TotalCategoria.TipoAConferir;
+                    nome = NomeCategoriaAConferir;
+                }
+                else if (!conta.Categoria.HasValue)
+                {
+                    tipo = TotalCategoria.TipoSem;
+                    nome = NomeSemCategoria;
+                }
+                else
+                {
+                    string? descricao;
+                    if (nomes.TryGetValue(nota.EmpresaId.Value + ":" + conta.Categoria.Value, out descricao))
+                    {
+                        tipo = TotalCategoria.TipoCategoria;
+                        nome = descricao;
+                    }
+                    else
+                    {
+                        tipo = TotalCategoria.TipoNaoIdentificada;
+                        nome = TotalCategoria.NomeNaoIdentificada;
+                    }
+                }
+                tipos.Add(tipo);
+                if (!nomesDaNota.Contains(nome))
+                {
+                    nomesDaNota.Add(nome);
+                }
+            }
+            if (nomesDaNota.Count == 0)
+            {
+                continue;
+            }
+            if (nomesDaNota.Count == 1)
+            {
+                itens[i].Categoria = nomesDaNota[0];
+                itens[i].CategoriaTipo = tipos[0];
+            }
+            else
+            {
+                itens[i].Categoria = NomeCategoriaVarias;
+                itens[i].CategoriaTipo = TipoCategoriaVarias;
+            }
+        }
     }
 }
