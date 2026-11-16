@@ -1,0 +1,157 @@
+# ==========================================================================================
+#  PREVISIO — PRODUÇÃO. Mesma VPS da Nexora, projeto Compose próprio (/opt/previsio).
+#
+#  ⚠️ NENHUM `ports:`. A entrada é o Cloudflare Tunnel que a Nexora já tem: o contêiner `web`
+#  entra também na rede `nexora_borda`, e no painel da Cloudflare o hostname
+#  previsio.softioconsultoria.com.br aponta para http://previsio-web:80. O firewall da VPS
+#  continua deixando entrar só a 22.
+#
+#  ⚠️ A CONTRAPARTIDA: o IP do cliente chega em `CF-Connecting-IP`, e a API precisa de
+#  `Proxy__CabecalhoIpReal=CF-Connecting-IP` para o limite de tentativas de login enxergá-lo.
+#
+#  ⚠️ POSTGRES PRÓPRIO, separado do da Nexora: deploy, reinício e problema de um não derrubam o
+#  outro, e o Previsio (certificados A1, tokens do Bling) não divide banco com as conversas da
+#  Nexora.
+#
+#  ⚠️ DEPENDE DA REDE DA NEXORA. Ela precisa existir antes do `up` (o deploy da Nexora a cria).
+#  Se um dia o Previsio sair desta VPS, troque `nexora_borda` por um `cloudflared` próprio.
+# ==========================================================================================
+
+name: previsio
+
+services:
+  # ------------------------------------------------------------------ painel + repasse da API
+  web:
+    build:
+      context: ../web-novo
+    image: previsio-web:latest
+    container_name: previsio-web          # é este nome que o hostname do Tunnel procura
+    restart: unless-stopped
+    mem_limit: ${LIMITE_WEB:-64m}
+    depends_on:
+      - api
+    networks: [interna, nexora_borda]
+
+  # ------------------------------------------------------------------ API + jobs (Hangfire)
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: previsio-api:latest
+    container_name: previsio-api          # o nginx repassa /api para este nome
+    restart: unless-stopped
+    mem_limit: ${LIMITE_API:-1g}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      TZ: America/Sao_Paulo
+
+      ConnectionStrings__Previsio: >-
+        Host=db;Port=5432;Database=previsio;Username=previsio;Password=${POSTGRES_PASSWORD:?}
+
+      Jwt__Chave: ${JWT_CHAVE:?}
+
+      # Primeiro administrador: só vale com o banco vazio. Depois do primeiro login, troque a
+      # senha no painel e apague ADMIN_SENHA do .env.
+      AdminInicial__Nome: ${ADMIN_NOME:-Administrador}
+      AdminInicial__Email: ${ADMIN_EMAIL:-}
+      AdminInicial__Senha: ${ADMIN_SENHA:-}
+
+      # O painel e a volta do OAuth do Bling. Tudo no mesmo endereço: o nginx entrega o painel
+      # e repassa /api.
+      Front__Url: ${PREVISIO_URL:?}/#
+      Bling__RedirectUri: ${PREVISIO_URL:?}/api/bling/callback
+      Bling__ClientId: ${BLING_CLIENT_ID:-}
+      Bling__ClientSecret: ${BLING_CLIENT_SECRET:-}
+
+      # ⚠️ VAZIO, O E-MAIL NÃO SAI: avisos de vencimento, resumo semanal e "esqueci a senha".
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Porta: ${SMTP_PORTA:-587}
+      Smtp__Ssl: ${SMTP_SSL:-false}
+      Smtp__Usuario: ${SMTP_USUARIO:-}
+      Smtp__Senha: ${SMTP_SENHA:-}
+      Smtp__Remetente: ${SMTP_REMETENTE:-}
+      Smtp__NomeRemetente: ${SMTP_NOME_REMETENTE:-Previsio}
+
+      # ⚠️ AS CHAVES QUE CIFRAM TOKENS, SENHAS E CERTIFICADOS. Se o volume sumir, todo Bling
+      # precisa ser reconectado e toda senha de IMAP e certificado A1, recadastrados.
+      DataProtection__PastaChaves: /app/chaves
+
+      # IP real atrás do Cloudflare (ver o banner do topo)
+      Proxy__CabecalhoIpReal: ${CABECALHO_IP_REAL:-CF-Connecting-IP}
+    volumes:
+      - chaves:/app/chaves
+    networks: [interna]
+
+  # ------------------------------------------------------------------ banco
+  db:
+    image: postgres:16-alpine
+    container_name: previsio-db
+    restart: unless-stopped
+    mem_limit: ${LIMITE_DB:-1g}
+    # SEM `ports:`. Só a API e o backup alcançam o banco, pela rede interna.
+    environment:
+      POSTGRES_DB: previsio
+      POSTGRES_USER: previsio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    # Calibrado para um banco pequeno dentro de 1 GB: as notas e contas de algumas redes.
+    command: >-
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c work_mem=8MB
+      -c max_connections=50
+    volumes:
+      - pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U previsio -d previsio"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [interna]
+
+  # ------------------------------------------------------------------ backup
+  backup:
+    build: ./backup
+    image: previsio-backup:latest
+    container_name: previsio-backup
+    restart: unless-stopped
+    mem_limit: ${LIMITE_BACKUP:-256m}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      # ⚠️ SEM ELA O SCRIPT RECUSA RODAR: o dump tem dados financeiros dos clientes.
+      BACKUP_SENHA: ${BACKUP_SENHA:?}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET_BACKUP: ${R2_BUCKET_BACKUP:-}
+      # Pasta dentro do bucket: dá para usar o mesmo bucket da Nexora sem misturar
+      R2_PASTA: ${R2_PASTA:-previsio}
+      BACKUP_PUSH_URL: ${BACKUP_PUSH_URL:-}
+    volumes:
+      # Só leitura: as chaves entram no backup junto com o banco (um sem o outro não serve)
+      - chaves:/dados/chaves:ro
+      # A cópia quente sobrevive aos deploys (sem volume, todo `up -d` a apagaria)
+      - backup_local:/tmp/backup
+    networks: [interna]
+
+networks:
+  interna:
+    name: previsio_interna
+  # A borda da Nexora, onde está o cloudflared
+  nexora_borda:
+    external: true
+
+volumes:
+  pg:
+    name: previsio_pg_prod
+  chaves:
+    name: previsio_chaves_prod
+  backup_local:
+    name: previsio_backup_local

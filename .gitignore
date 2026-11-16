@@ -9,3 +9,6 @@ notas-teste/arquivos/
 # Notas de teste geradas pelos scripts (refaça com python notas-teste/gerar_notas_*.py)
 notas-teste/arquivos*/
 __pycache__/
+
+# Segredos de produção (deploy/.env.example é o modelo, sem valores)
+deploy/.env

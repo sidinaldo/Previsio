@@ -1,0 +1,16 @@
+# O contexto do build é a raiz: só entra o que o Dockerfile da API copia (src/ e o props).
+**/bin
+**/obj
+**/node_modules
+.git
+.vs
+web-novo
+tests
+tools
+notas-teste
+deploy
+# ⚠️ Segredos e chaves de desenvolvimento NUNCA entram na imagem
+**/appsettings.Development.json
+**/chaves-dataprotection
+**/*.user
+**/*.pfx

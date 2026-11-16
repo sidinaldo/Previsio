@@ -136,16 +136,15 @@ if (tentativasLogin <= 0)
     throw new InvalidOperationException(LimitesRequisicao.ChaveTentativasLogin + " precisa ser maior que zero.");
 }
 
+// Atrás do Cloudflare Tunnel o IP real vem num cabeçalho (ver IpDoCliente)
+string? cabecalhoIpReal = builder.Configuration[IpDoCliente.ChaveCabecalhoIpReal];
+
 builder.Services.AddRateLimiter(opcoes =>
 {
     opcoes.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     opcoes.AddPolicy(LimitesRequisicao.Login, contexto =>
     {
-        string ip = "desconhecido";
-        if (contexto.Connection.RemoteIpAddress != null)
-        {
-            ip = contexto.Connection.RemoteIpAddress.ToString();
-        }
+        string ip = IpDoCliente.Obter(contexto, cabecalhoIpReal);
 
         return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
         {
@@ -245,6 +244,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Para o deploy e o monitoramento: a API está de pé e fala com o banco. Sem login e fora de /api,
+// então o nginx não expõe (só é alcançável pela rede interna dos contêineres).
+app.MapGet("/health", async (PrevisioDbContext banco, CancellationToken cancelamento) =>
+{
+    bool conectado = await banco.Database.CanConnectAsync(cancelamento);
+    if (conectado)
+    {
+        return Results.Ok("ok");
+    }
+    return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+}).AllowAnonymous();
 
 // Agenda dos jobs
 IRecurringJobManager agenda = app.Services.GetRequiredService<IRecurringJobManager>();

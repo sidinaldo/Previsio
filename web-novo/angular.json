@@ -61,6 +61,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/previsio.config.ts",
+                  "with": "src/app/core/previsio.config.producao.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",

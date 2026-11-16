@@ -249,6 +249,44 @@ npm start
 > A API só aceita chamadas do endereço configurado em `Front:Url` (padrão `http://localhost:4200/#`).
 > Se o painel rodar em outra porta ou domínio, ajuste `Front:Url`, senão o navegador barra as chamadas (CORS).
 
+## Produção (VPS da Nexora)
+
+O Previsio roda na mesma VPS da Nexora, num projeto Docker Compose próprio em `/opt/previsio`,
+com Postgres próprio. Nenhuma porta é aberta: a entrada é o Cloudflare Tunnel da Nexora, e o
+contêiner `previsio-web` entra na rede `nexora_borda` para o Tunnel alcançá-lo.
+
+```
+Cloudflare ─► cloudflared (Nexora) ─► previsio-web (nginx: painel + /api) ─► previsio-api ─► previsio-db
+                                                                              previsio-backup ─► R2
+```
+
+**Primeira vez**
+
+1. `git clone https://github.com/sidinaldo/Previsio.git /opt/previsio`
+2. `cp /opt/previsio/deploy/.env.example /opt/previsio/deploy/.env` e preencher
+   (`openssl rand -base64 48` para senhas e chaves; guarde `BACKUP_SENHA` fora da VPS).
+3. No painel da Cloudflare (Zero Trust → Tunnels → o tunnel da Nexora → Public Hostname):
+   `previsio.softioconsultoria.com.br` → `HTTP` → `previsio-web:80`.
+4. No app do Bling, URL de redirecionamento:
+   `https://previsio.softioconsultoria.com.br/api/bling/callback`.
+5. `/opt/previsio/deploy/deploy.sh`
+
+**Atualizar:** `cd /opt/previsio && git pull && deploy/deploy.sh`. As migrations rodam sozinhas
+quando a API sobe.
+
+**Por dentro, nunca pela internet:** `/health` e o painel do Hangfire (`/hangfire`) não passam
+pelo nginx, e o Hangfire só abre de dentro do próprio contêiner da API. Para acompanhar os jobs,
+use as telas de Jobs e Falhas do painel ou `docker compose --env-file .env logs api`.
+
+**Backup:** a cada 6 h (minuto 25), banco + chaves do Data Protection, cifrados, em
+`R2_BUCKET_BACKUP/previsio/AAAA/MM/`. Os dois andam juntos: o banco sem as chaves deixa tokens do
+Bling, senhas de IMAP e certificados A1 ilegíveis. Restauração: `deploy/backup/restore.sh`
+(instruções no topo do arquivo). `deploy/verificar-backup.sh` confere que o arquivo chegou no R2.
+
+**Primeira coisa depois do deploy: a SEFAZ.** O contêiner é Linux, e a cadeia ICP-Brasil dos
+servidores da SEFAZ pode não ser reconhecida nele. Rode a sondagem de uma empresa com
+certificado e veja se a conexão TLS fecha antes de ligar o job.
+
 ## Endpoints
 
 | Método | Rota | Uso |

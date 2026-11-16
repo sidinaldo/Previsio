@@ -1,0 +1,2 @@
+# A cada 6 horas, aos 25 minutos: longe da hora cheia (jobs do Previsio) e dos 10 minutos (backup da Nexora).
+25 0,6,12,18 * * * /usr/local/bin/backup.sh >> /proc/1/fd/1 2>&1
