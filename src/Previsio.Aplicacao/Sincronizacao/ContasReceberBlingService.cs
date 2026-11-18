@@ -1,7 +1,6 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 
@@ -14,13 +13,13 @@ namespace Previsio.Aplicacao.Sincronizacao;
 public class ContasReceberBlingService
 {
     private readonly IRepositorio<ContaReceberSincronizada> _contas;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly FornecedoresBlingService _contatos;
     private readonly ILogger<ContasReceberBlingService> _logger;
 
     public ContasReceberBlingService(
         IRepositorio<ContaReceberSincronizada> contas,
-        BlingClient bling,
+        IErp bling,
         FornecedoresBlingService contatos,
         ILogger<ContasReceberBlingService> logger)
     {
@@ -45,12 +44,12 @@ public class ContasReceberBlingService
         DateTime agoraUtc,
         CancellationToken cancelamento)
     {
-        List<ContaReceberBling> remotas;
+        List<ContaReceberErp> remotas;
         try
         {
             remotas = await _bling.ListarContasReceberAsync(conta, token, vencimentoInicial, vencimentoFinal, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             if (!erro.SemPermissao)
             {
@@ -72,13 +71,13 @@ public class ContasReceberBlingService
 
         var idsRecebidos = new HashSet<long>();
         var semNome = new List<ContaReceberSincronizada>();
-        foreach (ContaReceberBling remota in remotas)
+        foreach (ContaReceberErp remota in remotas)
         {
-            DateTime vencimento;
-            if (!DateTime.TryParseExact(remota.Vencimento, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out vencimento))
+            if (!remota.Vencimento.HasValue)
             {
                 continue;
             }
+            DateTime vencimento = remota.Vencimento.Value;
             // O filtro de data da API pode não valer para contas a receber: confere aqui
             if (vencimento.Date < vencimentoInicial || vencimento.Date > vencimentoFinal)
             {
@@ -100,12 +99,12 @@ public class ContasReceberBlingService
             local.Valor = remota.Valor;
             local.Situacao = remota.Situacao;
             local.SincronizadaEm = agoraUtc;
-            if (remota.Contato != null)
+            if (remota.ContatoId.HasValue)
             {
-                local.ErpContatoId = remota.Contato.Id;
-                if (!string.IsNullOrWhiteSpace(remota.Contato.Nome))
+                local.ErpContatoId = remota.ContatoId.Value;
+                if (!string.IsNullOrWhiteSpace(remota.ContatoNome))
                 {
-                    local.ClienteNome = FornecedoresBlingService.Limitar(remota.Contato.Nome);
+                    local.ClienteNome = FornecedoresBlingService.Limitar(remota.ContatoNome);
                 }
                 else
                 {

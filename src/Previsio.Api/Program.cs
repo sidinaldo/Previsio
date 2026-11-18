@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Previsio.Api.Autenticacao;
 using Previsio.Api.Jobs;
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Previsio.Bling;
 using Previsio.Data;
 using Previsio.Data.Repositorios;
@@ -52,6 +53,8 @@ builder.Services.AddHttpClient<BlingClient>(cliente =>
 {
     cliente.Timeout = TimeSpan.FromSeconds(60);
 });
+// O ERP que os serviços enxergam (Previsio.Aplicacao.Abstracoes.Erp): hoje, o Bling
+builder.Services.AddScoped<IErp, ErpBling>();
 
 // Implementações técnicas (IMAP, SMTP, SEFAZ, Hangfire, criptografia): Previsio.Infra
 builder.Services.AddPrevisioInfra(builder.Configuration);

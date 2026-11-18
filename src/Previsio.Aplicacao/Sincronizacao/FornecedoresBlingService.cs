@@ -1,6 +1,5 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 
@@ -19,13 +18,13 @@ public class FornecedoresBlingService
 
     private readonly IRepositorio<ParcelaNota> _parcelas;
     private readonly IRepositorio<FornecedorErp> _fornecedores;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly ILogger<FornecedoresBlingService> _logger;
 
     public FornecedoresBlingService(
         IRepositorio<ParcelaNota> parcelas,
         IRepositorio<FornecedorErp> fornecedores,
-        BlingClient bling,
+        IErp bling,
         ILogger<FornecedoresBlingService> logger)
     {
         _parcelas = parcelas;
@@ -149,7 +148,7 @@ public class FornecedoresBlingService
             }
 
             resultado.Buscas++;
-            ContatoBling? contato = await BuscarAsync(empresa, conta, token, idContato, cancelamento);
+            ContatoErp? contato = await BuscarAsync(empresa, conta, token, idContato, cancelamento);
             if (contato == null || string.IsNullOrWhiteSpace(contato.Nome))
             {
                 continue;
@@ -164,7 +163,7 @@ public class FornecedoresBlingService
                 porContato[idContato] = fornecedor;
             }
             fornecedor.Nome = Limitar(contato.Nome)!;
-            fornecedor.Documento = ApenasDigitos(contato.NumeroDocumento);
+            fornecedor.Documento = ApenasDigitos(contato.Documento);
             fornecedor.AtualizadoEm = agoraUtc;
         }
 
@@ -175,14 +174,14 @@ public class FornecedoresBlingService
         return resultado;
     }
 
-    private async Task<ContatoBling?> BuscarAsync(
+    private async Task<ContatoErp?> BuscarAsync(
         Empresa empresa, string conta, string token, long idContato, CancellationToken cancelamento)
     {
         try
         {
             return await _bling.ObterContatoAsync(conta, token, idContato, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             // Contato excluído ou falha passageira: a conta fica sem nome e tenta de novo na próxima
             _logger.LogWarning(erro, "Não foi possível buscar o contato {Contato} no Bling da empresa {EmpresaId}",

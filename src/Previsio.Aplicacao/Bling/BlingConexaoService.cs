@@ -1,7 +1,6 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Core.Abstracoes;
 using Previsio.Aplicacao.Comum;
@@ -20,7 +19,7 @@ public class BlingConexaoService
 
     private readonly IRepositorio<Empresa> _empresas;
     private readonly AcessoEmpresaService _acesso;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly TokenBlingService _tokens;
     private readonly IFilaJobs _jobs;
     private readonly IProtetorTemporario _protetorEstado;
@@ -29,7 +28,7 @@ public class BlingConexaoService
     public BlingConexaoService(
         IRepositorio<Empresa> empresas,
         AcessoEmpresaService acesso,
-        BlingClient bling,
+        IErp bling,
         TokenBlingService tokens,
         IFilaJobs jobs,
         IProtetorTemporario protetorEstado,
@@ -56,7 +55,7 @@ public class BlingConexaoService
             return Resultado<string>.NaoEncontrado(EmpresasService.MensagemNaoEncontrada);
         }
 
-        CredenciaisBling credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
+        CredenciaisErp credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
         if (!credenciais.Completas)
         {
             return Resultado<string>.Invalido("Cadastre o Client ID e o Client Secret do aplicativo do Bling desta empresa antes de conectar.");
@@ -115,12 +114,12 @@ public class BlingConexaoService
 
         try
         {
-            CredenciaisBling credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
-            TokenBling token = await _bling.TrocarCodigoPorTokenAsync(credenciais, codigo, cancelamento);
+            CredenciaisErp credenciais = await _tokens.CredenciaisAsync(empresa, cancelamento);
+            TokenErp token = await _bling.TrocarCodigoPorTokenAsync(credenciais, codigo, cancelamento);
             _tokens.SalvarToken(empresa, token);
             await _empresas.SalvarAsync(cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             _logger.LogError(erro, "Falha no OAuth da empresa {EmpresaId}: {Corpo}", empresaId, erro.CorpoResposta);
             return RetornoConexaoBling.Erro;

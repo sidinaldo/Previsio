@@ -1,4 +1,4 @@
-using Previsio.Bling;
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Previsio.Core.Entidades;
 
 namespace Previsio.Aplicacao.Falhas;
@@ -20,7 +20,7 @@ public static class FabricaFalha
     /// Falha numa chamada ao Bling durante o lançamento de uma nota.
     /// </summary>
     public static FalhaProcessamento DoBling(
-        EtapaFalha etapa, BlingException erro, NotaFiscal nota, ParcelaNota? parcela)
+        EtapaFalha etapa, ErpException erro, NotaFiscal nota, ParcelaNota? parcela)
     {
         FalhaProcessamento falha = DaNota(etapa, erro.Message, nota);
         PreencherChamadaBling(falha, erro);
@@ -38,7 +38,7 @@ public static class FabricaFalha
     /// Falha ao renovar o token de uma empresa fora do lançamento de uma nota
     /// (ex.: na sincronização das contas a pagar).
     /// </summary>
-    public static FalhaProcessamento DaEmpresa(EtapaFalha etapa, BlingException erro, Empresa empresa)
+    public static FalhaProcessamento DaEmpresa(EtapaFalha etapa, ErpException erro, Empresa empresa)
     {
         var falha = new FalhaProcessamento();
         falha.ClienteId = empresa.ClienteId;
@@ -119,7 +119,7 @@ public static class FabricaFalha
         return falha;
     }
 
-    private static void PreencherChamadaBling(FalhaProcessamento falha, BlingException erro)
+    private static void PreencherChamadaBling(FalhaProcessamento falha, ErpException erro)
     {
         falha.Metodo = Cortar(erro.Metodo, 10);
         falha.Endereco = Cortar(erro.Endereco, TamanhoEndereco);

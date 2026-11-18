@@ -1,7 +1,6 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.Pagamento;
@@ -17,13 +16,13 @@ public class FormasPagamentoBlingService
     public static readonly TimeSpan RenovarLista = TimeSpan.FromDays(1);
 
     private readonly IRepositorio<FormaPagamento> _formas;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly FormasPagamentoOptions _opcoes;
     private readonly ILogger<FormasPagamentoBlingService> _logger;
 
     public FormasPagamentoBlingService(
         IRepositorio<FormaPagamento> formas,
-        BlingClient bling,
+        IErp bling,
         IOptions<FormasPagamentoOptions> opcoes,
         ILogger<FormasPagamentoBlingService> logger)
     {
@@ -55,12 +54,12 @@ public class FormasPagamentoBlingService
             return;
         }
 
-        List<FormaPagamentoBling> remotas;
+        List<FormaPagamentoErp> remotas;
         try
         {
             remotas = await _bling.ListarFormasPagamentoAsync(conta, token, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             if (erro.SemPermissao)
             {
@@ -86,7 +85,7 @@ public class FormasPagamentoBlingService
 
         List<string> termos = _opcoes.TermosDebitoAutomaticoValidos();
         var recebidas = new HashSet<long>();
-        foreach (FormaPagamentoBling remota in remotas)
+        foreach (FormaPagamentoErp remota in remotas)
         {
             recebidas.Add(remota.Id);
             FormaPagamento? forma;

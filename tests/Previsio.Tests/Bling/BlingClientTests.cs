@@ -13,7 +13,7 @@ public class BlingClientTests
     {
         var respostas = new RespostasFixas(_ => RespostasFixas.Json(
             HttpStatusCode.BadRequest, "{\"error\":{\"message\":\"Id da forma de pagamento inválido.\"}}"));
-        BlingClient bling = BlingDeTeste.Criar(respostas);
+        BlingClient bling = BlingDeTeste.CriarCliente(respostas);
 
         BlingException erro = await Assert.ThrowsAsync<BlingException>(() =>
             bling.CriarContaPagarAsync("empresa-1", "token", new NovaContaPagarBling(), CancellationToken.None));
@@ -29,7 +29,7 @@ public class BlingClientTests
     public async Task SemConexao_ViraBlingExceptionComOEndereco()
     {
         var respostas = new RespostasFixas(_ => throw new HttpRequestException("Nome do servidor não resolvido"));
-        BlingClient bling = BlingDeTeste.Criar(respostas);
+        BlingClient bling = BlingDeTeste.CriarCliente(respostas);
 
         BlingException erro = await Assert.ThrowsAsync<BlingException>(() =>
             bling.BuscarContatoPorDocumentoAsync("empresa-1", "token", "12345678000199", CancellationToken.None));
@@ -45,7 +45,7 @@ public class BlingClientTests
     {
         var respostas = new RespostasFixas(_ => RespostasFixas.Json(
             HttpStatusCode.BadRequest, "{\"error\":\"invalid_grant\"}"));
-        BlingClient bling = BlingDeTeste.Criar(respostas);
+        BlingClient bling = BlingDeTeste.CriarCliente(respostas);
 
         BlingException erro = await Assert.ThrowsAsync<BlingException>(() =>
             bling.RenovarTokenAsync(bling.CredenciaisPadrao, "refresh-vencido", CancellationToken.None));
@@ -68,7 +68,7 @@ public class BlingClientTests
             return RespostasFixas.Json(HttpStatusCode.OK,
                 "{\"access_token\":\"a\",\"refresh_token\":\"r\",\"expires_in\":21600}");
         });
-        BlingClient bling = BlingDeTeste.Criar(respostas);
+        BlingClient bling = BlingDeTeste.CriarCliente(respostas);
 
         var credenciais = new CredenciaisBling();
         credenciais.ClientId = "app-da-filial";
@@ -82,7 +82,7 @@ public class BlingClientTests
     [Fact]
     public void UrlDeAutorizacao_LevaOClientIdDoAplicativo()
     {
-        BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{}")));
+        BlingClient bling = BlingDeTeste.CriarCliente(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{}")));
 
         var credenciais = new CredenciaisBling();
         credenciais.ClientId = "app-da-filial";

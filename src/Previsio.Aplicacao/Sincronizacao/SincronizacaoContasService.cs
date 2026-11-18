@@ -1,7 +1,6 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Contratos;
@@ -25,7 +24,7 @@ public class SincronizacaoContasService
     private readonly IRepositorio<Empresa> _empresas;
     private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly IRepositorio<FalhaProcessamento> _falhas;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly TokenBlingService _tokens;
     private readonly SincronizacaoOptions _opcoes;
     private readonly ContasAntigasEmAberto _antigas;
@@ -41,7 +40,7 @@ public class SincronizacaoContasService
         IRepositorio<Empresa> empresas,
         IRepositorio<ContaPagarSincronizada> contas,
         IRepositorio<FalhaProcessamento> falhas,
-        BlingClient bling,
+        IErp bling,
         TokenBlingService tokens,
         IOptions<SincronizacaoOptions> opcoes,
         ContasAntigasEmAberto antigas,
@@ -107,7 +106,7 @@ public class SincronizacaoContasService
                 _logger.LogError(erro, "Empresa {EmpresaId} desconectada do Bling durante a sincronização", empresa.Id);
 
                 // Renovação do token recusada pelo Bling: registra para aparecer na tela de falhas
-                BlingException? causa = erro.InnerException as BlingException;
+                ErpException? causa = erro.InnerException as ErpException;
                 if (causa != null)
                 {
                     await RegistrarFalhaAsync(FabricaFalha.DaEmpresa(EtapaFalha.RenovacaoToken, causa, empresa), cancelamento);
@@ -148,16 +147,15 @@ public class SincronizacaoContasService
         string conta = TokenBlingService.IdentificadorConta(empresa);
 
         DateTime hoje = RelogioBrasil.Hoje();
-        var filtro = new FiltroContasPagar();
-        filtro.VencimentoInicial = hoje.AddDays(-_opcoes.DiasPassadosValidos());
-        filtro.VencimentoFinal = hoje.AddDays(_opcoes.DiasFuturosValidos());
+        DateTime vencimentoInicial = hoje.AddDays(-_opcoes.DiasPassadosValidos());
+        DateTime vencimentoFinal = hoje.AddDays(_opcoes.DiasFuturosValidos());
 
-        List<ContaPagarBling> remotas;
+        List<ContaPagarErp> remotas;
         try
         {
-            remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+            remotas = await _bling.ListarContasPagarAsync(conta, token, vencimentoInicial, vencimentoFinal, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             // Primeira chamada da empresa: se o Bling revogou o token, renova uma vez e repete
             if (!erro.TokenInvalido)
@@ -165,13 +163,13 @@ public class SincronizacaoContasService
                 throw;
             }
             token = await _tokens.RenovarAposRecusaAsync(empresa, cancelamento);
-            remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+            remotas = await _bling.ListarContasPagarAsync(conta, token, vencimentoInicial, vencimentoFinal, cancelamento);
         }
 
         List<ContaPagarSincronizada> locais = await _contas.Consultar()
             .Where(c => c.EmpresaId == empresa.Id
-                && c.Vencimento >= filtro.VencimentoInicial
-                && c.Vencimento <= filtro.VencimentoFinal)
+                && c.Vencimento >= vencimentoInicial
+                && c.Vencimento <= vencimentoFinal)
             .ToListAsync(cancelamento);
 
         var locaisPorId = new Dictionary<long, ContaPagarSincronizada>();
@@ -184,15 +182,13 @@ public class SincronizacaoContasService
         var atuais = new List<ContaPagarSincronizada>();
         DateTime agora = DateTime.UtcNow;
 
-        foreach (ContaPagarBling remota in remotas)
+        foreach (ContaPagarErp remota in remotas)
         {
-            DateTime vencimento;
-            if (!DateTime.TryParseExact(remota.Vencimento, "yyyy-MM-dd",
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.None, out vencimento))
+            if (!remota.Vencimento.HasValue)
             {
                 continue;
             }
+            DateTime vencimento = remota.Vencimento.Value;
 
             idsRecebidos.Add(remota.Id);
 
@@ -213,14 +209,14 @@ public class SincronizacaoContasService
             local.Vencimento = vencimento.Date;
             local.Valor = remota.Valor;
             local.Situacao = remota.Situacao;
-            if (remota.Contato != null)
+            if (remota.ContatoId.HasValue)
             {
-                local.ErpContatoId = remota.Contato.Id;
+                local.ErpContatoId = remota.ContatoId.Value;
             }
             local.FormaPagamentoErpId = null;
-            if (remota.FormaPagamento != null && remota.FormaPagamento.Id > 0)
+            if (remota.FormaPagamentoId.HasValue && remota.FormaPagamentoId.Value > 0)
             {
-                local.FormaPagamentoErpId = remota.FormaPagamento.Id;
+                local.FormaPagamentoErpId = remota.FormaPagamentoId.Value;
             }
             local.SincronizadaEm = agora;
             atuais.Add(local);
@@ -249,7 +245,7 @@ public class SincronizacaoContasService
 
         // Contas em aberto que venceram antes da janela: conferidas uma a uma até baixarem
         int antigasConferidas = await _antigas.ConferirAsync(
-            empresa, conta, token, filtro.VencimentoInicial, _opcoes.MaximoContasAntigasValido(), agora, cancelamento);
+            empresa, conta, token, vencimentoInicial, _opcoes.MaximoContasAntigasValido(), agora, cancelamento);
         if (antigasConferidas > 0)
         {
             _logger.LogInformation("Empresa {Empresa}: {Quantidade} contas antigas em aberto conferidas no Bling",
@@ -273,7 +269,7 @@ public class SincronizacaoContasService
             .FirstOrDefaultAsync(cancelamento);
         if (fluxoCaixa)
         {
-            int? receber = await _receber.SincronizarAsync(empresa, conta, token, filtro.VencimentoInicial, filtro.VencimentoFinal,
+            int? receber = await _receber.SincronizarAsync(empresa, conta, token, vencimentoInicial, vencimentoFinal,
                 _opcoes.DiasRenovarFornecedorValidos(), agora, cancelamento);
             if (receber.HasValue)
             {

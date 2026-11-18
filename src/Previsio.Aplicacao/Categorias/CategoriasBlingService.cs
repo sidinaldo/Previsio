@@ -1,6 +1,5 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 
@@ -17,12 +16,12 @@ public class CategoriasBlingService
     public static readonly TimeSpan RenovarLista = TimeSpan.FromDays(1);
 
     private readonly IRepositorio<CategoriaFinanceira> _categorias;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly ILogger<CategoriasBlingService> _logger;
 
     public CategoriasBlingService(
         IRepositorio<CategoriaFinanceira> categorias,
-        BlingClient bling,
+        IErp bling,
         ILogger<CategoriasBlingService> logger)
     {
         _categorias = categorias;
@@ -56,12 +55,12 @@ public class CategoriasBlingService
             return;
         }
 
-        List<CategoriaBling> remotas;
+        List<CategoriaErp> remotas;
         try
         {
             remotas = await _bling.ListarCategoriasAsync(conta, token, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             // A categoria é um detalhe: qualquer problema aqui não pode parar a sincronização das contas
             if (erro.SemPermissao)
@@ -87,7 +86,7 @@ public class CategoriasBlingService
         }
 
         var recebidas = new HashSet<long>();
-        foreach (CategoriaBling remota in remotas)
+        foreach (CategoriaErp remota in remotas)
         {
             recebidas.Add(remota.Id);
             CategoriaFinanceira? categoria;
@@ -98,7 +97,7 @@ public class CategoriasBlingService
                 categoria.ErpId = remota.Id;
                 _categorias.Adicionar(categoria);
             }
-            categoria.ErpIdPai = remota.IdCategoriaPai;
+            categoria.ErpIdPai = remota.IdPai;
             categoria.Descricao = Limitar(remota.Descricao.Trim());
             categoria.Tipo = remota.Tipo;
             categoria.AtualizadaEm = agoraUtc;
@@ -140,12 +139,12 @@ public class CategoriasBlingService
         int abertas = 0;
         foreach (ContaPagarSincronizada contaLocal in aConferir)
         {
-            ContaPagarBling? detalhe;
+            ContaPagarErp? detalhe;
             try
             {
                 detalhe = await _bling.ObterContaPagarAsync(conta, token, contaLocal.ErpId, cancelamento);
             }
-            catch (BlingException erro)
+            catch (ErpException erro)
             {
                 if (erro.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
@@ -168,9 +167,9 @@ public class CategoriasBlingService
             }
 
             contaLocal.CategoriaErpId = null;
-            if (detalhe.Categoria != null && detalhe.Categoria.Id > 0)
+            if (detalhe.CategoriaId.HasValue && detalhe.CategoriaId.Value > 0)
             {
-                contaLocal.CategoriaErpId = detalhe.Categoria.Id;
+                contaLocal.CategoriaErpId = detalhe.CategoriaId.Value;
             }
             contaLocal.CategoriaConferidaEm = agoraUtc;
         }

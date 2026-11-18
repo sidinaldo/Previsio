@@ -1,6 +1,5 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Core.Conferencia;
@@ -19,14 +18,14 @@ public class ConferenciaBlingService
     private readonly IRepositorio<NotaFiscal> _notas;
     private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
     private readonly IRepositorio<ParcelaNota> _parcelas;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
 
     public ConferenciaBlingService(
         IRepositorio<Cliente> clientes,
         IRepositorio<NotaFiscal> notas,
         IRepositorio<ContaPagarSincronizada> contasPagar,
         IRepositorio<ParcelaNota> parcelas,
-        BlingClient bling)
+        IErp bling)
     {
         _clientes = clientes;
         _notas = notas;
@@ -42,33 +41,32 @@ public class ConferenciaBlingService
         NotaFiscal nota, Cliente cliente, string conta, string token, long contatoId, CancellationToken cancelamento)
     {
         RegrasConferencia regras = RegrasConferencia.Da(cliente);
-        var filtro = new FiltroContasPagar();
+        DateTime vencimentoInicial;
+        DateTime vencimentoFinal;
         if (nota.Parcelas.Count == 0)
         {
-            filtro.VencimentoInicial = nota.DataEmissao.Date;
-            filtro.VencimentoFinal = nota.DataEmissao.Date.AddDays(ConferenciaBling.DiasNotaSemParcelas);
+            vencimentoInicial = nota.DataEmissao.Date;
+            vencimentoFinal = nota.DataEmissao.Date.AddDays(ConferenciaBling.DiasNotaSemParcelas);
         }
         else
         {
-            filtro.VencimentoInicial = nota.Parcelas.Min(p => p.Vencimento).Date.AddDays(-regras.ToleranciaDias);
-            filtro.VencimentoFinal = nota.Parcelas.Max(p => p.Vencimento).Date.AddDays(regras.ToleranciaDias);
+            vencimentoInicial = nota.Parcelas.Min(p => p.Vencimento).Date.AddDays(-regras.ToleranciaDias);
+            vencimentoFinal = nota.Parcelas.Max(p => p.Vencimento).Date.AddDays(regras.ToleranciaDias);
         }
 
-        List<ContaPagarBling> remotas = await _bling.ListarContasPagarAsync(conta, token, filtro, cancelamento);
+        List<ContaPagarErp> remotas = await _bling.ListarContasPagarAsync(
+            conta, token, vencimentoInicial, vencimentoFinal, cancelamento);
         var candidatas = new List<ContaNoBling>();
-        foreach (ContaPagarBling remota in remotas)
+        foreach (ContaPagarErp remota in remotas)
         {
-            DateTime vencimento;
-            if (remota.Contato == null || remota.Contato.Id != contatoId
-                || !DateTime.TryParseExact(remota.Vencimento, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
-                    System.Globalization.DateTimeStyles.None, out vencimento))
+            if (remota.ContatoId != contatoId || !remota.Vencimento.HasValue)
             {
                 continue;
             }
             var candidata = new ContaNoBling();
             candidata.Id = remota.Id;
-            candidata.ContatoId = remota.Contato.Id;
-            candidata.Vencimento = vencimento;
+            candidata.ContatoId = contatoId;
+            candidata.Vencimento = remota.Vencimento.Value;
             candidata.Valor = remota.Valor;
             candidata.Situacao = remota.Situacao;
             candidata.NumeroDocumento = remota.NumeroDocumento;
@@ -109,7 +107,7 @@ public class ConferenciaBlingService
             }
             if (!contatos.ContainsKey(nota.CnpjFornecedor))
             {
-                ContatoBling? contato = await _bling.BuscarContatoPorDocumentoAsync(conta, token, nota.CnpjFornecedor, cancelamento);
+                ContatoErp? contato = await _bling.BuscarContatoPorDocumentoAsync(conta, token, nota.CnpjFornecedor, cancelamento);
                 contatos[nota.CnpjFornecedor] = contato == null ? null : contato.Id;
             }
             long? contatoId = contatos[nota.CnpjFornecedor];
@@ -181,7 +179,7 @@ public class ConferenciaBlingService
 
     private async Task CompletarAsync(ContaNoBling candidata, string conta, string token, CancellationToken cancelamento)
     {
-        ContaPagarBling? detalhe = await _bling.ObterContaPagarAsync(conta, token, candidata.Id, cancelamento);
+        ContaPagarErp? detalhe = await _bling.ObterContaPagarAsync(conta, token, candidata.Id, cancelamento);
         if (detalhe != null)
         {
             candidata.NumeroDocumento = detalhe.NumeroDocumento;

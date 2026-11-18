@@ -1,6 +1,5 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 using Previsio.Aplicacao.Abstracoes;
@@ -15,13 +14,13 @@ public class TokenBlingService
 {
     private static readonly TimeSpan MargemRenovacao = TimeSpan.FromMinutes(5);
 
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly IRepositorio<Cliente> _clientes;
     private readonly IProtetorSegredos _protetor;
     private readonly ILogger<TokenBlingService> _logger;
 
     public TokenBlingService(
-        BlingClient bling,
+        IErp bling,
         IRepositorio<Cliente> clientes,
         IProtetorSegredos protetor,
         ILogger<TokenBlingService> logger)
@@ -50,13 +49,13 @@ public class TokenBlingService
 
         string refreshToken = _protetor.Revelar(empresa.ErpRefreshTokenProtegido!);
 
-        TokenBling novoToken;
+        TokenErp novoToken;
         try
         {
-            CredenciaisBling credenciais = await CredenciaisAsync(empresa, cancelamento);
+            CredenciaisErp credenciais = await CredenciaisAsync(empresa, cancelamento);
             novoToken = await _bling.RenovarTokenAsync(credenciais, refreshToken, cancelamento);
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             _logger.LogError(erro, "Não foi possível renovar o token da empresa {EmpresaId}. Corpo: {Corpo}",
                 empresa.Id, erro.CorpoResposta);
@@ -101,7 +100,7 @@ public class TokenBlingService
     /// Aplicativo do Bling usado pela empresa, nesta ordem: o privado dela, o da rede (Cliente)
     /// e, se nenhum dos dois estiver cadastrado, o aplicativo global do Previsio.
     /// </summary>
-    public async Task<CredenciaisBling> CredenciaisAsync(Empresa empresa, CancellationToken cancelamento)
+    public async Task<CredenciaisErp> CredenciaisAsync(Empresa empresa, CancellationToken cancelamento)
     {
         if (!string.IsNullOrWhiteSpace(empresa.ErpClientId))
         {
@@ -121,9 +120,9 @@ public class TokenBlingService
         return _bling.CredenciaisPadrao;
     }
 
-    private CredenciaisBling Montar(string clientId, string? secretProtegido)
+    private CredenciaisErp Montar(string clientId, string? secretProtegido)
     {
-        var credenciais = new CredenciaisBling();
+        var credenciais = new CredenciaisErp();
         credenciais.ClientId = clientId;
         if (!string.IsNullOrEmpty(secretProtegido))
         {
@@ -132,7 +131,7 @@ public class TokenBlingService
         return credenciais;
     }
 
-    public void SalvarToken(Empresa empresa, TokenBling token)
+    public void SalvarToken(Empresa empresa, TokenErp token)
     {
         empresa.ErpAccessTokenProtegido = _protetor.Proteger(token.AccessToken);
         empresa.ErpRefreshTokenProtegido = _protetor.Proteger(token.RefreshToken);

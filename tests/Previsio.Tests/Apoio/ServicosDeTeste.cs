@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Previsio.Bling;
@@ -110,7 +111,7 @@ public static class ServicosDeTeste
     }
 
     public static BlingConexaoService ConexaoBling(
-        PrevisioDbContext db, ProtetorSegredos protetor, BlingClient bling, IFilaJobs fila)
+        PrevisioDbContext db, ProtetorSegredos protetor, IErp bling, IFilaJobs fila)
     {
         var tokens = TokenBlingService(bling, db, protetor, NullLogger<TokenBlingService>.Instance);
         return new BlingConexaoService(
@@ -202,7 +203,7 @@ public static class ServicosDeTeste
             new Repositorio<Cliente>(db));
     }
 
-    public static ConferenciaBlingService ConferenciaBlingService(PrevisioDbContext db, BlingClient bling)
+    public static ConferenciaBlingService ConferenciaBlingService(PrevisioDbContext db, IErp bling)
     {
         return new ConferenciaBlingService(
             new Repositorio<Cliente>(db),
@@ -235,7 +236,7 @@ public static class ServicosDeTeste
 
     public static LancamentoNotaService LancamentoNotaService(
         PrevisioDbContext db,
-        BlingClient bling,
+        IErp bling,
         TokenBlingService tokens,
         ConferenciaBlingService conferencia)
     {
@@ -260,7 +261,7 @@ public static class ServicosDeTeste
 
     public static SincronizacaoContasService SincronizacaoContasService(
         PrevisioDbContext db,
-        BlingClient bling,
+        IErp bling,
         TokenBlingService tokens,
         IOptions<SincronizacaoOptions> opcoes)
     {
@@ -285,7 +286,7 @@ public static class ServicosDeTeste
             NullLogger<SincronizacaoContasService>.Instance);
     }
 
-    public static FormasPagamentoBlingService FormasPagamentoBling(PrevisioDbContext db, BlingClient bling)
+    public static FormasPagamentoBlingService FormasPagamentoBling(PrevisioDbContext db, IErp bling)
     {
         return new FormasPagamentoBlingService(
             new Repositorio<FormaPagamento>(db),
@@ -294,7 +295,7 @@ public static class ServicosDeTeste
             NullLogger<FormasPagamentoBlingService>.Instance);
     }
 
-    public static FormaPagamentoLancamentoService FormaPagamentoLancamento(PrevisioDbContext db, BlingClient bling)
+    public static FormaPagamentoLancamentoService FormaPagamentoLancamento(PrevisioDbContext db, IErp bling)
     {
         return new FormaPagamentoLancamentoService(
             new Repositorio<RegraFormaPagamento>(db),
@@ -318,7 +319,7 @@ public static class ServicosDeTeste
 
     public static ContasAntigasEmAberto ContasAntigasEmAberto(
         PrevisioDbContext db,
-        BlingClient bling,
+        IErp bling,
         ILogger<ContasAntigasEmAberto> logger)
     {
         return new ContasAntigasEmAberto(
@@ -329,7 +330,7 @@ public static class ServicosDeTeste
 
     public static FornecedoresBlingService FornecedoresBlingService(
         PrevisioDbContext db,
-        BlingClient bling,
+        IErp bling,
         ILogger<FornecedoresBlingService> logger)
     {
         return new FornecedoresBlingService(
@@ -340,7 +341,7 @@ public static class ServicosDeTeste
     }
 
     public static TokenBlingService TokenBlingService(
-        BlingClient bling,
+        IErp bling,
         PrevisioDbContext db,
         IProtetorSegredos protetor,
         ILogger<TokenBlingService> logger)

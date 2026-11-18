@@ -1,6 +1,5 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Entidades;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Contratos;
@@ -29,7 +28,7 @@ public class LancamentoNotaService
     private readonly IRepositorio<ContaPagarSincronizada> _contas;
     private readonly CategoriaLancamentoService _categoria;
     private readonly FormaPagamentoLancamentoService _forma;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly TokenBlingService _tokens;
     private readonly ConferenciaBlingService _conferencia;
     private readonly ILogger<LancamentoNotaService> _logger;
@@ -41,7 +40,7 @@ public class LancamentoNotaService
         IRepositorio<ContaPagarSincronizada> contas,
         CategoriaLancamentoService categoria,
         FormaPagamentoLancamentoService forma,
-        BlingClient bling,
+        IErp bling,
         TokenBlingService tokens,
         ConferenciaBlingService conferencia,
         ILogger<LancamentoNotaService> logger)
@@ -135,12 +134,12 @@ public class LancamentoNotaService
 
             etapa = EtapaFalha.BuscaFornecedor;
             long contatoId;
-            ContatoBling? existente;
+            ContatoErp? existente;
             try
             {
                 existente = await _bling.BuscarContatoPorDocumentoAsync(conta, token, nota.CnpjFornecedor, cancelamento);
             }
-            catch (BlingException erro)
+            catch (ErpException erro)
             {
                 // Primeira chamada da nota: se o Bling revogou o token, renova uma vez e repete
                 if (!erro.TokenInvalido)
@@ -209,7 +208,7 @@ public class LancamentoNotaService
                 }
 
                 parcelaAtual = parcela;
-                NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId, categoriaId, formaId);
+                NovaContaPagarErp novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId, categoriaId, formaId);
                 parcela.ErpContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
                 await GravarContaNoPrevisioAsync(nota, empresa.Id, parcela, contatoId, categoriaId, formaId, true, cancelamento);
 
@@ -233,7 +232,7 @@ public class LancamentoNotaService
 
             // Só registra falha quando a renovação do token foi recusada pelo Bling.
             // Empresa que simplesmente não está conectada não é falha: a nota fica aguardando.
-            BlingException? causa = erro.InnerException as BlingException;
+            ErpException? causa = erro.InnerException as ErpException;
             if (causa != null)
             {
                 _falhas.Adicionar(FabricaFalha.DoBling(EtapaFalha.RenovacaoToken, causa, nota, null));
@@ -242,7 +241,7 @@ public class LancamentoNotaService
             await _notas.SalvarAsync(cancelamento);
             return true;
         }
-        catch (BlingException erro)
+        catch (ErpException erro)
         {
             nota.Status = StatusNota.Erro;
             nota.MensagemErro = MontarMensagemErro(erro);
@@ -267,19 +266,11 @@ public class LancamentoNotaService
         }
     }
 
-    private static NovoContatoBling MontarFornecedor(NotaFiscal nota)
+    private static NovoContatoErp MontarFornecedor(NotaFiscal nota)
     {
-        var novo = new NovoContatoBling();
+        var novo = new NovoContatoErp();
         novo.Nome = nota.NomeFornecedor;
-        novo.NumeroDocumento = nota.CnpjFornecedor;
-        if (nota.CnpjFornecedor.Length == 11)
-        {
-            novo.Tipo = "F";
-        }
-        else
-        {
-            novo.Tipo = "J";
-        }
+        novo.Documento = nota.CnpjFornecedor;
         return novo;
     }
 
@@ -324,23 +315,17 @@ public class LancamentoNotaService
         _contas.Adicionar(contaLocal);
     }
 
-    private static NovaContaPagarBling MontarContaPagar(
+    private static NovaContaPagarErp MontarContaPagar(
         NotaFiscal nota, ParcelaNota parcela, int totalParcelas, long contatoId, long? categoriaId, long? formaId)
     {
-        var conta = new NovaContaPagarBling();
-        conta.Contato = new Referencia { Id = contatoId };
-        if (categoriaId.HasValue)
-        {
-            conta.Categoria = new Referencia { Id = categoriaId.Value };
-        }
-        if (formaId.HasValue)
-        {
-            conta.FormaPagamento = new Referencia { Id = formaId.Value };
-        }
+        var conta = new NovaContaPagarErp();
+        conta.ContatoId = contatoId;
+        conta.CategoriaId = categoriaId;
+        conta.FormaPagamentoId = formaId;
         conta.Valor = parcela.Valor;
-        conta.Vencimento = BlingClient.FormatarData(parcela.Vencimento);
-        conta.DataEmissao = BlingClient.FormatarData(nota.DataEmissao);
-        conta.Competencia = BlingClient.FormatarData(nota.DataEmissao);
+        conta.Vencimento = parcela.Vencimento;
+        conta.DataEmissao = nota.DataEmissao;
+        conta.Competencia = nota.DataEmissao;
 
         // Ex.: "12345/2" = nota 12345, segunda parcela
         if (totalParcelas > 1)
@@ -370,7 +355,7 @@ public class LancamentoNotaService
         return limpo;
     }
 
-    private static string MontarMensagemErro(BlingException erro)
+    private static string MontarMensagemErro(ErpException erro)
     {
         string mensagem = erro.Message;
         if (!string.IsNullOrEmpty(erro.CorpoResposta))

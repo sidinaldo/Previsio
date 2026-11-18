@@ -16,8 +16,8 @@ Camadas, da mais interna para a mais externa (nenhuma depende de uma que vem dep
 | Pasta | Conteúdo |
 |---|---|
 | `src/Previsio.Core` | Entidades e regras puras: leitura de NF-e (`LeitorNFe`), painel (`CalculadoraPainel`), chave de acesso, período de teste, conferência com o Bling. Interface `IRepositorio<T>`. Não depende de nada |
-| `src/Previsio.Bling` | Cliente da API v3 do Bling: OAuth, contatos, contas a pagar, limite de 3 req/s por conta |
-| `src/Previsio.Aplicacao` | Serviços por assunto (Notas, Empresas, LeituraEmail, Sincronizacao, Avisos...), DTOs e mapeamentos. As interfaces do que é externo (IMAP, SMTP, SEFAZ, Hangfire, criptografia) ficam em `Abstracoes` |
+| `src/Previsio.Aplicacao` | Serviços por assunto (Notas, Empresas, LeituraEmail, Sincronizacao, Avisos...), DTOs e mapeamentos. As interfaces do que é externo (ERP, IMAP, SMTP, SEFAZ, Hangfire, criptografia) ficam em `Abstracoes`; o ERP é `Abstracoes/Erp/IErp`, com modelos neutros |
+| `src/Previsio.Bling` | O Bling como ERP: `ErpBling` implementa `IErp` sobre o cliente da API v3 (OAuth, contatos, contas a pagar e a receber, categorias, formas de pagamento, limite de 3 req/s por conta). Outro ERP entra como outro projeto ao lado deste |
 | `src/Previsio.Infra` | Implementações dessas interfaces: MailKit (IMAP e SMTP), SEFAZ (SOAP), Hangfire, Data Protection, hash de senha |
 | `src/Previsio.Data` | EF Core + PostgreSQL: `PrevisioDbContext`, migrations e `Repositorio<T>` |
 | `src/Previsio.Api` | Controllers, JWT e os jobs do Hangfire (só chamam o serviço da Aplicacao) |

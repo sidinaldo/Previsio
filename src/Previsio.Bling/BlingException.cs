@@ -1,4 +1,5 @@
 using System.Net;
+using Previsio.Aplicacao.Abstracoes.Erp;
 
 namespace Previsio.Bling;
 
@@ -6,22 +7,10 @@ namespace Previsio.Bling;
 /// Erro ao chamar a API do Bling. Carrega o endereço chamado e a resposta,
 /// para o Previsio registrar exatamente o que falhou.
 /// </summary>
-public class BlingException : Exception
+public class BlingException : ErpException
 {
-    // Usado quando o Bling nem chegou a responder (sem rede, DNS, tempo esgotado)
-    public const HttpStatusCode SemResposta = 0;
-
-    public HttpStatusCode StatusCode { get; }
-    public string? CorpoResposta { get; }
-
-    // "GET", "POST"...
-    public string Metodo { get; }
-
-    // URL completa chamada, ex.: https://api.bling.com.br/Api/v3/contas/pagar
-    public string Endereco { get; }
-
     public BlingException(string mensagem, HttpStatusCode statusCode, string? corpoResposta)
-        : this(mensagem, statusCode, corpoResposta, "", "", null)
+        : base(mensagem, statusCode, corpoResposta)
     {
     }
 
@@ -32,27 +21,7 @@ public class BlingException : Exception
         string metodo,
         string endereco,
         Exception? erroOriginal)
-        : base(mensagem, erroOriginal)
+        : base(mensagem, statusCode, corpoResposta, metodo, endereco, erroOriginal)
     {
-        StatusCode = statusCode;
-        CorpoResposta = corpoResposta;
-        Metodo = metodo;
-        Endereco = endereco;
-    }
-
-    public bool TokenInvalido
-    {
-        get { return StatusCode == HttpStatusCode.Unauthorized; }
-    }
-
-    // 403: o aplicativo não tem o escopo (ou o usuário do Bling não tem permissão) para o recurso
-    public bool SemPermissao
-    {
-        get { return StatusCode == HttpStatusCode.Forbidden; }
-    }
-
-    public bool FalhaDeConexao
-    {
-        get { return StatusCode == SemResposta; }
     }
 }

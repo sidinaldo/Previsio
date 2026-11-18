@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -57,7 +58,7 @@ public class RedeEEmpresasConfiguracaoTests
 
     private TokenBlingService Tokens()
     {
-        BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{}")));
+        IErp bling = BlingDeTeste.Criar(new RespostasFixas(_ => RespostasFixas.Json(HttpStatusCode.OK, "{}")));
         return ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
     }
 
@@ -69,7 +70,7 @@ public class RedeEEmpresasConfiguracaoTests
         Cliente rede = await CadastrarRede("app-da-rede", "segredo-da-rede");
         Empresa empresa = await CadastrarEmpresaConectada(rede, "11222333000181", "app-da-filial");
 
-        CredenciaisBling credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
+        CredenciaisErp credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
 
         Assert.Equal("app-da-filial", credenciais.ClientId);
         Assert.Equal("segredo-proprio", credenciais.ClientSecret);
@@ -82,7 +83,7 @@ public class RedeEEmpresasConfiguracaoTests
         Empresa empresa = await CadastrarEmpresaConectada(rede, "11222333000181", null);
         empresa.Cliente = null;
 
-        CredenciaisBling credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
+        CredenciaisErp credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
 
         Assert.Equal("app-da-rede", credenciais.ClientId);
         Assert.Equal("segredo-da-rede", credenciais.ClientSecret);
@@ -94,7 +95,7 @@ public class RedeEEmpresasConfiguracaoTests
         Cliente rede = await CadastrarRede(null, null);
         Empresa empresa = await CadastrarEmpresaConectada(rede, "11222333000181", null);
 
-        CredenciaisBling credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
+        CredenciaisErp credenciais = await Tokens().CredenciaisAsync(empresa, CancellationToken.None);
 
         Assert.Equal("id-teste", credenciais.ClientId);
     }

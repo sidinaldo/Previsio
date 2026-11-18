@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using System.Net;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -23,7 +24,7 @@ public class SincronizacaoContasServiceTests
 
     private SincronizacaoContasService CriarServico(RespostasFixas respostas)
     {
-        BlingClient bling = BlingDeTeste.Criar(respostas);
+        IErp bling = BlingDeTeste.Criar(respostas);
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
         return ServicosDeTeste.SincronizacaoContasService(_db, bling, tokens, Options.Create(new SincronizacaoOptions()));
     }

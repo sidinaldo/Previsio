@@ -1,3 +1,4 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -119,7 +120,7 @@ public class EmpresasControllerTests
         Assert.Null(empresa.ErpClientSecretProtegido);
         Assert.False(empresa.ErpConectado);
 
-        BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
+        IErp bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
         Assert.Equal("id-teste", (await tokens.CredenciaisAsync(empresa, CancellationToken.None)).ClientId);
     }
@@ -129,9 +130,9 @@ public class EmpresasControllerTests
     {
         Empresa empresa = await CadastrarEmpresaConectada();
 
-        BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
+        IErp bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);
-        CredenciaisBling credenciais = await tokens.CredenciaisAsync(empresa, CancellationToken.None);
+        CredenciaisErp credenciais = await tokens.CredenciaisAsync(empresa, CancellationToken.None);
 
         Assert.Equal("app-antigo", credenciais.ClientId);
         Assert.Equal("segredo-antigo", credenciais.ClientSecret);

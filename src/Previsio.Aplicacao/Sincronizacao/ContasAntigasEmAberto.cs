@@ -1,8 +1,7 @@
+using Previsio.Aplicacao.Abstracoes.Erp;
 using System.Globalization;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
-using Previsio.Bling;
-using Previsio.Bling.Modelos;
 using Previsio.Core.Abstracoes;
 using Previsio.Core.Entidades;
 
@@ -16,12 +15,12 @@ namespace Previsio.Aplicacao.Sincronizacao;
 public class ContasAntigasEmAberto
 {
     private readonly IRepositorio<ContaPagarSincronizada> _contasPagar;
-    private readonly BlingClient _bling;
+    private readonly IErp _bling;
     private readonly ILogger<ContasAntigasEmAberto> _logger;
 
     public ContasAntigasEmAberto(
         IRepositorio<ContaPagarSincronizada> contasPagar,
-        BlingClient bling,
+        IErp bling,
         ILogger<ContasAntigasEmAberto> logger)
     {
         _contasPagar = contasPagar;
@@ -54,12 +53,12 @@ public class ContasAntigasEmAberto
         int conferidas = 0;
         foreach (ContaPagarSincronizada local in antigas)
         {
-            ContaPagarBling? remota;
+            ContaPagarErp? remota;
             try
             {
                 remota = await _bling.ObterContaPagarAsync(conta, token, local.ErpId, cancelamento);
             }
-            catch (BlingException erro)
+            catch (ErpException erro)
             {
                 if (erro.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -82,11 +81,9 @@ public class ContasAntigasEmAberto
 
             local.Situacao = remota.Situacao;
             local.Valor = remota.Valor;
-            DateTime vencimento;
-            if (DateTime.TryParseExact(remota.Vencimento, "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out vencimento))
+            if (remota.Vencimento.HasValue)
             {
-                local.Vencimento = vencimento.Date;
+                local.Vencimento = remota.Vencimento.Value;
             }
             local.SincronizadaEm = agoraUtc;
         }
