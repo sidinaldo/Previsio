@@ -5,6 +5,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { ConfiguracaoCategorias, FornecedorDaRede, RegraCategoria } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Card "Categorias" da rede: categoria padrão e regras "fornecedor → categoria" usadas ao lançar
@@ -19,8 +20,8 @@ import { CarregandoDirective } from '../carregando.directive';
       <div class="pv-secao__cabecalho">
         <h2 class="pv-card__titulo">Categorias</h2>
         <p class="pv-card__descricao">
-          A categoria do Bling que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio
-          repete a categoria da última conta dele no Bling; se ele nunca teve, usa a categoria padrão.
+          A categoria do {{ erp() }} que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio
+          repete a categoria da última conta dele no {{ erp() }}; se ele nunca teve, usa a categoria padrão.
         </p>
       </div>
       <div class="card pv-secao__card">
@@ -35,13 +36,13 @@ import { CarregandoDirective } from '../carregando.directive';
           @if (atual.empresasSemCategorias.length > 0) {
             <div class="alert alert-warning" role="status">
               <span>
-                Ainda sem as categorias do Bling: {{ atual.empresasSemCategorias.join(', ') }}.
-                Elas chegam na próxima sincronização; se não chegarem, reconecte a empresa ao Bling para liberar o acesso às categorias.
+                Ainda sem as categorias do {{ erp() }}: {{ atual.empresasSemCategorias.join(', ') }}.
+                Elas chegam na próxima sincronização; se não chegarem, reconecte a empresa ao {{ erp() }} para liberar o acesso às categorias.
               </span>
             </div>
           }
           @if (atual.opcoes.length === 0) {
-            <p class="pv-formulario__ajuda">Nenhuma categoria de despesa do Bling por enquanto. Cadastre as categorias no Bling e sincronize.</p>
+            <p class="pv-formulario__ajuda">Nenhuma categoria de despesa do {{ erp() }} por enquanto. Cadastre as categorias no {{ erp() }} e sincronize.</p>
           } @else {
             <div class="pv-resumo__linha">
               <div class="pv-resumo__campo">
@@ -58,7 +59,7 @@ import { CarregandoDirective } from '../carregando.directive';
             </div>
             @if (atual.padraoAusenteEm.length > 0) {
               <p class="pv-formulario__ajuda pv-categorias__aviso">
-                Não existe no Bling de {{ atual.padraoAusenteEm.join(', ') }}: as notas dessas empresas vão sem categoria.
+                Não existe no {{ erp() }} de {{ atual.padraoAusenteEm.join(', ') }}: as notas dessas empresas vão sem categoria.
               </p>
             }
             <!-- O Salvar vale só para a categoria padrão; as regras valem na hora -->
@@ -82,7 +83,7 @@ import { CarregandoDirective } from '../carregando.directive';
                         <small class="pv-categorias__cnpj">{{ cnpj(regra.cnpjFornecedor) }}</small>
                       }
                       @if (regra.ausenteEm.length > 0) {
-                        <small class="pv-categorias__aviso">Não existe no Bling de {{ regra.ausenteEm.join(', ') }}.</small>
+                        <small class="pv-categorias__aviso">Não existe no {{ erp() }} de {{ regra.ausenteEm.join(', ') }}.</small>
                       }
                     </div>
                     <button type="button" class="btn btn-link btn-sm" [disabled]="acao() !== null"
@@ -125,7 +126,7 @@ import { CarregandoDirective } from '../carregando.directive';
               </div>
               <p class="pv-formulario__ajuda">
                 A lista mostra os fornecedores das notas já recebidas. Se o fornecedor já tem regra, a categoria é trocada.
-                As categorias são escolhidas pelo nome: cada empresa usa a categoria com esse nome no Bling dela.
+                As categorias são escolhidas pelo nome: cada empresa usa a categoria com esse nome no {{ erp() }} dela.
               </p>
             }
           }
@@ -140,6 +141,9 @@ import { CarregandoDirective } from '../carregando.directive';
   `
 })
 export class CategoriasComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly clienteId = input.required<number>();

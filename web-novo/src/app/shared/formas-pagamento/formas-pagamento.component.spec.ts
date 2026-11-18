@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { ConfiguracaoFormasPagamento } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { FormasPagamentoComponent } from './formas-pagamento.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 function configuracao(parcial: Partial<ConfiguracaoFormasPagamento> = {}): ConfiguracaoFormasPagamento {
   return {
@@ -31,7 +32,7 @@ describe('FormasPagamentoComponent', () => {
       salvarRegraFormaPagamento: vi.fn(() => of(dados)),
       removerRegraFormaPagamento: vi.fn(() => of({ ...dados, regras: [] }))
     };
-    TestBed.configureTestingModule({ imports: [FormasPagamentoComponent], providers: [{ provide: PrevisioService, useValue: api }] });
+    TestBed.configureTestingModule({ imports: [FormasPagamentoComponent], providers: [erpDeTeste(), { provide: PrevisioService, useValue: api }] });
     const fixture = TestBed.createComponent(FormasPagamentoComponent);
     fixture.componentRef.setInput('clienteId', 7);
     fixture.autoDetectChanges();

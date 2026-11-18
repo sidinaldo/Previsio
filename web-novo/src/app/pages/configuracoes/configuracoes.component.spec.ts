@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { SessaoService } from '../../core/sessao.service';
 import { ConfiguracoesComponent } from './configuracoes.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 const API = 'http://localhost:5080/api';
 
@@ -20,7 +21,7 @@ describe('ConfiguracoesComponent', () => {
   it('mostra as 6 seções da rede escolhida, cada uma com título fora do card', async () => {
     TestBed.configureTestingModule({
       imports: [ConfiguracoesComponent],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
+      providers: [erpDeTeste(), provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
     });
     TestBed.inject(SessaoService).escolherCliente(7);
     const fixture = TestBed.createComponent(ConfiguracoesComponent);

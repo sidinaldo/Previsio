@@ -2,7 +2,7 @@
   <div class="pv-card__cabecalho">
     <div>
       <h2 class="pv-card__titulo">5. Primeira leitura</h2>
-      <p class="pv-card__descricao">Lê a caixa de e-mail agora e lança as parcelas no Bling, sem esperar o agendamento</p>
+      <p class="pv-card__descricao">Lê a caixa de e-mail agora e lança as parcelas no {{ erp() }}, sem esperar o agendamento</p>
     </div>
   </div>
 
@@ -31,7 +31,7 @@
           } @else {
             <i class="material-icons" aria-hidden="true">radio_button_unchecked</i>
           }
-          Lançando as contas a pagar no Bling
+          Lançando as contas a pagar no {{ erp() }}
         </li>
       </ol>
     }
@@ -47,7 +47,7 @@
           <span class="pv-implantacao__valor">{{ r.notasLidas }}</span>
         </div>
         <div class="pv-implantacao__numero">
-          <span class="pv-implantacao__rotulo">Lançadas no Bling</span>
+          <span class="pv-implantacao__rotulo">Lançadas no {{ erp() }}</span>
           <span class="pv-implantacao__valor">{{ r.lancadas }}</span>
         </div>
         <div class="pv-implantacao__numero">

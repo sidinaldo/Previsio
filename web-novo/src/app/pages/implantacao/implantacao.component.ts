@@ -22,6 +22,7 @@ import { EtapaEmpresasComponent } from './etapa-empresas.component';
 import { EtapaLeituraComponent } from './etapa-leitura.component';
 import { EtapaRedeComponent } from './etapa-rede.component';
 import { EtapaUsuarioComponent } from './etapa-usuario.component';
+import { ErpService, comErp } from '../../core/erp.service';
 
 /**
  * Assistente de implantação de um cliente novo (só admin), em cinco etapas:
@@ -36,6 +37,10 @@ import { EtapaUsuarioComponent } from './etapa-usuario.component';
   templateUrl: './implantacao.component.html'
 })
 export class ImplantacaoComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+  protected readonly comErp = comErp;
+
   private readonly previsio = inject(PrevisioService);
   private readonly clientes = inject(ClientesService);
   private readonly sessao = inject(SessaoService);

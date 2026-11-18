@@ -208,7 +208,7 @@ public class ContasPagarService
         {
             consulta = consulta.Where(c => _parcelas.Consultar().Any(p => p.ErpContaPagarId == c.ErpId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
-        else if (Igual(origem, OrigemConta.Bling))
+        else if (Igual(origem, OrigemConta.Erp))
         {
             consulta = consulta.Where(c => !_parcelas.Consultar().Any(p => p.ErpContaPagarId == c.ErpId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
@@ -401,7 +401,7 @@ public class ContasPagarService
         ContaPagarSincronizada conta = linha.Conta;
         var dto = new ContaPagarDto();
         dto.Id = conta.Id;
-        dto.BlingId = conta.ErpId;
+        dto.ErpId = conta.ErpId;
         dto.EmpresaId = conta.EmpresaId;
         dto.EmpresaNome = linha.EmpresaNome;
         dto.Vencimento = conta.Vencimento.Date;

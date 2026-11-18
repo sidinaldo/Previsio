@@ -5,7 +5,7 @@
       <div class="pv-pagina__cabecalho">
         <div>
           <h1 class="pv-pagina__titulo">Notas pendentes</h1>
-          <p class="pv-pagina__subtitulo">Notas que chegaram no e-mail e ainda não estão no Bling</p>
+          <p class="pv-pagina__subtitulo">Notas que chegaram no e-mail e ainda não estão no {{ erp() }}</p>
         </div>
         <div class="pv-pagina__acoes">
           @if (ehAdmin()) {
@@ -29,7 +29,7 @@
     <div class="card">
       <div class="pv-card__cabecalho">
         <div>
-          <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no Bling</h2>
+          <h2 class="pv-card__titulo">Notas que chegaram no e-mail e não estão no {{ erp() }}</h2>
           <p class="pv-card__descricao pv-numero">{{ notas().length }} notas · {{ valorTotal() | currency:'BRL' }}</p>
         </div>
         <div class="pv-card__ferramentas">
@@ -53,7 +53,7 @@
       @if (!carregando() && notas().length === 0) {
         <div class="pv-vazio pv-vazio--compacto">
           <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">task_alt</i></span>
-          <p class="pv-vazio__titulo">Tudo certo: todas as notas recebidas já estão no Bling.</p>
+          <p class="pv-vazio__titulo">Tudo certo: todas as notas recebidas já estão no {{ erp() }}.</p>
         </div>
       }
 
@@ -115,8 +115,8 @@
                         </button>
                       }
                       @if (podeMarcarManual(nota)) {
-                        <button type="button" class="pv-botao-icone" title="Já lancei no Bling"
-                                [attr.aria-label]="'Marcar a NF ' + nota.numero + ' como lançada manualmente no Bling'"
+                        <button type="button" class="pv-botao-icone" title="Já lancei no {{ erp() }}"
+                                [attr.aria-label]="'Marcar a NF ' + nota.numero + ' como lançada manualmente no ' + erp()"
                                 [attr.aria-expanded]="resolvendoId() === nota.id" (click)="abrirResolucao(nota)">
                           <i class="material-icons" aria-hidden="true">task_alt</i>
                         </button>

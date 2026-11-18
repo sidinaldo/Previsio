@@ -16,7 +16,7 @@ function rede(clienteId: number, nome: string, atencao: boolean): SaudeRede {
     },
     notasAguardando: 1, notasComProblema: atencao ? 3 : 0, ultimaNotaEm: '2026-11-11T12:00:00Z',
     empresas: [{
-      id: clienteId * 10, nome: 'Loja ' + nome, cnpj: '11222333000181', blingConectado: !atencao,
+      id: clienteId * 10, nome: 'Loja ' + nome, cnpj: '11222333000181', erpConectado: !atencao,
       tokenValidoAte: atencao ? null : '2026-11-11T18:00:00Z', ultimaSincronizacaoEm: null, caixa: null,
       notasAguardando: 1, notasComProblema: atencao ? 3 : 0, avisosAbertos: atencao ? 2 : 0
     }]

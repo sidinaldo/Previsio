@@ -8,11 +8,12 @@ import { Cliente, seloContrato } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { FaixaTesteComponent } from './faixa-teste.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 function rede(parcial: Partial<Cliente>): Cliente {
   return {
     id: 7, nome: 'Rede Auto Center', imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '',
-    blingClientId: null, blingClientSecretCadastrado: false, ativo: true, contrato: 'Contratado', ...parcial
+    erpClientId: null, erpClientSecretCadastrado: false, erpNome: 'Bling', ativo: true, contrato: 'Contratado', ...parcial
   };
 }
 
@@ -20,7 +21,7 @@ async function montar(admin: boolean, cliente: Cliente) {
   const api = { obterCliente: vi.fn(() => of(cliente)) };
   TestBed.configureTestingModule({
     imports: [FaixaTesteComponent],
-    providers: [
+    providers: [erpDeTeste(), 
       provideRouter([]),
       { provide: PrevisioService, useValue: api },
       { provide: SessaoService, useValue: { ehAdmin: signal(admin), clienteId: signal(7) } },

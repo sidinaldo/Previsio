@@ -6,8 +6,8 @@ public class NovaEmpresaDto
     public string Cnpj { get; set; } = "";
 
     // Opcionais: aplicativo privado criado na conta Bling desta empresa
-    public string? BlingClientId { get; set; }
-    public string? BlingClientSecret { get; set; }
+    public string? ErpClientId { get; set; }
+    public string? ErpClientSecret { get; set; }
 
     // Opcionais: caixa de e-mail própria da empresa (sem ela, as notas chegam pela caixa da rede)
     public string? ImapHost { get; set; }

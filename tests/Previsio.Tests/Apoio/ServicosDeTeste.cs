@@ -174,6 +174,7 @@ public static class ServicosDeTeste
     {
         return new AutenticacaoService(
             new Repositorio<Usuario>(db),
+            new Repositorio<Empresa>(db),
             hasher,
             logger);
     }

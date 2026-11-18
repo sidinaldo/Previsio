@@ -19,6 +19,7 @@ import { AlertasVencimentoComponent } from '../../shared/alertas-vencimento/aler
 import { ConferenciaBlingComponent } from '../../shared/conferencia-bling/conferencia-bling.component';
 import { FluxoCaixaComponent } from '../../shared/fluxo-caixa/fluxo-caixa.component';
 import { CategoriasComponent } from '../../shared/categorias/categorias.component';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Edição de um cliente (só admin): caixa de e-mail e aplicativo do Bling da rede,
@@ -30,6 +31,9 @@ import { CategoriasComponent } from '../../shared/categorias/categorias.componen
   templateUrl: './cliente-detalhe.component.html'
 })
 export class ClienteDetalheComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly clientes = inject(ClientesService);
   private readonly sessao = inject(SessaoService);
@@ -67,8 +71,8 @@ export class ClienteDetalheComponent {
     if (cliente === null) {
       return false;
     }
-    const usamARede = this.empresas().some(e => e.origemAplicativoBling === 'Rede' && e.blingConectado);
-    return usamARede && this.clientId().trim() !== (cliente.blingClientId ?? '');
+    const usamARede = this.empresas().some(e => e.origemAplicativoErp === 'Rede' && e.erpConectado);
+    return usamARede && this.clientId().trim() !== (cliente.erpClientId ?? '');
   });
 
   readonly salvando = signal(false);
@@ -106,7 +110,7 @@ export class ClienteDetalheComponent {
   }
 
   descricaoOrigem(empresa: Empresa): string {
-    return DESCRICAO_ORIGEM_APLICATIVO[empresa.origemAplicativoBling] ?? '';
+    return DESCRICAO_ORIGEM_APLICATIVO[empresa.origemAplicativoErp] ?? '';
   }
 
   salvar(): void {
@@ -131,8 +135,8 @@ export class ClienteDetalheComponent {
     const cliente = this.cliente();
     const clientId = this.clientId().trim();
     const clientSecret = this.clientSecret().trim();
-    const trocouAplicativo = clientId !== (cliente?.blingClientId ?? '');
-    const temSecret = cliente !== null && cliente.blingClientSecretCadastrado;
+    const trocouAplicativo = clientId !== (cliente?.erpClientId ?? '');
+    const temSecret = cliente !== null && cliente.erpClientSecretCadastrado;
     if (clientId !== '' && clientSecret === '' && (trocouAplicativo || !temSecret)) {
       this.erro.set('Informe o Client Secret do aplicativo do Bling da rede.');
       return;
@@ -144,14 +148,14 @@ export class ClienteDetalheComponent {
       imapPorta: porta,
       imapSsl: this.imapSsl(),
       imapUsuario: usuario,
-      blingClientId: clientId
+      erpClientId: clientId
     };
     // Senha e secret em branco mantêm os atuais
     if (this.imapSenha().trim() !== '') {
       dados.imapSenha = this.imapSenha();
     }
     if (clientSecret !== '') {
-      dados.blingClientSecret = clientSecret;
+      dados.erpClientSecret = clientSecret;
     }
 
     const desconectou = this.vaiDesconectarEmpresas();
@@ -188,7 +192,7 @@ export class ClienteDetalheComponent {
         this.clientes.atualizar(cliente);
         this.mensagem.set(sucesso);
         if (recarregarEmpresas) {
-          this.mensagem.set('Cliente alterado. O aplicativo do Bling da rede mudou: conecte de novo o Bling das empresas que usam ele.');
+          this.mensagem.set(`Cliente alterado. O aplicativo do Bling da rede mudou: conecte de novo o ${this.erp()} das empresas que usam ele.`);
         }
         // A origem do aplicativo de cada empresa pode ter mudado
         this.carregarEmpresas();
@@ -208,7 +212,7 @@ export class ClienteDetalheComponent {
     this.imapSsl.set(cliente.imapSsl);
     this.imapUsuario.set(cliente.imapUsuario);
     this.imapSenha.set('');
-    this.clientId.set(cliente.blingClientId ?? '');
+    this.clientId.set(cliente.erpClientId ?? '');
     this.clientSecret.set('');
     avisarCamposPreenchidos(this.elemento.nativeElement);
   }

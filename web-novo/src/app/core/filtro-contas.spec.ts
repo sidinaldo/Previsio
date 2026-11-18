@@ -3,8 +3,8 @@ import { classeDaConta, filtroPadraoContas, lerFiltroContas, parametrosDasContas
 
 function conta(situacao: number, vencida: boolean): ContaPagar {
   return {
-    id: 1, blingId: 10, empresaId: 1, empresaNome: 'Loja', vencimento: '2026-11-20', valor: 10, situacao: situacao,
-    situacaoTexto: situacao === 2 ? 'Paga' : 'Em aberto', vencida: vencida, fornecedor: null, origem: 'Bling',
+    id: 1, erpId: 10, empresaId: 1, empresaNome: 'Loja', vencimento: '2026-11-20', valor: 10, situacao: situacao,
+    situacaoTexto: situacao === 2 ? 'Paga' : 'Em aberto', vencida: vencida, fornecedor: null, origem: 'Erp',
     notaFiscalId: null, numeroNota: null, numeroParcela: null
   };
 }
@@ -14,10 +14,10 @@ describe('filtro de contas a pagar', () => {
 
   it('não envia filtros vazios e envia os preenchidos', () => {
     expect(parametrosDasContas({ empresaId: null, situacao: '', origem: '', de: '', ate: '', busca: '  ', pagina: 1 }).keys()).toEqual([]);
-    const params = parametrosDasContas({ empresaId: 3, situacao: 'Vencidas', origem: 'Bling', de: '2026-11-01', ate: '2026-11-30', busca: ' silva ', ordem: '-valor', pagina: 2, forma: 'sai-sozinho' });
+    const params = parametrosDasContas({ empresaId: 3, situacao: 'Vencidas', origem: 'Erp', de: '2026-11-01', ate: '2026-11-30', busca: ' silva ', ordem: '-valor', pagina: 2, forma: 'sai-sozinho' });
     expect(params.get('empresaId')).toBe('3');
     expect(params.get('situacao')).toBe('Vencidas');
-    expect(params.get('origem')).toBe('Bling');
+    expect(params.get('origem')).toBe('Erp');
     expect(params.get('de')).toBe('2026-11-01');
     expect(params.get('ate')).toBe('2026-11-30');
     expect(params.get('busca')).toBe('silva');
@@ -33,11 +33,11 @@ describe('filtro de contas a pagar', () => {
 
   it('guarda o último filtro por cliente; o período padrão anda com o dia e a busca não fica', () => {
     const hoje = new Date(2026, 10, 11);
-    salvarFiltroContas(2, { ...filtroPadraoContas(hoje), empresaId: 7, origem: 'Bling', forma: 'boleto', busca: 'x' }, hoje);
+    salvarFiltroContas(2, { ...filtroPadraoContas(hoje), empresaId: 7, origem: 'Erp', forma: 'boleto', busca: 'x' }, hoje);
     const amanha = lerFiltroContas(2, new Date(2026, 10, 12));
     expect(amanha.empresaId).toBe(7);
     expect(amanha.forma).toBe('boleto');
-    expect(amanha.origem).toBe('Bling');
+    expect(amanha.origem).toBe('Erp');
     expect(amanha.ate).toBe('2026-12-12');
     expect(amanha.busca).toBe('');
 

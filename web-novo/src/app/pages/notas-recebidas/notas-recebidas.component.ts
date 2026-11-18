@@ -20,6 +20,7 @@ import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
+import { ErpService, comErp } from '../../core/erp.service';
 
 /** Opção do filtro de situação. */
 interface OpcaoSituacao {
@@ -40,6 +41,9 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
   templateUrl: './notas-recebidas.component.html'
 })
 export class NotasRecebidasComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly rota = inject(ActivatedRoute);
@@ -49,8 +53,8 @@ export class NotasRecebidasComponent {
 
   readonly situacoes: OpcaoSituacao[] = [
     { valor: '', texto: 'Todas' },
-    { valor: 'Lancada', texto: 'Lançadas no Bling' },
-    { valor: 'LancadaManualmente', texto: 'Lançadas manualmente no Bling' },
+    { valor: 'Lancada', texto: 'Lançadas no {erp}' },
+    { valor: 'LancadaManualmente', texto: 'Lançadas manualmente no {erp}' },
     { valor: SITUACAO_PENDENTES, texto: 'Pendentes (todas as não lançadas)' },
     { valor: 'Recebida', texto: descricaoDaSituacao('Recebida') },
     { valor: 'Erro', texto: descricaoDaSituacao('Erro') },
@@ -113,8 +117,11 @@ export class NotasRecebidasComponent {
   }
 
   descricao(status: string): string {
-    return descricaoDaSituacao(status);
+    return comErp(descricaoDaSituacao(status));
   }
+
+  /** Texto de opção com a marca {erp} trocada pelo nome do ERP. */
+  protected readonly comErp = comErp;
 
   classe(status: string): string {
     return classeDaSituacao(status);
@@ -145,7 +152,7 @@ export class NotasRecebidasComponent {
   aoResolver(nota: NotaRecebida): void {
     this.resolvendoId.set(null);
     this.erro.set('');
-    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no Bling.`);
+    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no ${this.erp()}.`);
     this.carregar();
   }
 
@@ -253,7 +260,7 @@ export class NotasRecebidasComponent {
       .subscribe({
         next: () => {
           this.buscandoEmails.set(false);
-          this.mensagem.set('Leitura dos e-mails concluída e lista atualizada. As notas novas são lançadas no Bling em até 10 minutos.');
+          this.mensagem.set(`Leitura dos e-mails concluída e lista atualizada. As notas novas são lançadas no ${this.erp()} em até 10 minutos.`);
           this.carregar();
         },
         error: () => {

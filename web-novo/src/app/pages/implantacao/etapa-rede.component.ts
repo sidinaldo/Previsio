@@ -133,8 +133,8 @@ export class EtapaRedeComponent {
       emTeste: this.emTeste()
     };
     if (clientId !== '') {
-      dados.blingClientId = clientId;
-      dados.blingClientSecret = clientSecret;
+      dados.erpClientId = clientId;
+      dados.erpClientSecret = clientSecret;
     }
 
     this.erro.set('');

@@ -127,13 +127,15 @@ export interface Empresa {
   id: number;
   nome: string;
   cnpj: string;
-  blingConectado: boolean;
+  erpConectado: boolean;
+  /** Nome do ERP desta empresa nas telas ("Bling"), decidido pela API. */
+  erpNome: string;
   /** Aplicativo privado criado na conta Bling desta empresa; null usa o da rede ou, sem ele, o padrão do Previsio. */
-  blingClientId: string | null;
+  erpClientId: string | null;
   /** O secret nunca volta da API, só se está cadastrado. */
-  blingClientSecretCadastrado: boolean;
+  erpClientSecretCadastrado: boolean;
   /** De onde vem o aplicativo do Bling em uso. */
-  origemAplicativoBling: OrigemAplicativoBling;
+  origemAplicativoErp: OrigemAplicativoErp;
   /** Caixa de e-mail própria; sem ela, as notas chegam só pela caixa da rede. */
   emailProprio: boolean;
   imapHost: string;
@@ -155,9 +157,9 @@ export interface Empresa {
   ativo: boolean;
 }
 
-export type OrigemAplicativoBling = 'Empresa' | 'Rede' | 'Padrao';
+export type OrigemAplicativoErp = 'Empresa' | 'Rede' | 'Padrao';
 
-export const DESCRICAO_ORIGEM_APLICATIVO: Record<OrigemAplicativoBling, string> = {
+export const DESCRICAO_ORIGEM_APLICATIVO: Record<OrigemAplicativoErp, string> = {
   Empresa: 'Aplicativo próprio',
   Rede: 'Aplicativo da rede',
   Padrao: 'Aplicativo padrão'
@@ -178,8 +180,8 @@ export interface EmailEmpresa {
 export interface NovaEmpresa extends EmailEmpresa {
   nome: string;
   cnpj: string;
-  blingClientId?: string;
-  blingClientSecret?: string;
+  erpClientId?: string;
+  erpClientSecret?: string;
 }
 
 /** PUT /api/empresas/{id}: só os campos enviados mudam. O CNPJ não pode ser alterado. */
@@ -187,9 +189,9 @@ export interface AlteracaoEmpresa extends EmailEmpresa {
   nome?: string;
   ativo?: boolean;
   /** "" volta ao aplicativo da rede (ou ao padrão). Trocar o Client ID desconecta a empresa. */
-  blingClientId?: string;
+  erpClientId?: string;
   /** Vazio ou ausente mantém o secret atual. */
-  blingClientSecret?: string;
+  erpClientSecret?: string;
 }
 
 export interface Cliente {
@@ -200,9 +202,11 @@ export interface Cliente {
   imapSsl: boolean;
   imapUsuario: string;
   /** Aplicativo privado do Bling da rede, usado pelas empresas que não têm um próprio. */
-  blingClientId: string | null;
+  erpClientId: string | null;
   /** O secret nunca volta da API, só se está cadastrado. */
-  blingClientSecretCadastrado: boolean;
+  erpClientSecretCadastrado: boolean;
+  /** Nome do ERP nas telas da rede ("Bling"; "ERP" com empresas em ERPs diferentes), decidido pela API. */
+  erpNome: string;
   /** Teste grátis: "EmTeste" com os dias que faltam (contando hoje) e o último dia; "TesteEncerrado" parou de processar. */
   contrato?: SituacaoContrato;
   testeUltimoDia?: string | null;
@@ -221,9 +225,9 @@ export interface AlteracaoCliente {
   imapUsuario?: string;
   imapSenha?: string;
   /** "" remove o aplicativo da rede. Trocar o Client ID desconecta as empresas que usam o da rede. */
-  blingClientId?: string;
+  erpClientId?: string;
   /** Vazio ou ausente mantém o secret atual. */
-  blingClientSecret?: string;
+  erpClientSecret?: string;
   ativo?: boolean;
 }
 
@@ -236,8 +240,8 @@ export interface NovoCliente {
   imapUsuario: string;
   imapSenha: string;
   /** Opcionais: aplicativo privado do Bling da rede. Vão juntos ou nenhum. */
-  blingClientId?: string;
-  blingClientSecret?: string;
+  erpClientId?: string;
+  erpClientSecret?: string;
   /** Começa no teste grátis de 15 dias. */
   emTeste?: boolean;
 }
@@ -269,6 +273,8 @@ export interface Usuario {
   perfil: string;
   ativo: boolean;
   ultimoAcessoEm: string | null;
+  /** Só no login e em /auth/eu: nome do ERP da rede nos textos do painel; nulo para o admin. */
+  erpNome?: string | null;
 }
 
 export const PERFIL_CLIENTE = 'Cliente';
@@ -311,12 +317,12 @@ export interface RespostaLogin {
   usuario: Usuario;
 }
 
-/** Parcela da nota; blingContaPagarId vem preenchido depois que a conta a pagar foi criada no Bling. */
+/** Parcela da nota; erpContaPagarId vem preenchido depois que a conta a pagar foi criada no Bling. */
 export interface ParcelaNota {
   numeroParcela: string;
   vencimento: string;
   valor: number;
-  blingContaPagarId: number | null;
+  erpContaPagarId: number | null;
 }
 
 /** Nota lida do e-mail, lançada ou não no Bling (GET /api/clientes/{id}/notas). */
@@ -388,7 +394,7 @@ export interface TratamentoEmailIgnorado {
 /** Conta a pagar do Bling (lançada pelo Previsio ou à mão), na tela Contas a pagar. */
 export interface ContaPagar {
   id: number;
-  blingId: number;
+  erpId: number;
   empresaId: number;
   empresaNome: string;
   vencimento: string;
@@ -397,7 +403,7 @@ export interface ContaPagar {
   situacaoTexto: string;
   vencida: boolean;
   fornecedor: string | null;
-  // 'Previsio' (veio de nota lida do e-mail) ou 'Bling' (lançada direto no Bling)
+  // 'Previsio' (veio de nota lida do e-mail) ou 'Erp' (lançada direto no ERP)
   origem: string;
   notaFiscalId: number | null;
   numeroNota: string | null;
@@ -425,7 +431,7 @@ export interface PaginaContasPagar {
 
 export interface ContaReceber {
   id: number;
-  blingId: number;
+  erpId: number;
   empresaId: number;
   empresaNome: string;
   vencimento: string;
@@ -587,13 +593,14 @@ export const SITUACOES_COM_PROBLEMA = ['Erro', 'BlingDesconectado', 'EmpresaNaoE
 /** Filtro que junta todas as situações que ainda não viraram conta a pagar. */
 export const SITUACAO_PENDENTES = 'Pendentes';
 
+/** {erp}: o nome do ERP entra na hora de mostrar (comErp). */
 export const DESCRICAO_STATUS: { [status: string]: string } = {
-  Lancada: 'Lançada no Bling',
+  Lancada: 'Lançada no {erp}',
   LancadaManualmente: 'Lançada manualmente',
   Recebida: 'Aguardando lançamento',
   SemParcelas: 'Sem vencimentos no XML',
   EmpresaNaoEncontrada: 'CNPJ não cadastrado',
-  BlingDesconectado: 'Bling desconectado',
+  BlingDesconectado: '{erp} desconectado',
   Erro: 'Erro ao lançar',
   CanceladaNaSefaz: 'Cancelada na SEFAZ'
 };
@@ -647,14 +654,14 @@ export interface FiltroFalhas {
   tamanho?: number;
 }
 
-/** Nome de cada etapa como aparece na tela, na ordem do caminho e-mail → Bling. */
+/** Nome de cada etapa como aparece na tela, na ordem do caminho e-mail → ERP ({erp}: comErp). */
 export const DESCRICAO_ETAPA: { [etapa: string]: string } = {
   LeituraEmail: 'Leitura do e-mail',
   LeituraXml: 'Leitura do XML',
-  RenovacaoToken: 'Renovação do acesso ao Bling',
-  BuscaFornecedor: 'Busca do fornecedor no Bling',
-  CadastroFornecedor: 'Cadastro do fornecedor no Bling',
-  ConferenciaBling: 'Conferência no Bling',
+  RenovacaoToken: 'Renovação do acesso ao {erp}',
+  BuscaFornecedor: 'Busca do fornecedor no {erp}',
+  CadastroFornecedor: 'Cadastro do fornecedor no {erp}',
+  ConferenciaBling: 'Conferência no {erp}',
   LancamentoContaPagar: 'Lançamento da conta a pagar'
 };
 
@@ -711,7 +718,7 @@ export interface SaudeEmpresa {
   id: number;
   nome: string;
   cnpj: string;
-  blingConectado: boolean;
+  erpConectado: boolean;
   tokenValidoAte: string | null;
   ultimaSincronizacaoEm: string | null;
   // Só para empresa com caixa de e-mail própria

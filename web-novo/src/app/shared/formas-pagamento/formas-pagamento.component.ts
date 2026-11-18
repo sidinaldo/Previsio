@@ -5,6 +5,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { ConfiguracaoFormasPagamento, FornecedorDaRede, OpcaoFormaPagamento, RegraFormaPagamento } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 type AcaoFormas = 'padrao' | 'regra' | 'remover';
 
@@ -21,8 +22,8 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
       <div class="pv-secao__cabecalho">
         <h2 class="pv-card__titulo">Formas de pagamento</h2>
         <p class="pv-card__descricao">
-          A forma do Bling que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio repete a
-          forma da última conta dele no Bling; se ele nunca teve, usa a da nota (boleto, Pix...) e, por último, a padrão.
+          A forma do {{ erp() }} que vai na conta a pagar de cada nota. Sem regra para o fornecedor, o Previsio repete a
+          forma da última conta dele no {{ erp() }}; se ele nunca teve, usa a da nota (boleto, Pix...) e, por último, a padrão.
         </p>
       </div>
       <div class="card pv-secao__card">
@@ -37,13 +38,13 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
           @if (atual.empresasSemFormas.length > 0) {
             <div class="alert alert-warning" role="status">
               <span>
-                Ainda sem as formas de pagamento do Bling: {{ atual.empresasSemFormas.join(', ') }}.
-                Elas chegam na próxima sincronização; se não chegarem, reconecte a empresa ao Bling para liberar o acesso às formas de pagamento.
+                Ainda sem as formas de pagamento do {{ erp() }}: {{ atual.empresasSemFormas.join(', ') }}.
+                Elas chegam na próxima sincronização; se não chegarem, reconecte a empresa ao {{ erp() }} para liberar o acesso às formas de pagamento.
               </span>
             </div>
           }
           @if (atual.opcoes.length === 0) {
-            <p class="pv-formulario__ajuda">Nenhuma forma de pagamento ativa no Bling por enquanto. Cadastre as formas no Bling e sincronize.</p>
+            <p class="pv-formulario__ajuda">Nenhuma forma de pagamento ativa no {{ erp() }} por enquanto. Cadastre as formas no {{ erp() }} e sincronize.</p>
           } @else {
             <div class="pv-resumo__linha">
               <div class="pv-resumo__campo">
@@ -60,7 +61,7 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
             </div>
             @if (atual.padraoAusenteEm.length > 0) {
               <p class="pv-formulario__ajuda pv-categorias__aviso">
-                Não existe no Bling de {{ atual.padraoAusenteEm.join(', ') }}: as notas dessas empresas sem regra, histórico
+                Não existe no {{ erp() }} de {{ atual.padraoAusenteEm.join(', ') }}: as notas dessas empresas sem regra, histórico
                 ou forma na nota vão sem forma de pagamento.
               </p>
             }
@@ -87,7 +88,7 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
                         <small class="pv-categorias__cnpj">{{ cnpj(regra.cnpjFornecedor) }}</small>
                       }
                       @if (regra.ausenteEm.length > 0) {
-                        <small class="pv-categorias__aviso">Não existe no Bling de {{ regra.ausenteEm.join(', ') }}.</small>
+                        <small class="pv-categorias__aviso">Não existe no {{ erp() }} de {{ regra.ausenteEm.join(', ') }}.</small>
                       }
                     </div>
                     <button type="button" class="btn btn-link btn-sm" [disabled]="acao() !== null"
@@ -129,7 +130,7 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
                 </button>
               </div>
               <p class="pv-formulario__ajuda">
-                As formas são escolhidas pelo nome: cada empresa usa a forma com esse nome no Bling dela.
+                As formas são escolhidas pelo nome: cada empresa usa a forma com esse nome no {{ erp() }} dela.
                 @if (atual.gruposSaiSozinho.length > 0) {
                   {{ textoSaiSozinho() }}
                 }
@@ -147,6 +148,9 @@ type AcaoFormas = 'padrao' | 'regra' | 'remover';
   `
 })
 export class FormasPagamentoComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly clienteId = input.required<number>();

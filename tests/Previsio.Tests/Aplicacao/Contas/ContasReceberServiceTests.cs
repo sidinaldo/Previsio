@@ -70,7 +70,7 @@ public class ContasReceberServiceTests
 
         PaginaContasReceberDto pagina = await Listar();
 
-        Assert.Equal(new long[] { 1, 2, 3, 4 }, pagina.Itens.Select(c => c.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 2, 3, 4 }, pagina.Itens.Select(c => c.ErpId).ToArray());
         Assert.Equal(490m, pagina.ValorTotal);
         Assert.True(pagina.FluxoCaixaAtivo);
         ContaReceberDto vencida = pagina.Itens[0];
@@ -91,7 +91,7 @@ public class ContasReceberServiceTests
 
         PaginaContasReceberDto pagina = await Listar(situacao: situacao);
 
-        Assert.Equal(esperadas, pagina.Itens.Select(c => c.BlingId).ToArray());
+        Assert.Equal(esperadas, pagina.Itens.Select(c => c.ErpId).ToArray());
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public class ContasReceberServiceTests
         PaginaContasReceberDto daNorte = await Listar(empresaId: _norte.Id, ordem: "-valor");
         PaginaContasReceberDto ordenada = await Listar(ordem: "cliente");
 
-        Assert.Equal(new long[] { 1, 3 }, porCliente.Itens.Select(c => c.BlingId).ToArray());
-        Assert.Equal(new long[] { 3, 4 }, daNorte.Itens.Select(c => c.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 3 }, porCliente.Itens.Select(c => c.ErpId).ToArray());
+        Assert.Equal(new long[] { 3, 4 }, daNorte.Itens.Select(c => c.ErpId).ToArray());
         Assert.Equal("Frota Beta", ordenada.Itens[0].Cliente);
     }
 

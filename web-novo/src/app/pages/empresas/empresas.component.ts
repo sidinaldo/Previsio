@@ -28,12 +28,16 @@ type AcaoConfirmada = 'desativar' | 'desconectar';
  * O mesmo formulário do topo cadastra uma empresa nova ou, depois de "Editar", altera a escolhida.
  */
 import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
+import { ErpService } from '../../core/erp.service';
 @Component({
   selector: 'app-empresas',
   imports: [FormsModule, RouterLink, DatePipe, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent, ProvedorEmailComponent, CertificadoEmpresaComponent],
   templateUrl: './empresas.component.html'
 })
 export class EmpresasComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly rota = inject(ActivatedRoute);
   private readonly injector = inject(Injector);
@@ -62,7 +66,7 @@ export class EmpresasComponent {
     nome: item => item.nome,
     cnpj: item => item.cnpj,
     email: item => item.emailProprio ? item.imapUsuario : this.emailRede(),
-    bling: item => item.blingConectado ? 1 : 0,
+    bling: item => item.erpConectado ? 1 : 0,
     sincronizacao: item => item.ultimaSincronizacaoEm
   }));
   readonly empresasDaPagina = computed(() => paginar(this.empresasOrdenadas(), this.pagina(), this.tamanhoPagina()));
@@ -112,7 +116,7 @@ export class EmpresasComponent {
     if (empresa === null) {
       return false;
     }
-    return empresa.blingConectado && this.clientId().trim() !== (empresa.blingClientId ?? '');
+    return empresa.erpConectado && this.clientId().trim() !== (empresa.erpClientId ?? '');
   });
 
   private readonly cartaoFormulario = viewChild<ElementRef<HTMLElement>>('cartaoFormulario');
@@ -142,7 +146,7 @@ export class EmpresasComponent {
 
     // Vindo da tela Clientes, logo depois de cadastrar a rede
     if (this.rota.snapshot.queryParamMap.get('cliente') === 'novo') {
-      this.mensagem.set('Cliente cadastrado. Agora cadastre cada empresa (CNPJ) e conecte o Bling dela.');
+      this.mensagem.set(`Cliente cadastrado. Agora cadastre cada empresa (CNPJ) e conecte o ${this.erp()} dela.`);
       this.formularioAberto.set(true);
     }
 
@@ -199,8 +203,8 @@ export class EmpresasComponent {
 
     const dados: NovaEmpresa = { nome: nome, cnpj: cnpj };
     if (clientId !== '') {
-      dados.blingClientId = clientId;
-      dados.blingClientSecret = clientSecret;
+      dados.erpClientId = clientId;
+      dados.erpClientSecret = clientSecret;
     }
 
     if (!this.emailProprioValido(null)) {
@@ -220,7 +224,7 @@ export class EmpresasComponent {
       next: () => {
         this.cadastrando.set(false);
         this.limparFormulario();
-        this.mensagem.set('Empresa cadastrada. Agora clique em "Conectar Bling" na lista para ligar a conta dela.');
+        this.mensagem.set(`Empresa cadastrada. Agora clique em "Conectar ${this.erp()}" na lista para ligar a conta dela.`);
         this.carregar();
       },
       error: resposta => {
@@ -244,7 +248,7 @@ export class EmpresasComponent {
         if (janela !== null && !janela.closed) {
           janela.location.href = resposta.url;
           janela.focus();
-          this.mensagem.set('Entre no Bling e autorize o acesso na janela que abriu. Esta tela atualiza sozinha no fim.');
+          this.mensagem.set(`Entre no ${this.erp()} e autorize o acesso na janela que abriu. Esta tela atualiza sozinha no fim.`);
         } else {
           window.location.href = resposta.url;
         }
@@ -261,11 +265,11 @@ export class EmpresasComponent {
 
   private mostrarRetornoBling(retorno: string): void {
     if (retorno === 'conectado') {
-      this.mensagem.set('Bling conectado. As contas a pagar aparecem em alguns instantes.');
+      this.mensagem.set(`${this.erp()} conectado. As contas a pagar aparecem em alguns instantes.`);
     } else if (retorno === 'expirado') {
-      this.erro.set('O link de conexão expirou. Clique em "Conectar Bling" de novo.');
+      this.erro.set(`O link de conexão expirou. Clique em "Conectar ${this.erp()}" de novo.`);
     } else if (retorno === 'erro') {
-      this.erro.set('Não foi possível conectar ao Bling. Tente novamente.');
+      this.erro.set(`Não foi possível conectar ao ${this.erp()}. Tente novamente.`);
     }
   }
 
@@ -273,7 +277,7 @@ export class EmpresasComponent {
   sincronizarAgora(): void {
     this.limparAvisos();
     this.sincronizando.set(true);
-    this.mensagem.set('Buscando as contas no Bling... a tela atualiza sozinha no fim.');
+    this.mensagem.set(`Buscando as contas no ${this.erp()}... a tela atualiza sozinha no fim.`);
     this.previsio.executarJob('sincronizacao').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.esperarSincronizacao(),
       error: () => {
@@ -295,7 +299,7 @@ export class EmpresasComponent {
         },
         error: () => {
           this.sincronizando.set(false);
-          this.mensagem.set('A busca no Bling ainda não terminou. Confira o Painel em alguns minutos.');
+          this.mensagem.set(`A busca no ${this.erp()} ainda não terminou. Confira o Painel em alguns minutos.`);
           this.carregar();
         }
       });
@@ -348,7 +352,7 @@ export class EmpresasComponent {
     this.editando.set(empresa);
     this.nome.set(empresa.nome);
     this.cnpj.set(empresa.cnpj);
-    this.clientId.set(empresa.blingClientId ?? '');
+    this.clientId.set(empresa.erpClientId ?? '');
     this.clientSecret.set('');
     this.imapHost.set(empresa.imapHost);
     this.imapPorta.set(empresa.emailProprio ? empresa.imapPorta : 993);
@@ -360,7 +364,7 @@ export class EmpresasComponent {
   }
 
   descricaoOrigem(empresa: Empresa): string {
-    return DESCRICAO_ORIGEM_APLICATIVO[empresa.origemAplicativoBling] ?? '';
+    return DESCRICAO_ORIGEM_APLICATIVO[empresa.origemAplicativoErp] ?? '';
   }
 
   /**
@@ -418,15 +422,15 @@ export class EmpresasComponent {
 
     const clientId = this.clientId().trim();
     const clientSecret = this.clientSecret().trim();
-    const trocouAplicativo = clientId !== (empresa.blingClientId ?? '');
-    if (clientId !== '' && clientSecret === '' && (trocouAplicativo || !empresa.blingClientSecretCadastrado)) {
+    const trocouAplicativo = clientId !== (empresa.erpClientId ?? '');
+    if (clientId !== '' && clientSecret === '' && (trocouAplicativo || !empresa.erpClientSecretCadastrado)) {
       this.erro.set('Informe o Client Secret do aplicativo do Bling.');
       return;
     }
 
-    const dados: AlteracaoEmpresa = { nome: nome, blingClientId: clientId };
+    const dados: AlteracaoEmpresa = { nome: nome, erpClientId: clientId };
     if (clientSecret !== '') {
-      dados.blingClientSecret = clientSecret;
+      dados.erpClientSecret = clientSecret;
     }
 
     if (!this.emailProprioValido(empresa)) {
@@ -454,7 +458,7 @@ export class EmpresasComponent {
         this.substituir(alterada);
         this.limparFormulario();
         this.processandoId.set(null);
-        if (empresa.blingConectado && !alterada.blingConectado) {
+        if (empresa.erpConectado && !alterada.erpConectado) {
           this.mensagem.set('Empresa salva. Como o aplicativo do Bling mudou, clique em "Conectar Bling" para autorizar de novo.');
         } else {
           this.mensagem.set('Empresa salva.');
@@ -482,7 +486,7 @@ export class EmpresasComponent {
   perguntaConfirmacao(): string {
     const confirmacao = this.confirmacao();
     if (confirmacao !== null && confirmacao.acao === 'desconectar') {
-      return 'Desconectar do Bling?';
+      return `Desconectar do ${this.erp()}?`;
     }
     return 'Desativar a empresa?';
   }
@@ -535,12 +539,12 @@ export class EmpresasComponent {
     this.previsio.desconectarBling(empresa.id).subscribe({
       next: () => {
         this.processandoId.set(null);
-        this.mensagem.set('Empresa desconectada do Bling.');
+        this.mensagem.set(`Empresa desconectada do ${this.erp()}.`);
         this.carregar();
       },
       error: resposta => {
         this.processandoId.set(null);
-        this.erro.set(mensagemDaApi(resposta, 'Não foi possível desconectar a empresa do Bling.'));
+        this.erro.set(mensagemDaApi(resposta, `Não foi possível desconectar a empresa do ${this.erp()}.`));
       }
     });
   }

@@ -3,6 +3,7 @@ import { Component, effect, inject, input, signal, untracked } from '@angular/co
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Card "Fluxo de caixa" da rede: liga ou desliga as contas a receber do Bling no painel
@@ -15,7 +16,7 @@ import { CarregandoDirective } from '../carregando.directive';
     <section class="pv-secao">
       <div class="pv-secao__cabecalho">
         <h2 class="pv-card__titulo">Fluxo de caixa</h2>
-        <p class="pv-card__descricao">Traz do Bling as contas a receber e mostra no painel o que entra, o que sai e o saldo de cada semana.</p>
+        <p class="pv-card__descricao">Traz do {{ erp() }} as contas a receber e mostra no painel o que entra, o que sai e o saldo de cada semana.</p>
       </div>
       <div class="card pv-secao__card">
       @if (carregado()) {
@@ -34,7 +35,7 @@ import { CarregandoDirective } from '../carregando.directive';
             </label>
           </div>
           <p class="pv-formulario__ajuda">
-            Deixe desligado se as vendas da rede não são lançadas no Bling: as entradas apareceriam zeradas.
+            Deixe desligado se as vendas da rede não são lançadas no {{ erp() }}: as entradas apareceriam zeradas.
             As contas a receber vencidas e não recebidas ficam fora do saldo, num card à parte.
           </p>
         </div>
@@ -51,6 +52,9 @@ import { CarregandoDirective } from '../carregando.directive';
   `
 })
 export class FluxoCaixaComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly clienteId = input.required<number>();
@@ -81,7 +85,7 @@ export class FluxoCaixaComponent {
         this.ativo.set(salvo.ativo);
         this.salvando.set(false);
         if (salvo.ativo) {
-          this.mensagem.set('Fluxo de caixa ligado. As contas a receber chegam na próxima sincronização com o Bling.');
+          this.mensagem.set(`Fluxo de caixa ligado. As contas a receber chegam na próxima sincronização com o ${this.erp()}.`);
         } else {
           this.mensagem.set('Fluxo de caixa desligado. O painel mostra só as saídas.');
         }

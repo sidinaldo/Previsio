@@ -5,16 +5,17 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 
 import { ImplantacaoComponent } from './implantacao.component';
 import { Cliente, Empresa } from '../../core/previsio.models';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 const CLIENTE: Cliente = {
   id: 7, nome: 'Rede Alfa', imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true,
-  imapUsuario: 'notas@alfa.com.br', blingClientId: null, blingClientSecretCadastrado: false, ativo: true
+  imapUsuario: 'notas@alfa.com.br', erpClientId: null, erpClientSecretCadastrado: false, erpNome: 'Bling', ativo: true
 };
 
 function empresa(id: number, conectada: boolean): Empresa {
   return {
-    id: id, nome: 'Loja ' + id, cnpj: '1122233300018' + id, blingConectado: conectada, blingClientId: null,
-    blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false, imapHost: '',
+    id: id, nome: 'Loja ' + id, cnpj: '1122233300018' + id, erpConectado: conectada, erpClientId: null,
+    erpClientSecretCadastrado: false, erpNome: 'Bling', origemAplicativoErp: 'Padrao', emailProprio: false, imapHost: '',
     imapPorta: 993, imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false, ultimaSincronizacaoEm: null, ativo: true
   };
 }
@@ -22,7 +23,7 @@ function empresa(id: number, conectada: boolean): Empresa {
 function montar(id: string | null) {
   TestBed.configureTestingModule({
     imports: [ImplantacaoComponent],
-    providers: [
+    providers: [erpDeTeste(), 
       provideRouter([]),
       provideHttpClient(),
       provideHttpClientTesting(),

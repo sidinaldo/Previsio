@@ -6,7 +6,7 @@ namespace Previsio.Aplicacao.Dtos;
 public class ContaReceberDto
 {
     public int Id { get; set; }
-    public long BlingId { get; set; }
+    public long ErpId { get; set; }
     public int EmpresaId { get; set; }
     public string EmpresaNome { get; set; } = "";
     public DateTime Vencimento { get; set; }

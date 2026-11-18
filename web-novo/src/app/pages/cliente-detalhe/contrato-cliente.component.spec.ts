@@ -6,8 +6,8 @@ import { PrevisioService } from '../../core/previsio.service';
 import { ContratoClienteComponent } from './contrato-cliente.component';
 
 const EM_TESTE: Cliente = {
-  id: 7, nome: 'Rede', imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', blingClientId: null,
-  blingClientSecretCadastrado: false, ativo: true, contrato: 'EmTeste', diasRestantesTeste: 3, testeUltimoDia: '2026-11-13T00:00:00'
+  id: 7, nome: 'Rede', imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', erpClientId: null,
+  erpClientSecretCadastrado: false, erpNome: 'Bling', ativo: true, contrato: 'EmTeste', diasRestantesTeste: 3, testeUltimoDia: '2026-11-13T00:00:00'
 };
 
 describe('ContratoClienteComponent', () => {

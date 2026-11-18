@@ -7,9 +7,9 @@ import { PrevisioService } from '../../core/previsio.service';
 import { ContasReceberComponent } from './contas-receber.component';
 
 const CONTAS: ContaReceber[] = [
-  { id: 1, blingId: 7001, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-05T00:00:00', valor: 300,
+  { id: 1, erpId: 7001, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-05T00:00:00', valor: 300,
     situacao: 1, situacaoTexto: 'Em aberto', vencida: true, cliente: 'Oficina do Zé' },
-  { id: 2, blingId: 7002, empresaId: 11, empresaNome: 'Auto Center Norte', vencimento: '2026-11-20T00:00:00', valor: 900,
+  { id: 2, erpId: 7002, empresaId: 11, empresaNome: 'Auto Center Norte', vencimento: '2026-11-20T00:00:00', valor: 900,
     situacao: 2, situacaoTexto: 'Recebida', vencida: false, cliente: null }
 ];
 

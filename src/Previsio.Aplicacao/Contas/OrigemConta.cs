@@ -8,6 +8,6 @@ public static class OrigemConta
     // Lançada pelo Previsio a partir de uma nota lida do e-mail
     public const string Previsio = "Previsio";
 
-    // Lançada à mão direto no Bling
-    public const string Bling = "Bling";
+    // Lançada à mão direto no ERP da empresa
+    public const string Erp = "Erp";
 }

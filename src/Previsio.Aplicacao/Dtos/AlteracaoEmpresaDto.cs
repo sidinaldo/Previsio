@@ -11,8 +11,8 @@ public class AlteracaoEmpresaDto
     // Aplicativo privado do Bling. Client ID vazio ("") remove o aplicativo próprio
     // e volta a usar o global. Secret vazio ou ausente mantém o atual.
     // Trocar o Client ID desconecta a empresa: os tokens pertencem ao aplicativo anterior.
-    public string? BlingClientId { get; set; }
-    public string? BlingClientSecret { get; set; }
+    public string? ErpClientId { get; set; }
+    public string? ErpClientSecret { get; set; }
 
     // Caixa de e-mail própria. Servidor vazio ("") remove a caixa própria e as notas
     // dela voltam a chegar só pela caixa da rede. A senha só troca se vier preenchida.

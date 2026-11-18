@@ -5,7 +5,7 @@ namespace Previsio.Aplicacao.Bling;
 /// <summary>
 /// De onde vem o aplicativo do Bling que a empresa usa: dela, da rede ou o global do Previsio.
 /// </summary>
-public static class OrigemAplicativoBling
+public static class OrigemAplicativoErp
 {
     public const string Empresa = "Empresa";
     public const string Rede = "Rede";

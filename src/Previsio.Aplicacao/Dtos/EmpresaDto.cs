@@ -5,15 +5,17 @@ public class EmpresaDto
     public int Id { get; set; }
     public string Nome { get; set; } = "";
     public string Cnpj { get; set; } = "";
-    public bool BlingConectado { get; set; }
+    public bool ErpConectado { get; set; }
+    // Nome do ERP desta empresa nas telas ("Bling")
+    public string ErpNome { get; set; } = "";
 
-    // Aplicativo privado do Bling desta empresa. O secret nunca é devolvido,
+    // Aplicativo privado do ERP desta empresa. O secret nunca é devolvido,
     // só se está cadastrado. Client ID vazio: usa o aplicativo global do Previsio.
-    public string? BlingClientId { get; set; }
-    public bool BlingClientSecretCadastrado { get; set; }
+    public string? ErpClientId { get; set; }
+    public bool ErpClientSecretCadastrado { get; set; }
 
-    // De onde vem o aplicativo do Bling em uso: "Empresa", "Rede" ou "Padrao"
-    public string OrigemAplicativoBling { get; set; } = "";
+    // De onde vem o aplicativo do ERP em uso: "Empresa", "Rede" ou "Padrao"
+    public string OrigemAplicativoErp { get; set; } = "";
 
     // Caixa de e-mail própria (opcional). A senha nunca é devolvida, só se está cadastrada.
     public bool EmailProprio { get; set; }

@@ -33,8 +33,26 @@ public class ClientesService
         List<Cliente> clientes = await _clientes.ConsultarSomenteLeitura()
             .OrderBy(c => c.Nome)
             .ToListAsync(cancelamento);
+        var erps = await _empresas.ConsultarSomenteLeitura()
+            .Select(e => new { e.ClienteId, e.Erp })
+            .ToListAsync(cancelamento);
         DateTime agora = DateTime.UtcNow;
-        return clientes.Select(c => ClienteMapeamento.ParaDto(c, agora)).ToList();
+        var lista = new List<ClienteDto>();
+        foreach (Cliente cliente in clientes)
+        {
+            IEnumerable<TipoErp> daRede = erps.Where(e => e.ClienteId == cliente.Id).Select(e => e.Erp);
+            lista.Add(ClienteMapeamento.ParaDto(cliente, daRede, agora));
+        }
+        return lista;
+    }
+
+    private async Task<ClienteDto> ParaDtoAsync(Cliente cliente, CancellationToken cancelamento)
+    {
+        List<TipoErp> erps = await _empresas.ConsultarSomenteLeitura()
+            .Where(e => e.ClienteId == cliente.Id)
+            .Select(e => e.Erp)
+            .ToListAsync(cancelamento);
+        return ClienteMapeamento.ParaDto(cliente, erps);
     }
 
     public async Task<Resultado<ClienteDto>> ObterAsync(int clienteId, CancellationToken cancelamento)
@@ -45,7 +63,7 @@ public class ClientesService
             return Resultado<ClienteDto>.NaoEncontrado(MensagemNaoEncontrado);
         }
 
-        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente));
+        return Resultado<ClienteDto>.Ok(await ParaDtoAsync(cliente, cancelamento));
     }
 
     public async Task<Resultado<ClienteDto>> CriarAsync(NovoClienteDto dados, CancellationToken cancelamento)
@@ -66,8 +84,8 @@ public class ClientesService
             cliente.ImapSenhaProtegida = _protetor.Proteger(dados.ImapSenha);
         }
 
-        string clientId = (dados.BlingClientId ?? "").Trim();
-        string clientSecret = (dados.BlingClientSecret ?? "").Trim();
+        string clientId = (dados.ErpClientId ?? "").Trim();
+        string clientSecret = (dados.ErpClientSecret ?? "").Trim();
         if (clientId != "" || clientSecret != "")
         {
             if (clientId == "" || clientSecret == "")
@@ -87,7 +105,7 @@ public class ClientesService
         _clientes.Adicionar(cliente);
         await _clientes.SalvarAsync(cancelamento);
 
-        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente));
+        return Resultado<ClienteDto>.Ok(await ParaDtoAsync(cliente, cancelamento));
     }
 
     /// <summary>
@@ -142,9 +160,9 @@ public class ClientesService
 
         string clientIdAnterior = cliente.ErpClientId ?? "";
 
-        if (dados.BlingClientId != null)
+        if (dados.ErpClientId != null)
         {
-            string clientId = dados.BlingClientId.Trim();
+            string clientId = dados.ErpClientId.Trim();
             if (clientId == "")
             {
                 // As empresas sem aplicativo próprio passam a usar o global do Previsio
@@ -157,9 +175,9 @@ public class ClientesService
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(dados.BlingClientSecret) && !string.IsNullOrEmpty(cliente.ErpClientId))
+        if (!string.IsNullOrWhiteSpace(dados.ErpClientSecret) && !string.IsNullOrEmpty(cliente.ErpClientId))
         {
-            cliente.ErpClientSecretProtegido = _protetor.Proteger(dados.BlingClientSecret.Trim());
+            cliente.ErpClientSecretProtegido = _protetor.Proteger(dados.ErpClientSecret.Trim());
         }
 
         if (!string.IsNullOrEmpty(cliente.ErpClientId) && string.IsNullOrEmpty(cliente.ErpClientSecretProtegido))
@@ -192,6 +210,6 @@ public class ClientesService
         }
 
         await _clientes.SalvarAsync(cancelamento);
-        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente));
+        return Resultado<ClienteDto>.Ok(await ParaDtoAsync(cliente, cancelamento));
     }
 }

@@ -29,7 +29,7 @@
         <div class="col-lg-4 col-md-6">
           <div class="card pv-kpi">
             <div class="pv-kpi__topo">
-              <p class="pv-kpi__rotulo">Fora do Bling</p>
+              <p class="pv-kpi__rotulo">Fora do {{ erp() }}</p>
               <span class="pv-kpi__icone" aria-hidden="true"
                     [class.pv-kpi__icone--alerta]="e.notasPendentes > 0"
                     [class.pv-kpi__icone--neutro]="e.notasPendentes === 0">

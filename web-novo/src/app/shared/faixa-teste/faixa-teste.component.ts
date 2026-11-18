@@ -6,6 +6,7 @@ import { ClientesService } from '../../core/clientes.service';
 import { Cliente } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Faixa no topo durante o teste grátis: quantos dias faltam e, quando acaba, que o Previsio parou.
@@ -29,7 +30,7 @@ import { SessaoService } from '../../core/sessao.service';
             @if (ehAdmin()) {
               {{ c.nome }} ainda não contratou.
             } @else {
-              Depois disso o Previsio para de ler as notas e lançar no Bling. Para continuar, fale com a Soft.IO.
+              Depois disso o Previsio para de ler as notas e lançar no {{ erp() }}. Para continuar, fale com a Soft.IO.
             }
           </span>
           @if (ehAdmin()) {
@@ -41,7 +42,7 @@ import { SessaoService } from '../../core/sessao.service';
           <i class="material-icons" aria-hidden="true">pause_circle</i>
           <span>
             <strong>O teste grátis acabou em {{ c.testeUltimoDia | date:'dd/MM/yyyy' }}.</strong>
-            O Previsio parou de ler as notas do e-mail e de lançar no Bling; os dados continuam aqui.
+            O Previsio parou de ler as notas do e-mail e de lançar no {{ erp() }}; os dados continuam aqui.
             @if (!ehAdmin()) {
               Para continuar, fale com a Soft.IO.
             }
@@ -55,6 +56,9 @@ import { SessaoService } from '../../core/sessao.service';
   `
 })
 export class FaixaTesteComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
   private readonly sessao = inject(SessaoService);
   private readonly clientes = inject(ClientesService);

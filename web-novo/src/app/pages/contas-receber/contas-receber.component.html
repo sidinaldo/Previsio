@@ -4,7 +4,7 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Contas a receber</h1>
-        <p class="pv-pagina__subtitulo">O que os clientes das empresas têm a pagar, copiado do Bling: as entradas do fluxo de caixa</p>
+        <p class="pv-pagina__subtitulo">O que os clientes das empresas têm a pagar, copiado do {{ erp() }}: as entradas do fluxo de caixa</p>
       </div>
       <div class="pv-pagina__acoes">
         <app-sincronizar-bling (sincronizado)="carregar()" (aviso)="avisoSincronizacao.set($event)" />
@@ -28,7 +28,7 @@
 
     @if (carregada() && !fluxoCaixaAtivo()) {
       <div class="alert alert-warning" role="status">
-        <span>O fluxo de caixa está desligado para esta rede: as contas a receber não são atualizadas do Bling.
+        <span>O fluxo de caixa está desligado para esta rede: as contas a receber não são atualizadas do {{ erp() }}.
           Ligue em <a routerLink="/pages/empresas">Empresas</a>, no card Fluxo de caixa.</span>
       </div>
     }
@@ -60,7 +60,7 @@
               </div>
             </div>
             <div class="col-md-4 col-sm-6">
-              <label for="contas-situacao" class="col-form-label pt-0">Situação no Bling</label>
+              <label for="contas-situacao" class="col-form-label pt-0">Situação no {{ erp() }}</label>
               <div class="form-group">
                 <select id="contas-situacao" class="form-control" name="situacao"
                         [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
@@ -103,11 +103,11 @@
     <div class="card">
       <div class="pv-card__cabecalho">
         <div>
-          <h2 class="pv-card__titulo">Contas no Bling</h2>
+          <h2 class="pv-card__titulo">Contas no {{ erp() }}</h2>
           <p class="pv-card__descricao">
             {{ total() }} {{ total() === 1 ? 'conta' : 'contas' }} · <strong>{{ valorTotal() | currency:'BRL' }}</strong>
             @if (sincronizadaEm()) {
-              · atualizado do Bling em {{ sincronizadaEm() | date:'dd/MM/yyyy HH:mm' }}
+              · atualizado do {{ erp() }} em {{ sincronizadaEm() | date:'dd/MM/yyyy HH:mm' }}
             }
           </p>
         </div>
@@ -120,7 +120,7 @@
           <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">savings</i></span>
           <p class="pv-vazio__titulo">Nenhuma conta a receber com esses filtros.</p>
           <p class="pv-vazio__texto">
-            O Previsio copia do Bling as contas que vencem de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente.
+            O Previsio copia do {{ erp() }} as contas que vencem de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente.
           </p>
         </div>
       }
@@ -145,9 +145,9 @@
                     @if (conta.cliente) {
                       {{ conta.cliente }}
                     } @else {
-                      <span class="pv-tabela__auxiliar" title="O nome é buscado no Bling na próxima sincronização">Cliente ainda não identificado</span>
+                      <span class="pv-tabela__auxiliar" title="O nome é buscado no {{ erp() }} na próxima sincronização">Cliente ainda não identificado</span>
                     }
-                    <span class="pv-tabela__auxiliar">conta nº {{ conta.blingId }}</span>
+                    <span class="pv-tabela__auxiliar">conta nº {{ conta.erpId }}</span>
                   </td>
                   <td>{{ conta.empresaNome }}</td>
                   <td class="text-right"><strong>{{ conta.valor | currency:'BRL' }}</strong></td>
@@ -164,7 +164,7 @@
       }
 
       <p class="pv-card__rodape">
-        Mostra o que vence de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente, copiado do Bling de tempos em tempos.
+        Mostra o que vence de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente, copiado do {{ erp() }} de tempos em tempos.
       </p>
     </div>
 

@@ -30,7 +30,7 @@ public class ContratosService
     /// </summary>
     public async Task<Resultado<ClienteDto>> ContratarAsync(int clienteId, CancellationToken cancelamento)
     {
-        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().Include(c => c.Empresas).FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ClienteDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -38,7 +38,7 @@ public class ContratosService
         cliente.Contrato = SituacaoContrato.Contratado;
         cliente.ContratadoEm = Agora();
         await _clientes.SalvarAsync(cancelamento);
-        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, Agora()));
+        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, cliente.Empresas.Select(e => e.Erp), Agora()));
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class ContratosService
         {
             return Resultado<ClienteDto>.Invalido("Informe de 1 a " + MaximoDiasProrrogacao + " dias.");
         }
-        Cliente? cliente = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
+        Cliente? cliente = await _clientes.Consultar().Include(c => c.Empresas).FirstOrDefaultAsync(c => c.Id == clienteId, cancelamento);
         if (cliente == null)
         {
             return Resultado<ClienteDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
@@ -70,7 +70,7 @@ public class ContratosService
         cliente.TesteAvisoFinalEnviadoEm = null;
         cliente.TesteAvisoEncerradoEnviadoEm = null;
         await _clientes.SalvarAsync(cancelamento);
-        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, agora));
+        return Resultado<ClienteDto>.Ok(ClienteMapeamento.ParaDto(cliente, cliente.Empresas.Select(e => e.Erp), agora));
     }
 
     private DateTime Agora()

@@ -7,6 +7,7 @@ import { TotalEmpresa, VencimentoDia } from '../../core/previsio.models';
 import { NotasPendentesComponent } from '../notas-pendentes/notas-pendentes.component';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { ErpService } from '../../core/erp.service';
 
 @Component({
   selector: 'app-empresa-detalhe',
@@ -14,6 +15,9 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
   templateUrl: './empresa-detalhe.component.html'
 })
 export class EmpresaDetalheComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly rota = inject(ActivatedRoute);
 

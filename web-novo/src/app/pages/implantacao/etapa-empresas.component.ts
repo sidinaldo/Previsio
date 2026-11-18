@@ -14,12 +14,16 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
  * e a própria caixa de e-mail; sem eles, usa os da rede (mesmas regras da tela Empresas).
  */
 import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
+import { ErpService } from '../../core/erp.service';
 @Component({
   selector: 'app-etapa-empresas',
   imports: [FormsModule, CarregandoDirective, PaginacaoComponent, ProvedorEmailComponent],
   templateUrl: './etapa-empresas.component.html'
 })
 export class EtapaEmpresasComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
 
   readonly cliente = input.required<Cliente>();
@@ -73,8 +77,8 @@ export class EtapaEmpresasComponent {
 
     const dados: NovaEmpresa = { nome: nome, cnpj: cnpj };
     if (clientId !== '') {
-      dados.blingClientId = clientId;
-      dados.blingClientSecret = clientSecret;
+      dados.erpClientId = clientId;
+      dados.erpClientSecret = clientSecret;
     }
     if (this.imapHost().trim() !== '') {
       dados.imapHost = this.imapHost().trim();

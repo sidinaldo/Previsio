@@ -11,7 +11,7 @@
           @if (cliente(); as c) {
             {{ c.nome }} · {{ concluidas() }} de {{ etapas.length }} etapas concluídas
           } @else {
-            Cadastre a rede, as empresas e conecte o Bling num só caminho
+            Cadastre a rede, as empresas e conecte o {{ erp() }} num só caminho
           }
         </p>
       </div>
@@ -37,7 +37,7 @@
                 }
               </span>
               <span class="pv-etapas__texto">
-                <span class="pv-etapas__titulo">{{ titulos[etapa] }}</span>
+                <span class="pv-etapas__titulo">{{ comErp(titulos[etapa]) }}</span>
                 <span class="pv-etapas__estado">
                   @if (concluida(etapa)) {
                     Concluída

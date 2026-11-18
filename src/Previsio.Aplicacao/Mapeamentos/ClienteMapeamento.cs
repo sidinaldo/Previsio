@@ -6,12 +6,15 @@ namespace Previsio.Aplicacao.Mapeamentos;
 
 public static class ClienteMapeamento
 {
-    public static ClienteDto ParaDto(Cliente cliente)
+    /// <summary>
+    /// erpsDasEmpresas: o ERP de cada empresa da rede, para o nome que as telas usam (NomeErp.DaRede).
+    /// </summary>
+    public static ClienteDto ParaDto(Cliente cliente, IEnumerable<TipoErp> erpsDasEmpresas)
     {
-        return ParaDto(cliente, DateTime.UtcNow);
+        return ParaDto(cliente, erpsDasEmpresas, DateTime.UtcNow);
     }
 
-    public static ClienteDto ParaDto(Cliente cliente, DateTime agoraUtc)
+    public static ClienteDto ParaDto(Cliente cliente, IEnumerable<TipoErp> erpsDasEmpresas, DateTime agoraUtc)
     {
         var dto = new ClienteDto();
         dto.Id = cliente.Id;
@@ -20,8 +23,9 @@ public static class ClienteMapeamento
         dto.ImapPorta = cliente.ImapPorta;
         dto.ImapSsl = cliente.ImapSsl;
         dto.ImapUsuario = cliente.ImapUsuario;
-        dto.BlingClientId = cliente.ErpClientId;
-        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(cliente.ErpClientSecretProtegido);
+        dto.ErpClientId = cliente.ErpClientId;
+        dto.ErpClientSecretCadastrado = !string.IsNullOrEmpty(cliente.ErpClientSecretProtegido);
+        dto.ErpNome = NomeErp.DaRede(erpsDasEmpresas);
         dto.Contrato = PeriodoTeste.Situacao(cliente, agoraUtc);
         if (cliente.Contrato == SituacaoContrato.EmTeste && cliente.TesteTerminaEm.HasValue)
         {

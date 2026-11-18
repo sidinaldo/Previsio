@@ -84,7 +84,7 @@ public class LinhaContaPagar
             {
                 return OrigemConta.Previsio;
             }
-            return OrigemConta.Bling;
+            return OrigemConta.Erp;
         }
     }
 }

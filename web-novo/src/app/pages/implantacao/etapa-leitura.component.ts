@@ -7,6 +7,7 @@ import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { Cliente, SITUACAO_PENDENTES } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /** Em que ponto está a primeira leitura. */
 export type FaseLeitura = 'parada' | 'lendo' | 'lancando' | 'pronta' | 'erro';
@@ -29,6 +30,9 @@ export interface ResultadoLeitura {
   templateUrl: './etapa-leitura.component.html'
 })
 export class EtapaLeituraComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly destroyRef = inject(DestroyRef);
 

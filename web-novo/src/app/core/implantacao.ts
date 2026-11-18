@@ -8,7 +8,7 @@ export const ETAPAS_IMPLANTACAO: EtapaImplantacao[] = ['rede', 'empresas', 'blin
 export const TITULO_ETAPA: Record<EtapaImplantacao, string> = {
   rede: 'Rede e e-mail',
   empresas: 'Empresas',
-  bling: 'Conectar Bling',
+  bling: 'Conectar {erp}',
   usuario: 'Usuário do cliente',
   leitura: 'Primeira leitura'
 };
@@ -46,7 +46,7 @@ export function etapaConcluida(situacao: SituacaoImplantacao, etapa: EtapaImplan
   }
   if (etapa === 'bling') {
     const ativas = empresasAtivas(situacao);
-    return ativas.length > 0 && ativas.every(empresa => empresa.blingConectado);
+    return ativas.length > 0 && ativas.every(empresa => empresa.erpConectado);
   }
   if (etapa === 'usuario') {
     return usuariosDoCliente(situacao).length > 0;

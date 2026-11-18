@@ -10,6 +10,7 @@ import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { MenuAcoesComponent } from '../../shared/menu-acoes/menu-acoes.component';
+import { ErpService } from '../../core/erp.service';
 
 type Acao = 'xml' | 'chave' | 'lancada';
 
@@ -24,6 +25,9 @@ type Acao = 'xml' | 'chave' | 'lancada';
   templateUrl: './notas-so-pdf.component.html'
 })
 export class NotasSoPdfComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly empresaId = input<number | undefined>(undefined);
@@ -126,7 +130,7 @@ export class NotasSoPdfComponent {
     this.ocupadoId.set(nota.id);
     const xml = await arquivo.text();
     this.api.anexarXmlNotaSoPdf(nota.id, xml).subscribe({
-      next: () => this.concluir('XML anexado. A nota entrou em Notas pendentes e vai para o Bling em até 10 minutos.'),
+      next: () => this.concluir(`XML anexado. A nota entrou em Notas pendentes e vai para o ${this.erp()} em até 10 minutos.`),
       error: erro => this.falhar(erro, 'Não consegui anexar o XML.')
     });
   }
@@ -153,7 +157,7 @@ export class NotasSoPdfComponent {
     this.limpar();
     this.ocupadoId.set(nota.id);
     this.api.marcarNotaSoPdfLancada(nota.id, this.observacao()).subscribe({
-      next: () => this.concluir('Marcada como lançada no Bling.'),
+      next: () => this.concluir(`Marcada como lançada no ${this.erp()}.`),
       error: erro => this.falhar(erro, 'Não consegui marcar a nota.')
     });
   }

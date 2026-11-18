@@ -16,6 +16,7 @@ import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-o
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { SincronizarBlingComponent } from '../../shared/sincronizar-bling/sincronizar-bling.component';
+import { ErpService, comErp } from '../../core/erp.service';
 
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -38,6 +39,11 @@ type AcaoLista = 'filtrar' | 'limpar' | 'atualizar' | 'pagina' | null;
   templateUrl: './contas-pagar.component.html'
 })
 export class ContasPagarComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+  /** Texto de opção com a marca {erp} trocada pelo nome do ERP. */
+  protected readonly comErp = comErp;
+
   private readonly previsio = inject(PrevisioService);
   private readonly sessao = inject(SessaoService);
 
@@ -52,7 +58,7 @@ export class ContasPagarComponent {
   readonly origens: Opcao[] = [
     { valor: '', texto: 'Todas' },
     { valor: 'Previsio', texto: 'Notas lidas pelo Previsio' },
-    { valor: 'Bling', texto: 'Lançadas direto no Bling' }
+    { valor: 'Erp', texto: 'Lançadas direto no {erp}' }
   ];
 
   readonly formas: Opcao[] = FORMAS_FILTRO;

@@ -14,6 +14,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
+import { ErpService, comErp } from '../../core/erp.service';
 
 // Acima desta parte das saídas sem categoria (%), o painel mostra o atalho para configurar
 const LIMITE_SEM_CATEGORIA = 20;
@@ -24,6 +25,9 @@ const LIMITE_SEM_CATEGORIA = 20;
   templateUrl: './painel.component.html'
 })
 export class PainelComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly injector = inject(Injector);
 
@@ -122,7 +126,9 @@ export class PainelComponent {
     return resumo.semanas.every(semana => (semana.entradas ?? 0) <= 0);
   });
   readonly notasParaResolver = computed<NotaParaResolver[]>(() => this.resumo()?.notasParaResolver ?? []);
-  readonly descricaoSituacao = descricaoDaSituacao;
+  descricaoSituacao(status: string): string {
+    return comErp(descricaoDaSituacao(status));
+  }
 
   /** Largura da barra, proporcional à maior categoria. */
   larguraCategoria(categoria: TotalCategoria): number {

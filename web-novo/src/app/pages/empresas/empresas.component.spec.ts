@@ -7,14 +7,15 @@ import { EmpresasComponent } from './empresas.component';
 import { Empresa } from '../../core/previsio.models';
 import { PREVISIO_CONFIG } from '../../core/previsio.config';
 import { SessaoService } from '../../core/sessao.service';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 const API = PREVISIO_CONFIG.apiUrl;
 
 const EMPRESAS: Empresa[] = [
-  { id: 1, nome: 'Loja Centro', cnpj: '11222333000181', blingConectado: true, blingClientId: null, blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false,
+  { id: 1, nome: 'Loja Centro', cnpj: '11222333000181', erpConectado: true, erpClientId: null, erpClientSecretCadastrado: false, erpNome: 'Bling', origemAplicativoErp: 'Padrao', emailProprio: false,
     imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false,
     ultimaSincronizacaoEm: null, ativo: true },
-  { id: 2, nome: 'Loja Norte', cnpj: '11222333000262', blingConectado: false, blingClientId: null, blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false,
+  { id: 2, nome: 'Loja Norte', cnpj: '11222333000262', erpConectado: false, erpClientId: null, erpClientSecretCadastrado: false, erpNome: 'Bling', origemAplicativoErp: 'Padrao', emailProprio: false,
     imapHost: '', imapPorta: 993, imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false,
     ultimaSincronizacaoEm: null, ativo: true }
 ];
@@ -27,7 +28,7 @@ async function montar() {
   }));
   TestBed.configureTestingModule({
     imports: [EmpresasComponent],
-    providers: [
+    providers: [erpDeTeste(), 
       provideRouter([]),
       provideHttpClient(),
       provideHttpClientTesting(),
@@ -41,7 +42,7 @@ async function montar() {
   api.expectOne(`${API}/clientes/7/empresas`).flush(EMPRESAS);
   api.expectOne(`${API}/clientes/7`).flush({
     id: 7, nome: 'Rede', imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'notas@rede.com.br',
-    blingClientId: null, blingClientSecretCadastrado: false, ativo: true
+    erpClientId: null, erpClientSecretCadastrado: false, erpNome: 'Bling', ativo: true
   });
   await fixture.whenStable();
   return { fixture, api, tela: fixture.nativeElement as HTMLElement };
@@ -71,7 +72,7 @@ describe('EmpresasComponent: edição no formulário do topo', () => {
 
     const chamada = api.expectOne(`${API}/empresas/2`);
     expect(chamada.request.method).toBe('PUT');
-    expect(chamada.request.body).toEqual({ nome: 'Loja Norte Shopping', blingClientId: '' });
+    expect(chamada.request.body).toEqual({ nome: 'Loja Norte Shopping', erpClientId: '' });
     chamada.flush({ ...EMPRESAS[1], nome: 'Loja Norte Shopping' });
     await fixture.whenStable();
 
@@ -150,7 +151,7 @@ describe('EmpresasComponent: e-mail próprio da empresa', () => {
 
     const chamada = api.expectOne(`${API}/empresas/1`);
     expect(chamada.request.body).toEqual({
-      nome: 'Loja Centro', blingClientId: '',
+      nome: 'Loja Centro', erpClientId: '',
       imapHost: 'imap.gmail.com', imapPorta: 993, imapSsl: true, imapUsuario: 'centro@rede.com.br'
     });
   });

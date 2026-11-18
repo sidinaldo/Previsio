@@ -150,7 +150,7 @@ export const FORMAS_FILTRO: { valor: string; texto: string }[] = [
   { valor: 'dinheiro', texto: 'Dinheiro' },
   { valor: 'debito-automatico', texto: 'Débito automático' },
   { valor: 'outras', texto: 'Outras' },
-  { valor: 'sem', texto: 'Sem forma no Bling' }
+  { valor: 'sem', texto: 'Sem forma no {erp}' }
 ];
 
 /** Cor do badge da situação da conta. */

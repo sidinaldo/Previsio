@@ -10,6 +10,7 @@ import { FooterComponent } from '../../shared/footer/footer.component';
 import { FaixaTesteComponent } from '../../shared/faixa-teste/faixa-teste.component';
 import { ClientesService } from '../../core/clientes.service';
 import { SessaoService } from '../../core/sessao.service';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Layout das telas internas: menu lateral, barra do topo e rodapé.
@@ -22,6 +23,9 @@ import { SessaoService } from '../../core/sessao.service';
   templateUrl: './admin-layout.component.html'
 })
 export class AdminLayoutComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly elemento = inject(ElementRef<HTMLElement>);

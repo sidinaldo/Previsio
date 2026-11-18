@@ -298,7 +298,7 @@ public class ContasReceberService
         ContaReceberSincronizada conta = linha.Conta;
         var dto = new ContaReceberDto();
         dto.Id = conta.Id;
-        dto.BlingId = conta.ErpId;
+        dto.ErpId = conta.ErpId;
         dto.EmpresaId = conta.EmpresaId;
         dto.EmpresaNome = linha.EmpresaNome;
         dto.Vencimento = conta.Vencimento.Date;

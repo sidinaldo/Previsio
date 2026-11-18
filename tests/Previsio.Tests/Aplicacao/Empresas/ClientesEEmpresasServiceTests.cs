@@ -67,6 +67,20 @@ public class ClientesEEmpresasServiceTests
     }
 
     [Fact]
+    public async Task ObterCliente_MandaONomeDoErpDasEmpresas()
+    {
+        int clienteId = await CadastrarCliente();
+        Resultado<EmpresaDto> empresa = await ServicosDeTeste.Empresas(_db, _protetor)
+            .CriarAsync(clienteId, NovaEmpresa("11222333000181"), CancellationToken.None);
+
+        Resultado<ClienteDto> cliente = await ServicosDeTeste.Clientes(_db, _protetor).ObterAsync(clienteId, CancellationToken.None);
+
+        Assert.Equal("Bling", empresa.Valor!.ErpNome);
+        Assert.Equal("Bling", cliente.Valor!.ErpNome);
+        Assert.Equal("Bling", (await ServicosDeTeste.Clientes(_db, _protetor).ListarAsync(CancellationToken.None)).Single().ErpNome);
+    }
+
+    [Fact]
     public async Task CriarEmpresa_GuardaSoOsDigitosDoCnpj()
     {
         int clienteId = await CadastrarCliente();
@@ -106,7 +120,7 @@ public class ClientesEEmpresasServiceTests
     {
         int clienteId = await CadastrarCliente();
         NovaEmpresaDto dados = NovaEmpresa("11222333000181");
-        dados.BlingClientId = "app-da-filial";
+        dados.ErpClientId = "app-da-filial";
 
         Resultado<EmpresaDto> resultado = await ServicosDeTeste.Empresas(_db, _protetor)
             .CriarAsync(clienteId, dados, CancellationToken.None);

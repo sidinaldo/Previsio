@@ -7,6 +7,7 @@ import { NotaRecebida, PaginaNotas } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { NotasRecebidasComponent } from './notas-recebidas.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 function nota(id: number, categoria: string | null, categoriaTipo: string | null): NotaRecebida {
   return {
@@ -36,7 +37,7 @@ describe('NotasRecebidasComponent', () => {
     const api = { obterNotas: vi.fn(() => of(PAGINA)), listarEmpresas: vi.fn(() => of([])), exportarNotas: vi.fn() };
     TestBed.configureTestingModule({
       imports: [NotasRecebidasComponent],
-      providers: [
+      providers: [erpDeTeste(), 
         provideRouter([]),
         { provide: PrevisioService, useValue: api },
         { provide: SessaoService, useValue: { clienteId: signal(2), ehAdmin: signal(false) } },

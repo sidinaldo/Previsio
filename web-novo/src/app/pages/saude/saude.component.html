@@ -5,7 +5,7 @@
       <div>
         <h1 class="pv-pagina__titulo">Saúde das integrações</h1>
         <p class="pv-pagina__subtitulo">
-          Caixas de e-mail, Bling e jobs de todas as redes.
+          Caixas de e-mail, ERP e jobs de todas as redes.
           @if (saude(); as s) {
             Atualizado às {{ s.geradoEm | date:'HH:mm' }}.
           }
@@ -157,7 +157,7 @@
                 <thead>
                   <tr>
                     <th>Empresa</th>
-                    <th>Bling</th>
+                    <th>ERP</th>
                     <th>Última sincronização</th>
                     <th>Caixa própria</th>
                     <th class="text-right">Aguardando</th>
@@ -172,7 +172,7 @@
                         <span class="pv-tabela__auxiliar pv-numero">{{ formatarCnpj(empresa.cnpj) }}</span>
                       </td>
                       <td>
-                        @if (empresa.blingConectado) {
+                        @if (empresa.erpConectado) {
                           <span class="badge badge-success">Conectado</span>
                           @if (empresa.tokenValidoAte) {
                             <span class="pv-tabela__auxiliar">Token até {{ empresa.tokenValidoAte | date:'dd/MM HH:mm' }} (renova sozinho)</span>

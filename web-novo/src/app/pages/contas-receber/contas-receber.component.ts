@@ -15,6 +15,7 @@ import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-o
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { SincronizarBlingComponent } from '../../shared/sincronizar-bling/sincronizar-bling.component';
+import { ErpService } from '../../core/erp.service';
 
 /** Opção de um select de filtro. */
 interface Opcao {
@@ -39,6 +40,9 @@ const SITUACOES_VALIDAS = ['Abertas', 'Vencidas', 'Recebidas', 'Canceladas', 'To
   templateUrl: './contas-receber.component.html'
 })
 export class ContasReceberComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
 
   readonly situacoes: Opcao[] = [

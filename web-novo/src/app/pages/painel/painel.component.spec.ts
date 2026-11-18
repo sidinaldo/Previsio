@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { PainelComponent } from './painel.component';
 import { ResumoPainel } from '../../core/previsio.models';
 import { SessaoService } from '../../core/sessao.service';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 function resumo(valores: number[], notasPendentes: number): ResumoPainel {
   let total = 0;
@@ -32,7 +33,7 @@ async function montar(dados: ResumoPainel) {
 
   TestBed.configureTestingModule({
     imports: [PainelComponent],
-    providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
+    providers: [erpDeTeste(), provideRouter([]), provideHttpClient(), provideHttpClientTesting()]
   });
   const sessao = TestBed.inject(SessaoService);
   sessao.escolherCliente(1);

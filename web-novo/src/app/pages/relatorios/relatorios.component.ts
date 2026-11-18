@@ -9,6 +9,7 @@ import { Dossie, IndicadorConformidade, SemanaProjecao } from '../../core/previs
 import { PrevisioService } from '../../core/previsio.service';
 import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { SimboloComponent } from '../../shared/simbolo/simbolo.component';
+import { ErpService } from '../../core/erp.service';
 
 /** Uma semana desenhada no gráfico da projeção (coordenadas no viewBox). */
 interface BarraSemana {
@@ -40,6 +41,9 @@ const MARGEM_BAIXO = 26;
   templateUrl: './relatorios.component.html'
 })
 export class RelatoriosComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly horizontes = [30, 60, 90];

@@ -7,8 +7,8 @@ import { PrevisioService } from '../../core/previsio.service';
 import { CertificadoEmpresaComponent } from './certificado-empresa.component';
 
 const EMPRESA: Empresa = {
-  id: 5, nome: 'Auto Center Centro', cnpj: '11222333000262', blingConectado: true, blingClientId: null,
-  blingClientSecretCadastrado: false, origemAplicativoBling: 'Padrao', emailProprio: false, imapHost: '', imapPorta: 993,
+  id: 5, nome: 'Auto Center Centro', cnpj: '11222333000262', erpConectado: true, erpClientId: null,
+  erpClientSecretCadastrado: false, erpNome: 'Bling', origemAplicativoErp: 'Padrao', emailProprio: false, imapHost: '', imapPorta: 993,
   imapSsl: true, imapUsuario: '', imapSenhaCadastrada: false, ultimaSincronizacaoEm: null, ativo: true
 };
 

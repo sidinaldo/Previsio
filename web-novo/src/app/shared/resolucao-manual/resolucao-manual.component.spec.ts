@@ -4,13 +4,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { ResolucaoManualComponent } from './resolucao-manual.component';
 import { PREVISIO_CONFIG } from '../../core/previsio.config';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 const API = PREVISIO_CONFIG.apiUrl;
 
 async function montar() {
   TestBed.configureTestingModule({
     imports: [ResolucaoManualComponent],
-    providers: [provideHttpClient(), provideHttpClientTesting()]
+    providers: [erpDeTeste(), provideHttpClient(), provideHttpClientTesting()]
   });
   const fixture = TestBed.createComponent(ResolucaoManualComponent);
   fixture.componentRef.setInput('notaId', 15);

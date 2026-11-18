@@ -13,6 +13,7 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
 import { BuscaComponent } from '../../shared/busca/busca.component';
 import { ColunaOrdenavelComponent } from '../../shared/coluna-ordenavel/coluna-ordenavel.component';
 import { Ordenacao, alternarOrdenacao, parametroOrdem } from '../../core/ordenacao';
+import { ErpService, comErp } from '../../core/erp.service';
 
 /** Botão que disparou o carregamento da lista, para o spinner aparecer só nele. */
 type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | null;
@@ -27,6 +28,9 @@ type AcaoLista = 'filtrar' | 'limpar' | 'anterior' | 'proxima' | 'atualizar' | n
   templateUrl: './falhas.component.html'
 })
 export class FalhasComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly rota = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -87,7 +91,7 @@ export class FalhasComponent {
   descricaoEtapa(etapa: string): string {
     const texto = DESCRICAO_ETAPA[etapa];
     if (texto) {
-      return texto;
+      return comErp(texto);
     }
     return etapa;
   }

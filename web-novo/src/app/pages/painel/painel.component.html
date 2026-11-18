@@ -41,7 +41,7 @@
           <div class="pv-vazio">
             <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">event_available</i></span>
             <p class="pv-vazio__titulo">Nenhuma conta a pagar prevista.</p>
-            <p class="pv-vazio__texto">Conecte o Bling das empresas para começar.</p>
+            <p class="pv-vazio__texto">Conecte o {{ erp() }} das empresas para começar.</p>
             <a class="btn btn-info" routerLink="/pages/empresas">Ir para Empresas</a>
           </div>
         </div>
@@ -74,7 +74,7 @@
 
           <div class="card pv-kpi">
             <div class="pv-kpi__topo">
-              <p class="pv-kpi__rotulo">Notas fora do Bling</p>
+              <p class="pv-kpi__rotulo">Notas fora do {{ erp() }}</p>
               <span class="pv-kpi__icone" aria-hidden="true"
                     [class.pv-kpi__icone--alerta]="r.notasPendentes > 0"
                     [class.pv-kpi__icone--neutro]="r.notasPendentes === 0">
@@ -107,16 +107,16 @@
             <p class="pv-kpi__valor">R$ {{ (r.totalVencidas ?? 0) | number:'1.0-0' }}</p>
             <p class="pv-kpi__auxiliar">
               @if ((r.quantidadeVencidas ?? 0) === 0) {
-                Nenhuma conta vencida no Bling
+                Nenhuma conta vencida no {{ erp() }}
               } @else if (r.quantidadeVencidas === 1) {
-                1 conta: pague ou dê baixa no Bling
+                1 conta: pague ou dê baixa no {{ erp() }}
               } @else {
-                {{ r.quantidadeVencidas }} contas: pague ou dê baixa no Bling
+                {{ r.quantidadeVencidas }} contas: pague ou dê baixa no {{ erp() }}
               }
             </p>
           </div>
 
-          <!-- Fluxo de caixa: o que entra (contas a receber do Bling) e o saldo do período -->
+          <!-- Fluxo de caixa: o que entra (contas a receber do ERP) e o saldo do período -->
           @if (fluxoCaixa()) {
             <div class="card pv-kpi">
               <div class="pv-kpi__topo">
@@ -177,14 +177,14 @@
           }
         </div>
 
-        <!-- Notas que ainda não estão no Bling: ficam fora da previsão até serem lançadas -->
+        <!-- Notas que ainda não estão no ERP: ficam fora da previsão até serem lançadas -->
         @if (notasParaResolver().length > 0) {
           <div class="card">
             <div class="pv-card__cabecalho">
               <div>
                 <h2 class="pv-card__titulo">Notas para resolver</h2>
                 <p class="pv-card__descricao">
-                  Ainda não estão no Bling, por isso não entram na previsão abaixo. As que vencem primeiro:
+                  Ainda não estão no {{ erp() }}, por isso não entram na previsão abaixo. As que vencem primeiro:
                 </p>
               </div>
             </div>
@@ -252,12 +252,12 @@
               @if (fluxoCaixa()) {
                 <h2 class="pv-card__titulo">Entradas × saídas por semana</h2>
                 <p class="pv-card__descricao">
-                  Contas a receber e a pagar em aberto no Bling {{ textoEmpresas(r.empresas.length) }}, semana a semana
+                  Contas a receber e a pagar em aberto no {{ erp() }} {{ textoEmpresas(r.empresas.length) }}, semana a semana
                 </p>
               } @else {
                 <h2 class="pv-card__titulo">Saídas previstas por semana</h2>
                 <p class="pv-card__descricao">
-                  Contas em aberto no Bling {{ textoEmpresas(r.empresas.length) }}, semana a semana
+                  Contas em aberto no {{ erp() }} {{ textoEmpresas(r.empresas.length) }}, semana a semana
                 </p>
               }
             </div>
@@ -324,13 +324,13 @@
           }
         </div>
 
-        <!-- Saídas por categoria do Bling: as 6 maiores, Outras, Sem categoria e A conferir -->
+        <!-- Saídas por categoria do ERP: as 6 maiores, Outras, Sem categoria e A conferir -->
         @if (categorias().length > 0) {
           <div class="card">
             <div class="pv-card__cabecalho">
               <div>
                 <h2 class="pv-card__titulo">Saídas por categoria</h2>
-                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela categoria do Bling</p>
+                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela categoria do {{ erp() }}</p>
               </div>
             </div>
             <div class="card-body">
@@ -357,7 +357,7 @@
             </div>
             @if (mostrarConfigurarCategorias()) {
               <div class="pv-categorias-painel__acao">
-                <span>{{ percentualSemCategoria() }}% das saídas estão sem categoria no Bling.</span>
+                <span>{{ percentualSemCategoria() }}% das saídas estão sem categoria no {{ erp() }}.</span>
                 <a class="btn btn-secundario btn-sm" routerLink="/pages/configuracoes" fragment="categorias">
                   <i class="material-icons" aria-hidden="true">tune</i> Configurar categorias
                 </a>
@@ -366,7 +366,7 @@
             @if (categorias()[categorias().length - 1].tipo === 'conferir') {
               <div class="pv-card__rodape">
                 <i class="material-icons" aria-hidden="true">schedule</i>
-                "A conferir": contas que o Previsio ainda vai olhar no Bling, aos poucos, a cada sincronização.
+                "A conferir": contas que o Previsio ainda vai olhar no {{ erp() }}, aos poucos, a cada sincronização.
               </div>
             }
           </div>
@@ -378,7 +378,7 @@
             <div class="pv-card__cabecalho">
               <div>
                 <h2 class="pv-card__titulo">Como as contas saem</h2>
-                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela forma de pagamento do Bling</p>
+                <p class="pv-card__descricao">Contas a pagar em aberto no período, pela forma de pagamento do {{ erp() }}</p>
               </div>
             </div>
             <div class="card-body">
@@ -419,7 +419,7 @@
             </div>
             @if (percentualSemForma() > 0) {
               <div class="pv-categorias-painel__acao">
-                <span>{{ percentualSemForma() }}% das saídas estão sem forma de pagamento no Bling.</span>
+                <span>{{ percentualSemForma() }}% das saídas estão sem forma de pagamento no {{ erp() }}.</span>
                 <a class="btn btn-secundario btn-sm" routerLink="/pages/configuracoes" fragment="formas-pagamento">
                   <i class="material-icons" aria-hidden="true">tune</i> Configurar formas de pagamento
                 </a>
@@ -434,9 +434,9 @@
             <div>
               <h2 class="pv-card__titulo">Por empresa</h2>
               @if (fluxoCaixa()) {
-                <p class="pv-card__descricao">Contas a pagar e a receber no período e notas que ainda não estão no Bling</p>
+                <p class="pv-card__descricao">Contas a pagar e a receber no período e notas que ainda não estão no {{ erp() }}</p>
               } @else {
-                <p class="pv-card__descricao">Contas a pagar no período e notas que ainda não estão no Bling</p>
+                <p class="pv-card__descricao">Contas a pagar no período e notas que ainda não estão no {{ erp() }}</p>
               }
             </div>
           </div>
@@ -450,7 +450,7 @@
                   @if (fluxoCaixa()) {
                     <th class="text-right">A receber</th>
                   }
-                  <th class="text-right">Notas fora do Bling</th>
+                  <th class="text-right">Notas fora do {{ erp() }}</th>
                   <th>Próximo a pagar</th>
                 </tr>
               </thead>

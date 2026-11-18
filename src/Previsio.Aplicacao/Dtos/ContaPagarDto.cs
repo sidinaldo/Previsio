@@ -6,7 +6,7 @@ namespace Previsio.Aplicacao.Dtos;
 public class ContaPagarDto
 {
     public int Id { get; set; }
-    public long BlingId { get; set; }
+    public long ErpId { get; set; }
     public int EmpresaId { get; set; }
     public string EmpresaNome { get; set; } = "";
     public DateTime Vencimento { get; set; }
@@ -23,7 +23,7 @@ public class ContaPagarDto
     public string FormaGrupoNome { get; set; } = "";
     public bool SaiSozinho { get; set; }
 
-    // "Previsio" ou "Bling"
+    // "Previsio" ou "Erp" (lançada direto no ERP)
     public string Origem { get; set; } = "";
     public int? NotaFiscalId { get; set; }
     public string? NumeroNota { get; set; }

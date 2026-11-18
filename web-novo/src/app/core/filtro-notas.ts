@@ -35,7 +35,7 @@ export function parametrosDasNotas(filtro: FiltroNotas): HttpParams {
   return params;
 }
 
-/** Texto da situação da nota como aparece na tela. */
+/** Texto da situação da nota como aparece na tela, ainda com a marca {erp} (quem mostra usa comErp). */
 export function descricaoDaSituacao(status: string): string {
   const texto = DESCRICAO_STATUS[status];
   if (texto) {

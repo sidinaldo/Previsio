@@ -7,7 +7,7 @@ namespace Previsio.Aplicacao.Mapeamentos;
 public static class EmpresaMapeamento
 {
     /// <summary>
-    /// Para dizer de onde vem o aplicativo do Bling, a empresa precisa vir com o Cliente (Include).
+    /// Para dizer de onde vem o aplicativo do ERP, a empresa precisa vir com o Cliente (Include).
     /// </summary>
     public static EmpresaDto ParaDto(Empresa empresa)
     {
@@ -15,10 +15,11 @@ public static class EmpresaMapeamento
         dto.Id = empresa.Id;
         dto.Nome = empresa.Nome;
         dto.Cnpj = empresa.Cnpj;
-        dto.BlingConectado = empresa.ErpConectado;
-        dto.BlingClientId = empresa.ErpClientId;
-        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(empresa.ErpClientSecretProtegido);
-        dto.OrigemAplicativoBling = OrigemAplicativoBling.Da(empresa, empresa.Cliente);
+        dto.ErpConectado = empresa.ErpConectado;
+        dto.ErpNome = NomeErp.De(empresa.Erp);
+        dto.ErpClientId = empresa.ErpClientId;
+        dto.ErpClientSecretCadastrado = !string.IsNullOrEmpty(empresa.ErpClientSecretProtegido);
+        dto.OrigemAplicativoErp = OrigemAplicativoErp.Da(empresa, empresa.Cliente);
         dto.EmailProprio = empresa.TemEmailProprio;
         dto.ImapHost = empresa.ImapHost;
         dto.ImapPorta = empresa.ImapPorta;

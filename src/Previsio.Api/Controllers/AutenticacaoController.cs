@@ -44,7 +44,7 @@ public class AutenticacaoController : PrevisioControllerBase
             return Unauthorized("E-mail ou senha inválidos.");
         }
 
-        return MontarResposta(usuario);
+        return await MontarRespostaAsync(usuario, cancelamento);
     }
 
     [HttpGet("eu")]
@@ -56,7 +56,9 @@ public class AutenticacaoController : PrevisioControllerBase
             return Unauthorized();
         }
 
-        return UsuarioMapeamento.ParaDto(usuario);
+        UsuarioDto dto = UsuarioMapeamento.ParaDto(usuario);
+        dto.ErpNome = await _autenticacao.NomeErpDaRedeAsync(usuario, cancelamento);
+        return dto;
     }
 
     /// <summary>
@@ -79,7 +81,7 @@ public class AutenticacaoController : PrevisioControllerBase
             return BadRequest(resultado.Mensagem);
         }
 
-        return MontarResposta(usuario);
+        return await MontarRespostaAsync(usuario, cancelamento);
     }
 
     /// <summary>
@@ -116,7 +118,7 @@ public class AutenticacaoController : PrevisioControllerBase
         return await _autenticacao.ObterUsuarioAsync(usuarioId.Value, cancelamento);
     }
 
-    private RespostaLoginDto MontarResposta(Usuario usuario)
+    private async Task<RespostaLoginDto> MontarRespostaAsync(Usuario usuario, CancellationToken cancelamento)
     {
         TokenGerado token = _gerador.Gerar(usuario);
 
@@ -124,6 +126,7 @@ public class AutenticacaoController : PrevisioControllerBase
         resposta.Token = token.Token;
         resposta.ExpiraEm = token.ExpiraEm;
         resposta.Usuario = UsuarioMapeamento.ParaDto(usuario);
+        resposta.Usuario.ErpNome = await _autenticacao.NomeErpDaRedeAsync(usuario, cancelamento);
         return resposta;
     }
 }

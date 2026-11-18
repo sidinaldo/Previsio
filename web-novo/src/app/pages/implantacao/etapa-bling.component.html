@@ -1,7 +1,7 @@
 <div class="card">
   <div class="pv-card__cabecalho">
     <div>
-      <h2 class="pv-card__titulo">3. Conectar o Bling de cada empresa</h2>
+      <h2 class="pv-card__titulo">3. Conectar o {{ erp() }} de cada empresa</h2>
       <p class="pv-card__descricao">
         @if (pendentes() === 0) {
           Todas as empresas estão conectadas
@@ -44,19 +44,19 @@
               {{ empresa.nome }}
               <span class="pv-tabela__auxiliar">{{ formatarCnpj(empresa.cnpj) }}</span>
             </td>
-            <td>{{ origens[empresa.origemAplicativoBling] }}</td>
+            <td>{{ origens[empresa.origemAplicativoErp] }}</td>
             <td>
-              @if (empresa.blingConectado) {
+              @if (empresa.erpConectado) {
                 <span class="badge badge-success">Conectada</span>
               } @else {
-                <span class="badge badge-warning">Bling desconectado</span>
+                <span class="badge badge-warning">{{ empresa.erpNome }} desconectado</span>
               }
             </td>
             <td class="text-right">
-              @if (!empresa.blingConectado) {
+              @if (!empresa.erpConectado) {
                 <button type="button" class="btn btn-info btn-sm" (click)="conectar(empresa)"
                         [pvCarregando]="processandoId() === empresa.id" [disabled]="processandoId() !== null">
-                  <i class="material-icons" aria-hidden="true">link</i> Conectar Bling
+                  <i class="material-icons" aria-hidden="true">link</i> Conectar {{ empresa.erpNome }}
                 </button>
               }
             </td>

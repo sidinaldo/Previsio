@@ -87,4 +87,21 @@ public class AutenticacaoServiceTests
         Assert.True(_servico.SenhaConfere(usuario, "nova-senha-456"));
         Assert.NotEqual(carimboAntes, usuario.CarimboSeguranca);
     }
+
+    [Fact]
+    public async Task NomeErp_UsuarioDaRedeRecebeOErpDasEmpresas_AdminNao()
+    {
+        var cliente = new Cliente();
+        cliente.Nome = "Rede";
+        _db.Clientes.Add(cliente);
+        await _db.SaveChangesAsync();
+        _db.Empresas.Add(new Empresa { ClienteId = cliente.Id, Nome = "Matriz", Cnpj = "11222333000181" });
+        await _db.SaveChangesAsync();
+
+        string? daRede = await _servico.NomeErpDaRedeAsync(new Usuario { ClienteId = cliente.Id }, CancellationToken.None);
+        string? doAdmin = await _servico.NomeErpDaRedeAsync(new Usuario { ClienteId = null }, CancellationToken.None);
+
+        Assert.Equal("Bling", daRede);
+        Assert.Null(doAdmin);
+    }
 }

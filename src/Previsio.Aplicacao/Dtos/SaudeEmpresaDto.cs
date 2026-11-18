@@ -5,7 +5,7 @@ public class SaudeEmpresaDto
     public int Id { get; set; }
     public string Nome { get; set; } = "";
     public string Cnpj { get; set; } = "";
-    public bool BlingConectado { get; set; }
+    public bool ErpConectado { get; set; }
     // Validade do token de acesso; o Previsio renova sozinho antes de vencer
     public DateTime? TokenValidoAte { get; set; }
     public DateTime? UltimaSincronizacaoEm { get; set; }

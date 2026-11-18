@@ -4,7 +4,7 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Notas recebidas</h1>
-        <p class="pv-pagina__subtitulo">Todas as notas lidas do e-mail, lançadas no Bling ou não</p>
+        <p class="pv-pagina__subtitulo">Todas as notas lidas do e-mail, lançadas no {{ erp() }} ou não</p>
       </div>
       <div class="pv-pagina__acoes">
         @if (ehAdmin()) {
@@ -61,7 +61,7 @@
                 <select id="notas-situacao" class="form-control" name="situacao"
                         [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
                   @for (opcao of situacoes; track opcao.valor) {
-                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                    <option [value]="opcao.valor">{{ comErp(opcao.texto) }}</option>
                   }
                 </select>
               </div>
@@ -158,11 +158,11 @@
                       <a routerLink="/pages/contas-pagar" [queryParams]="{ categoria: nota.categoria }"
                          title="Ver as contas a pagar desta categoria">{{ nota.categoria }}</a>
                     } @else if (nota.categoriaTipo === 'conferir') {
-                      <span class="pv-tabela__auxiliar" title="A categoria é conferida no Bling nas próximas sincronizações">A conferir</span>
+                      <span class="pv-tabela__auxiliar" title="A categoria é conferida no {{ erp() }} nas próximas sincronizações">A conferir</span>
                     } @else if (nota.categoriaTipo) {
                       <span class="pv-tabela__auxiliar">{{ nota.categoria }}</span>
                     } @else {
-                      <span class="pv-tabela__auxiliar" title="A categoria aparece quando a nota vai para o Bling">—</span>
+                      <span class="pv-tabela__auxiliar" title="A categoria aparece quando a nota vai para o {{ erp() }}">—</span>
                     }
                   </td>
                   <td><span class="badge" [class]="classe(nota.status)">{{ descricao(nota.status) }}</span></td>
@@ -188,7 +188,7 @@
                           }
                           @if (podeMarcarManual(nota)) {
                             <button type="button" class="pv-acoes__item" (click)="abrirResolucao(nota)">
-                              <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no Bling
+                              <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no {{ erp() }}
                             </button>
                           }
                           @if (temFalhas(nota)) {
@@ -227,7 +227,7 @@
                                     <th>Parcela</th>
                                     <th>Vencimento</th>
                                     <th class="text-right">Valor</th>
-                                    <th>Conta a pagar no Bling</th>
+                                    <th>Conta a pagar no {{ erp() }}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -237,8 +237,8 @@
                                       <td class="pv-numero">{{ parcela.vencimento | date:'dd/MM/yyyy' }}</td>
                                       <td class="text-right">{{ parcela.valor | currency:'BRL' }}</td>
                                       <td class="pv-numero">
-                                        @if (parcela.blingContaPagarId) {
-                                          <span class="badge badge-success">Criada</span> nº {{ parcela.blingContaPagarId }}
+                                        @if (parcela.erpContaPagarId) {
+                                          <span class="badge badge-success">Criada</span> nº {{ parcela.erpContaPagarId }}
                                         } @else {
                                           <span class="badge badge-default">Ainda não criada</span>
                                         }
@@ -251,12 +251,12 @@
                           }
                         </div>
                         <div class="col-lg-5">
-                          <h3 class="pv-detalhe__titulo">Lançamento no Bling</h3>
+                          <h3 class="pv-detalhe__titulo">Lançamento no {{ erp() }}</h3>
                           <p class="pv-detalhe__texto">
                             @if (nota.lancadaEm) {
                               Lançada em {{ nota.lancadaEm | date:'dd/MM/yyyy HH:mm' }}
                             } @else if (nota.resolvidaManualmenteEm) {
-                              Lançada manualmente no Bling, marcada em {{ nota.resolvidaManualmenteEm | date:'dd/MM/yyyy HH:mm' }}
+                              Lançada manualmente no {{ erp() }}, marcada em {{ nota.resolvidaManualmenteEm | date:'dd/MM/yyyy HH:mm' }}
                               @if (nota.resolvidaManualmentePor) {
                                 por {{ nota.resolvidaManualmentePor }}
                               }

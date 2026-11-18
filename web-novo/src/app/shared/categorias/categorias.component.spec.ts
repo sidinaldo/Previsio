@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { ConfiguracaoCategorias } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CategoriasComponent } from './categorias.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 function configuracao(parcial: Partial<ConfiguracaoCategorias> = {}): ConfiguracaoCategorias {
   return {
@@ -25,7 +26,7 @@ describe('CategoriasComponent', () => {
       salvarRegraCategoria: vi.fn(() => of(dados)),
       removerRegraCategoria: vi.fn(() => of({ ...dados, regras: [] }))
     };
-    TestBed.configureTestingModule({ imports: [CategoriasComponent], providers: [{ provide: PrevisioService, useValue: api }] });
+    TestBed.configureTestingModule({ imports: [CategoriasComponent], providers: [erpDeTeste(), { provide: PrevisioService, useValue: api }] });
     const fixture = TestBed.createComponent(CategoriasComponent);
     fixture.componentRef.setInput('clienteId', 7);
     fixture.autoDetectChanges();

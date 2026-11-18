@@ -99,7 +99,7 @@ public class NotasControllerTests
         Assert.Equal(lancada.LancadaEm, maisRecente.LancadaEm);
         Assert.Equal(new DateTime(2026, 11, 17), maisRecente.PrimeiroVencimento);
         Assert.Equal(new[] { "001", "002" }, maisRecente.Parcelas.Select(p => p.NumeroParcela).ToArray());
-        Assert.Equal(111, maisRecente.Parcelas[0].BlingContaPagarId);
+        Assert.Equal(111, maisRecente.Parcelas[0].ErpContaPagarId);
         Assert.Equal("1000", resposta.Value.Itens[1].Numero);
     }
 

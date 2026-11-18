@@ -5,6 +5,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { Cliente, seloContrato } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Teste grátis e contratação da rede (admin): situação, "Marcar como contratado" e "Prorrogar 7 dias".
@@ -19,7 +20,7 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
           <h2 class="pv-card__titulo">Contrato</h2>
           <p class="pv-card__descricao">
             @if (cliente().contrato === 'EmTeste') {
-              Teste grátis até {{ cliente().testeUltimoDia | date:'dd/MM/yyyy' }}. Depois disso o Previsio para de ler as notas e lançar no Bling.
+              Teste grátis até {{ cliente().testeUltimoDia | date:'dd/MM/yyyy' }}. Depois disso o Previsio para de ler as notas e lançar no {{ erp() }}.
             } @else if (cliente().contrato === 'TesteEncerrado') {
               O teste grátis acabou em {{ cliente().testeUltimoDia | date:'dd/MM/yyyy' }}: a rede não está sendo processada.
             } @else {
@@ -59,6 +60,9 @@ import { CarregandoDirective } from '../../shared/carregando.directive';
   `
 })
 export class ContratoClienteComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly cliente = input.required<Cliente>();

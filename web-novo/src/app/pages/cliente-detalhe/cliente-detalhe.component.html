@@ -106,7 +106,7 @@
               <div class="col-md-5">
                 <div class="form-group bmd-form-group">
                   <label for="detalhe-client-secret" class="bmd-label-floating">
-                    @if (atual.blingClientSecretCadastrado) {
+                    @if (atual.erpClientSecretCadastrado) {
                       Client Secret (cadastrado; em branco mantém)
                     } @else {
                       Client Secret
@@ -176,7 +176,7 @@
                 <tr>
                   <th>Empresa</th>
                   <th>CNPJ</th>
-                  <th>Bling</th>
+                  <th>{{ erp() }}</th>
                   <th>Última sincronização</th>
                   <th>Situação</th>
                 </tr>
@@ -187,7 +187,7 @@
                     <td><strong>{{ empresa.nome }}</strong></td>
                     <td class="pv-numero">{{ empresa.cnpj }}</td>
                     <td>
-                      @if (empresa.blingConectado) {
+                      @if (empresa.erpConectado) {
                         <span class="badge badge-success">Conectado</span>
                       } @else {
                         <span class="badge badge-warning">Desconectado</span>

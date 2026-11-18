@@ -78,8 +78,8 @@ public class EmpresasService
         empresa.Nome = dados.Nome.Trim();
         empresa.Cnpj = cnpj;
 
-        string clientId = (dados.BlingClientId ?? "").Trim();
-        string clientSecret = (dados.BlingClientSecret ?? "").Trim();
+        string clientId = (dados.ErpClientId ?? "").Trim();
+        string clientSecret = (dados.ErpClientSecret ?? "").Trim();
         if (clientId != "" || clientSecret != "")
         {
             if (clientId == "" || clientSecret == "")
@@ -153,9 +153,9 @@ public class EmpresasService
 
         string clientIdAnterior = empresa.ErpClientId ?? "";
 
-        if (dados.BlingClientId != null)
+        if (dados.ErpClientId != null)
         {
-            string clientId = dados.BlingClientId.Trim();
+            string clientId = dados.ErpClientId.Trim();
             if (clientId == "")
             {
                 // Volta a usar o aplicativo global do Previsio
@@ -168,9 +168,9 @@ public class EmpresasService
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(dados.BlingClientSecret) && !string.IsNullOrEmpty(empresa.ErpClientId))
+        if (!string.IsNullOrWhiteSpace(dados.ErpClientSecret) && !string.IsNullOrEmpty(empresa.ErpClientId))
         {
-            empresa.ErpClientSecretProtegido = _protetor.Proteger(dados.BlingClientSecret.Trim());
+            empresa.ErpClientSecretProtegido = _protetor.Proteger(dados.ErpClientSecret.Trim());
         }
 
         if (!string.IsNullOrEmpty(empresa.ErpClientId) && string.IsNullOrEmpty(empresa.ErpClientSecretProtegido))

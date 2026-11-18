@@ -15,8 +15,8 @@ public class AlteracaoClienteDto
     // Aplicativo privado do Bling da rede. Client ID vazio ("") remove o aplicativo da rede.
     // Secret vazio ou ausente mantém o atual. Trocar o Client ID desconecta as empresas
     // que usam o aplicativo da rede: os tokens pertencem ao aplicativo anterior.
-    public string? BlingClientId { get; set; }
-    public string? BlingClientSecret { get; set; }
+    public string? ErpClientId { get; set; }
+    public string? ErpClientSecret { get; set; }
 
     // Desativar o cliente derruba na hora as sessões dos usuários dele
     public bool? Ativo { get; set; }

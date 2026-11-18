@@ -79,7 +79,7 @@ public static class NotaMapeamento
             parcelaDto.NumeroParcela = parcela.NumeroParcela;
             parcelaDto.Vencimento = parcela.Vencimento;
             parcelaDto.Valor = parcela.Valor;
-            parcelaDto.BlingContaPagarId = parcela.ErpContaPagarId;
+            parcelaDto.ErpContaPagarId = parcela.ErpContaPagarId;
             dto.Parcelas.Add(parcelaDto);
         }
         return dto;

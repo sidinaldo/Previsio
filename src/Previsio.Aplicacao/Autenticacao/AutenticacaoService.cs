@@ -12,6 +12,7 @@ namespace Previsio.Aplicacao.Autenticacao;
 public class AutenticacaoService
 {
     private readonly IRepositorio<Usuario> _usuarios;
+    private readonly IRepositorio<Empresa> _empresas;
     private readonly IHashSenha _hasher;
 
     // Hash de uma senha aleatória, conferido quando o e-mail não existe: assim a resposta
@@ -21,13 +22,33 @@ public class AutenticacaoService
 
     public AutenticacaoService(
         IRepositorio<Usuario> usuarios,
+        IRepositorio<Empresa> empresas,
         IHashSenha hasher,
         ILogger<AutenticacaoService> logger)
     {
         _usuarios = usuarios;
+        _empresas = empresas;
         _hasher = hasher;
         _hashFicticio = hasher.Gerar(new Usuario(), Guid.NewGuid().ToString());
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Nome do ERP da rede do usuário, para os textos do painel ("lançada no Bling").
+    /// Nulo para o admin: ele escolhe a rede no topo, e o nome vem na lista de clientes.
+    /// </summary>
+    public async Task<string?> NomeErpDaRedeAsync(Usuario usuario, CancellationToken cancelamento)
+    {
+        if (!usuario.ClienteId.HasValue)
+        {
+            return null;
+        }
+        int clienteId = usuario.ClienteId.Value;
+        List<TipoErp> erps = await _empresas.ConsultarSomenteLeitura()
+            .Where(e => e.ClienteId == clienteId)
+            .Select(e => e.Erp)
+            .ToListAsync(cancelamento);
+        return NomeErp.DaRede(erps);
     }
 
     /// <summary>

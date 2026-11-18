@@ -19,6 +19,7 @@ import { ExportarComponent } from '../../shared/exportar/exportar.component';
 import { NotasSoPdfComponent } from './notas-so-pdf.component';
 import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista, parametroOrdem } from '../../core/ordenacao';
 import { classeDaSituacao } from '../../core/filtro-notas';
+import { ErpService, comErp } from '../../core/erp.service';
 
 @Component({
   selector: 'app-notas-pendentes',
@@ -26,6 +27,9 @@ import { classeDaSituacao } from '../../core/filtro-notas';
   templateUrl: './notas-pendentes.component.html'
 })
 export class NotasPendentesComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -111,7 +115,7 @@ export class NotasPendentesComponent {
   descricao(status: string): string {
     const texto = DESCRICAO_STATUS[status];
     if (texto) {
-      return texto;
+      return comErp(texto);
     }
     return status;
   }
@@ -142,7 +146,7 @@ export class NotasPendentesComponent {
   aoResolver(nota: Nota): void {
     this.resolvendoId.set(null);
     this.erro.set('');
-    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no Bling.`);
+    this.mensagem.set(`NF ${nota.numero} marcada como lançada manualmente no ${this.erp()}.`);
     this.carregar();
   }
 
@@ -188,7 +192,7 @@ export class NotasPendentesComponent {
       .subscribe({
         next: () => {
           this.buscandoEmails.set(false);
-          this.mensagem.set('Leitura dos e-mails concluída e lista atualizada. As notas novas são lançadas no Bling em até 10 minutos.');
+          this.mensagem.set(`Leitura dos e-mails concluída e lista atualizada. As notas novas são lançadas no ${this.erp()} em até 10 minutos.`);
           this.carregar();
         },
         error: () => {

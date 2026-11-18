@@ -23,7 +23,8 @@ describe('filtro de notas recebidas', () => {
   });
 
   it('descreve e colore a situação', () => {
-    expect(descricaoDaSituacao('Lancada')).toBe('Lançada no Bling');
+    // O nome do ERP entra na hora de mostrar
+    expect(descricaoDaSituacao('Lancada')).toBe('Lançada no {erp}');
     expect(descricaoDaSituacao('Desconhecida')).toBe('Desconhecida');
     expect(classeDaSituacao('Lancada')).toBe('badge-success');
     expect(classeDaSituacao('Erro')).toBe('badge-danger');

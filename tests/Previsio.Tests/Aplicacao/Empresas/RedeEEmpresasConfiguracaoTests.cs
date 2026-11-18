@@ -110,13 +110,13 @@ public class RedeEEmpresasConfiguracaoTests
         Empresa usaProprio = await CadastrarEmpresaConectada(rede, "11222333000262", "app-da-filial");
 
         var dados = new AlteracaoClienteDto();
-        dados.BlingClientId = "app-novo";
-        dados.BlingClientSecret = "segredo-novo";
+        dados.ErpClientId = "app-novo";
+        dados.ErpClientSecret = "segredo-novo";
         Resultado<ClienteDto> resultado = await ServicosDeTeste.Clientes(_db, _protetor).AlterarAsync(rede.Id, dados, CancellationToken.None);
 
         Assert.True(resultado.Sucesso);
-        Assert.Equal("app-novo", resultado.Valor!.BlingClientId);
-        Assert.True(resultado.Valor.BlingClientSecretCadastrado);
+        Assert.Equal("app-novo", resultado.Valor!.ErpClientId);
+        Assert.True(resultado.Valor.ErpClientSecretCadastrado);
         Assert.False(usaRede.ErpConectado);
         Assert.True(usaProprio.ErpConectado);
     }
@@ -128,7 +128,7 @@ public class RedeEEmpresasConfiguracaoTests
         Empresa usaRede = await CadastrarEmpresaConectada(rede, "11222333000181", null);
 
         var dados = new AlteracaoClienteDto();
-        dados.BlingClientSecret = "segredo-regenerado";
+        dados.ErpClientSecret = "segredo-regenerado";
         await ServicosDeTeste.Clientes(_db, _protetor).AlterarAsync(rede.Id, dados, CancellationToken.None);
 
         Assert.True(usaRede.ErpConectado);
@@ -141,7 +141,7 @@ public class RedeEEmpresasConfiguracaoTests
         Cliente rede = await CadastrarRede(null, null);
 
         var dados = new AlteracaoClienteDto();
-        dados.BlingClientId = "app-da-rede";
+        dados.ErpClientId = "app-da-rede";
         Resultado<ClienteDto> resultado = await ServicosDeTeste.Clientes(_db, _protetor).AlterarAsync(rede.Id, dados, CancellationToken.None);
 
         Assert.Equal(TipoResultado.Invalido, resultado.Tipo);
@@ -157,8 +157,8 @@ public class RedeEEmpresasConfiguracaoTests
 
         List<EmpresaDto> empresas = await ServicosDeTeste.Empresas(_db, _protetor).ListarDoClienteAsync(rede.Id, CancellationToken.None);
 
-        Assert.Equal(OrigemAplicativoBling.Rede, empresas.Single(e => e.Cnpj == "11222333000181").OrigemAplicativoBling);
-        Assert.Equal(OrigemAplicativoBling.Empresa, empresas.Single(e => e.Cnpj == "11222333000262").OrigemAplicativoBling);
+        Assert.Equal(OrigemAplicativoErp.Rede, empresas.Single(e => e.Cnpj == "11222333000181").OrigemAplicativoErp);
+        Assert.Equal(OrigemAplicativoErp.Empresa, empresas.Single(e => e.Cnpj == "11222333000262").OrigemAplicativoErp);
     }
 
     // ---------- e-mail próprio da empresa ----------
@@ -255,6 +255,6 @@ public class RedeEEmpresasConfiguracaoTests
         Assert.True(resultado.Valor!.EmailProprio);
         Assert.Equal(993, resultado.Valor.ImapPorta);
         Assert.True(resultado.Valor.ImapSsl);
-        Assert.Equal(OrigemAplicativoBling.Padrao, resultado.Valor.OrigemAplicativoBling);
+        Assert.Equal(OrigemAplicativoErp.Padrao, resultado.Valor.OrigemAplicativoErp);
     }
 }

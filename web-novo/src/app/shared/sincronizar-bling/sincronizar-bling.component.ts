@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { aguardarFimDoJob } from '../../core/aguardar-job';
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Botão "Sincronizar com o Bling" das telas Contas a pagar e Contas a receber: traz as contas
@@ -18,12 +19,15 @@ import { PrevisioService } from '../../core/previsio.service';
       @if (sincronizando()) {
         <span class="pv-spinner" aria-hidden="true"></span> Sincronizando...
       } @else {
-        <i class="material-icons" aria-hidden="true">sync</i> Sincronizar com o Bling
+        <i class="material-icons" aria-hidden="true">sync</i> Sincronizar com o {{ erp() }}
       }
     </button>
   `
 })
 export class SincronizarBlingComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -36,7 +40,7 @@ export class SincronizarBlingComponent {
 
   sincronizar(): void {
     this.sincronizando.set(true);
-    this.aviso.emit({ tipo: 'info', texto: 'Buscando as contas no Bling... a lista atualiza sozinha no fim.' });
+    this.aviso.emit({ tipo: 'info', texto: `Buscando as contas no ${this.erp()}... a lista atualiza sozinha no fim.` });
     this.api.sincronizarRede().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.esperar(),
       error: erro => {
@@ -57,12 +61,12 @@ export class SincronizarBlingComponent {
       .subscribe({
         next: () => {
           this.sincronizando.set(false);
-          this.aviso.emit({ tipo: 'sucesso', texto: 'Contas atualizadas com o Bling.' });
+          this.aviso.emit({ tipo: 'sucesso', texto: `Contas atualizadas com o ${this.erp()}.` });
           this.sincronizado.emit();
         },
         error: () => {
           this.sincronizando.set(false);
-          this.aviso.emit({ tipo: 'info', texto: 'A busca no Bling ainda não terminou. Clique em Atualizar em alguns minutos.' });
+          this.aviso.emit({ tipo: 'info', texto: `A busca no ${this.erp()} ainda não terminou. Clique em Atualizar em alguns minutos.` });
           this.sincronizado.emit();
         }
       });

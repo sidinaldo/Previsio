@@ -8,6 +8,7 @@ import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../../shared/carregando.directive';
 import { TAMANHO_PAGINA_PADRAO, paginar } from '../../core/paginacao';
 import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Etapa 3: autorizar o Previsio na conta Bling de cada empresa, na mesma janela usada
@@ -19,6 +20,9 @@ import { PaginacaoComponent } from '../../shared/paginacao/paginacao.component';
   templateUrl: './etapa-bling.component.html'
 })
 export class EtapaBlingComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
 
   readonly empresas = input.required<Empresa[]>();
@@ -33,7 +37,7 @@ export class EtapaBlingComponent {
   readonly mensagem = signal('');
 
   readonly ativas = computed(() => this.empresas().filter(empresa => empresa.ativo));
-  readonly pendentes = computed(() => this.ativas().filter(empresa => !empresa.blingConectado).length);
+  readonly pendentes = computed(() => this.ativas().filter(empresa => !empresa.erpConectado).length);
 
   // Paginação da tabela (a lista inteira vem da API)
   readonly pagina = signal(1);

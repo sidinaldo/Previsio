@@ -196,7 +196,7 @@
 
         <!-- 2. Auditoria -->
         <section class="pv-dossie__bloco">
-          <h2 class="pv-dossie__titulo"><span class="pv-dossie__numero">2</span> Saúde dos lançamentos no Bling</h2>
+          <h2 class="pv-dossie__titulo"><span class="pv-dossie__numero">2</span> Saúde dos lançamentos no {{ erp() }}</h2>
           <div class="pv-dossie__auditoria">
             <div class="pv-dossie__indice" [class]="'pv-dossie__indice pv-dossie__faixa--' + (d.auditoria.faixa || 'sem')">
               <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -241,7 +241,7 @@
           </div>
           <p class="pv-dossie__nota">
             Em ordem a partir de {{ d.auditoria.faixaVerde }}; atenção a partir de {{ d.auditoria.faixaAmarela }}.
-            Categorias: contas do período já conferidas no Bling. Notas: recebidas no período. Em dia: tudo o que está em aberto.
+            Categorias: contas do período já conferidas no {{ erp() }}. Notas: recebidas no período. Em dia: tudo o que está em aberto.
             @if (d.auditoria.valorReceberVencido > 0) {
               A receber vencido: {{ d.auditoria.quantidadeReceberVencido }} contas, {{ d.auditoria.valorReceberVencido | currency:'BRL':'symbol':'1.0-0' }}.
             }
@@ -322,7 +322,7 @@
         </section>
 
         <footer class="pv-dossie__rodape">
-          Previsio · dados das contas do Bling sincronizadas até {{ d.geradoEm | date:'dd/MM/yyyy HH:mm' }}. Valores em reais.
+          Previsio · dados das contas do {{ erp() }} sincronizadas até {{ d.geradoEm | date:'dd/MM/yyyy HH:mm' }}. Valores em reais.
         </footer>
       </article>
     } @else if (carregando()) {

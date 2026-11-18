@@ -4,7 +4,7 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Contas a pagar</h1>
-        <p class="pv-pagina__subtitulo">Tudo o que está no Bling: as contas das notas lidas pelo Previsio e as lançadas à mão</p>
+        <p class="pv-pagina__subtitulo">Tudo o que está no {{ erp() }}: as contas das notas lidas pelo Previsio e as lançadas à mão</p>
       </div>
       <div class="pv-pagina__acoes">
         <app-sincronizar-bling (sincronizado)="carregar()" (aviso)="avisoSincronizacao.set($event)" />
@@ -63,12 +63,12 @@
               </div>
             </div>
             <div class="col-md-3 col-sm-6">
-              <label for="contas-situacao" class="col-form-label pt-0">Situação no Bling</label>
+              <label for="contas-situacao" class="col-form-label pt-0">Situação no {{ erp() }}</label>
               <div class="form-group">
                 <select id="contas-situacao" class="form-control" name="situacao"
                         [ngModel]="situacao()" (ngModelChange)="situacao.set($event)">
                   @for (opcao of situacoes; track opcao.valor) {
-                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                    <option [value]="opcao.valor">{{ comErp(opcao.texto) }}</option>
                   }
                 </select>
               </div>
@@ -79,7 +79,7 @@
                 <select id="contas-origem" class="form-control" name="origem"
                         [ngModel]="origem()" (ngModelChange)="origem.set($event)">
                   @for (opcao of origens; track opcao.valor) {
-                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                    <option [value]="opcao.valor">{{ comErp(opcao.texto) }}</option>
                   }
                 </select>
               </div>
@@ -90,7 +90,7 @@
                 <select id="contas-forma" class="form-control" name="forma"
                         [ngModel]="forma()" (ngModelChange)="forma.set($event)">
                   @for (opcao of formas; track opcao.valor) {
-                    <option [value]="opcao.valor">{{ opcao.texto }}</option>
+                    <option [value]="opcao.valor">{{ comErp(opcao.texto) }}</option>
                   }
                 </select>
               </div>
@@ -128,11 +128,11 @@
     <div class="card">
       <div class="pv-card__cabecalho">
         <div>
-          <h2 class="pv-card__titulo">Contas no Bling</h2>
+          <h2 class="pv-card__titulo">Contas no {{ erp() }}</h2>
           <p class="pv-card__descricao">
             {{ total() }} {{ total() === 1 ? 'conta' : 'contas' }} · <strong>{{ valorTotal() | currency:'BRL' }}</strong>
             @if (sincronizadaEm()) {
-              · atualizado do Bling em {{ sincronizadaEm() | date:'dd/MM/yyyy HH:mm' }}
+              · atualizado do {{ erp() }} em {{ sincronizadaEm() | date:'dd/MM/yyyy HH:mm' }}
             }
           </p>
         </div>
@@ -145,7 +145,7 @@
           <span class="pv-vazio__icone" aria-hidden="true"><i class="material-icons">payments</i></span>
           <p class="pv-vazio__titulo">Nenhuma conta a pagar com esses filtros.</p>
           <p class="pv-vazio__texto">
-            O Previsio copia do Bling as contas que vencem de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente.
+            O Previsio copia do {{ erp() }} as contas que vencem de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente.
           </p>
         </div>
       }
@@ -173,7 +173,7 @@
                     @if (conta.fornecedor) {
                       {{ conta.fornecedor }}
                     } @else {
-                      <span class="pv-tabela__auxiliar" title="O nome é buscado no Bling na próxima sincronização">Fornecedor ainda não identificado</span>
+                      <span class="pv-tabela__auxiliar" title="O nome é buscado no {{ erp() }} na próxima sincronização">Fornecedor ainda não identificado</span>
                     }
                   </td>
                   <td>
@@ -190,7 +190,7 @@
                         <span class="pv-tabela__auxiliar pv-forma__sozinho" title="Debitado na conta: ninguém precisa pagar">sai sozinho da conta</span>
                       }
                     } @else if (conta.formaGrupo === 'outras') {
-                      <span class="pv-tabela__auxiliar" title="Forma criada no Bling depois da última sincronização">Forma não identificada</span>
+                      <span class="pv-tabela__auxiliar" title="Forma criada no {{ erp() }} depois da última sincronização">Forma não identificada</span>
                     } @else {
                       <span class="pv-tabela__auxiliar">—</span>
                     }
@@ -205,9 +205,9 @@
                         <span class="pv-tabela__auxiliar">parcela {{ conta.numeroParcela }}</span>
                       }
                     } @else {
-                      Lançada direto no Bling
+                      Lançada direto no {{ erp() }}
                     }
-                    <span class="pv-tabela__auxiliar">conta nº {{ conta.blingId }}</span>
+                    <span class="pv-tabela__auxiliar">conta nº {{ conta.erpId }}</span>
                   </td>
                 </tr>
               }
@@ -221,7 +221,7 @@
       }
 
       <p class="pv-card__rodape">
-        Mostra o que vence de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente, copiado do Bling de tempos em tempos.
+        Mostra o que vence de {{ diasPassados() }} dias atrás até {{ diasFuturos() }} dias à frente, copiado do {{ erp() }} de tempos em tempos.
       </p>
     </div>
 

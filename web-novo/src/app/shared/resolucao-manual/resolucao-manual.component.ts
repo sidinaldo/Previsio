@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { mensagemDaApi } from '../../core/mensagem-erro';
 import { PrevisioService } from '../../core/previsio.service';
+import { ErpService } from '../../core/erp.service';
 
 /** Tamanho máximo da observação (o mesmo da API). */
 export const TAMANHO_MAXIMO_OBSERVACAO = 500;
@@ -18,11 +19,11 @@ export const TAMANHO_MAXIMO_OBSERVACAO = 500;
     <form class="pv-resolucao" (ngSubmit)="confirmar()">
       <p class="pv-resolucao__titulo">
         <i class="material-icons" aria-hidden="true">task_alt</i>
-        Marcar a NF {{ numero() }} como lançada manualmente no Bling?
+        Marcar a NF {{ numero() }} como lançada manualmente no {{ erp() }}?
       </p>
       <p class="pv-formulario__ajuda">
         A nota sai das pendentes e do painel, e o Previsio não tenta mais lançá-la.
-        Use quando a conta a pagar já foi criada direto no Bling.
+        Use quando a conta a pagar já foi criada direto no {{ erp() }}.
       </p>
       <div class="pv-resolucao__linha">
         <div class="pv-resolucao__campo">
@@ -47,6 +48,9 @@ export const TAMANHO_MAXIMO_OBSERVACAO = 500;
   `
 })
 export class ResolucaoManualComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly previsio = inject(PrevisioService);
 
   readonly notaId = input.required<number>();

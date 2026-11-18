@@ -4,6 +4,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { ConferenciaBling } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Card "Conferência com o Bling" da rede: antes de lançar, procura a conta já lançada à mão
@@ -16,8 +17,8 @@ import { CarregandoDirective } from '../carregando.directive';
   template: `
     <section class="pv-secao">
       <div class="pv-secao__cabecalho">
-        <h2 class="pv-card__titulo">Conferência com o Bling</h2>
-        <p class="pv-card__descricao">Evita lançar de novo uma nota que alguém já lançou à mão no Bling.</p>
+        <h2 class="pv-card__titulo">Conferência com o {{ erp() }}</h2>
+        <p class="pv-card__descricao">Evita lançar de novo uma nota que alguém já lançou à mão no {{ erp() }}.</p>
       </div>
       <div class="card pv-secao__card">
       @if (dados(); as d) {
@@ -31,12 +32,12 @@ import { CarregandoDirective } from '../carregando.directive';
           <div class="form-check">
             <label class="form-check-label">
               <input class="form-check-input" type="checkbox" [checked]="d.conferirAntesDeLancar" (change)="marcar('conferirAntesDeLancar', $event)">
-              Conferir no Bling antes de lançar
+              Conferir no {{ erp() }} antes de lançar
               <span class="form-check-sign"><span class="check"></span></span>
             </label>
           </div>
           <p class="pv-formulario__ajuda">
-            Antes de lançar, o Previsio procura as parcelas da nota no Bling. Achou todas: marca a nota como
+            Antes de lançar, o Previsio procura as parcelas da nota no {{ erp() }}. Achou todas: marca a nota como
             "Lançada manualmente". Achou só algumas: não lança nada e avisa para você conferir.
           </p>
 
@@ -67,11 +68,11 @@ import { CarregandoDirective } from '../carregando.directive';
           <div class="form-check">
             <label class="form-check-label">
               <input class="form-check-input" type="checkbox" [checked]="d.fecharPendentes" (change)="marcar('fecharPendentes', $event)">
-              Fechar sozinhas as notas pendentes que já estão no Bling
+              Fechar sozinhas as notas pendentes que já estão no {{ erp() }}
               <span class="form-check-sign"><span class="check"></span></span>
             </label>
           </div>
-          <p class="pv-formulario__ajuda">Confere a cada sincronização com o Bling. Desligado, a nota fica pendente até alguém clicar em "Já lancei no Bling".</p>
+          <p class="pv-formulario__ajuda">Confere a cada sincronização com o {{ erp() }}. Desligado, a nota fica pendente até alguém clicar em "Já lancei no {{ erp() }}".</p>
         </div>
         <div class="pv-formulario__acoes">
           <button type="button" class="btn btn-info" [pvCarregando]="salvando()" [disabled]="salvando()" (click)="salvar()">Salvar</button>
@@ -86,6 +87,9 @@ import { CarregandoDirective } from '../carregando.directive';
   `
 })
 export class ConferenciaBlingComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly clienteId = input.required<number>();
@@ -137,11 +141,11 @@ export class ConferenciaBlingComponent {
       next: salvo => {
         this.dados.set(salvo);
         this.salvando.set(false);
-        this.mensagem.set('Conferência com o Bling salva.');
+        this.mensagem.set(`Conferência com o ${this.erp()} salva.`);
       },
       error: erro => {
         this.salvando.set(false);
-        this.erro.set(mensagemDaApi(erro, 'Não consegui salvar a conferência com o Bling.'));
+        this.erro.set(mensagemDaApi(erro, `Não consegui salvar a conferência com o ${this.erp()}.`));
       }
     });
   }
@@ -159,7 +163,7 @@ export class ConferenciaBlingComponent {
     this.erro.set('');
     this.api.obterConferenciaBling(clienteId).subscribe({
       next: dados => this.dados.set(dados),
-      error: erro => this.erro.set(mensagemDaApi(erro, 'Não consegui carregar a conferência com o Bling.'))
+      error: erro => this.erro.set(mensagemDaApi(erro, `Não consegui carregar a conferência com o ${this.erp()}.`))
     });
   }
 }

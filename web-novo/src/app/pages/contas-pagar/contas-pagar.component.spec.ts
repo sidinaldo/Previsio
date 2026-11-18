@@ -7,17 +7,18 @@ import { ContaPagar, FiltroContas, PaginaContasPagar } from '../../core/previsio
 import { PrevisioService } from '../../core/previsio.service';
 import { SessaoService } from '../../core/sessao.service';
 import { ContasPagarComponent } from './contas-pagar.component';
+import { erpDeTeste } from '../../core/erp-de-teste';
 
 const CONTAS: ContaPagar[] = [
-  { id: 1, blingId: 9001, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-05T00:00:00', valor: 1250,
-    situacao: 1, situacaoTexto: 'Em aberto', vencida: true, fornecedor: 'Contabilidade Silva', origem: 'Bling',
+  { id: 1, erpId: 9001, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-05T00:00:00', valor: 1250,
+    situacao: 1, situacaoTexto: 'Em aberto', vencida: true, fornecedor: 'Contabilidade Silva', origem: 'Erp',
     notaFiscalId: null, numeroNota: null, numeroParcela: null,
     formaPagamento: 'Débito em conta', formaGrupo: 'debito-automatico', formaGrupoNome: 'Débito automático', saiSozinho: true },
-  { id: 2, blingId: 9002, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-20T00:00:00', valor: 3240,
+  { id: 2, erpId: 9002, empresaId: 10, empresaNome: 'Auto Center Centro', vencimento: '2026-11-20T00:00:00', valor: 3240,
     situacao: 1, situacaoTexto: 'Em aberto', vencida: false, fornecedor: 'ALFA DISTRIBUIDORA', origem: 'Previsio',
     notaFiscalId: 5, numeroNota: '48213', numeroParcela: '001' },
-  { id: 3, blingId: 9003, empresaId: 11, empresaNome: 'Auto Center Norte', vencimento: '2026-11-25T00:00:00', valor: 80,
-    situacao: 1, situacaoTexto: 'Em aberto', vencida: false, fornecedor: null, origem: 'Bling',
+  { id: 3, erpId: 9003, empresaId: 11, empresaNome: 'Auto Center Norte', vencimento: '2026-11-25T00:00:00', valor: 80,
+    situacao: 1, situacaoTexto: 'Em aberto', vencida: false, fornecedor: null, origem: 'Erp',
     notaFiscalId: null, numeroNota: null, numeroParcela: null }
 ];
 
@@ -34,7 +35,7 @@ async function montar(parametros: Record<string, string> = {}) {
   };
   TestBed.configureTestingModule({
     imports: [ContasPagarComponent],
-    providers: [
+    providers: [erpDeTeste(), 
       provideRouter([]),
       { provide: PrevisioService, useValue: api },
       { provide: SessaoService, useValue: { clienteId: signal(2) } },
@@ -72,10 +73,10 @@ describe('ContasPagarComponent', () => {
   it('guarda o filtro usado e volta ao padrão no Limpar', async () => {
     const { fixture, api } = await montar();
     const tela = fixture.componentInstance;
-    tela.origem.set('Bling');
+    tela.origem.set('Erp');
     tela.situacao.set('Pagas');
     tela.filtrar();
-    expect(api.obterContasPagar.mock.calls[1][0].origem).toBe('Bling');
+    expect(api.obterContasPagar.mock.calls[1][0].origem).toBe('Erp');
     expect(JSON.parse(localStorage.getItem('previsio.filtro-contas.2')!).situacao).toBe('Pagas');
 
     tela.limpar();
@@ -85,7 +86,7 @@ describe('ContasPagarComponent', () => {
   });
 
   it('do painel abre nas em aberto da categoria, no período, e o filtro sai no x', async () => {
-    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '', ate: '', datasPadrao: true }));
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Erp', de: '', ate: '', datasPadrao: true }));
     const { fixture, api, tela } = await montar({ categoria: 'Fretes', de: '2026-11-13', ate: '2026-12-12' });
     const filtro = api.obterContasPagar.mock.calls[0][0];
     expect(filtro.categoria).toBe('Fretes');
@@ -123,7 +124,7 @@ describe('ContasPagarComponent', () => {
   });
 
   it('link do e-mail: vencidas de qualquer data, sem empresa nem origem guardadas', async () => {
-    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '2026-11-01', ate: '2026-11-30', datasPadrao: false }));
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Erp', de: '2026-11-01', ate: '2026-11-30', datasPadrao: false }));
     const { api } = await montar({ situacao: 'Vencidas' });
     const filtro = api.obterContasPagar.mock.calls[0][0];
     expect(filtro.situacao).toBe('Vencidas');
@@ -143,7 +144,7 @@ describe('ContasPagarComponent', () => {
   });
 
   it('situação inválida no endereço é ignorada e vale o filtro guardado', async () => {
-    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Bling', de: '', ate: '', datasPadrao: true }));
+    localStorage.setItem('previsio.filtro-contas.2', JSON.stringify({ empresaId: 10, situacao: 'Pagas', origem: 'Erp', de: '', ate: '', datasPadrao: true }));
     const { api } = await montar({ situacao: 'Qualquer' });
     expect(api.obterContasPagar.mock.calls[0][0].situacao).toBe('Pagas');
   });

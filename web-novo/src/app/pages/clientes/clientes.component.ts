@@ -21,12 +21,16 @@ import { Ordenacao, alternarOrdenacao, combinaComBusca, ordenarLista } from '../
  * O mesmo formulário do topo cadastra um cliente novo ou, depois de "Editar", altera o escolhido.
  */
 import { ProvedorEmailComponent } from '../../shared/provedor-email/provedor-email.component';
+import { ErpService } from '../../core/erp.service';
 @Component({
   selector: 'app-clientes',
   imports: [FormsModule, RouterLink, ProvedorEmailComponent, MenuAcoesComponent, CarregandoDirective, PaginacaoComponent, BuscaComponent, ColunaOrdenavelComponent],
   templateUrl: './clientes.component.html'
 })
 export class ClientesComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly clientes = inject(ClientesService);
   private readonly sessao = inject(SessaoService);
   private readonly router = inject(Router);

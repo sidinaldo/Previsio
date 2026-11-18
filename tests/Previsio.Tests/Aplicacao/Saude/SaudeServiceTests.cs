@@ -94,7 +94,7 @@ public class SaudeServiceTests
         Assert.True(saude.Redes[0].Atencao);
         Assert.Equal(1, saude.Redes[0].AvisosAbertos);
         SaudeEmpresaDto sul = saude.Redes[0].Empresas.Single(e => e.Nome == "Loja Sul");
-        Assert.False(sul.BlingConectado);
+        Assert.False(sul.ErpConectado);
         Assert.Null(sul.TokenValidoAte);
         Assert.Equal(1, sul.AvisosAbertos);
         Assert.False(saude.Redes[1].Atencao);

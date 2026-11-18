@@ -4,7 +4,7 @@
     <div class="pv-pagina__cabecalho">
       <div>
         <h1 class="pv-pagina__titulo">Falhas</h1>
-        <p class="pv-pagina__subtitulo">Tentativas que falharam ao ler as notas do e-mail ou ao lançá-las no Bling</p>
+        <p class="pv-pagina__subtitulo">Tentativas que falharam ao ler as notas do e-mail ou ao lançá-las no {{ erp() }}</p>
       </div>
     </div>
 
@@ -173,12 +173,12 @@
                             @if (falha.statusHttp !== null) {
                               <br>Status HTTP: <strong>{{ falha.statusHttp }}</strong>
                             } @else if (falha.metodo !== 'IMAP') {
-                              <br>Sem resposta do Bling (rede ou tempo esgotado)
+                              <br>Sem resposta do {{ erp() }} (rede ou tempo esgotado)
                             }
                           </p>
 
                           @if (falha.resposta) {
-                            <h3 class="pv-detalhe__titulo">Resposta do Bling</h3>
+                            <h3 class="pv-detalhe__titulo">Resposta do {{ erp() }}</h3>
                             <pre class="pv-codigo">{{ falha.resposta }}</pre>
                           }
                         </div>

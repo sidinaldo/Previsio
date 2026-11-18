@@ -4,7 +4,7 @@
       <div>
         <h2 class="pv-card__titulo">Notas que chegaram só em PDF</h2>
         <p class="pv-card__descricao">
-          Sem o XML, a nota não vai sozinha para o Bling. O Previsio busca o XML na SEFAZ pela chave de acesso;
+          Sem o XML, a nota não vai sozinha para o {{ erp() }}. O Previsio busca o XML na SEFAZ pela chave de acesso;
           as que não der para buscar ficam aqui para resolver.
         </p>
       </div>
@@ -80,7 +80,7 @@
                         <i class="material-icons" aria-hidden="true">forward_to_inbox</i> Pedir o XML ao fornecedor
                       </button>
                       <button type="button" class="pv-acoes__item" (click)="abrir(nota, 'lancada')">
-                        <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no Bling
+                        <i class="material-icons" aria-hidden="true">task_alt</i> Já lancei no {{ erp() }}
                       </button>
                     </app-menu-acoes>
                   </div>
@@ -110,10 +110,10 @@
                       } @else {
                         <label class="pv-rotulo" for="so-pdf-obs-{{ nota.id }}">Observação (opcional)</label>
                         <input id="so-pdf-obs-{{ nota.id }}" type="text" class="pv-campo pv-campo--texto pv-so-pdf__chave" maxlength="500"
-                               placeholder="Ex.: lançada como conta 4512 no Bling" [value]="observacao()" (input)="mudarObservacao($event)">
+                               placeholder="Ex.: lançada como conta 4512 no {{ erp() }}" [value]="observacao()" (input)="mudarObservacao($event)">
                         <div class="pv-so-pdf__botoes">
                           <button type="button" class="btn btn-info btn-sm" [pvCarregando]="ocupadoId() === nota.id"
-                                  [disabled]="ocupadoId() === nota.id" (click)="marcarLancada(nota)">Já lancei no Bling</button>
+                                  [disabled]="ocupadoId() === nota.id" (click)="marcarLancada(nota)">Já lancei no {{ erp() }}</button>
                           <button type="button" class="btn btn-secundario btn-sm" (click)="fechar()">Cancelar</button>
                         </div>
                       }

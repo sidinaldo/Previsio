@@ -4,6 +4,7 @@ import { mensagemDaApi } from '../../core/mensagem-erro';
 import { AlertasVencimento } from '../../core/previsio.models';
 import { PrevisioService } from '../../core/previsio.service';
 import { CarregandoDirective } from '../carregando.directive';
+import { ErpService } from '../../core/erp.service';
 
 /**
  * Card "Avisos de vencimento" da rede: depois de quantos dias de atraso a conta vencida vira aviso
@@ -17,7 +18,7 @@ import { CarregandoDirective } from '../carregando.directive';
     <section class="pv-secao">
       <div class="pv-secao__cabecalho">
         <h2 class="pv-card__titulo">Avisos de vencimento</h2>
-        <p class="pv-card__descricao">Contas em aberto no Bling: as vencidas aparecem no sininho; as de hoje e amanhã vão por e-mail.</p>
+        <p class="pv-card__descricao">Contas em aberto no {{ erp() }}: as vencidas aparecem no sininho; as de hoje e amanhã vão por e-mail.</p>
       </div>
       <div class="card pv-secao__card">
       @if (carregado()) {
@@ -41,7 +42,7 @@ import { CarregandoDirective } from '../carregando.directive';
             </div>
           </div>
           <p class="pv-formulario__ajuda">
-            Com 1, o aviso aparece no dia seguinte ao vencimento e some quando a conta é paga ou baixada no Bling.
+            Com 1, o aviso aparece no dia seguinte ao vencimento e some quando a conta é paga ou baixada no {{ erp() }}.
           </p>
           </div>
           <div class="pv-config__grupo">
@@ -87,6 +88,9 @@ import { CarregandoDirective } from '../carregando.directive';
   `
 })
 export class AlertasVencimentoComponent {
+  /** Nome do ERP da rede nos textos (vem da API). */
+  protected readonly erp = inject(ErpService).nome;
+
   private readonly api = inject(PrevisioService);
 
   readonly clienteId = input.required<number>();

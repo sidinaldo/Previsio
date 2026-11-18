@@ -101,10 +101,10 @@ public class ContasPagarTests
 
         Assert.Equal(3, pagina.Total);
         Assert.Equal(450m, pagina.ValorTotal);
-        Assert.Equal(new long[] { 1, 3, 2 }, pagina.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 3, 2 }, pagina.Itens.Select(i => i.ErpId).ToArray());
         ContaPagarDto vencida = pagina.Itens[0];
         Assert.True(vencida.Vencida);
-        Assert.Equal("Bling", vencida.Origem);
+        Assert.Equal("Erp", vencida.Origem);
         Assert.Null(vencida.Fornecedor);
         ContaPagarDto daNota = pagina.Itens[2];
         Assert.Equal("Previsio", daNota.Origem);
@@ -112,7 +112,7 @@ public class ContasPagarTests
         Assert.Equal("001", daNota.NumeroParcela);
         Assert.Equal("ALFA DISTRIBUIDORA", daNota.Fornecedor);
         Assert.False(daNota.Vencida);
-        Assert.Equal("Bling", pagina.Itens[1].Origem);
+        Assert.Equal("Erp", pagina.Itens[1].Origem);
         Assert.Equal(30, pagina.DiasPassados);
         Assert.Equal(90, pagina.DiasFuturos);
     }
@@ -128,18 +128,18 @@ public class ContasPagarTests
         NotaDaConta(_centro, "48213", "ALFA DISTRIBUIDORA", 2);
         await _db.SaveChangesAsync();
 
-        Assert.Equal(new long[] { 1 }, (await Listar(new FiltroContas { Situacao = "Vencidas" })).Itens.Select(i => i.BlingId).ToArray());
-        Assert.Equal(new long[] { 4 }, (await Listar(new FiltroContas { Situacao = "pagas" })).Itens.Select(i => i.BlingId).ToArray());
-        Assert.Equal(new long[] { 3 }, (await Listar(new FiltroContas { Situacao = "Canceladas" })).Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1 }, (await Listar(new FiltroContas { Situacao = "Vencidas" })).Itens.Select(i => i.ErpId).ToArray());
+        Assert.Equal(new long[] { 4 }, (await Listar(new FiltroContas { Situacao = "pagas" })).Itens.Select(i => i.ErpId).ToArray());
+        Assert.Equal(new long[] { 3 }, (await Listar(new FiltroContas { Situacao = "Canceladas" })).Itens.Select(i => i.ErpId).ToArray());
         Assert.Equal(4, (await Listar(new FiltroContas())).Total);
-        Assert.Equal(new long[] { 2 }, (await Listar(new FiltroContas { Origem = "Previsio" })).Itens.Select(i => i.BlingId).ToArray());
-        Assert.Equal(3, (await Listar(new FiltroContas { Origem = "Bling" })).Total);
-        Assert.Equal(new long[] { 4, 3 }, (await Listar(new FiltroContas { De = new DateTime(2026, 11, 10), Ate = new DateTime(2026, 11, 15) })).Itens.Select(i => i.BlingId).ToArray());
-        Assert.Equal(new long[] { 1 }, (await Listar(new FiltroContas { Busca = "silva" })).Itens.Select(i => i.BlingId).ToArray());
-        Assert.Equal(new long[] { 2 }, (await Listar(new FiltroContas { Busca = "4821" })).Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 2 }, (await Listar(new FiltroContas { Origem = "Previsio" })).Itens.Select(i => i.ErpId).ToArray());
+        Assert.Equal(3, (await Listar(new FiltroContas { Origem = "Erp" })).Total);
+        Assert.Equal(new long[] { 4, 3 }, (await Listar(new FiltroContas { De = new DateTime(2026, 11, 10), Ate = new DateTime(2026, 11, 15) })).Itens.Select(i => i.ErpId).ToArray());
+        Assert.Equal(new long[] { 1 }, (await Listar(new FiltroContas { Busca = "silva" })).Itens.Select(i => i.ErpId).ToArray());
+        Assert.Equal(new long[] { 2 }, (await Listar(new FiltroContas { Busca = "4821" })).Itens.Select(i => i.ErpId).ToArray());
         Assert.Equal(2, (await Listar(new FiltroContas { Busca = "zona norte" })).Total);
         Assert.Equal(2, (await Listar(new FiltroContas { EmpresaId = _centro.Id })).Total);
-        Assert.Equal(new long[] { 1, 2, 4, 3 }, (await Listar(new FiltroContas { Ordem = "-valor" })).Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 2, 4, 3 }, (await Listar(new FiltroContas { Ordem = "-valor" })).Itens.Select(i => i.ErpId).ToArray());
     }
 
     [Fact]
@@ -285,16 +285,16 @@ public class ContasPagarTests
         await _db.SaveChangesAsync();
 
         PaginaContasPagarDto fretes = await Listar(new FiltroContas { Categoria = "fretes", Ordem = "vencimento" });
-        Assert.Equal(new long[] { 1, 2 }, fretes.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 2 }, fretes.Itens.Select(i => i.ErpId).ToArray());
         Assert.Equal("Fretes", fretes.Itens[0].Categoria);
 
         PaginaContasPagarDto sem = await Listar(new FiltroContas { Categoria = FiltroContas.SemCategoria, Ordem = "vencimento" });
-        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.ErpId).ToArray());
         Assert.Null(sem.Itens[0].Categoria);
 
         // Categoria que o Previsio não tem na lista da empresa
         PaginaContasPagarDto naoIdentificada = await Listar(new FiltroContas { Categoria = FiltroContas.CategoriaNaoIdentificada });
-        Assert.Equal(new long[] { 5 }, naoIdentificada.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 5 }, naoIdentificada.Itens.Select(i => i.ErpId).ToArray());
         Assert.Equal(FiltroContas.CategoriaNaoIdentificada, naoIdentificada.Itens[0].Categoria);
     }
 
@@ -317,27 +317,27 @@ public class ContasPagarTests
         await _db.SaveChangesAsync();
 
         PaginaContasPagarDto boletos = await Listar(new FiltroContas { Forma = "BOLETO", Ordem = "vencimento" });
-        Assert.Equal(new long[] { 1, 2 }, boletos.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 2 }, boletos.Itens.Select(i => i.ErpId).ToArray());
         Assert.Equal("Boleto Itaú", boletos.Itens[1].FormaPagamento);
         Assert.Equal("Boleto", boletos.Itens[1].FormaGrupoNome);
         Assert.False(boletos.Itens[1].SaiSozinho);
 
         PaginaContasPagarDto sozinho = await Listar(new FiltroContas { Forma = FiltroContas.SaiSozinho });
         ContaPagarDto debito = Assert.Single(sozinho.Itens);
-        Assert.Equal(3, debito.BlingId);
+        Assert.Equal(3, debito.ErpId);
         Assert.True(debito.SaiSozinho);
         Assert.Equal(GruposFormaPagamento.DebitoAutomatico, debito.FormaGrupo);
 
         PaginaContasPagarDto aPagar = await Listar(new FiltroContas { Forma = FiltroContas.PrecisaPagar, Ordem = "vencimento" });
-        Assert.Equal(new long[] { 1, 2, 4, 5, 6 }, aPagar.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 1, 2, 4, 5, 6 }, aPagar.Itens.Select(i => i.ErpId).ToArray());
 
         PaginaContasPagarDto sem = await Listar(new FiltroContas { Forma = GruposFormaPagamento.Sem });
-        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 4 }, sem.Itens.Select(i => i.ErpId).ToArray());
         Assert.Null(sem.Itens[0].FormaPagamento);
         Assert.Equal("Sem forma", sem.Itens[0].FormaGrupoNome);
 
         PaginaContasPagarDto outras = await Listar(new FiltroContas { Forma = GruposFormaPagamento.Outras, Ordem = "vencimento" });
-        Assert.Equal(new long[] { 5, 6 }, outras.Itens.Select(i => i.BlingId).ToArray());
+        Assert.Equal(new long[] { 5, 6 }, outras.Itens.Select(i => i.ErpId).ToArray());
 
         Resultado<PaginaContasPagarDto> invalida = await Servico().ListarAsync(_rede.Id, new FiltroContas { Forma = "cheque" }, 1, CancellationToken.None);
         Assert.False(invalida.Sucesso);

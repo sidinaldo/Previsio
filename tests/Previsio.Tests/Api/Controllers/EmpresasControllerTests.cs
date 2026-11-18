@@ -53,13 +53,13 @@ public class EmpresasControllerTests
         Empresa empresa = await CadastrarEmpresaConectada();
 
         var dados = new AlteracaoEmpresaDto();
-        dados.BlingClientId = "app-novo";
-        dados.BlingClientSecret = "segredo-novo";
+        dados.ErpClientId = "app-novo";
+        dados.ErpClientSecret = "segredo-novo";
         ActionResult<EmpresaDto> resposta = await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
         Assert.NotNull(resposta.Value);
-        Assert.Equal("app-novo", resposta.Value!.BlingClientId);
-        Assert.True(resposta.Value.BlingClientSecretCadastrado);
+        Assert.Equal("app-novo", resposta.Value!.ErpClientId);
+        Assert.True(resposta.Value.ErpClientSecretCadastrado);
         Assert.NotEqual("segredo-novo", empresa.ErpClientSecretProtegido);
         Assert.Equal("segredo-novo", _protetor.Revelar(empresa.ErpClientSecretProtegido!));
     }
@@ -70,8 +70,8 @@ public class EmpresasControllerTests
         Empresa empresa = await CadastrarEmpresaConectada();
 
         var dados = new AlteracaoEmpresaDto();
-        dados.BlingClientId = "app-novo";
-        dados.BlingClientSecret = "segredo-novo";
+        dados.ErpClientId = "app-novo";
+        dados.ErpClientSecret = "segredo-novo";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
         Assert.False(empresa.ErpConectado);
@@ -84,8 +84,8 @@ public class EmpresasControllerTests
         Empresa empresa = await CadastrarEmpresaConectada();
 
         var dados = new AlteracaoEmpresaDto();
-        dados.BlingClientId = "app-antigo";
-        dados.BlingClientSecret = "segredo-regenerado";
+        dados.ErpClientId = "app-antigo";
+        dados.ErpClientSecret = "segredo-regenerado";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
         Assert.True(empresa.ErpConectado);
@@ -101,7 +101,7 @@ public class EmpresasControllerTests
         await _db.SaveChangesAsync();
 
         var dados = new AlteracaoEmpresaDto();
-        dados.BlingClientId = "app-novo";
+        dados.ErpClientId = "app-novo";
         ActionResult<EmpresaDto> resposta = await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
         Assert.IsType<BadRequestObjectResult>(resposta.Result);
@@ -113,7 +113,7 @@ public class EmpresasControllerTests
         Empresa empresa = await CadastrarEmpresaConectada();
 
         var dados = new AlteracaoEmpresaDto();
-        dados.BlingClientId = "";
+        dados.ErpClientId = "";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
         Assert.Null(empresa.ErpClientId);

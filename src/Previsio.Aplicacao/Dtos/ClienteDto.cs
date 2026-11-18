@@ -13,8 +13,10 @@ public class ClienteDto
     public string ImapUsuario { get; set; } = "";
 
     // Aplicativo privado do Bling da rede. O secret nunca é devolvido, só se está cadastrado.
-    public string? BlingClientId { get; set; }
-    public bool BlingClientSecretCadastrado { get; set; }
+    public string? ErpClientId { get; set; }
+    public bool ErpClientSecretCadastrado { get; set; }
+    // Nome do ERP nas telas da rede ("Bling"; "ERP" quando as empresas usam ERPs diferentes)
+    public string ErpNome { get; set; } = "";
 
     // "Contratado", "EmTeste" ou "TesteEncerrado"
     public string Contrato { get; set; } = "Contratado";
