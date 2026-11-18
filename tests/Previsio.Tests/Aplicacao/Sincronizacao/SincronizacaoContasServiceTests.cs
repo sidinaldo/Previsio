@@ -33,9 +33,9 @@ public class SincronizacaoContasServiceTests
         var empresa = new Empresa { ClienteId = rede.Id, Nome = "Loja " + cnpj, Cnpj = cnpj };
         if (conectada)
         {
-            empresa.BlingAccessTokenProtegido = _protetor.Proteger("access-valido");
-            empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
-            empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+            empresa.ErpAccessTokenProtegido = _protetor.Proteger("access-valido");
+            empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
+            empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         }
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
@@ -79,11 +79,11 @@ public class SincronizacaoContasServiceTests
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = empresa.Id, BlingId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoContaBling.EmAberto
+            EmpresaId = empresa.Id, ErpId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoConta.EmAberto
         });
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = empresa.Id, BlingId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoContaBling.EmAberto
+            EmpresaId = empresa.Id, ErpId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoConta.EmAberto
         });
         await _db.SaveChangesAsync();
 
@@ -92,12 +92,12 @@ public class SincronizacaoContasServiceTests
 
         await CriarServico(BlingComContas(contas)).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
-        List<ContaPagarSincronizada> locais = _db.ContasPagar.OrderBy(c => c.BlingId).ToList();
-        Assert.Equal(new long[] { 10, 12 }, locais.Select(c => c.BlingId).ToArray());
+        List<ContaPagarSincronizada> locais = _db.ContasPagar.OrderBy(c => c.ErpId).ToList();
+        Assert.Equal(new long[] { 10, 12 }, locais.Select(c => c.ErpId).ToArray());
         Assert.Equal(120m, locais[0].Valor);
-        Assert.Equal(SituacaoContaBling.Pago, locais[0].Situacao);
+        Assert.Equal(SituacaoConta.Pago, locais[0].Situacao);
         Assert.Equal(_hoje.AddDays(20), locais[1].Vencimento);
-        Assert.Equal(555, locais[1].BlingContatoId);
+        Assert.Equal(555, locais[1].ErpContatoId);
         Assert.NotNull(_db.Empresas.Single().UltimaSincronizacaoEm);
     }
 
@@ -109,13 +109,13 @@ public class SincronizacaoContasServiceTests
         // Vence daqui a um ano: fora da janela de 90 dias, não some por não vir na lista
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = empresa.Id, BlingId = 30, Vencimento = _hoje.AddDays(365), Valor = 10m, Situacao = SituacaoContaBling.EmAberto
+            EmpresaId = empresa.Id, ErpId = 30, Vencimento = _hoje.AddDays(365), Valor = 10m, Situacao = SituacaoConta.EmAberto
         });
         await _db.SaveChangesAsync();
 
         await CriarServico(BlingComContas("")).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
-        Assert.Single(_db.ContasPagar.Where(c => c.BlingId == 30));
+        Assert.Single(_db.ContasPagar.Where(c => c.ErpId == 30));
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class SincronizacaoContasServiceTests
     {
         Cliente rede = await CadastrarRede(true);
         Empresa expirada = await CadastrarEmpresa(rede, "98765432000110", true);
-        expirada.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(-1);
+        expirada.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(-1);
         Empresa outra = await CadastrarEmpresa(rede, "11222333000181", true);
         await _db.SaveChangesAsync();
 
@@ -196,8 +196,8 @@ public class SincronizacaoContasServiceTests
     {
         Cliente rede = await CadastrarRede(true);
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
-        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, BlingId = 50, Vencimento = _hoje.AddDays(2), Valor = 10m, Situacao = SituacaoContaBling.EmAberto });
-        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, BlingId = 51, Vencimento = _hoje.AddDays(3), Valor = 20m, Situacao = SituacaoContaBling.EmAberto });
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, ErpId = 50, Vencimento = _hoje.AddDays(2), Valor = 10m, Situacao = SituacaoConta.EmAberto });
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = empresa.Id, ErpId = 51, Vencimento = _hoje.AddDays(3), Valor = 20m, Situacao = SituacaoConta.EmAberto });
         await _db.SaveChangesAsync();
         string receber = "{\"id\":50,\"situacao\":2,\"vencimento\":\"" + Data(2) + "\",\"valor\":15,\"contato\":{\"id\":700,\"nome\":\"OFICINA DO ZE\"}},"
             + "{\"id\":52,\"situacao\":1,\"vencimento\":\"" + Data(10) + "\",\"valor\":800,\"contato\":{\"id\":701}},"
@@ -219,10 +219,10 @@ public class SincronizacaoContasServiceTests
 
         await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
-        List<ContaReceberSincronizada> contas = _db.ContasReceber.OrderBy(c => c.BlingId).ToList();
-        Assert.Equal(new long[] { 50, 52 }, contas.Select(c => c.BlingId).ToArray());
+        List<ContaReceberSincronizada> contas = _db.ContasReceber.OrderBy(c => c.ErpId).ToList();
+        Assert.Equal(new long[] { 50, 52 }, contas.Select(c => c.ErpId).ToArray());
         Assert.Equal(15m, contas[0].Valor);
-        Assert.Equal(SituacaoContaBling.Pago, contas[0].Situacao);
+        Assert.Equal(SituacaoConta.Pago, contas[0].Situacao);
         Assert.Equal("OFICINA DO ZE", contas[0].ClienteNome);
         Assert.Equal("AUTO PECAS BETA", contas[1].ClienteNome);
     }
@@ -278,7 +278,7 @@ public class SincronizacaoContasServiceTests
     {
         Cliente rede = await CadastrarRede(true);
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 20, Vencimento = _hoje.AddDays(3), Valor = 645m, Situacao = SituacaoContaBling.EmAberto });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, ErpId = 20, Vencimento = _hoje.AddDays(3), Valor = 645m, Situacao = SituacaoConta.EmAberto });
         await _db.SaveChangesAsync();
         // O Bling só devolve a paga quando a consulta pede situacoes[]=2
         var respostas = new RespostasFixas(requisicao =>
@@ -303,7 +303,7 @@ public class SincronizacaoContasServiceTests
         await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
         ContaPagarSincronizada conta = Assert.Single(_db.ContasPagar.Where(c => c.EmpresaId == empresa.Id));
-        Assert.Equal(SituacaoContaBling.Pago, conta.Situacao);
+        Assert.Equal(SituacaoConta.Pago, conta.Situacao);
         string consulta = Uri.UnescapeDataString(respostas.Chamadas.First(c => c.Contains("contas/pagar?")));
         for (int situacao = 1; situacao <= 5; situacao++)
         {
@@ -331,7 +331,7 @@ public class SincronizacaoContasServiceTests
         Cliente rede = await CadastrarRede(true);
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
         // Lista atualizada há uma hora: o job automático não busca de novo
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 1, Descricao = "Antiga", Tipo = 1, AtualizadaEm = DateTime.UtcNow.AddHours(-1) });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, ErpId = 1, Descricao = "Antiga", Tipo = 1, AtualizadaEm = DateTime.UtcNow.AddHours(-1) });
         await _db.SaveChangesAsync();
 
         RespostasFixas automatico = BlingComContas("");
@@ -372,10 +372,10 @@ public class SincronizacaoContasServiceTests
 
         await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
-        Assert.Equal(41, _db.ContasPagar.Single(c => c.BlingId == 10).FormaPagamentoBlingId);
-        Assert.Null(_db.ContasPagar.Single(c => c.BlingId == 11).FormaPagamentoBlingId);
-        Assert.Equal(GruposFormaPagamento.DebitoAutomatico, _db.FormasPagamento.Single(f => f.BlingId == 41).Grupo);
-        Assert.Equal(GruposFormaPagamento.Boleto, _db.FormasPagamento.Single(f => f.BlingId == 42).Grupo);
+        Assert.Equal(41, _db.ContasPagar.Single(c => c.ErpId == 10).FormaPagamentoErpId);
+        Assert.Null(_db.ContasPagar.Single(c => c.ErpId == 11).FormaPagamentoErpId);
+        Assert.Equal(GruposFormaPagamento.DebitoAutomatico, _db.FormasPagamento.Single(f => f.ErpId == 41).Grupo);
+        Assert.Equal(GruposFormaPagamento.Boleto, _db.FormasPagamento.Single(f => f.ErpId == 42).Grupo);
     }
 
     [Fact]
@@ -385,8 +385,8 @@ public class SincronizacaoContasServiceTests
         Empresa empresa = await CadastrarEmpresa(rede, "98765432000110", true);
         // Conferidas há 6 horas: dentro do prazo de reconferência (1 dia)
         DateTime conferidaHaPouco = DateTime.UtcNow.AddHours(-6);
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = conferidaHaPouco });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, BlingId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoContaBling.EmAberto, CategoriaBlingId = 7, CategoriaConferidaEm = conferidaHaPouco });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, ErpId = 10, Vencimento = _hoje.AddDays(5), Valor = 100m, Situacao = SituacaoConta.EmAberto, CategoriaErpId = 7, CategoriaConferidaEm = conferidaHaPouco });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = empresa.Id, ErpId = 11, Vencimento = _hoje.AddDays(6), Valor = 50m, Situacao = SituacaoConta.EmAberto, CategoriaErpId = 7, CategoriaConferidaEm = conferidaHaPouco });
         await _db.SaveChangesAsync();
         // A 10 mudou de valor; a 11 veio igual
         string contas = "{\"id\":10,\"situacao\":1,\"vencimento\":\"" + Data(5) + "\",\"valor\":130,\"contato\":{\"id\":555}},"
@@ -411,8 +411,8 @@ public class SincronizacaoContasServiceTests
 
         await CriarServico(respostas).SincronizarEmpresaAsync(empresa, CancellationToken.None);
 
-        Assert.Equal(8, _db.ContasPagar.Single(c => c.BlingId == 10).CategoriaBlingId);
-        Assert.Equal(7, _db.ContasPagar.Single(c => c.BlingId == 11).CategoriaBlingId);
+        Assert.Equal(8, _db.ContasPagar.Single(c => c.ErpId == 10).CategoriaErpId);
+        Assert.Equal(7, _db.ContasPagar.Single(c => c.ErpId == 11).CategoriaErpId);
         Assert.DoesNotContain(respostas.Chamadas, c => c.EndsWith("contas/pagar/11"));
     }
 }

@@ -23,7 +23,7 @@ public class FormasPagamentoServiceTests
 
     private Empresa Empresa(string nome)
     {
-        var empresa = new Empresa { ClienteId = _rede.Id, Nome = nome, Cnpj = "11222333000181", BlingRefreshTokenProtegido = "x" };
+        var empresa = new Empresa { ClienteId = _rede.Id, Nome = nome, Cnpj = "11222333000181", ErpRefreshTokenProtegido = "x" };
         _db.Empresas.Add(empresa);
         return empresa;
     }
@@ -32,7 +32,7 @@ public class FormasPagamentoServiceTests
     {
         _db.FormasPagamento.Add(new FormaPagamento
         {
-            EmpresaId = empresa.Id, BlingId = id, Descricao = nome, TipoPagamento = tipo, Situacao = situacao, Grupo = grupo
+            EmpresaId = empresa.Id, ErpId = id, Descricao = nome, TipoPagamento = tipo, Situacao = situacao, Grupo = grupo
         });
     }
 

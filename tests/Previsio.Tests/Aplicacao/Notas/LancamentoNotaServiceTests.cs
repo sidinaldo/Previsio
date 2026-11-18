@@ -35,9 +35,9 @@ public class LancamentoNotaServiceTests
         empresa.ClienteId = cliente.Id;
         empresa.Nome = "Filial Centro";
         empresa.Cnpj = "98765432000110";
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger("access-valido");
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger("access-valido");
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
 
@@ -124,7 +124,7 @@ public class LancamentoNotaServiceTests
     {
         NotaFiscal nota = await CadastrarNota();
         Empresa empresa = _db.Empresas.Single();
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
         await _db.SaveChangesAsync();
 
         var respostas = new RespostasFixas(_ => RespostasFixas.Json(
@@ -139,7 +139,7 @@ public class LancamentoNotaServiceTests
         Assert.Equal("48213", falha.NumeroNota);
 
         Assert.Equal(StatusNota.BlingDesconectado, nota.Status);
-        Assert.False(empresa.BlingConectado);
+        Assert.False(empresa.ErpConectado);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class LancamentoNotaServiceTests
     {
         NotaFiscal nota = await CadastrarNota();
         Empresa empresa = _db.Empresas.Single();
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddMinutes(-1);
         await _db.SaveChangesAsync();
 
         var respostas = new RespostasFixas(_ => throw new HttpRequestException("Sem rede"));
@@ -155,7 +155,7 @@ public class LancamentoNotaServiceTests
         bool blingRespondeu = await CriarServico(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.False(blingRespondeu);
-        Assert.True(empresa.BlingConectado);
+        Assert.True(empresa.ErpConectado);
         FalhaProcessamento falha = Assert.Single(_db.Falhas.ToList());
         Assert.Equal(EtapaFalha.RenovacaoToken, falha.Etapa);
     }

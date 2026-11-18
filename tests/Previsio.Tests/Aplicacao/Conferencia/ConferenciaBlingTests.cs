@@ -36,7 +36,7 @@ public class ConferenciaBlingTests
         return nota;
     }
 
-    private static ContaNoBling Conta(long id, decimal valor, int dia, int situacao = SituacaoContaBling.EmAberto)
+    private static ContaNoBling Conta(long id, decimal valor, int dia, int situacao = SituacaoConta.EmAberto)
     {
         return new ContaNoBling { Id = id, ContatoId = 555, Valor = valor, Vencimento = new DateTime(2026, 11, dia), Situacao = situacao };
     }
@@ -52,7 +52,7 @@ public class ConferenciaBlingTests
     public async Task Todas_as_parcelas_achadas_com_a_tolerancia_de_valor_e_cada_conta_uma_vez()
     {
         NotaFiscal nota = Nota((3240m, 12), (3240m, 26));
-        var contas = new List<ContaNoBling> { Conta(1, 3240.05m, 12), Conta(2, 3240m, 26), Conta(3, 3240m, 12, SituacaoContaBling.Cancelado) };
+        var contas = new List<ContaNoBling> { Conta(1, 3240.05m, 12), Conta(2, 3240m, 26), Conta(3, 3240m, 12, SituacaoConta.Cancelado) };
 
         ResultadoConferencia resultado = await ConferenciaBling.ConferirAsync(nota, contas, new RegrasConferencia(), SemDetalhe);
 
@@ -109,7 +109,7 @@ public class ConferenciaBlingTests
     {
         NotaFiscal nota = Nota();
         nota.ValorTotal = 907m;
-        var contas = new List<ContaNoBling> { new ContaNoBling { Id = 7, Valor = 907m, Vencimento = new DateTime(2026, 12, 6), Situacao = SituacaoContaBling.Pago } };
+        var contas = new List<ContaNoBling> { new ContaNoBling { Id = 7, Valor = 907m, Vencimento = new DateTime(2026, 12, 6), Situacao = SituacaoConta.Pago } };
 
         ResultadoConferencia resultado = await ConferenciaBling.ConferirAsync(nota, contas, new RegrasConferencia(), SemDetalhe);
 
@@ -123,16 +123,16 @@ public class ConferenciaBlingTests
     {
         var cliente = new Cliente();
         cliente.Nome = "Rede Alfa";
-        cliente.ConferirBlingAntesDeLancar = conferir;
+        cliente.ConferirErpAntesDeLancar = conferir;
         _db.Clientes.Add(cliente);
         await _db.SaveChangesAsync();
         var empresa = new Empresa();
         empresa.ClienteId = cliente.Id;
         empresa.Nome = "Filial Centro";
         empresa.Cnpj = "98765432000110";
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger("access-valido");
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger("access-valido");
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh-valido");
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
         NotaFiscal nota = Nota((3240m, 12), (3240m, 26));
@@ -187,10 +187,10 @@ public class ConferenciaBlingTests
         Assert.Equal(StatusNota.LancadaManualmente, depois.Status);
         Assert.Equal(ConferenciaBlingService.ResolvidaPor, depois.ResolvidaManualmentePor);
         Assert.Equal("Encontrada no Bling, lançada à mão (conta 71, 72).", depois.ObservacaoResolucao);
-        Assert.Equal(new List<long?> { 71, 72 }, depois.Parcelas.OrderBy(p => p.Vencimento).Select(p => p.BlingContaPagarId).ToList());
+        Assert.Equal(new List<long?> { 71, 72 }, depois.Parcelas.OrderBy(p => p.Vencimento).Select(p => p.ErpContaPagarId).ToList());
         Assert.DoesNotContain(respostas.Chamadas, c => c.StartsWith("POST") && c.Contains("contas/pagar"));
         // As contas achadas já entram no painel, sem esperar a sincronização
-        Assert.Equal(new long[] { 71, 72 }, _db.ContasPagar.OrderBy(c => c.BlingId).Select(c => c.BlingId).ToArray());
+        Assert.Equal(new long[] { 71, 72 }, _db.ContasPagar.OrderBy(c => c.ErpId).Select(c => c.ErpId).ToArray());
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public class ConferenciaBlingTests
         // A sincronização já tinha trazido a 9002 (não duplica)
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = nota.EmpresaId!.Value, BlingId = 9002, Vencimento = new DateTime(2026, 11, 26), Valor = 3240m, Situacao = SituacaoContaBling.Pago
+            EmpresaId = nota.EmpresaId!.Value, ErpId = 9002, Vencimento = new DateTime(2026, 11, 26), Valor = 3240m, Situacao = SituacaoConta.Pago
         });
         await _db.SaveChangesAsync();
         int proximoId = 9000;
@@ -249,22 +249,22 @@ public class ConferenciaBlingTests
 
         await Job(respostas).LancarAsync(nota.Id, CancellationToken.None);
 
-        List<ContaPagarSincronizada> contas = _db.ContasPagar.OrderBy(c => c.BlingId).ToList();
-        Assert.Equal(new long[] { 9001, 9002 }, contas.Select(c => c.BlingId).ToArray());
+        List<ContaPagarSincronizada> contas = _db.ContasPagar.OrderBy(c => c.ErpId).ToList();
+        Assert.Equal(new long[] { 9001, 9002 }, contas.Select(c => c.ErpId).ToArray());
         Assert.Equal(new DateTime(2026, 11, 12), contas[0].Vencimento);
         Assert.Equal(3240m, contas[0].Valor);
-        Assert.Equal(SituacaoContaBling.EmAberto, contas[0].Situacao);
-        Assert.Equal(555, contas[0].BlingContatoId);
+        Assert.Equal(SituacaoConta.EmAberto, contas[0].Situacao);
+        Assert.Equal(555, contas[0].ErpContatoId);
         Assert.Equal("ROTA SUL PECAS LTDA", contas[0].FornecedorNome);
         // A que já existia fica como a sincronização trouxe
-        Assert.Equal(SituacaoContaBling.Pago, contas[1].Situacao);
+        Assert.Equal(SituacaoConta.Pago, contas[1].Situacao);
     }
 
     [Fact]
     public async Task Ao_lancar_manda_a_categoria_da_regra_e_guarda_na_conta()
     {
         NotaFiscal nota = await CadastrarNota(false);
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = nota.EmpresaId!.Value, BlingId = 11, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = nota.EmpresaId!.Value, ErpId = 11, Descricao = "Fretes", Tipo = 1 });
         _db.RegrasCategoria.Add(new RegraCategoria { ClienteId = nota.ClienteId, CnpjFornecedor = "12345678000199", Categoria = "Fretes" });
         await _db.SaveChangesAsync();
         var corpos = new List<string>();
@@ -291,7 +291,7 @@ public class ConferenciaBlingTests
         Assert.All(corpos, corpo => Assert.Contains("\"categoria\":{\"id\":11}", corpo));
         Assert.All(_db.ContasPagar.ToList(), conta =>
         {
-            Assert.Equal(11, conta.CategoriaBlingId);
+            Assert.Equal(11, conta.CategoriaErpId);
             Assert.NotNull(conta.CategoriaConferidaEm);
         });
     }
@@ -331,7 +331,7 @@ public class ConferenciaBlingTests
 
         Assert.Equal(2, corpos.Count);
         Assert.All(corpos, corpo => Assert.Contains("\"formaPagamento\":{\"id\":32}", corpo));
-        Assert.All(_db.ContasPagar.ToList(), conta => Assert.Equal(32, conta.FormaPagamentoBlingId));
+        Assert.All(_db.ContasPagar.ToList(), conta => Assert.Equal(32, conta.FormaPagamentoErpId));
         Assert.Equal(2, _db.FormasPagamento.Count());
     }
 
@@ -375,7 +375,7 @@ public class ConferenciaBlingTests
         Assert.True(lancou);
         Assert.Equal(StatusNota.Lancada, _db.NotasFiscais.Single().Status);
         Assert.Equal(1, respostas.Chamadas.Count(c => c.Contains("oauth/token")));
-        Assert.Equal("access-novo", _protetor.Revelar(_db.Empresas.Single().BlingAccessTokenProtegido!));
+        Assert.Equal("access-novo", _protetor.Revelar(_db.Empresas.Single().ErpAccessTokenProtegido!));
         Assert.Empty(_db.Falhas);
     }
 
@@ -387,7 +387,7 @@ public class ConferenciaBlingTests
         await Job(BlingQueRevogouOToken(false)).LancarAsync(nota.Id, CancellationToken.None);
 
         Assert.Equal(StatusNota.BlingDesconectado, _db.NotasFiscais.Single().Status);
-        Assert.False(_db.Empresas.Single().BlingConectado);
+        Assert.False(_db.Empresas.Single().ErpConectado);
         FalhaProcessamento falha = Assert.Single(_db.Falhas);
         Assert.Equal(EtapaFalha.RenovacaoToken, falha.Etapa);
     }
@@ -400,8 +400,8 @@ public class ConferenciaBlingTests
         NotaFiscal nota = await CadastrarNota(true);
         nota.Status = StatusNota.Erro;
         nota.Tentativas = RegrasLancamento.MaximoTentativas;
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, BlingId = 71, BlingContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 12), Situacao = 1 });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, BlingId = 72, BlingContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 26), Situacao = 1 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, ErpId = 71, ErpContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 12), Situacao = 1 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = nota.EmpresaId!.Value, ErpId = 72, ErpContatoId = 555, Valor = 3240m, Vencimento = new DateTime(2026, 11, 26), Situacao = 1 });
         await _db.SaveChangesAsync();
         Empresa empresa = _db.Empresas.Single();
 
@@ -435,12 +435,12 @@ public class ConferenciaBlingTests
         Resultado<ConferenciaBlingDto> ok = await configuracao.AlterarAsync(nota.ClienteId, dados, CancellationToken.None);
         Assert.True(ok.Sucesso);
         Cliente rede = _db.Clientes.Single(c => c.Id == nota.ClienteId);
-        Assert.False(rede.ConferirBlingAntesDeLancar);
+        Assert.False(rede.ConferirErpAntesDeLancar);
         Assert.True(rede.ConferenciaExigeNumeroNota);
         Assert.Equal(0.5m, rede.ConferenciaToleranciaValor);
         Assert.Equal(2, rede.ConferenciaToleranciaDias);
         Assert.False(rede.ConferenciaFecharPendentes);
-        Assert.True(new Cliente().ConferirBlingAntesDeLancar);
+        Assert.True(new Cliente().ConferirErpAntesDeLancar);
         Assert.Equal(0.10m, new Cliente().ConferenciaToleranciaValor);
     }
 }

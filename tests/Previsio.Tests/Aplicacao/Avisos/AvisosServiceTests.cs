@@ -45,9 +45,9 @@ public class AvisosServiceTests
         _conectada.ClienteId = _rede.Id;
         _conectada.Nome = "Auto Center Centro";
         _conectada.Cnpj = "11222333000262";
-        _conectada.BlingAccessTokenProtegido = _protetor.Proteger("token");
-        _conectada.BlingRefreshTokenProtegido = _protetor.Proteger("refresh");
-        _conectada.BlingTokenExpiraEm = DateTime.UtcNow.AddDays(30);
+        _conectada.ErpAccessTokenProtegido = _protetor.Proteger("token");
+        _conectada.ErpRefreshTokenProtegido = _protetor.Proteger("refresh");
+        _conectada.ErpTokenExpiraEm = DateTime.UtcNow.AddDays(30);
         _db.Empresas.Add(_conectada);
 
         _admin = Usuario("admin@softio.com.br", PerfilUsuario.Admin, null);

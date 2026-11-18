@@ -1,7 +1,7 @@
 namespace Previsio.Core.Entidades;
 
 /// <summary>
-/// Cada CNPJ do cliente. Cada empresa tem a sua própria conta no Bling.
+/// Cada CNPJ do cliente. Cada empresa tem a sua própria conta no ERP (hoje, o Bling).
 /// </summary>
 public class Empresa : ICaixaEmail
 {
@@ -25,15 +25,18 @@ public class Empresa : ICaixaEmail
     public DateTime? ImapUltimaFalhaConexaoEm { get; set; }
     public string? ImapUltimoErroConexao { get; set; }
 
-    // Aplicativo privado criado dentro da conta Bling desta empresa.
-    // Vazio: usa o aplicativo da rede (Cliente) e, se a rede também não tiver, o global do Previsio.
-    public string? BlingClientId { get; set; }
-    public string? BlingClientSecretProtegido { get; set; }
+    // ERP desta empresa: define com qual integração as contas são lançadas e sincronizadas
+    public TipoErp Erp { get; set; } = TipoErp.Bling;
 
-    // Tokens OAuth do Bling (criptografados com Data Protection)
-    public string? BlingAccessTokenProtegido { get; set; }
-    public string? BlingRefreshTokenProtegido { get; set; }
-    public DateTime? BlingTokenExpiraEm { get; set; }
+    // Aplicativo privado criado dentro da conta do ERP desta empresa.
+    // Vazio: usa o aplicativo da rede (Cliente) e, se a rede também não tiver, o global do Previsio.
+    public string? ErpClientId { get; set; }
+    public string? ErpClientSecretProtegido { get; set; }
+
+    // Tokens OAuth do ERP (criptografados com Data Protection)
+    public string? ErpAccessTokenProtegido { get; set; }
+    public string? ErpRefreshTokenProtegido { get; set; }
+    public DateTime? ErpTokenExpiraEm { get; set; }
 
     public DateTime? UltimaSincronizacaoEm { get; set; }
 
@@ -59,9 +62,9 @@ public class Empresa : ICaixaEmail
 
     public bool Ativo { get; set; } = true;
 
-    public bool BlingConectado
+    public bool ErpConectado
     {
-        get { return !string.IsNullOrEmpty(BlingRefreshTokenProtegido); }
+        get { return !string.IsNullOrEmpty(ErpRefreshTokenProtegido); }
     }
 
     public bool TemCertificado

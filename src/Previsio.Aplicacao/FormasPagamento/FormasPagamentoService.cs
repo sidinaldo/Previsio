@@ -200,14 +200,14 @@ public class FormasPagamentoService
     private async Task<FormasPagamentoDaRede> CarregarRedeAsync(int clienteId, CancellationToken cancelamento)
     {
         List<Empresa> empresas = await _empresas.ConsultarSomenteLeitura()
-            .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null)
+            .Where(e => e.ClienteId == clienteId && e.Ativo && e.ErpRefreshTokenProtegido != null)
             .OrderBy(e => e.Nome)
             .ToListAsync(cancelamento);
         List<int> ids = empresas.Select(e => e.Id).ToList();
         List<FormaPagamento> formas = await _formas.ConsultarSomenteLeitura()
             .Where(f => ids.Contains(f.EmpresaId) && f.Situacao == 1)
             .OrderBy(f => f.EmpresaId)
-            .ThenBy(f => f.BlingId)
+            .ThenBy(f => f.ErpId)
             .ToListAsync(cancelamento);
         return new FormasPagamentoDaRede(empresas, formas);
     }

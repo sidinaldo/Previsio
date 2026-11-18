@@ -191,7 +191,7 @@ public class NotasServiceTests
         int n = 1;
         foreach (long? conta in contas)
         {
-            nota.Parcelas.Add(new ParcelaNota { NumeroParcela = n.ToString("000"), Vencimento = DateTime.Today.AddDays(n), Valor = 10m, BlingContaPagarId = conta });
+            nota.Parcelas.Add(new ParcelaNota { NumeroParcela = n.ToString("000"), Vencimento = DateTime.Today.AddDays(n), Valor = 10m, ErpContaPagarId = conta });
             n++;
         }
         _db.NotasFiscais.Add(nota);
@@ -202,7 +202,7 @@ public class NotasServiceTests
     {
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = empresa.Id, BlingId = blingId, CategoriaBlingId = categoria,
+            EmpresaId = empresa.Id, ErpId = blingId, CategoriaErpId = categoria,
             CategoriaConferidaEm = conferida ? DateTime.UtcNow : null
         });
     }
@@ -213,8 +213,8 @@ public class NotasServiceTests
         var empresa = new Empresa { ClienteId = 1, Nome = "Matriz", Cnpj = "11222333000181" };
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 7, Descricao = "Compras de Mercadorias", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, BlingId = 8, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, ErpId = 7, Descricao = "Compras de Mercadorias", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = empresa.Id, ErpId = 8, Descricao = "Fretes", Tipo = 1 });
         Conta(empresa, 101, 7, true);
         Conta(empresa, 102, 7, true);
         Conta(empresa, 201, null, true);

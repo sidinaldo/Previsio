@@ -36,11 +36,11 @@ public class EmpresasControllerTests
         empresa.ClienteId = cliente.Id;
         empresa.Nome = "Filial Centro";
         empresa.Cnpj = "98765432000110";
-        empresa.BlingClientId = "app-antigo";
-        empresa.BlingClientSecretProtegido = _protetor.Proteger("segredo-antigo");
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger("access");
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh");
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+        empresa.ErpClientId = "app-antigo";
+        empresa.ErpClientSecretProtegido = _protetor.Proteger("segredo-antigo");
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger("access");
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh");
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
         return empresa;
@@ -59,8 +59,8 @@ public class EmpresasControllerTests
         Assert.NotNull(resposta.Value);
         Assert.Equal("app-novo", resposta.Value!.BlingClientId);
         Assert.True(resposta.Value.BlingClientSecretCadastrado);
-        Assert.NotEqual("segredo-novo", empresa.BlingClientSecretProtegido);
-        Assert.Equal("segredo-novo", _protetor.Revelar(empresa.BlingClientSecretProtegido!));
+        Assert.NotEqual("segredo-novo", empresa.ErpClientSecretProtegido);
+        Assert.Equal("segredo-novo", _protetor.Revelar(empresa.ErpClientSecretProtegido!));
     }
 
     [Fact]
@@ -73,8 +73,8 @@ public class EmpresasControllerTests
         dados.BlingClientSecret = "segredo-novo";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
-        Assert.False(empresa.BlingConectado);
-        Assert.Null(empresa.BlingAccessTokenProtegido);
+        Assert.False(empresa.ErpConectado);
+        Assert.Null(empresa.ErpAccessTokenProtegido);
     }
 
     [Fact]
@@ -87,16 +87,16 @@ public class EmpresasControllerTests
         dados.BlingClientSecret = "segredo-regenerado";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
-        Assert.True(empresa.BlingConectado);
-        Assert.Equal("segredo-regenerado", _protetor.Revelar(empresa.BlingClientSecretProtegido!));
+        Assert.True(empresa.ErpConectado);
+        Assert.Equal("segredo-regenerado", _protetor.Revelar(empresa.ErpClientSecretProtegido!));
     }
 
     [Fact]
     public async Task ClientIdSemSecret_EhRecusado()
     {
         Empresa empresa = await CadastrarEmpresaConectada();
-        empresa.BlingClientId = null;
-        empresa.BlingClientSecretProtegido = null;
+        empresa.ErpClientId = null;
+        empresa.ErpClientSecretProtegido = null;
         await _db.SaveChangesAsync();
 
         var dados = new AlteracaoEmpresaDto();
@@ -115,9 +115,9 @@ public class EmpresasControllerTests
         dados.BlingClientId = "";
         await CriarController(empresa.ClienteId).Alterar(empresa.Id, dados, CancellationToken.None);
 
-        Assert.Null(empresa.BlingClientId);
-        Assert.Null(empresa.BlingClientSecretProtegido);
-        Assert.False(empresa.BlingConectado);
+        Assert.Null(empresa.ErpClientId);
+        Assert.Null(empresa.ErpClientSecretProtegido);
+        Assert.False(empresa.ErpConectado);
 
         BlingClient bling = BlingDeTeste.Criar(new RespostasFixas(_ => new HttpResponseMessage()));
         var tokens = ServicosDeTeste.TokenBlingService(bling, _db, _protetor, NullLogger<TokenBlingService>.Instance);

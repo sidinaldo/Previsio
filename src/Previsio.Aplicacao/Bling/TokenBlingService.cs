@@ -34,21 +34,21 @@ public class TokenBlingService
 
     public async Task<string> ObterAccessTokenAsync(Empresa empresa, CancellationToken cancelamento)
     {
-        if (!empresa.BlingConectado)
+        if (!empresa.ErpConectado)
         {
             throw new EmpresaDesconectadaException("A empresa " + empresa.Nome + " não está conectada ao Bling.");
         }
 
-        bool tokenValido = empresa.BlingAccessTokenProtegido != null
-            && empresa.BlingTokenExpiraEm.HasValue
-            && empresa.BlingTokenExpiraEm.Value > DateTime.UtcNow.Add(MargemRenovacao);
+        bool tokenValido = empresa.ErpAccessTokenProtegido != null
+            && empresa.ErpTokenExpiraEm.HasValue
+            && empresa.ErpTokenExpiraEm.Value > DateTime.UtcNow.Add(MargemRenovacao);
 
         if (tokenValido)
         {
-            return _protetor.Revelar(empresa.BlingAccessTokenProtegido!);
+            return _protetor.Revelar(empresa.ErpAccessTokenProtegido!);
         }
 
-        string refreshToken = _protetor.Revelar(empresa.BlingRefreshTokenProtegido!);
+        string refreshToken = _protetor.Revelar(empresa.ErpRefreshTokenProtegido!);
 
         TokenBling novoToken;
         try
@@ -69,9 +69,9 @@ public class TokenBlingService
             }
 
             // Refresh token revogado ou expirado: o cliente precisa reconectar
-            empresa.BlingAccessTokenProtegido = null;
-            empresa.BlingRefreshTokenProtegido = null;
-            empresa.BlingTokenExpiraEm = null;
+            empresa.ErpAccessTokenProtegido = null;
+            empresa.ErpRefreshTokenProtegido = null;
+            empresa.ErpTokenExpiraEm = null;
             await _clientes.SalvarAsync(cancelamento);
 
             throw new EmpresaDesconectadaException(
@@ -93,7 +93,7 @@ public class TokenBlingService
     public Task<string> RenovarAposRecusaAsync(Empresa empresa, CancellationToken cancelamento)
     {
         _logger.LogWarning("O Bling recusou o token da empresa {EmpresaId} antes de vencer; renovando", empresa.Id);
-        empresa.BlingTokenExpiraEm = null;
+        empresa.ErpTokenExpiraEm = null;
         return ObterAccessTokenAsync(empresa, cancelamento);
     }
 
@@ -103,9 +103,9 @@ public class TokenBlingService
     /// </summary>
     public async Task<CredenciaisBling> CredenciaisAsync(Empresa empresa, CancellationToken cancelamento)
     {
-        if (!string.IsNullOrWhiteSpace(empresa.BlingClientId))
+        if (!string.IsNullOrWhiteSpace(empresa.ErpClientId))
         {
-            return Montar(empresa.BlingClientId, empresa.BlingClientSecretProtegido);
+            return Montar(empresa.ErpClientId, empresa.ErpClientSecretProtegido);
         }
 
         Cliente? rede = empresa.Cliente;
@@ -113,9 +113,9 @@ public class TokenBlingService
         {
             rede = await _clientes.Consultar().FirstOrDefaultAsync(c => c.Id == empresa.ClienteId, cancelamento);
         }
-        if (rede != null && !string.IsNullOrWhiteSpace(rede.BlingClientId))
+        if (rede != null && !string.IsNullOrWhiteSpace(rede.ErpClientId))
         {
-            return Montar(rede.BlingClientId, rede.BlingClientSecretProtegido);
+            return Montar(rede.ErpClientId, rede.ErpClientSecretProtegido);
         }
 
         return _bling.CredenciaisPadrao;
@@ -134,9 +134,9 @@ public class TokenBlingService
 
     public void SalvarToken(Empresa empresa, TokenBling token)
     {
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger(token.AccessToken);
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger(token.RefreshToken);
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddSeconds(token.ExpiraEmSegundos);
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger(token.AccessToken);
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger(token.RefreshToken);
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddSeconds(token.ExpiraEmSegundos);
     }
 
     public static string IdentificadorConta(Empresa empresa)

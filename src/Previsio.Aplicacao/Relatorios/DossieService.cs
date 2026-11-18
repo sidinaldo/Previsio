@@ -145,11 +145,11 @@ public class DossieService
         DateTime fimDoDia = fim.AddDays(1);
         List<ContaPagarSincronizada> contasPeriodo = await _contas.ConsultarSomenteLeitura()
             .Where(c => ids.Contains(c.EmpresaId) && c.Vencimento >= inicio && c.Vencimento < fimDoDia
-                && c.Situacao != SituacaoContaBling.Devolvido && c.Situacao != SituacaoContaBling.Cancelado)
+                && c.Situacao != SituacaoConta.Devolvido && c.Situacao != SituacaoConta.Cancelado)
             .ToListAsync(cancelamento);
         List<ContaReceberSincronizada> receberPeriodo = await _contasReceber.ConsultarSomenteLeitura()
             .Where(c => ids.Contains(c.EmpresaId) && c.Vencimento >= inicio && c.Vencimento < fimDoDia
-                && c.Situacao != SituacaoContaBling.Devolvido && c.Situacao != SituacaoContaBling.Cancelado)
+                && c.Situacao != SituacaoConta.Devolvido && c.Situacao != SituacaoConta.Cancelado)
             .ToListAsync(cancelamento);
 
         // 2) Auditoria
@@ -161,7 +161,7 @@ public class DossieService
             .ToListAsync(cancelamento);
         List<ContaPagarSincronizada> emAberto = await _contas.ConsultarSomenteLeitura()
             .Where(c => ids.Contains(c.EmpresaId)
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago))
             .ToListAsync(cancelamento);
 
         var auditoria = new AuditoriaLancamentosDto();
@@ -184,12 +184,12 @@ public class DossieService
         var lista = await _categorias.ConsultarSomenteLeitura()
             .Where(k => ids.Contains(k.EmpresaId))
             .OrderBy(k => k.EmpresaId)
-            .ThenBy(k => k.BlingId)
-            .Select(k => new { k.EmpresaId, k.BlingId, k.Descricao })
+            .ThenBy(k => k.ErpId)
+            .Select(k => new { k.EmpresaId, k.ErpId, k.Descricao })
             .ToListAsync(cancelamento);
         foreach (var categoria in lista)
         {
-            nomesCategorias[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao;
+            nomesCategorias[categoria.EmpresaId + ":" + categoria.ErpId] = categoria.Descricao;
         }
         dossie.Comparativo = CalculoDossie.Comparativo(empresas, contasPeriodo, receberPeriodo, nomesCategorias, _opcoes.TamanhoRankingValido());
 

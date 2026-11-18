@@ -39,9 +39,9 @@ public class CategoriaLancamentoServiceTests
         _empresa = new Empresa { ClienteId = _rede.Id, Nome = "Loja", Cnpj = "11222333000181" };
         _db.Empresas.Add(_empresa);
         await _db.SaveChangesAsync();
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, BlingId = 11, Descricao = "Fretes", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, BlingId = 12, Descricao = "Compras de mercadorias", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, BlingId = 20, Descricao = "Peças", Tipo = 2 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, ErpId = 11, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, ErpId = 12, Descricao = "Compras de mercadorias", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _empresa.Id, ErpId = 20, Descricao = "Peças", Tipo = 2 });
         _nota = new NotaFiscal { ClienteId = _rede.Id, EmpresaId = _empresa.Id, CnpjFornecedor = "12.345.678/0001-99", NomeFornecedor = "ROTA SUL" };
         await _db.SaveChangesAsync();
     }
@@ -76,9 +76,9 @@ public class CategoriaLancamentoServiceTests
     public async Task Sem_regra_aprende_com_a_ultima_conta_do_fornecedor_no_Bling()
     {
         await Cadastrar("Compras de mercadorias");
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 1, BlingContatoId = Contato, CategoriaBlingId = 12, CategoriaConferidaEm = DateTime.UtcNow.AddDays(-5) });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 2, BlingContatoId = Contato, CategoriaBlingId = 11, CategoriaConferidaEm = DateTime.UtcNow.AddDays(-1) });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 3, BlingContatoId = 999, CategoriaBlingId = 12, CategoriaConferidaEm = DateTime.UtcNow });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 1, ErpContatoId = Contato, CategoriaErpId = 12, CategoriaConferidaEm = DateTime.UtcNow.AddDays(-5) });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 2, ErpContatoId = Contato, CategoriaErpId = 11, CategoriaConferidaEm = DateTime.UtcNow.AddDays(-1) });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 3, ErpContatoId = 999, CategoriaErpId = 12, CategoriaConferidaEm = DateTime.UtcNow });
         await _db.SaveChangesAsync();
 
         Assert.Equal(11, await Escolher());

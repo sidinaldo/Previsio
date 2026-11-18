@@ -20,8 +20,8 @@ public static class ClienteMapeamento
         dto.ImapPorta = cliente.ImapPorta;
         dto.ImapSsl = cliente.ImapSsl;
         dto.ImapUsuario = cliente.ImapUsuario;
-        dto.BlingClientId = cliente.BlingClientId;
-        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(cliente.BlingClientSecretProtegido);
+        dto.BlingClientId = cliente.ErpClientId;
+        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(cliente.ErpClientSecretProtegido);
         dto.Contrato = PeriodoTeste.Situacao(cliente, agoraUtc);
         if (cliente.Contrato == SituacaoContrato.EmTeste && cliente.TesteTerminaEm.HasValue)
         {

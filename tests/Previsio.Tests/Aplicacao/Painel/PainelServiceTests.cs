@@ -29,7 +29,7 @@ public class PainelServiceTests
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresaId;
-        conta.BlingId = blingId;
+        conta.ErpId = blingId;
         conta.Vencimento = vencimento;
         conta.Valor = valor;
         conta.Situacao = situacao;
@@ -52,11 +52,11 @@ public class PainelServiceTests
     {
         Empresa empresa = await CadastrarEmpresa(1, "Matriz", true);
         DateTime amanha = RelogioBrasil.Hoje().AddDays(1);
-        Conta(empresa.Id, 1, amanha, 100m, SituacaoContaBling.EmAberto);
-        Conta(empresa.Id, 2, amanha, 50m, SituacaoContaBling.ParcialmentePago);
-        Conta(empresa.Id, 3, amanha, 999m, SituacaoContaBling.Pago);
-        Conta(empresa.Id, 4, amanha.AddDays(2), 30m, SituacaoContaBling.EmAberto);
-        Conta(empresa.Id, 5, amanha.AddDays(60), 70m, SituacaoContaBling.EmAberto);
+        Conta(empresa.Id, 1, amanha, 100m, SituacaoConta.EmAberto);
+        Conta(empresa.Id, 2, amanha, 50m, SituacaoConta.ParcialmentePago);
+        Conta(empresa.Id, 3, amanha, 999m, SituacaoConta.Pago);
+        Conta(empresa.Id, 4, amanha.AddDays(2), 30m, SituacaoConta.EmAberto);
+        Conta(empresa.Id, 5, amanha.AddDays(60), 70m, SituacaoConta.EmAberto);
         await _db.SaveChangesAsync();
 
         List<VencimentoDiaDto> dias = await ServicosDeTeste.Painel(_db).VencimentosAsync(empresa.Id, 30, CancellationToken.None);
@@ -75,9 +75,9 @@ public class PainelServiceTests
         Empresa inativa = await CadastrarEmpresa(1, "Filial antiga", false);
         Empresa outroCliente = await CadastrarEmpresa(2, "Outra rede", true);
         DateTime amanha = RelogioBrasil.Hoje().AddDays(1);
-        Conta(ativa.Id, 1, amanha, 100m, SituacaoContaBling.EmAberto);
-        Conta(inativa.Id, 2, amanha, 200m, SituacaoContaBling.EmAberto);
-        Conta(outroCliente.Id, 3, amanha, 400m, SituacaoContaBling.EmAberto);
+        Conta(ativa.Id, 1, amanha, 100m, SituacaoConta.EmAberto);
+        Conta(inativa.Id, 2, amanha, 200m, SituacaoConta.EmAberto);
+        Conta(outroCliente.Id, 3, amanha, 400m, SituacaoConta.EmAberto);
         await _db.SaveChangesAsync();
 
         ResumoPainel resumo = await ServicosDeTeste.Painel(_db).ResumoAsync(1, 30, CancellationToken.None);
@@ -116,7 +116,7 @@ public class PainelServiceTests
         await _db.SaveChangesAsync();
         Empresa matriz = await CadastrarEmpresa(rede.Id, "Matriz", true);
         DateTime amanha = RelogioBrasil.Hoje().AddDays(1);
-        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = matriz.Id, BlingId = 1, Vencimento = amanha, Valor = 500m, Situacao = SituacaoContaBling.EmAberto });
+        _db.ContasReceber.Add(new ContaReceberSincronizada { EmpresaId = matriz.Id, ErpId = 1, Vencimento = amanha, Valor = 500m, Situacao = SituacaoConta.EmAberto });
         await _db.SaveChangesAsync();
 
         ResumoPainel ligado = await ServicosDeTeste.Painel(_db).ResumoAsync(rede.Id, 30, CancellationToken.None);

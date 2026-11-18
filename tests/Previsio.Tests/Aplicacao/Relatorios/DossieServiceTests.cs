@@ -28,20 +28,20 @@ public class DossieServiceTests
         _db.Empresas.Add(_matriz);
         _db.Empresas.Add(new Empresa { ClienteId = _rede.Id, Nome = "Inativa", Cnpj = "11222333000262", Ativo = false });
         await _db.SaveChangesAsync();
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _matriz.Id, BlingId = 7, Descricao = "Compras de Mercadorias", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _matriz.Id, ErpId = 7, Descricao = "Compras de Mercadorias", Tipo = 1 });
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = _matriz.Id, BlingId = 1, Vencimento = _hoje.AddDays(2), Valor = 1000m, Situacao = SituacaoContaBling.EmAberto,
-            FornecedorNome = "ALFA", CategoriaBlingId = 7, CategoriaConferidaEm = DateTime.UtcNow
+            EmpresaId = _matriz.Id, ErpId = 1, Vencimento = _hoje.AddDays(2), Valor = 1000m, Situacao = SituacaoConta.EmAberto,
+            FornecedorNome = "ALFA", CategoriaErpId = 7, CategoriaConferidaEm = DateTime.UtcNow
         });
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = _matriz.Id, BlingId = 2, Vencimento = _hoje.AddDays(-3), Valor = 250m, Situacao = SituacaoContaBling.EmAberto,
+            EmpresaId = _matriz.Id, ErpId = 2, Vencimento = _hoje.AddDays(-3), Valor = 250m, Situacao = SituacaoConta.EmAberto,
             FornecedorNome = "BETA", CategoriaConferidaEm = DateTime.UtcNow
         });
         _db.ContasPagar.Add(new ContaPagarSincronizada
         {
-            EmpresaId = _matriz.Id, BlingId = 3, Vencimento = _hoje.AddDays(1), Valor = 999m, Situacao = SituacaoContaBling.Cancelado
+            EmpresaId = _matriz.Id, ErpId = 3, Vencimento = _hoje.AddDays(1), Valor = 999m, Situacao = SituacaoConta.Cancelado
         });
         _db.NotasFiscais.Add(new NotaFiscal { ClienteId = _rede.Id, ChaveAcesso = "1", Status = StatusNota.Lancada, RecebidaEm = _hoje, ValorTotal = 1000m });
         _db.NotasFiscais.Add(new NotaFiscal { ClienteId = _rede.Id, ChaveAcesso = "2", Status = StatusNota.Erro, RecebidaEm = _hoje, ValorTotal = 80m });

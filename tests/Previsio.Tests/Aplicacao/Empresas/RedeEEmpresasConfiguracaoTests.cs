@@ -26,10 +26,10 @@ public class RedeEEmpresasConfiguracaoTests
     {
         var rede = new Cliente();
         rede.Nome = "Rede Alfa";
-        rede.BlingClientId = clientId;
+        rede.ErpClientId = clientId;
         if (secret != null)
         {
-            rede.BlingClientSecretProtegido = _protetor.Proteger(secret);
+            rede.ErpClientSecretProtegido = _protetor.Proteger(secret);
         }
         _db.Clientes.Add(rede);
         await _db.SaveChangesAsync();
@@ -44,12 +44,12 @@ public class RedeEEmpresasConfiguracaoTests
         empresa.Cnpj = cnpj;
         if (clientIdProprio != null)
         {
-            empresa.BlingClientId = clientIdProprio;
-            empresa.BlingClientSecretProtegido = _protetor.Proteger("segredo-proprio");
+            empresa.ErpClientId = clientIdProprio;
+            empresa.ErpClientSecretProtegido = _protetor.Proteger("segredo-proprio");
         }
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger("access");
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh");
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger("access");
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh");
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
         return empresa;
@@ -116,8 +116,8 @@ public class RedeEEmpresasConfiguracaoTests
         Assert.True(resultado.Sucesso);
         Assert.Equal("app-novo", resultado.Valor!.BlingClientId);
         Assert.True(resultado.Valor.BlingClientSecretCadastrado);
-        Assert.False(usaRede.BlingConectado);
-        Assert.True(usaProprio.BlingConectado);
+        Assert.False(usaRede.ErpConectado);
+        Assert.True(usaProprio.ErpConectado);
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public class RedeEEmpresasConfiguracaoTests
         dados.BlingClientSecret = "segredo-regenerado";
         await ServicosDeTeste.Clientes(_db, _protetor).AlterarAsync(rede.Id, dados, CancellationToken.None);
 
-        Assert.True(usaRede.BlingConectado);
-        Assert.Equal("segredo-regenerado", _protetor.Revelar(rede.BlingClientSecretProtegido!));
+        Assert.True(usaRede.ErpConectado);
+        Assert.Equal("segredo-regenerado", _protetor.Revelar(rede.ErpClientSecretProtegido!));
     }
 
     [Fact]

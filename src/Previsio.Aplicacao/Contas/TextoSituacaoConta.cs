@@ -9,23 +9,23 @@ public static class TextoSituacaoConta
 {
     public static string De(int situacao)
     {
-        if (situacao == SituacaoContaBling.EmAberto)
+        if (situacao == SituacaoConta.EmAberto)
         {
             return "Em aberto";
         }
-        if (situacao == SituacaoContaBling.Pago)
+        if (situacao == SituacaoConta.Pago)
         {
             return "Paga";
         }
-        if (situacao == SituacaoContaBling.ParcialmentePago)
+        if (situacao == SituacaoConta.ParcialmentePago)
         {
             return "Parcialmente paga";
         }
-        if (situacao == SituacaoContaBling.Devolvido)
+        if (situacao == SituacaoConta.Devolvido)
         {
             return "Devolvida";
         }
-        if (situacao == SituacaoContaBling.Cancelado)
+        if (situacao == SituacaoConta.Cancelado)
         {
             return "Cancelada";
         }
@@ -35,11 +35,11 @@ public static class TextoSituacaoConta
     /// <summary>A mesma situação, falando de conta a receber ("Recebida" no lugar de "Paga").</summary>
     public static string DeReceber(int situacao)
     {
-        if (situacao == SituacaoContaBling.Pago)
+        if (situacao == SituacaoConta.Pago)
         {
             return "Recebida";
         }
-        if (situacao == SituacaoContaBling.ParcialmentePago)
+        if (situacao == SituacaoConta.ParcialmentePago)
         {
             return "Parcialmente recebida";
         }
@@ -48,6 +48,6 @@ public static class TextoSituacaoConta
 
     public static bool EmAberto(int situacao)
     {
-        return situacao == SituacaoContaBling.EmAberto || situacao == SituacaoContaBling.ParcialmentePago;
+        return situacao == SituacaoConta.EmAberto || situacao == SituacaoConta.ParcialmentePago;
     }
 }

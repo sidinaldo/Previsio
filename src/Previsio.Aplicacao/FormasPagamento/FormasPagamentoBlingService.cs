@@ -81,7 +81,7 @@ public class FormasPagamentoBlingService
         var porId = new Dictionary<long, FormaPagamento>();
         foreach (FormaPagamento guardada in guardadas)
         {
-            porId[guardada.BlingId] = guardada;
+            porId[guardada.ErpId] = guardada;
         }
 
         List<string> termos = _opcoes.TermosDebitoAutomaticoValidos();
@@ -94,7 +94,7 @@ public class FormasPagamentoBlingService
             {
                 forma = new FormaPagamento();
                 forma.EmpresaId = empresa.Id;
-                forma.BlingId = remota.Id;
+                forma.ErpId = remota.Id;
                 _formas.Adicionar(forma);
             }
             forma.Descricao = Limitar(remota.Descricao.Trim());
@@ -106,7 +106,7 @@ public class FormasPagamentoBlingService
 
         foreach (FormaPagamento guardada in guardadas)
         {
-            if (!recebidas.Contains(guardada.BlingId))
+            if (!recebidas.Contains(guardada.ErpId))
             {
                 _formas.Remover(guardada);
             }

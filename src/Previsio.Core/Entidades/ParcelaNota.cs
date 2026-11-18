@@ -11,5 +11,5 @@ public class ParcelaNota
     public decimal Valor { get; set; }
 
     // Preenchido quando a conta a pagar é criada no Bling
-    public long? BlingContaPagarId { get; set; }
+    public long? ErpContaPagarId { get; set; }
 }

@@ -92,7 +92,7 @@ public class SincronizacaoContasService
             .Select(c => c.Id)
             .ToListAsync(cancelamento);
         List<Empresa> empresas = await _empresas.Consultar()
-            .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null && redes.Contains(e.ClienteId))
+            .Where(e => e.Ativo && e.ErpRefreshTokenProtegido != null && redes.Contains(e.ClienteId))
             .ToListAsync(cancelamento);
 
         foreach (Empresa empresa in empresas)
@@ -177,7 +177,7 @@ public class SincronizacaoContasService
         var locaisPorId = new Dictionary<long, ContaPagarSincronizada>();
         foreach (ContaPagarSincronizada local in locais)
         {
-            locaisPorId[local.BlingId] = local;
+            locaisPorId[local.ErpId] = local;
         }
 
         var idsRecebidos = new HashSet<long>();
@@ -201,7 +201,7 @@ public class SincronizacaoContasService
             {
                 local = new ContaPagarSincronizada();
                 local.EmpresaId = empresa.Id;
-                local.BlingId = remota.Id;
+                local.ErpId = remota.Id;
                 _contas.Adicionar(local);
             }
             else if (local.Vencimento != vencimento.Date || local.Valor != remota.Valor || local.Situacao != remota.Situacao)
@@ -215,12 +215,12 @@ public class SincronizacaoContasService
             local.Situacao = remota.Situacao;
             if (remota.Contato != null)
             {
-                local.BlingContatoId = remota.Contato.Id;
+                local.ErpContatoId = remota.Contato.Id;
             }
-            local.FormaPagamentoBlingId = null;
+            local.FormaPagamentoErpId = null;
             if (remota.FormaPagamento != null && remota.FormaPagamento.Id > 0)
             {
-                local.FormaPagamentoBlingId = remota.FormaPagamento.Id;
+                local.FormaPagamentoErpId = remota.FormaPagamento.Id;
             }
             local.SincronizadaEm = agora;
             atuais.Add(local);
@@ -229,7 +229,7 @@ public class SincronizacaoContasService
         // Contas que sumiram do Bling dentro da janela foram excluídas lá
         foreach (ContaPagarSincronizada local in locais)
         {
-            if (!idsRecebidos.Contains(local.BlingId))
+            if (!idsRecebidos.Contains(local.ErpId))
             {
                 _contas.Remover(local);
             }

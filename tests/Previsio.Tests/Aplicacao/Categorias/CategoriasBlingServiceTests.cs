@@ -67,10 +67,10 @@ public class CategoriasBlingServiceTests
         await _db.SaveChangesAsync();
         await CriarServico(respostas).AtualizarSePrecisoAsync(_empresa, "conta", "token", _agora.AddHours(5), CancellationToken.None);
 
-        List<CategoriaFinanceira> categorias = _db.Categorias.OrderBy(c => c.BlingId).ToList();
-        Assert.Equal(new long[] { 10, 11, 20 }, categorias.Select(c => c.BlingId).ToArray());
+        List<CategoriaFinanceira> categorias = _db.Categorias.OrderBy(c => c.ErpId).ToList();
+        Assert.Equal(new long[] { 10, 11, 20 }, categorias.Select(c => c.ErpId).ToArray());
         Assert.Equal("Fretes", categorias[1].Descricao);
-        Assert.Equal(10, categorias[1].BlingIdPai);
+        Assert.Equal(10, categorias[1].ErpIdPai);
         Assert.Equal(1, respostas.Chamadas.Count(c => c.Contains("categorias")));
     }
 
@@ -104,8 +104,8 @@ public class CategoriasBlingServiceTests
     {
         return new ContaPagarSincronizada
         {
-            EmpresaId = 1, BlingId = blingId, Vencimento = _agora.Date.AddDays(diasVencimento),
-            Valor = 10m, Situacao = 1, CategoriaConferidaEm = conferidaEm, CategoriaBlingId = 99
+            EmpresaId = 1, ErpId = blingId, Vencimento = _agora.Date.AddDays(diasVencimento),
+            Valor = 10m, Situacao = 1, CategoriaConferidaEm = conferidaEm, CategoriaErpId = 99
         };
     }
 
@@ -127,10 +127,10 @@ public class CategoriasBlingServiceTests
         Assert.Equal(2, abertas);
         Assert.Contains(respostas.Chamadas, c => c.EndsWith("contas/pagar/503"));
         Assert.Contains(respostas.Chamadas, c => c.EndsWith("contas/pagar/501"));
-        Assert.Equal(11, contas[1].CategoriaBlingId);
+        Assert.Equal(11, contas[1].CategoriaErpId);
         Assert.Equal(_agora, contas[1].CategoriaConferidaEm);
         // Sem categoria no Bling: fica nula
-        Assert.Null(contas[3].CategoriaBlingId);
+        Assert.Null(contas[3].CategoriaErpId);
         // As outras ficam para as próximas sincronizações
         Assert.Equal(_agora.AddDays(-10), contas[2].CategoriaConferidaEm);
     }

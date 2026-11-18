@@ -31,7 +31,7 @@ public class SincronizacaoManualServiceTests
         var empresa = new Empresa { ClienteId = rede.Id, Nome = "Loja", Cnpj = "11222333000181", UltimaSincronizacaoEm = ultimaSincronizacao };
         if (conectada)
         {
-            empresa.BlingRefreshTokenProtegido = "x";
+            empresa.ErpRefreshTokenProtegido = "x";
         }
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();

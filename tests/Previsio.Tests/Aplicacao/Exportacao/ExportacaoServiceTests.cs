@@ -74,18 +74,18 @@ public class ExportacaoServiceTests
             parcela.NumeroParcela = (i + 1).ToString("000");
             parcela.Vencimento = new DateTime(2026, 11, 18).AddDays(30 * i);
             parcela.Valor = parcelas[i];
-            parcela.BlingContaPagarId = 5000 + int.Parse(numero) * 10 + i;
+            parcela.ErpContaPagarId = 5000 + int.Parse(numero) * 10 + i;
             nota.Parcelas.Add(parcela);
         }
         _db.NotasFiscais.Add(nota);
         return nota;
     }
 
-    private void Conta(Empresa empresa, long blingId, int diasAFrente, decimal valor, int situacao = SituacaoContaBling.EmAberto)
+    private void Conta(Empresa empresa, long blingId, int diasAFrente, decimal valor, int situacao = SituacaoConta.EmAberto)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
-        conta.BlingId = blingId;
+        conta.ErpId = blingId;
         conta.Vencimento = new DateTime(2026, 11, 11).AddDays(diasAFrente);
         conta.Valor = valor;
         conta.Situacao = situacao;
@@ -214,12 +214,12 @@ public class ExportacaoServiceTests
         Nota("100", _centro, StatusNota.Lancada, new DateTime(2026, 11, 10, 13, 0, 0, DateTimeKind.Utc), 500m);
         await _db.SaveChangesAsync();
         Conta(_centro, 6000, 7, 500m);
-        Conta(_norte, 7777, 2, 120m, SituacaoContaBling.ParcialmentePago);
-        Conta(_norte, 7778, 3, 999m, SituacaoContaBling.Pago);
+        Conta(_norte, 7777, 2, 120m, SituacaoConta.ParcialmentePago);
+        Conta(_norte, 7778, 3, 999m, SituacaoConta.Pago);
         Conta(_norte, 7779, 31, 50m);
         Conta(_norte, 7780, -1, 50m);
         await _db.SaveChangesAsync();
-        // Conta 6000 é a parcela 001 da NF 100 (BlingContaPagarId = 5000 + 100 * 10)
+        // Conta 6000 é a parcela 001 da NF 100 (ErpContaPagarId = 5000 + 100 * 10)
 
         Resultado<ArquivoExportado> resultado = await CriarServico().ContasPagarAsync(_rede.Id, 30, null, CancellationToken.None);
 
@@ -242,9 +242,9 @@ public class ExportacaoServiceTests
     {
         await CadastrarRede();
         Conta(_norte, 7780, -3, 50m);
-        Conta(_norte, 7778, 3, 999m, SituacaoContaBling.Pago);
+        Conta(_norte, 7778, 3, 999m, SituacaoConta.Pago);
         await _db.SaveChangesAsync();
-        _db.ContasPagar.Local.Single(c => c.BlingId == 7780).FornecedorNome = "Energia Elétrica";
+        _db.ContasPagar.Local.Single(c => c.ErpId == 7780).FornecedorNome = "Energia Elétrica";
         await _db.SaveChangesAsync();
 
         var filtro = new FiltroContas { Situacao = SituacaoFiltroContas.Abertas };
@@ -266,8 +266,8 @@ public class ExportacaoServiceTests
         await CadastrarRede();
         _db.ContasReceber.Add(new ContaReceberSincronizada
         {
-            EmpresaId = _centro.Id, BlingId = 1, Vencimento = new DateTime(2026, 11, 5), Valor = 150.5m,
-            Situacao = SituacaoContaBling.EmAberto, ClienteNome = "Oficina do Zé"
+            EmpresaId = _centro.Id, ErpId = 1, Vencimento = new DateTime(2026, 11, 5), Valor = 150.5m,
+            Situacao = SituacaoConta.EmAberto, ClienteNome = "Oficina do Zé"
         });
         await _db.SaveChangesAsync();
 

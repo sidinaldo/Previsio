@@ -50,7 +50,7 @@ public class FormaPagamentoLancamentoService
         int empresaId = empresa.Id;
         List<FormaPagamento> ativas = await _formas.ConsultarSomenteLeitura()
             .Where(f => f.EmpresaId == empresaId && f.Situacao == 1)
-            .OrderBy(f => f.BlingId)
+            .OrderBy(f => f.ErpId)
             .ToListAsync(cancelamento);
         if (ativas.Count == 0)
         {
@@ -69,21 +69,21 @@ public class FormaPagamentoLancamentoService
             FormaPagamento? daRegra = PorNome(ativas, regra);
             if (daRegra != null)
             {
-                return daRegra.BlingId;
+                return daRegra.ErpId;
             }
         }
 
         // 2) Última conta desse fornecedor no Bling da empresa com forma
         List<long?> anteriores = await _contas.ConsultarSomenteLeitura()
-            .Where(c => c.EmpresaId == empresaId && c.BlingContatoId == contatoId && c.FormaPagamentoBlingId != null)
+            .Where(c => c.EmpresaId == empresaId && c.ErpContatoId == contatoId && c.FormaPagamentoErpId != null)
             .OrderByDescending(c => c.Vencimento)
             .ThenByDescending(c => c.Id)
-            .Select(c => c.FormaPagamentoBlingId)
+            .Select(c => c.FormaPagamentoErpId)
             .Take(5)
             .ToListAsync(cancelamento);
         foreach (long? anterior in anteriores)
         {
-            if (anterior.HasValue && ativas.Any(f => f.BlingId == anterior.Value))
+            if (anterior.HasValue && ativas.Any(f => f.ErpId == anterior.Value))
             {
                 return anterior.Value;
             }
@@ -95,7 +95,7 @@ public class FormaPagamentoLancamentoService
             FormaPagamento? doXml = PorTipo(ativas, nota.TipoPagamento.Value);
             if (doXml != null)
             {
-                return doXml.BlingId;
+                return doXml.ErpId;
             }
         }
 
@@ -117,7 +117,7 @@ public class FormaPagamentoLancamentoService
         {
             return null;
         }
-        return daPadrao.BlingId;
+        return daPadrao.ErpId;
     }
 
     private static FormaPagamento? PorNome(List<FormaPagamento> formas, string nome)

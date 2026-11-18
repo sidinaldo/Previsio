@@ -177,21 +177,21 @@ public class ContasPagarService
         }
         else if (Igual(situacao, SituacaoFiltroContas.Abertas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Vencidas))
         {
             DateTime hoje = Hoje();
-            consulta = consulta.Where(c => (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago)
+            consulta = consulta.Where(c => (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago)
                 && c.Vencimento < hoje);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Pagas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.Pago);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.Pago);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Canceladas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.Cancelado || c.Situacao == SituacaoContaBling.Devolvido);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.Cancelado || c.Situacao == SituacaoConta.Devolvido);
         }
         else
         {
@@ -206,11 +206,11 @@ public class ContasPagarService
         }
         else if (Igual(origem, OrigemConta.Previsio))
         {
-            consulta = consulta.Where(c => _parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
+            consulta = consulta.Where(c => _parcelas.Consultar().Any(p => p.ErpContaPagarId == c.ErpId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
         else if (Igual(origem, OrigemConta.Bling))
         {
-            consulta = consulta.Where(c => !_parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
+            consulta = consulta.Where(c => !_parcelas.Consultar().Any(p => p.ErpContaPagarId == c.ErpId && p.NotaFiscal!.EmpresaId == c.EmpresaId));
         }
         else
         {
@@ -221,19 +221,19 @@ public class ContasPagarService
         if (string.Equals(categoria, FiltroContas.SemCategoria, StringComparison.OrdinalIgnoreCase))
         {
             // Já conferidas no Bling e sem categoria
-            consulta = consulta.Where(c => c.CategoriaConferidaEm != null && c.CategoriaBlingId == null);
+            consulta = consulta.Where(c => c.CategoriaConferidaEm != null && c.CategoriaErpId == null);
         }
         else if (string.Equals(categoria, FiltroContas.CategoriaNaoIdentificada, StringComparison.OrdinalIgnoreCase))
         {
             // Têm categoria no Bling, mas ela não está na lista da empresa no Previsio
-            consulta = consulta.Where(c => c.CategoriaBlingId != null
-                && !_categorias.Consultar().Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId));
+            consulta = consulta.Where(c => c.CategoriaErpId != null
+                && !_categorias.Consultar().Any(k => k.EmpresaId == c.EmpresaId && k.ErpId == c.CategoriaErpId));
         }
         else if (categoria != "")
         {
             string nome = categoria.ToLower();
             consulta = consulta.Where(c => _categorias.Consultar()
-                .Any(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId && k.Descricao.ToLower() == nome));
+                .Any(k => k.EmpresaId == c.EmpresaId && k.ErpId == c.CategoriaErpId && k.Descricao.ToLower() == nome));
         }
 
         Resultado<IQueryable<ContaPagarSincronizada>> porForma = FiltrarForma(consulta, filtro.Forma);
@@ -250,7 +250,7 @@ public class ContasPagarService
             consulta = consulta.Where(c =>
                 (c.FornecedorNome != null && c.FornecedorNome.ToLower().Contains(texto))
                 || c.Empresa!.Nome.ToLower().Contains(texto)
-                || _parcelas.Consultar().Any(p => p.BlingContaPagarId == c.BlingId
+                || _parcelas.Consultar().Any(p => p.ErpContaPagarId == c.ErpId
                     && p.NotaFiscal!.EmpresaId == c.EmpresaId
                     && (p.NotaFiscal.Numero.Contains(texto) || p.NotaFiscal.NomeFornecedor.ToLower().Contains(texto))));
         }
@@ -272,12 +272,12 @@ public class ContasPagarService
         if (grupo == FiltroContas.SaiSozinho)
         {
             return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => _formas.Consultar()
-                .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && saiSozinho.Contains(f.Grupo))));
+                .Any(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId && saiSozinho.Contains(f.Grupo))));
         }
         if (grupo == FiltroContas.PrecisaPagar)
         {
             return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => !_formas.Consultar()
-                .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && saiSozinho.Contains(f.Grupo))));
+                .Any(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId && saiSozinho.Contains(f.Grupo))));
         }
         if (!GruposFormaPagamento.Valido(grupo))
         {
@@ -285,16 +285,16 @@ public class ContasPagarService
         }
         if (grupo == GruposFormaPagamento.Sem)
         {
-            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoBlingId == null));
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoErpId == null));
         }
         if (grupo == GruposFormaPagamento.Outras)
         {
             // Outras inclui a forma que não está na lista da empresa no Previsio
-            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoBlingId != null
-                && !_formas.Consultar().Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && f.Grupo != grupo)));
+            return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => c.FormaPagamentoErpId != null
+                && !_formas.Consultar().Any(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId && f.Grupo != grupo)));
         }
         return Resultado<IQueryable<ContaPagarSincronizada>>.Ok(consulta.Where(c => _formas.Consultar()
-            .Any(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId && f.Grupo == grupo)));
+            .Any(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId && f.Grupo == grupo)));
     }
 
     private void MarcarSaiSozinho(List<LinhaContaPagar> linhas)
@@ -316,19 +316,19 @@ public class ContasPagarService
             EmpresaNome = c.Empresa!.Nome,
             EmpresaCnpj = c.Empresa.Cnpj,
             CategoriaNome = _categorias.Consultar()
-                .Where(k => k.EmpresaId == c.EmpresaId && k.BlingId == c.CategoriaBlingId)
+                .Where(k => k.EmpresaId == c.EmpresaId && k.ErpId == c.CategoriaErpId)
                 .Select(k => k.Descricao)
                 .FirstOrDefault(),
             FormaNome = _formas.Consultar()
-                .Where(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId)
+                .Where(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId)
                 .Select(f => f.Descricao)
                 .FirstOrDefault(),
             FormaGrupoGuardado = _formas.Consultar()
-                .Where(f => f.EmpresaId == c.EmpresaId && f.BlingId == c.FormaPagamentoBlingId)
+                .Where(f => f.EmpresaId == c.EmpresaId && f.ErpId == c.FormaPagamentoErpId)
                 .Select(f => f.Grupo)
                 .FirstOrDefault(),
             Parcela = _parcelas.Consultar()
-                .Where(p => p.BlingContaPagarId == c.BlingId && p.NotaFiscal!.EmpresaId == c.EmpresaId)
+                .Where(p => p.ErpContaPagarId == c.ErpId && p.NotaFiscal!.EmpresaId == c.EmpresaId)
                 .Select(p => new ParcelaDaConta
                 {
                     NotaFiscalId = p.NotaFiscalId,
@@ -374,7 +374,7 @@ public class ContasPagarService
     private async Task<DateTime?> SincronizadaEmAsync(int clienteId, int? empresaId, CancellationToken cancelamento)
     {
         IQueryable<Empresa> empresas = _empresas.ConsultarSomenteLeitura()
-            .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null);
+            .Where(e => e.ClienteId == clienteId && e.Ativo && e.ErpRefreshTokenProtegido != null);
         if (empresaId.HasValue)
         {
             int id = empresaId.Value;
@@ -401,7 +401,7 @@ public class ContasPagarService
         ContaPagarSincronizada conta = linha.Conta;
         var dto = new ContaPagarDto();
         dto.Id = conta.Id;
-        dto.BlingId = conta.BlingId;
+        dto.BlingId = conta.ErpId;
         dto.EmpresaId = conta.EmpresaId;
         dto.EmpresaNome = linha.EmpresaNome;
         dto.Vencimento = conta.Vencimento.Date;

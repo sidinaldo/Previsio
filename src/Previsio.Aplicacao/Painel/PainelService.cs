@@ -96,11 +96,11 @@ public class PainelService
         var nomesCategorias = new Dictionary<string, string>();
         var categorias = await _categorias.ConsultarSomenteLeitura()
             .Where(k => idsEmpresas.Contains(k.EmpresaId))
-            .Select(k => new { k.EmpresaId, k.BlingId, k.Descricao })
+            .Select(k => new { k.EmpresaId, k.ErpId, k.Descricao })
             .ToListAsync(cancelamento);
         foreach (var categoria in categorias)
         {
-            nomesCategorias[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao;
+            nomesCategorias[categoria.EmpresaId + ":" + categoria.ErpId] = categoria.Descricao;
         }
         _calculadora.AplicarCategorias(resumo, contas, nomesCategorias);
 
@@ -108,11 +108,11 @@ public class PainelService
         var gruposFormas = new Dictionary<string, string>();
         var formas = await _formas.ConsultarSomenteLeitura()
             .Where(f => idsEmpresas.Contains(f.EmpresaId))
-            .Select(f => new { f.EmpresaId, f.BlingId, f.Grupo })
+            .Select(f => new { f.EmpresaId, f.ErpId, f.Grupo })
             .ToListAsync(cancelamento);
         foreach (var forma in formas)
         {
-            gruposFormas[forma.EmpresaId + ":" + forma.BlingId] = forma.Grupo;
+            gruposFormas[forma.EmpresaId + ":" + forma.ErpId] = forma.Grupo;
         }
         _calculadora.AplicarFormas(resumo, contas, gruposFormas, _opcoesFormas.GruposSaiSozinhoValidos());
 
@@ -120,7 +120,7 @@ public class PainelService
         List<ContaPagarSincronizada> vencidas = await _contas.ConsultarSomenteLeitura()
             .Where(c => idsEmpresas.Contains(c.EmpresaId)
                 && c.Vencimento < hoje
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago))
             .ToListAsync(cancelamento);
         resumo.QuantidadeVencidas = vencidas.Count;
         resumo.TotalVencidas = vencidas.Sum(c => c.Valor);
@@ -154,7 +154,7 @@ public class PainelService
             .Where(c => c.EmpresaId == empresaId
                 && c.Vencimento >= hoje
                 && c.Vencimento <= fim
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago))
             .ToListAsync(cancelamento);
 
         return contas

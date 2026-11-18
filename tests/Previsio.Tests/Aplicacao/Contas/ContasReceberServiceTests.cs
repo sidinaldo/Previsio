@@ -38,11 +38,11 @@ public class ContasReceberServiceTests
         var deOutraRede = new Empresa { ClienteId = outra.Id, Nome = "Outra", Cnpj = "99888777000166" };
         _db.Empresas.AddRange(_centro, _norte, deOutraRede);
         await _db.SaveChangesAsync();
-        Conta(_centro, 1, 10, 100m, SituacaoContaBling.EmAberto, "Oficina do Zé");     // vencida
-        Conta(_centro, 2, 15, 250m, SituacaoContaBling.EmAberto, "Mecânica Silva");
-        Conta(_norte, 3, 20, 80m, SituacaoContaBling.Pago, "Oficina do Zé");
-        Conta(_norte, 4, 25, 60m, SituacaoContaBling.Cancelado, "Frota Beta");
-        Conta(deOutraRede, 5, 15, 999m, SituacaoContaBling.EmAberto, "Não aparece");
+        Conta(_centro, 1, 10, 100m, SituacaoConta.EmAberto, "Oficina do Zé");     // vencida
+        Conta(_centro, 2, 15, 250m, SituacaoConta.EmAberto, "Mecânica Silva");
+        Conta(_norte, 3, 20, 80m, SituacaoConta.Pago, "Oficina do Zé");
+        Conta(_norte, 4, 25, 60m, SituacaoConta.Cancelado, "Frota Beta");
+        Conta(deOutraRede, 5, 15, 999m, SituacaoConta.EmAberto, "Não aparece");
         await _db.SaveChangesAsync();
     }
 
@@ -50,7 +50,7 @@ public class ContasReceberServiceTests
     {
         _db.ContasReceber.Add(new ContaReceberSincronizada
         {
-            EmpresaId = empresa.Id, BlingId = blingId, Vencimento = new DateTime(2026, 11, dia),
+            EmpresaId = empresa.Id, ErpId = blingId, Vencimento = new DateTime(2026, 11, dia),
             Valor = valor, Situacao = situacao, ClienteNome = cliente
         });
     }

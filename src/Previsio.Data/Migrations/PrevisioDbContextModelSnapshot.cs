@@ -91,12 +91,6 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime>("AtualizadaEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("BlingId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BlingIdPai")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Descricao")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -105,12 +99,18 @@ namespace Previsio.Data.Migrations
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
 
+                    b.Property<long>("ErpId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ErpIdPai")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Tipo")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpresaId", "BlingId")
+                    b.HasIndex("EmpresaId", "ErpId")
                         .IsUnique();
 
                     b.ToTable("categorias_financeiras", (string)null);
@@ -139,13 +139,6 @@ namespace Previsio.Data.Migrations
                     b.Property<int>("AvisoVencidasDias")
                         .HasColumnType("integer");
 
-                    b.Property<string>("BlingClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("BlingClientSecretProtegido")
-                        .HasColumnType("text");
-
                     b.Property<string>("CategoriaPadrao")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -163,7 +156,7 @@ namespace Previsio.Data.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<bool>("ConferirBlingAntesDeLancar")
+                    b.Property<bool>("ConferirErpAntesDeLancar")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("ContratadoEm")
@@ -174,6 +167,13 @@ namespace Previsio.Data.Migrations
 
                     b.Property<DateTime>("CriadoEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErpClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ErpClientSecretProtegido")
+                        .HasColumnType("text");
 
                     b.Property<string>("FormaPagamentoPadrao")
                         .HasMaxLength(200)
@@ -257,22 +257,22 @@ namespace Previsio.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long?>("BlingContatoId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BlingId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("CategoriaBlingId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("CategoriaConferidaEm")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("CategoriaErpId")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("FormaPagamentoBlingId")
+                    b.Property<long?>("ErpContatoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ErpId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FormaPagamentoErpId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("FornecedorNome")
@@ -296,7 +296,7 @@ namespace Previsio.Data.Migrations
 
                     b.HasIndex("Vencimento");
 
-                    b.HasIndex("EmpresaId", "BlingId")
+                    b.HasIndex("EmpresaId", "ErpId")
                         .IsUnique();
 
                     b.ToTable("contas_pagar", (string)null);
@@ -310,18 +310,18 @@ namespace Previsio.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long?>("BlingContatoId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BlingId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("ClienteNome")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("ErpContatoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ErpId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("SincronizadaEm")
                         .HasColumnType("timestamp with time zone");
@@ -340,7 +340,7 @@ namespace Previsio.Data.Migrations
 
                     b.HasIndex("Vencimento");
 
-                    b.HasIndex("EmpresaId", "BlingId")
+                    b.HasIndex("EmpresaId", "ErpId")
                         .IsUnique();
 
                     b.ToTable("contas_receber", (string)null);
@@ -451,22 +451,6 @@ namespace Previsio.Data.Migrations
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("BlingAccessTokenProtegido")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BlingClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("BlingClientSecretProtegido")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BlingRefreshTokenProtegido")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("BlingTokenExpiraEm")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("CertificadoPfxProtegido")
                         .HasColumnType("text");
 
@@ -487,6 +471,25 @@ namespace Previsio.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(14)
                         .HasColumnType("character varying(14)");
+
+                    b.Property<int>("Erp")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErpAccessTokenProtegido")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErpClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ErpClientSecretProtegido")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErpRefreshTokenProtegido")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ErpTokenExpiraEm")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ImapHost")
                         .IsRequired()
@@ -670,9 +673,6 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime>("AtualizadaEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("BlingId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Descricao")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -680,6 +680,9 @@ namespace Previsio.Data.Migrations
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
+
+                    b.Property<long>("ErpId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Grupo")
                         .IsRequired()
@@ -694,13 +697,13 @@ namespace Previsio.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpresaId", "BlingId")
+                    b.HasIndex("EmpresaId", "ErpId")
                         .IsUnique();
 
                     b.ToTable("formas_pagamento", (string)null);
                 });
 
-            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorErp", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -711,15 +714,15 @@ namespace Previsio.Data.Migrations
                     b.Property<DateTime>("AtualizadoEm")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("BlingContatoId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Documento")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
                     b.Property<int>("EmpresaId")
                         .HasColumnType("integer");
+
+                    b.Property<long>("ErpContatoId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -728,10 +731,10 @@ namespace Previsio.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpresaId", "BlingContatoId")
+                    b.HasIndex("EmpresaId", "ErpContatoId")
                         .IsUnique();
 
-                    b.ToTable("fornecedores_bling", (string)null);
+                    b.ToTable("fornecedores_erp", (string)null);
                 });
 
             modelBuilder.Entity("Previsio.Core.Entidades.NotaFiscal", b =>
@@ -953,7 +956,7 @@ namespace Previsio.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long?>("BlingContaPagarId")
+                    b.Property<long?>("ErpContaPagarId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("NotaFiscalId")
@@ -1212,7 +1215,7 @@ namespace Previsio.Data.Migrations
                     b.Navigation("Empresa");
                 });
 
-            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorBling", b =>
+            modelBuilder.Entity("Previsio.Core.Entidades.FornecedorErp", b =>
                 {
                     b.HasOne("Previsio.Core.Entidades.Empresa", "Empresa")
                         .WithMany()

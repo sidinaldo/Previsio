@@ -164,11 +164,11 @@ public class LancamentoNotaService
             }
 
             // Conferência com o Bling: alguém pode ter lançado esta nota à mão antes do Previsio
-            bool nenhumaLancada = !nota.Parcelas.Any(p => p.BlingContaPagarId.HasValue);
+            bool nenhumaLancada = !nota.Parcelas.Any(p => p.ErpContaPagarId.HasValue);
             if (existente != null && nenhumaLancada)
             {
                 Cliente? rede = await _clientes.ConsultarSomenteLeitura().FirstOrDefaultAsync(c => c.Id == nota.ClienteId, cancelamento);
-                if (rede != null && rede.ConferirBlingAntesDeLancar)
+                if (rede != null && rede.ConferirErpAntesDeLancar)
                 {
                     etapa = EtapaFalha.ConferenciaBling;
                     ResultadoConferencia resultado = await _conferencia.ConferirNoBlingAsync(nota, rede, conta, token, contatoId, cancelamento);
@@ -203,14 +203,14 @@ public class LancamentoNotaService
             foreach (ParcelaNota parcela in nota.Parcelas.OrderBy(p => p.Vencimento))
             {
                 // Em caso de retentativa, não recria parcelas que já foram lançadas
-                if (parcela.BlingContaPagarId.HasValue)
+                if (parcela.ErpContaPagarId.HasValue)
                 {
                     continue;
                 }
 
                 parcelaAtual = parcela;
                 NovaContaPagarBling novaConta = MontarContaPagar(nota, parcela, totalParcelas, contatoId, categoriaId, formaId);
-                parcela.BlingContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
+                parcela.ErpContaPagarId = await _bling.CriarContaPagarAsync(conta, token, novaConta, cancelamento);
                 await GravarContaNoPrevisioAsync(nota, empresa.Id, parcela, contatoId, categoriaId, formaId, true, cancelamento);
 
                 // Salva parcela a parcela: se cair no meio, a próxima tentativa continua de onde parou
@@ -292,14 +292,14 @@ public class LancamentoNotaService
         NotaFiscal nota, int empresaId, ParcelaNota parcela, long contatoId, long? categoriaId, long? formaId, bool categoriaDefinida,
         CancellationToken cancelamento)
     {
-        if (!parcela.BlingContaPagarId.HasValue)
+        if (!parcela.ErpContaPagarId.HasValue)
         {
             return;
         }
 
-        long blingId = parcela.BlingContaPagarId.Value;
+        long blingId = parcela.ErpContaPagarId.Value;
         // Conta já trazida pela sincronização (por exemplo, a lançada à mão que a conferência achou)
-        bool jaExiste = await _contas.ExisteAsync(c => c.EmpresaId == empresaId && c.BlingId == blingId, cancelamento);
+        bool jaExiste = await _contas.ExisteAsync(c => c.EmpresaId == empresaId && c.ErpId == blingId, cancelamento);
         if (jaExiste)
         {
             return;
@@ -307,19 +307,19 @@ public class LancamentoNotaService
 
         var contaLocal = new ContaPagarSincronizada();
         contaLocal.EmpresaId = empresaId;
-        contaLocal.BlingId = blingId;
+        contaLocal.ErpId = blingId;
         contaLocal.Vencimento = parcela.Vencimento;
         contaLocal.Valor = parcela.Valor;
-        contaLocal.Situacao = SituacaoContaBling.EmAberto;
-        contaLocal.BlingContatoId = contatoId;
+        contaLocal.Situacao = SituacaoConta.EmAberto;
+        contaLocal.ErpContatoId = contatoId;
         contaLocal.FornecedorNome = nota.NomeFornecedor;
         // Categoria escolhida pelo Previsio: não precisa abrir a conta no Bling para saber.
         // Conta lançada à mão (achada na conferência): a sincronização descobre a categoria depois
         if (categoriaDefinida)
         {
-            contaLocal.CategoriaBlingId = categoriaId;
+            contaLocal.CategoriaErpId = categoriaId;
             contaLocal.CategoriaConferidaEm = DateTime.UtcNow;
-            contaLocal.FormaPagamentoBlingId = formaId;
+            contaLocal.FormaPagamentoErpId = formaId;
         }
         _contas.Adicionar(contaLocal);
     }

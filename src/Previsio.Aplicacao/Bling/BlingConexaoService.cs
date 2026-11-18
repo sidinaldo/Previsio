@@ -78,9 +78,9 @@ public class BlingConexaoService
             return Resultado.NaoEncontrado(EmpresasService.MensagemNaoEncontrada);
         }
 
-        empresa.BlingAccessTokenProtegido = null;
-        empresa.BlingRefreshTokenProtegido = null;
-        empresa.BlingTokenExpiraEm = null;
+        empresa.ErpAccessTokenProtegido = null;
+        empresa.ErpRefreshTokenProtegido = null;
+        empresa.ErpTokenExpiraEm = null;
         await _empresas.SalvarAsync(cancelamento);
 
         return Resultado.Ok();

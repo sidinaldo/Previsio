@@ -45,7 +45,7 @@ public class ContasAntigasEmAberto
         List<ContaPagarSincronizada> antigas = await _contasPagar.Consultar()
             .Where(c => c.EmpresaId == empresa.Id
                 && c.Vencimento < inicioJanela
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago))
             .OrderBy(c => c.SincronizadaEm)
             .ThenBy(c => c.Id)
             .Take(limite)
@@ -57,7 +57,7 @@ public class ContasAntigasEmAberto
             ContaPagarBling? remota;
             try
             {
-                remota = await _bling.ObterContaPagarAsync(conta, token, local.BlingId, cancelamento);
+                remota = await _bling.ObterContaPagarAsync(conta, token, local.ErpId, cancelamento);
             }
             catch (BlingException erro)
             {
@@ -70,7 +70,7 @@ public class ContasAntigasEmAberto
                 }
                 // Outro erro (token, limite, rede): para aqui e tenta de novo na próxima sincronização
                 _logger.LogWarning(erro, "Não foi possível conferir a conta {Conta} no Bling da empresa {EmpresaId}",
-                    local.BlingId, empresa.Id);
+                    local.ErpId, empresa.Id);
                 break;
             }
 

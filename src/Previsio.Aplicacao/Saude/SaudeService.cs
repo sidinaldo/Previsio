@@ -104,10 +104,10 @@ public class SaudeService
                 item.Id = empresa.Id;
                 item.Nome = empresa.Nome;
                 item.Cnpj = empresa.Cnpj;
-                item.BlingConectado = empresa.BlingConectado;
-                if (empresa.BlingConectado)
+                item.BlingConectado = empresa.ErpConectado;
+                if (empresa.ErpConectado)
                 {
-                    item.TokenValidoAte = empresa.BlingTokenExpiraEm;
+                    item.TokenValidoAte = empresa.ErpTokenExpiraEm;
                 }
                 item.UltimaSincronizacaoEm = empresa.UltimaSincronizacaoEm;
                 if (empresa.TemEmailProprio)

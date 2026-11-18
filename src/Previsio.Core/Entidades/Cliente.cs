@@ -23,10 +23,10 @@ public class Cliente : ICaixaEmail
     public DateTime? ImapUltimaFalhaConexaoEm { get; set; }
     public string? ImapUltimoErroConexao { get; set; }
 
-    // Aplicativo privado do Bling da rede: vale para as empresas que não têm um próprio.
+    // Aplicativo privado do ERP da rede: vale para as empresas que não têm um próprio.
     // Vazio: as empresas sem aplicativo próprio usam o aplicativo global do Previsio (appsettings).
-    public string? BlingClientId { get; set; }
-    public string? BlingClientSecretProtegido { get; set; }
+    public string? ErpClientId { get; set; }
+    public string? ErpClientSecretProtegido { get; set; }
 
     // Resumo semanal por e-mail para os usuários da rede. Dia da semana como DayOfWeek (0 = domingo) ou 7 = todo dia útil
     // e hora cheia no horário de Brasília. EnviadoEm evita mandar duas vezes no mesmo dia.
@@ -42,15 +42,15 @@ public class Cliente : ICaixaEmail
     public int AlertaVencimentosHora { get; set; } = 7;
     public DateTime? AlertaVencimentosEnviadoEm { get; set; }
 
-    // Conferência com o Bling: antes de lançar, procura a conta já lançada à mão (mesmo fornecedor,
+    // Conferência com o ERP: antes de lançar, procura a conta já lançada à mão (mesmo fornecedor,
     // vencimento e valor, com as tolerâncias); e fecha sozinhas as notas pendentes encontradas lá.
-    public bool ConferirBlingAntesDeLancar { get; set; } = true;
+    public bool ConferirErpAntesDeLancar { get; set; } = true;
 
-    // Fluxo de caixa: traz as contas a receber do Bling e mostra entradas × saídas no painel.
-    // Desligado para quem não lança as vendas no Bling (as entradas ficariam zeradas).
+    // Fluxo de caixa: traz as contas a receber do ERP e mostra entradas × saídas no painel.
+    // Desligado para quem não lança as vendas no ERP (as entradas ficariam zeradas).
     public bool MostrarFluxoCaixa { get; set; } = true;
 
-    // Categoria (nome) das notas de fornecedor sem regra e sem histórico no Bling; vazio = sem categoria
+    // Categoria (nome) das notas de fornecedor sem regra e sem histórico no ERP; vazio = sem categoria
     public string? CategoriaPadrao { get; set; }
     // Forma de pagamento (nome) das notas de fornecedor sem regra, sem histórico e sem tipo útil no XML;
     // vazio = a automática do appsettings (FormasPagamento:PadraoAutomatico)
@@ -61,7 +61,7 @@ public class Cliente : ICaixaEmail
     public bool ConferenciaFecharPendentes { get; set; } = true;
 
     // Teste grátis: termina no início do dia seguinte ao último dia (UTC). Acabado o teste sem contratar,
-    // o Previsio para de ler e-mails e lançar no Bling; os usuários continuam vendo os dados.
+    // o Previsio para de ler e-mails e lançar no ERP; os usuários continuam vendo os dados.
     public SituacaoContrato Contrato { get; set; } = SituacaoContrato.Contratado;
     public DateTime? TesteTerminaEm { get; set; }
     public DateTime? TesteAvisoFinalEnviadoEm { get; set; }

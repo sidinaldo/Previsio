@@ -32,7 +32,7 @@ public class LinhaContaPagar
             {
                 return FormaGrupoGuardado;
             }
-            if (Conta.FormaPagamentoBlingId.HasValue)
+            if (Conta.FormaPagamentoErpId.HasValue)
             {
                 return GruposFormaPagamento.Outras;
             }
@@ -52,7 +52,7 @@ public class LinhaContaPagar
             {
                 return CategoriaNome;
             }
-            if (Conta.CategoriaBlingId.HasValue)
+            if (Conta.CategoriaErpId.HasValue)
             {
                 return FiltroContas.CategoriaNaoIdentificada;
             }

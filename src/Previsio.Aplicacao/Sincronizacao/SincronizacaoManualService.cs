@@ -73,7 +73,7 @@ public class SincronizacaoManualService
     private IQueryable<Empresa> EmpresasConectadas(int clienteId)
     {
         return _empresas.ConsultarSomenteLeitura()
-            .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null);
+            .Where(e => e.ClienteId == clienteId && e.Ativo && e.ErpRefreshTokenProtegido != null);
     }
 
     private SituacaoSincronizacaoDto Montar(List<DateTime?> datas)

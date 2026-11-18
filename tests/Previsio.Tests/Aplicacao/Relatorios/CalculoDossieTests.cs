@@ -71,7 +71,7 @@ public class CalculoDossieTests
         DateTime conferida = DateTime.UtcNow;
         var contas = new List<ContaPagarSincronizada>
         {
-            new ContaPagarSincronizada { Valor = 900m, CategoriaBlingId = 1, CategoriaConferidaEm = conferida },
+            new ContaPagarSincronizada { Valor = 900m, CategoriaErpId = 1, CategoriaConferidaEm = conferida },
             new ContaPagarSincronizada { Valor = 100m, CategoriaConferidaEm = conferida },
             new ContaPagarSincronizada { Valor = 5000m }
         };
@@ -138,11 +138,11 @@ public class CalculoDossieTests
         var filial = new Empresa { Id = 2, Nome = "Filial", Cnpj = "11222333000262" };
         var contas = new List<ContaPagarSincronizada>
         {
-            new ContaPagarSincronizada { EmpresaId = 1, Valor = 600m, Situacao = SituacaoContaBling.Pago, FornecedorNome = "ALFA", CategoriaBlingId = 7, CategoriaConferidaEm = conferida },
-            new ContaPagarSincronizada { EmpresaId = 1, Valor = 150m, Situacao = SituacaoContaBling.EmAberto, FornecedorNome = "alfa ", CategoriaBlingId = 8, CategoriaConferidaEm = conferida },
-            new ContaPagarSincronizada { EmpresaId = 2, Valor = 100m, Situacao = SituacaoContaBling.EmAberto, FornecedorNome = "BETA", CategoriaBlingId = 7, CategoriaConferidaEm = conferida },
-            new ContaPagarSincronizada { EmpresaId = 2, Valor = 50m, Situacao = SituacaoContaBling.EmAberto, FornecedorNome = "GAMA", CategoriaConferidaEm = conferida },
-            new ContaPagarSincronizada { EmpresaId = 2, Valor = 100m, Situacao = SituacaoContaBling.EmAberto }
+            new ContaPagarSincronizada { EmpresaId = 1, Valor = 600m, Situacao = SituacaoConta.Pago, FornecedorNome = "ALFA", CategoriaErpId = 7, CategoriaConferidaEm = conferida },
+            new ContaPagarSincronizada { EmpresaId = 1, Valor = 150m, Situacao = SituacaoConta.EmAberto, FornecedorNome = "alfa ", CategoriaErpId = 8, CategoriaConferidaEm = conferida },
+            new ContaPagarSincronizada { EmpresaId = 2, Valor = 100m, Situacao = SituacaoConta.EmAberto, FornecedorNome = "BETA", CategoriaErpId = 7, CategoriaConferidaEm = conferida },
+            new ContaPagarSincronizada { EmpresaId = 2, Valor = 50m, Situacao = SituacaoConta.EmAberto, FornecedorNome = "GAMA", CategoriaConferidaEm = conferida },
+            new ContaPagarSincronizada { EmpresaId = 2, Valor = 100m, Situacao = SituacaoConta.EmAberto }
         };
         var receber = new List<ContaReceberSincronizada> { new ContaReceberSincronizada { EmpresaId = 2, Valor = 400m } };
         var nomes = new Dictionary<string, string>

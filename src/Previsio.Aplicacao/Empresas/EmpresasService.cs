@@ -86,8 +86,8 @@ public class EmpresasService
             {
                 return Resultado<EmpresaDto>.Invalido("Informe o Client ID e o Client Secret do aplicativo do Bling, ou deixe os dois vazios.");
             }
-            empresa.BlingClientId = clientId;
-            empresa.BlingClientSecretProtegido = _protetor.Proteger(clientSecret);
+            empresa.ErpClientId = clientId;
+            empresa.ErpClientSecretProtegido = _protetor.Proteger(clientSecret);
         }
 
         string host = (dados.ImapHost ?? "").Trim();
@@ -151,7 +151,7 @@ public class EmpresasService
             empresa.Ativo = dados.Ativo.Value;
         }
 
-        string clientIdAnterior = empresa.BlingClientId ?? "";
+        string clientIdAnterior = empresa.ErpClientId ?? "";
 
         if (dados.BlingClientId != null)
         {
@@ -159,21 +159,21 @@ public class EmpresasService
             if (clientId == "")
             {
                 // Volta a usar o aplicativo global do Previsio
-                empresa.BlingClientId = null;
-                empresa.BlingClientSecretProtegido = null;
+                empresa.ErpClientId = null;
+                empresa.ErpClientSecretProtegido = null;
             }
             else
             {
-                empresa.BlingClientId = clientId;
+                empresa.ErpClientId = clientId;
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(dados.BlingClientSecret) && !string.IsNullOrEmpty(empresa.BlingClientId))
+        if (!string.IsNullOrWhiteSpace(dados.BlingClientSecret) && !string.IsNullOrEmpty(empresa.ErpClientId))
         {
-            empresa.BlingClientSecretProtegido = _protetor.Proteger(dados.BlingClientSecret.Trim());
+            empresa.ErpClientSecretProtegido = _protetor.Proteger(dados.BlingClientSecret.Trim());
         }
 
-        if (!string.IsNullOrEmpty(empresa.BlingClientId) && string.IsNullOrEmpty(empresa.BlingClientSecretProtegido))
+        if (!string.IsNullOrEmpty(empresa.ErpClientId) && string.IsNullOrEmpty(empresa.ErpClientSecretProtegido))
         {
             return Resultado<EmpresaDto>.Invalido("Informe o Client Secret do aplicativo do Bling.");
         }
@@ -181,11 +181,11 @@ public class EmpresasService
         AlterarEmailProprio(empresa, dados);
 
         // Os tokens pertencem ao aplicativo que autorizou: outro aplicativo exige conectar de novo
-        if (clientIdAnterior != (empresa.BlingClientId ?? ""))
+        if (clientIdAnterior != (empresa.ErpClientId ?? ""))
         {
-            empresa.BlingAccessTokenProtegido = null;
-            empresa.BlingRefreshTokenProtegido = null;
-            empresa.BlingTokenExpiraEm = null;
+            empresa.ErpAccessTokenProtegido = null;
+            empresa.ErpRefreshTokenProtegido = null;
+            empresa.ErpTokenExpiraEm = null;
         }
 
         await _empresas.SalvarAsync(cancelamento);

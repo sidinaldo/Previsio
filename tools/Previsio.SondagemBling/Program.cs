@@ -81,7 +81,7 @@ if (args.Length > 0)
 else
 {
     empresa = await empresas.Consultar()
-        .Where(e => e.Ativo && e.BlingRefreshTokenProtegido != null)
+        .Where(e => e.Ativo && e.ErpRefreshTokenProtegido != null)
         .OrderBy(e => e.Id)
         .FirstOrDefaultAsync();
 }

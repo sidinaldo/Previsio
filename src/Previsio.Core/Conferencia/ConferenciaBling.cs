@@ -18,7 +18,7 @@ public static class ConferenciaBling
         var resultado = new ResultadoConferencia();
         var usadas = new HashSet<long>();
         List<ContaNoBling> validas = candidatas
-            .Where(c => c.Situacao != SituacaoContaBling.Cancelado && c.Situacao != SituacaoContaBling.Devolvido)
+            .Where(c => c.Situacao != SituacaoConta.Cancelado && c.Situacao != SituacaoConta.Devolvido)
             .ToList();
 
         if (nota.Parcelas.Count == 0)

@@ -55,9 +55,9 @@ public class SaudeServiceTests
         empresa.Cnpj = "11222333000181";
         if (conectada)
         {
-            empresa.BlingAccessTokenProtegido = _protetor.Proteger("token");
-            empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh");
-            empresa.BlingTokenExpiraEm = new DateTime(2026, 11, 11, 18, 0, 0, DateTimeKind.Utc);
+            empresa.ErpAccessTokenProtegido = _protetor.Proteger("token");
+            empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh");
+            empresa.ErpTokenExpiraEm = new DateTime(2026, 11, 11, 18, 0, 0, DateTimeKind.Utc);
             empresa.UltimaSincronizacaoEm = new DateTime(2026, 11, 11, 11, 30, 0, DateTimeKind.Utc);
         }
         _db.Empresas.Add(empresa);

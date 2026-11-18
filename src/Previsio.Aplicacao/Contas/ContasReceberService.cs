@@ -167,21 +167,21 @@ public class ContasReceberService
         }
         else if (Igual(situacao, SituacaoFiltroContas.Abertas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Vencidas))
         {
             DateTime hoje = Hoje();
-            consulta = consulta.Where(c => (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago)
+            consulta = consulta.Where(c => (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago)
                 && c.Vencimento < hoje);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Recebidas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.Pago);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.Pago);
         }
         else if (Igual(situacao, SituacaoFiltroContas.Canceladas))
         {
-            consulta = consulta.Where(c => c.Situacao == SituacaoContaBling.Cancelado || c.Situacao == SituacaoContaBling.Devolvido);
+            consulta = consulta.Where(c => c.Situacao == SituacaoConta.Cancelado || c.Situacao == SituacaoConta.Devolvido);
         }
         else
         {
@@ -271,7 +271,7 @@ public class ContasReceberService
     private async Task<DateTime?> SincronizadaEmAsync(int clienteId, int? empresaId, CancellationToken cancelamento)
     {
         IQueryable<Empresa> empresas = _empresas.ConsultarSomenteLeitura()
-            .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null);
+            .Where(e => e.ClienteId == clienteId && e.Ativo && e.ErpRefreshTokenProtegido != null);
         if (empresaId.HasValue)
         {
             int id = empresaId.Value;
@@ -298,7 +298,7 @@ public class ContasReceberService
         ContaReceberSincronizada conta = linha.Conta;
         var dto = new ContaReceberDto();
         dto.Id = conta.Id;
-        dto.BlingId = conta.BlingId;
+        dto.BlingId = conta.ErpId;
         dto.EmpresaId = conta.EmpresaId;
         dto.EmpresaNome = linha.EmpresaNome;
         dto.Vencimento = conta.Vencimento.Date;

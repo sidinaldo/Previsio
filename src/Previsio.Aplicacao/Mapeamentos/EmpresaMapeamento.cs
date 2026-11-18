@@ -15,9 +15,9 @@ public static class EmpresaMapeamento
         dto.Id = empresa.Id;
         dto.Nome = empresa.Nome;
         dto.Cnpj = empresa.Cnpj;
-        dto.BlingConectado = empresa.BlingConectado;
-        dto.BlingClientId = empresa.BlingClientId;
-        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(empresa.BlingClientSecretProtegido);
+        dto.BlingConectado = empresa.ErpConectado;
+        dto.BlingClientId = empresa.ErpClientId;
+        dto.BlingClientSecretCadastrado = !string.IsNullOrEmpty(empresa.ErpClientSecretProtegido);
         dto.OrigemAplicativoBling = OrigemAplicativoBling.Da(empresa, empresa.Cliente);
         dto.EmailProprio = empresa.TemEmailProprio;
         dto.ImapHost = empresa.ImapHost;

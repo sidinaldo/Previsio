@@ -31,12 +31,12 @@ public class CalculadoraPainelTests
 
         var contas = new List<ContaPagarSincronizada>
         {
-            Conta(1, 0, 100m, SituacaoContaBling.EmAberto),
-            Conta(1, 8, 200m, SituacaoContaBling.EmAberto),
-            Conta(2, 3, 50m, SituacaoContaBling.ParcialmentePago),
-            Conta(2, 5, 999m, SituacaoContaBling.Pago),       // já paga: fora
-            Conta(1, 40, 999m, SituacaoContaBling.EmAberto),  // fora dos 30 dias
-            Conta(1, -1, 999m, SituacaoContaBling.EmAberto)   // vencida ontem: fora
+            Conta(1, 0, 100m, SituacaoConta.EmAberto),
+            Conta(1, 8, 200m, SituacaoConta.EmAberto),
+            Conta(2, 3, 50m, SituacaoConta.ParcialmentePago),
+            Conta(2, 5, 999m, SituacaoConta.Pago),       // já paga: fora
+            Conta(1, 40, 999m, SituacaoConta.EmAberto),  // fora dos 30 dias
+            Conta(1, -1, 999m, SituacaoConta.EmAberto)   // vencida ontem: fora
         };
 
         var calculadora = new CalculadoraPainel();
@@ -144,16 +144,16 @@ public class CalculadoraPainelTests
         var empresas = new List<Empresa> { new Empresa { Id = 1, Nome = "Matriz" }, new Empresa { Id = 2, Nome = "Filial" } };
         var pagar = new List<ContaPagarSincronizada>
         {
-            new ContaPagarSincronizada { EmpresaId = 1, Vencimento = Hoje.AddDays(1), Valor = 1000m, Situacao = SituacaoContaBling.EmAberto },
-            new ContaPagarSincronizada { EmpresaId = 2, Vencimento = Hoje.AddDays(8), Valor = 300m, Situacao = SituacaoContaBling.EmAberto }
+            new ContaPagarSincronizada { EmpresaId = 1, Vencimento = Hoje.AddDays(1), Valor = 1000m, Situacao = SituacaoConta.EmAberto },
+            new ContaPagarSincronizada { EmpresaId = 2, Vencimento = Hoje.AddDays(8), Valor = 300m, Situacao = SituacaoConta.EmAberto }
         };
         var receber = new List<ContaReceberSincronizada>
         {
-            Receber(1, 2, 400m, SituacaoContaBling.EmAberto),
-            Receber(2, 9, 900m, SituacaoContaBling.ParcialmentePago),
-            Receber(1, 3, 50m, SituacaoContaBling.Pago),        // já recebida: fora
-            Receber(1, -4, 700m, SituacaoContaBling.EmAberto),  // vencida: fora do saldo, card à parte
-            Receber(1, 30, 999m, SituacaoContaBling.EmAberto)   // depois do período de 14 dias
+            Receber(1, 2, 400m, SituacaoConta.EmAberto),
+            Receber(2, 9, 900m, SituacaoConta.ParcialmentePago),
+            Receber(1, 3, 50m, SituacaoConta.Pago),        // já recebida: fora
+            Receber(1, -4, 700m, SituacaoConta.EmAberto),  // vencida: fora do saldo, card à parte
+            Receber(1, 30, 999m, SituacaoConta.EmAberto)   // depois do período de 14 dias
         };
         var calculadora = new CalculadoraPainel();
         ResumoPainel resumo = calculadora.Calcular(Hoje, 14, empresas, pagar, new List<NotaFiscal>());
@@ -190,28 +190,28 @@ public class CalculadoraPainelTests
         var nomes = new Dictionary<string, string>();
         for (int i = 1; i <= 8; i++)
         {
-            ContaPagarSincronizada conta = Conta(1, i, i * 100m, SituacaoContaBling.EmAberto);
-            conta.CategoriaBlingId = i;
+            ContaPagarSincronizada conta = Conta(1, i, i * 100m, SituacaoConta.EmAberto);
+            conta.CategoriaErpId = i;
             conta.CategoriaConferidaEm = Hoje;
             pagar.Add(conta);
             nomes["1:" + i] = "Categoria " + i;
         }
         // A mesma categoria (pelo nome) em outra empresa soma junto
-        ContaPagarSincronizada outraEmpresa = Conta(2, 2, 1000m, SituacaoContaBling.EmAberto);
-        outraEmpresa.CategoriaBlingId = 50;
+        ContaPagarSincronizada outraEmpresa = Conta(2, 2, 1000m, SituacaoConta.EmAberto);
+        outraEmpresa.CategoriaErpId = 50;
         outraEmpresa.CategoriaConferidaEm = Hoje;
         pagar.Add(outraEmpresa);
         nomes["2:50"] = "CATEGORIA 1";
-        ContaPagarSincronizada sem = Conta(1, 3, 70m, SituacaoContaBling.EmAberto);
+        ContaPagarSincronizada sem = Conta(1, 3, 70m, SituacaoConta.EmAberto);
         sem.CategoriaConferidaEm = Hoje;
         pagar.Add(sem);
-        pagar.Add(Conta(1, 4, 30m, SituacaoContaBling.EmAberto));
+        pagar.Add(Conta(1, 4, 30m, SituacaoConta.EmAberto));
         // Paga e fora do período não entram
-        ContaPagarSincronizada paga = Conta(1, 1, 9999m, SituacaoContaBling.Pago);
-        paga.CategoriaBlingId = 1;
+        ContaPagarSincronizada paga = Conta(1, 1, 9999m, SituacaoConta.Pago);
+        paga.CategoriaErpId = 1;
         pagar.Add(paga);
-        ContaPagarSincronizada longe = Conta(1, 60, 9999m, SituacaoContaBling.EmAberto);
-        longe.CategoriaBlingId = 1;
+        ContaPagarSincronizada longe = Conta(1, 60, 9999m, SituacaoConta.EmAberto);
+        longe.CategoriaErpId = 1;
         pagar.Add(longe);
 
         var calculadora = new CalculadoraPainel();
@@ -235,13 +235,13 @@ public class CalculadoraPainelTests
     [Fact]
     public void Categoria_fora_da_lista_da_empresa_vai_para_nao_identificada()
     {
-        ContaPagarSincronizada conhecida = Conta(1, 2, 100m, SituacaoContaBling.EmAberto);
-        conhecida.CategoriaBlingId = 1;
+        ContaPagarSincronizada conhecida = Conta(1, 2, 100m, SituacaoConta.EmAberto);
+        conhecida.CategoriaErpId = 1;
         conhecida.CategoriaConferidaEm = Hoje;
-        ContaPagarSincronizada desconhecida = Conta(1, 3, 40m, SituacaoContaBling.EmAberto);
-        desconhecida.CategoriaBlingId = 99;
+        ContaPagarSincronizada desconhecida = Conta(1, 3, 40m, SituacaoConta.EmAberto);
+        desconhecida.CategoriaErpId = 99;
         desconhecida.CategoriaConferidaEm = Hoje;
-        ContaPagarSincronizada sem = Conta(1, 4, 10m, SituacaoContaBling.EmAberto);
+        ContaPagarSincronizada sem = Conta(1, 4, 10m, SituacaoConta.EmAberto);
         sem.CategoriaConferidaEm = Hoje;
         var pagar = new List<ContaPagarSincronizada> { conhecida, desconhecida, sem };
         var nomes = new Dictionary<string, string> { { "1:1", "Compras" } };
@@ -258,21 +258,21 @@ public class CalculadoraPainelTests
     [Fact]
     public void Formas_separam_o_que_precisa_pagar_do_que_sai_sozinho()
     {
-        ContaPagarSincronizada boleto = Conta(1, 2, 100m, SituacaoContaBling.EmAberto);
-        boleto.FormaPagamentoBlingId = 31;
-        ContaPagarSincronizada boletoOutraLoja = Conta(2, 3, 50m, SituacaoContaBling.EmAberto);
-        boletoOutraLoja.FormaPagamentoBlingId = 41;
-        ContaPagarSincronizada debito = Conta(1, 4, 300m, SituacaoContaBling.EmAberto);
-        debito.FormaPagamentoBlingId = 32;
-        ContaPagarSincronizada pix = Conta(1, 5, 20m, SituacaoContaBling.ParcialmentePago);
-        pix.FormaPagamentoBlingId = 33;
-        ContaPagarSincronizada desconhecida = Conta(1, 6, 7m, SituacaoContaBling.EmAberto);
-        desconhecida.FormaPagamentoBlingId = 99;
-        ContaPagarSincronizada sem = Conta(1, 7, 500m, SituacaoContaBling.EmAberto);
+        ContaPagarSincronizada boleto = Conta(1, 2, 100m, SituacaoConta.EmAberto);
+        boleto.FormaPagamentoErpId = 31;
+        ContaPagarSincronizada boletoOutraLoja = Conta(2, 3, 50m, SituacaoConta.EmAberto);
+        boletoOutraLoja.FormaPagamentoErpId = 41;
+        ContaPagarSincronizada debito = Conta(1, 4, 300m, SituacaoConta.EmAberto);
+        debito.FormaPagamentoErpId = 32;
+        ContaPagarSincronizada pix = Conta(1, 5, 20m, SituacaoConta.ParcialmentePago);
+        pix.FormaPagamentoErpId = 33;
+        ContaPagarSincronizada desconhecida = Conta(1, 6, 7m, SituacaoConta.EmAberto);
+        desconhecida.FormaPagamentoErpId = 99;
+        ContaPagarSincronizada sem = Conta(1, 7, 500m, SituacaoConta.EmAberto);
         // Paga e fora do período não contam
-        ContaPagarSincronizada paga = Conta(1, 8, 1000m, SituacaoContaBling.Pago);
-        paga.FormaPagamentoBlingId = 31;
-        ContaPagarSincronizada depois = Conta(1, 60, 1000m, SituacaoContaBling.EmAberto);
+        ContaPagarSincronizada paga = Conta(1, 8, 1000m, SituacaoConta.Pago);
+        paga.FormaPagamentoErpId = 31;
+        ContaPagarSincronizada depois = Conta(1, 60, 1000m, SituacaoConta.EmAberto);
         var pagar = new List<ContaPagarSincronizada> { boleto, boletoOutraLoja, debito, pix, desconhecida, sem, paga, depois };
         var grupos = new Dictionary<string, string>
         {

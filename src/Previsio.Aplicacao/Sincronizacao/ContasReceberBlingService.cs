@@ -67,7 +67,7 @@ public class ContasReceberBlingService
         var locaisPorId = new Dictionary<long, ContaReceberSincronizada>();
         foreach (ContaReceberSincronizada local in locais)
         {
-            locaisPorId[local.BlingId] = local;
+            locaisPorId[local.ErpId] = local;
         }
 
         var idsRecebidos = new HashSet<long>();
@@ -92,7 +92,7 @@ public class ContasReceberBlingService
             {
                 local = new ContaReceberSincronizada();
                 local.EmpresaId = empresa.Id;
-                local.BlingId = remota.Id;
+                local.ErpId = remota.Id;
                 _contas.Adicionar(local);
             }
 
@@ -102,7 +102,7 @@ public class ContasReceberBlingService
             local.SincronizadaEm = agoraUtc;
             if (remota.Contato != null)
             {
-                local.BlingContatoId = remota.Contato.Id;
+                local.ErpContatoId = remota.Contato.Id;
                 if (!string.IsNullOrWhiteSpace(remota.Contato.Nome))
                 {
                     local.ClienteNome = FornecedoresBlingService.Limitar(remota.Contato.Nome);
@@ -117,7 +117,7 @@ public class ContasReceberBlingService
         // Contas que sumiram do Bling dentro da janela foram excluídas lá
         foreach (ContaReceberSincronizada local in locais)
         {
-            if (!idsRecebidos.Contains(local.BlingId))
+            if (!idsRecebidos.Contains(local.ErpId))
             {
                 _contas.Remover(local);
             }
@@ -126,13 +126,13 @@ public class ContasReceberBlingService
         // Quando a lista não traz o nome do cliente: contato guardado ou buscado no Bling
         if (semNome.Count > 0)
         {
-            List<long> idsContatos = semNome.Select(c => c.BlingContatoId!.Value).Distinct().ToList();
+            List<long> idsContatos = semNome.Select(c => c.ErpContatoId!.Value).Distinct().ToList();
             NomesDeContatos contatos = await _contatos.NomesDosContatosAsync(
                 empresa, conta, token, idsContatos, diasRenovarContato, agoraUtc, cancelamento);
             foreach (ContaReceberSincronizada local in semNome)
             {
                 string? nome;
-                if (contatos.Nomes.TryGetValue(local.BlingContatoId!.Value, out nome))
+                if (contatos.Nomes.TryGetValue(local.ErpContatoId!.Value, out nome))
                 {
                     local.ClienteNome = nome;
                 }

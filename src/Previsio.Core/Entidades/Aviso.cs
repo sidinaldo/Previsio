@@ -2,7 +2,7 @@ namespace Previsio.Core.Entidades;
 
 /// <summary>
 /// Algo que precisa de ação numa rede. É criado quando o problema aparece e marcado
-/// como resolvido sozinho quando ele some (nota lançada, Bling reconectado, caixa voltou).
+/// como resolvido sozinho quando ele some (nota lançada, ERP reconectado, caixa voltou).
 /// A Chave identifica o problema ("nota:12", "bling:3", "caixa-rede:1") para não repetir aviso.
 /// </summary>
 public class Aviso

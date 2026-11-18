@@ -74,12 +74,12 @@ public class NotasControllerTests
         segunda.NumeroParcela = "002";
         segunda.Vencimento = new DateTime(2026, 12, 17);
         segunda.Valor = 50m;
-        segunda.BlingContaPagarId = 222;
+        segunda.ErpContaPagarId = 222;
         var primeira = new ParcelaNota();
         primeira.NumeroParcela = "001";
         primeira.Vencimento = new DateTime(2026, 11, 17);
         primeira.Valor = 50m;
-        primeira.BlingContaPagarId = 111;
+        primeira.ErpContaPagarId = 111;
         lancada.Parcelas.Add(segunda);
         lancada.Parcelas.Add(primeira);
 

@@ -79,11 +79,11 @@ public class ResumoSemanalServiceTests
         return usuario;
     }
 
-    private void Conta(Empresa empresa, int diasAFrente, decimal valor, int situacao = SituacaoContaBling.EmAberto)
+    private void Conta(Empresa empresa, int diasAFrente, decimal valor, int situacao = SituacaoConta.EmAberto)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
-        conta.BlingId = 1000 + _db.ChangeTracker.Entries<ContaPagarSincronizada>().Count();
+        conta.ErpId = 1000 + _db.ChangeTracker.Entries<ContaPagarSincronizada>().Count();
         conta.Vencimento = new DateTime(2026, 11, 16).AddDays(diasAFrente);
         conta.Valor = valor;
         conta.Situacao = situacao;
@@ -195,8 +195,8 @@ public class ResumoSemanalServiceTests
         Conta(_centro, 0, 1000.00m);
         Conta(_zonaNorte, 0, 840.50m);
         Conta(_zonaNorte, 0, 100.00m);
-        Conta(_centro, 3, 500.00m, SituacaoContaBling.ParcialmentePago);
-        Conta(_centro, 4, 999.00m, SituacaoContaBling.Pago);
+        Conta(_centro, 3, 500.00m, SituacaoConta.ParcialmentePago);
+        Conta(_centro, 4, 999.00m, SituacaoConta.Pago);
         Conta(_centro, 6, 200.00m);
         Conta(_centro, 7, 300.00m);
         Conta(_centro, 30, 50.00m);

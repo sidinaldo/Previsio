@@ -219,7 +219,7 @@ public class ResumoSemanalService
             .Where(c => idsEmpresas.Contains(c.EmpresaId)
                 && c.Vencimento >= hoje
                 && c.Vencimento <= fim30
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago))
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago))
             .ToListAsync(cancelamento);
 
         List<ContaPagarSincronizada> vencidas = await Vencimentos.ContasEmAberto.Vencidas(_contasPagar.ConsultarSomenteLeitura(), idsEmpresas, hoje, 1).ToListAsync(cancelamento);

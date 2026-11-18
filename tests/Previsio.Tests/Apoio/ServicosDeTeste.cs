@@ -334,7 +334,7 @@ public static class ServicosDeTeste
     {
         return new FornecedoresBlingService(
             new Repositorio<ParcelaNota>(db),
-            new Repositorio<FornecedorBling>(db),
+            new Repositorio<FornecedorErp>(db),
             bling,
             logger);
     }

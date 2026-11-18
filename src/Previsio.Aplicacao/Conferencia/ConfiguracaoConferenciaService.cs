@@ -47,7 +47,7 @@ public class ConfiguracaoConferenciaService
         {
             return Resultado<ConferenciaBlingDto>.NaoEncontrado(ClientesService.MensagemNaoEncontrado);
         }
-        cliente.ConferirBlingAntesDeLancar = dados.ConferirAntesDeLancar;
+        cliente.ConferirErpAntesDeLancar = dados.ConferirAntesDeLancar;
         cliente.ConferenciaExigeNumeroNota = dados.ExigeNumeroNota;
         cliente.ConferenciaToleranciaValor = Math.Round(dados.ToleranciaValor, 2);
         cliente.ConferenciaToleranciaDias = dados.ToleranciaDias;
@@ -59,7 +59,7 @@ public class ConfiguracaoConferenciaService
     private static ConferenciaBlingDto ParaDto(Cliente cliente)
     {
         var dto = new ConferenciaBlingDto();
-        dto.ConferirAntesDeLancar = cliente.ConferirBlingAntesDeLancar;
+        dto.ConferirAntesDeLancar = cliente.ConferirErpAntesDeLancar;
         dto.ExigeNumeroNota = cliente.ConferenciaExigeNumeroNota;
         dto.ToleranciaValor = cliente.ConferenciaToleranciaValor;
         dto.ToleranciaDias = cliente.ConferenciaToleranciaDias;

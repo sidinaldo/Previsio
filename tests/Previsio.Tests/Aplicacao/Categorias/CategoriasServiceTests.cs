@@ -38,13 +38,13 @@ public class CategoriasServiceTests
         _norte = Empresa("Norte");
         _semCategorias = Empresa("Sul");
         Empresa desconectada = Empresa("Desconectada");
-        desconectada.BlingRefreshTokenProtegido = null;
+        desconectada.ErpRefreshTokenProtegido = null;
         await _db.SaveChangesAsync();
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 1, Descricao = "Fretes", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 2, Descricao = "Compras", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, BlingId = 3, Descricao = "FRETES", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, BlingId = 4, Descricao = "Vendas", Tipo = 2 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = desconectada.Id, BlingId = 5, Descricao = "Aluguel", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, ErpId = 1, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, ErpId = 2, Descricao = "Compras", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, ErpId = 3, Descricao = "FRETES", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, ErpId = 4, Descricao = "Vendas", Tipo = 2 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = desconectada.Id, ErpId = 5, Descricao = "Aluguel", Tipo = 1 });
         _db.NotasFiscais.Add(new NotaFiscal { ClienteId = _rede.Id, EmpresaId = _centro.Id, CnpjFornecedor = "12.345.678/0001-99", NomeFornecedor = "ROTA SUL" });
         _db.NotasFiscais.Add(new NotaFiscal { ClienteId = _rede.Id, EmpresaId = _norte.Id, CnpjFornecedor = "12345678000199", NomeFornecedor = "ROTA SUL LTDA" });
         _db.NotasFiscais.Add(new NotaFiscal { ClienteId = _rede.Id, EmpresaId = _norte.Id, CnpjFornecedor = "98765432000155", NomeFornecedor = "AUTOPEÇAS ABC" });
@@ -53,7 +53,7 @@ public class CategoriasServiceTests
 
     private Empresa Empresa(string nome)
     {
-        var empresa = new Empresa { ClienteId = _rede.Id, Nome = nome, Cnpj = "11222333000181", BlingRefreshTokenProtegido = "token" };
+        var empresa = new Empresa { ClienteId = _rede.Id, Nome = nome, Cnpj = "11222333000181", ErpRefreshTokenProtegido = "token" };
         _db.Empresas.Add(empresa);
         return empresa;
     }

@@ -23,7 +23,7 @@ public class PrevisioDbContext : DbContext
     public DbSet<FalhaProcessamento> Falhas => Set<FalhaProcessamento>();
     public DbSet<Aviso> Avisos => Set<Aviso>();
     public DbSet<NotaSoPdf> NotasSoPdf => Set<NotaSoPdf>();
-    public DbSet<FornecedorBling> FornecedoresBling => Set<FornecedorBling>();
+    public DbSet<FornecedorErp> FornecedoresErp => Set<FornecedorErp>();
     public DbSet<EmailIgnorado> EmailsIgnorados => Set<EmailIgnorado>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,7 +36,7 @@ public class PrevisioDbContext : DbContext
             entidade.Property(c => c.ImapHost).HasMaxLength(200);
             entidade.Property(c => c.ImapUsuario).HasMaxLength(200);
             entidade.Property(c => c.ImapUltimoErroConexao).HasMaxLength(500);
-            entidade.Property(c => c.BlingClientId).HasMaxLength(200);
+            entidade.Property(c => c.ErpClientId).HasMaxLength(200);
             entidade.Property(c => c.CategoriaPadrao).HasMaxLength(200);
             entidade.Property(c => c.FormaPagamentoPadrao).HasMaxLength(200);
         });
@@ -47,11 +47,11 @@ public class PrevisioDbContext : DbContext
             entidade.Property(e => e.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(e => e.Cnpj).HasMaxLength(14).IsRequired();
             entidade.Property(e => e.ImapUltimoErroConexao).HasMaxLength(500);
-            entidade.Property(e => e.BlingClientId).HasMaxLength(200);
+            entidade.Property(e => e.ErpClientId).HasMaxLength(200);
             entidade.Property(e => e.ImapHost).HasMaxLength(200);
             entidade.Property(e => e.ImapUsuario).HasMaxLength(200);
             entidade.HasIndex(e => new { e.ClienteId, e.Cnpj }).IsUnique();
-            entidade.Ignore(e => e.BlingConectado);
+            entidade.Ignore(e => e.ErpConectado);
             entidade.Ignore(e => e.TemEmailProprio);
             entidade.Ignore(e => e.TemCertificado);
             entidade.Property(e => e.CertificadoTitular).HasMaxLength(300);
@@ -133,7 +133,7 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("contas_pagar");
             entidade.Property(c => c.Valor).HasPrecision(14, 2);
             entidade.Property(c => c.Vencimento).HasColumnType("date");
-            entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
+            entidade.HasIndex(c => new { c.EmpresaId, c.ErpId }).IsUnique();
             entidade.HasIndex(c => c.Vencimento);
             entidade.Property(c => c.FornecedorNome).HasMaxLength(200);
 
@@ -146,7 +146,7 @@ public class PrevisioDbContext : DbContext
         {
             entidade.ToTable("categorias_financeiras");
             entidade.Property(c => c.Descricao).HasMaxLength(200);
-            entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
+            entidade.HasIndex(c => new { c.EmpresaId, c.ErpId }).IsUnique();
 
             entidade.HasOne(c => c.Empresa)
                 .WithMany()
@@ -170,7 +170,7 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("formas_pagamento");
             entidade.Property(f => f.Descricao).HasMaxLength(200);
             entidade.Property(f => f.Grupo).HasMaxLength(30);
-            entidade.HasIndex(f => new { f.EmpresaId, f.BlingId }).IsUnique();
+            entidade.HasIndex(f => new { f.EmpresaId, f.ErpId }).IsUnique();
 
             entidade.HasOne(f => f.Empresa)
                 .WithMany()
@@ -194,7 +194,7 @@ public class PrevisioDbContext : DbContext
             entidade.ToTable("contas_receber");
             entidade.Property(c => c.Valor).HasPrecision(14, 2);
             entidade.Property(c => c.Vencimento).HasColumnType("date");
-            entidade.HasIndex(c => new { c.EmpresaId, c.BlingId }).IsUnique();
+            entidade.HasIndex(c => new { c.EmpresaId, c.ErpId }).IsUnique();
             entidade.HasIndex(c => c.Vencimento);
             entidade.Property(c => c.ClienteNome).HasMaxLength(200);
 
@@ -229,12 +229,12 @@ public class PrevisioDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<FornecedorBling>(entidade =>
+        modelBuilder.Entity<FornecedorErp>(entidade =>
         {
-            entidade.ToTable("fornecedores_bling");
+            entidade.ToTable("fornecedores_erp");
             entidade.Property(f => f.Nome).HasMaxLength(200).IsRequired();
             entidade.Property(f => f.Documento).HasMaxLength(20);
-            entidade.HasIndex(f => new { f.EmpresaId, f.BlingContatoId }).IsUnique();
+            entidade.HasIndex(f => new { f.EmpresaId, f.ErpContatoId }).IsUnique();
 
             entidade.HasOne(f => f.Empresa)
                 .WithMany()

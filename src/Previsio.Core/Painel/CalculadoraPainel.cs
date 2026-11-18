@@ -29,8 +29,8 @@ public class CalculadoraPainel
         var contasDoPeriodo = new List<ContaPagarSincronizada>();
         foreach (ContaPagarSincronizada conta in contas)
         {
-            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto
-                || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            bool emAberto = conta.Situacao == SituacaoConta.EmAberto
+                || conta.Situacao == SituacaoConta.ParcialmentePago;
 
             if (emAberto && conta.Vencimento.Date >= inicio && conta.Vencimento.Date <= fim)
             {
@@ -116,8 +116,8 @@ public class CalculadoraPainel
         var doPeriodo = new List<ContaReceberSincronizada>();
         foreach (ContaReceberSincronizada conta in contasReceber)
         {
-            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto
-                || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            bool emAberto = conta.Situacao == SituacaoConta.EmAberto
+                || conta.Situacao == SituacaoConta.ParcialmentePago;
             if (!emAberto)
             {
                 continue;
@@ -155,7 +155,7 @@ public class CalculadoraPainel
     }
 
     /// <summary>
-    /// Saídas em aberto do período por categoria. "nomes" leva a chave EmpresaId:BlingId da
+    /// Saídas em aberto do período por categoria. "nomes" leva a chave EmpresaId:ErpId da
     /// categoria ao nome dela no Bling da empresa; categorias de mesmo nome em empresas diferentes
     /// somam juntas. Mostra as 6 maiores e junta o resto em "Outras"; no fim vêm "Sem categoria"
     /// (conferidas sem categoria) e "A conferir" (a sincronização ainda não abriu a conta no Bling).
@@ -171,7 +171,7 @@ public class CalculadoraPainel
 
         foreach (ContaPagarSincronizada conta in contas)
         {
-            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            bool emAberto = conta.Situacao == SituacaoConta.EmAberto || conta.Situacao == SituacaoConta.ParcialmentePago;
             if (!emAberto || conta.Vencimento.Date < inicio || conta.Vencimento.Date > fim)
             {
                 continue;
@@ -179,9 +179,9 @@ public class CalculadoraPainel
 
             TotalCategoria destino;
             string? nome = null;
-            if (conta.CategoriaBlingId.HasValue)
+            if (conta.CategoriaErpId.HasValue)
             {
-                nomes.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaBlingId.Value, out nome);
+                nomes.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaErpId.Value, out nome);
             }
             if (nome != null)
             {
@@ -192,7 +192,7 @@ public class CalculadoraPainel
                     porNome[chave] = destino;
                 }
             }
-            else if (conta.CategoriaBlingId.HasValue)
+            else if (conta.CategoriaErpId.HasValue)
             {
                 destino = naoIdentificada;
             }
@@ -240,7 +240,7 @@ public class CalculadoraPainel
     }
 
     /// <summary>
-    /// Saídas em aberto do período por grupo de forma de pagamento. "grupos" leva a chave EmpresaId:BlingId
+    /// Saídas em aberto do período por grupo de forma de pagamento. "grupos" leva a chave EmpresaId:ErpId
     /// da forma ao grupo dela; conta com forma fora da lista conta como "outras" e sem forma, "sem forma".
     /// Os grupos de "gruposSaiSozinho" somam no que sai sozinho da conta; o resto, no que precisa pagar.
     /// Ordem: primeiro o que precisa pagar, do maior para o menor; "sem forma" no fim dele.
@@ -255,17 +255,17 @@ public class CalculadoraPainel
 
         foreach (ContaPagarSincronizada conta in contas)
         {
-            bool emAberto = conta.Situacao == SituacaoContaBling.EmAberto || conta.Situacao == SituacaoContaBling.ParcialmentePago;
+            bool emAberto = conta.Situacao == SituacaoConta.EmAberto || conta.Situacao == SituacaoConta.ParcialmentePago;
             if (!emAberto || conta.Vencimento.Date < inicio || conta.Vencimento.Date > fim)
             {
                 continue;
             }
 
             string grupo = GruposFormaPagamento.Sem;
-            if (conta.FormaPagamentoBlingId.HasValue)
+            if (conta.FormaPagamentoErpId.HasValue)
             {
                 string? guardado;
-                if (grupos.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoBlingId.Value, out guardado))
+                if (grupos.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoErpId.Value, out guardado))
                 {
                     grupo = guardado;
                 }

@@ -15,7 +15,7 @@ public class FormasDasContas
     {
         foreach (FormaPagamento forma in formas)
         {
-            _porChave[forma.EmpresaId + ":" + forma.BlingId] = forma;
+            _porChave[forma.EmpresaId + ":" + forma.ErpId] = forma;
         }
         _gruposSaiSozinho = gruposSaiSozinho;
     }
@@ -23,12 +23,12 @@ public class FormasDasContas
     /// <summary>O nome da forma no Bling; "Sem forma" ou "Forma não identificada" quando não há.</summary>
     public string Nome(ContaPagarSincronizada conta)
     {
-        if (!conta.FormaPagamentoBlingId.HasValue)
+        if (!conta.FormaPagamentoErpId.HasValue)
         {
             return GruposFormaPagamento.Nome(GruposFormaPagamento.Sem);
         }
         FormaPagamento? forma;
-        if (_porChave.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoBlingId.Value, out forma))
+        if (_porChave.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoErpId.Value, out forma))
         {
             return forma.Descricao;
         }
@@ -37,12 +37,12 @@ public class FormasDasContas
 
     public bool SaiSozinho(ContaPagarSincronizada conta)
     {
-        if (!conta.FormaPagamentoBlingId.HasValue)
+        if (!conta.FormaPagamentoErpId.HasValue)
         {
             return false;
         }
         FormaPagamento? forma;
-        if (_porChave.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoBlingId.Value, out forma))
+        if (_porChave.TryGetValue(conta.EmpresaId + ":" + conta.FormaPagamentoErpId.Value, out forma))
         {
             return _gruposSaiSozinho.Contains(forma.Grupo);
         }

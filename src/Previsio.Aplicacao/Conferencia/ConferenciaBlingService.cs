@@ -103,7 +103,7 @@ public class ConferenciaBlingService
         foreach (NotaFiscal nota in pendentes)
         {
             // Nota com parcela já lançada pelo Previsio: o resto é com o lançamento, não com a conferência
-            if (nota.Parcelas.Any(p => p.BlingContaPagarId.HasValue))
+            if (nota.Parcelas.Any(p => p.ErpContaPagarId.HasValue))
             {
                 continue;
             }
@@ -120,8 +120,8 @@ public class ConferenciaBlingService
 
             long id = contatoId.Value;
             List<ContaNoBling> candidatas = await _contasPagar.ConsultarSomenteLeitura()
-                .Where(c => c.EmpresaId == empresa.Id && c.BlingContatoId == id)
-                .Select(c => new ContaNoBling { Id = c.BlingId, ContatoId = c.BlingContatoId, Vencimento = c.Vencimento, Valor = c.Valor, Situacao = c.Situacao })
+                .Where(c => c.EmpresaId == empresa.Id && c.ErpContatoId == id)
+                .Select(c => new ContaNoBling { Id = c.ErpId, ContatoId = c.ErpContatoId, Vencimento = c.Vencimento, Valor = c.Valor, Situacao = c.Situacao })
                 .ToListAsync(cancelamento);
             candidatas = await SemAsJaVinculadasAsync(candidatas, nota.Id, cancelamento);
 
@@ -148,7 +148,7 @@ public class ConferenciaBlingService
         {
             if (encontrada.Parcela != null)
             {
-                encontrada.Parcela.BlingContaPagarId = encontrada.ContaId;
+                encontrada.Parcela.ErpContaPagarId = encontrada.ContaId;
             }
         }
         nota.Status = StatusNota.LancadaManualmente;
@@ -173,8 +173,8 @@ public class ConferenciaBlingService
         }
         List<long> ids = candidatas.Select(c => c.Id).ToList();
         List<long> vinculadas = await _parcelas.ConsultarSomenteLeitura()
-            .Where(p => p.NotaFiscalId != notaId && p.BlingContaPagarId.HasValue && ids.Contains(p.BlingContaPagarId.Value))
-            .Select(p => p.BlingContaPagarId!.Value)
+            .Where(p => p.NotaFiscalId != notaId && p.ErpContaPagarId.HasValue && ids.Contains(p.ErpContaPagarId.Value))
+            .Select(p => p.ErpContaPagarId!.Value)
             .ToListAsync(cancelamento);
         return candidatas.Where(c => !vinculadas.Contains(c.Id)).ToList();
     }

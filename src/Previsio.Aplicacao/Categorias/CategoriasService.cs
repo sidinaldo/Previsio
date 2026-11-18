@@ -184,14 +184,14 @@ public class CategoriasService
     private async Task<CategoriasDaRede> CarregarRedeAsync(int clienteId, CancellationToken cancelamento)
     {
         List<Empresa> empresas = await _empresas.ConsultarSomenteLeitura()
-            .Where(e => e.ClienteId == clienteId && e.Ativo && e.BlingRefreshTokenProtegido != null)
+            .Where(e => e.ClienteId == clienteId && e.Ativo && e.ErpRefreshTokenProtegido != null)
             .OrderBy(e => e.Nome)
             .ToListAsync(cancelamento);
         List<int> ids = empresas.Select(e => e.Id).ToList();
         List<CategoriaFinanceira> categorias = await _categorias.ConsultarSomenteLeitura()
             .Where(k => ids.Contains(k.EmpresaId) && k.Tipo != RegrasCategoria.TipoReceita)
             .OrderBy(k => k.EmpresaId)
-            .ThenBy(k => k.BlingId)
+            .ThenBy(k => k.ErpId)
             .ToListAsync(cancelamento);
         return new CategoriasDaRede(empresas, categorias);
     }

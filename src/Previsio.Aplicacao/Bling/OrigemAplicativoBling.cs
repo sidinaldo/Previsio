@@ -13,11 +13,11 @@ public static class OrigemAplicativoBling
 
     public static string Da(Empresa empresa, Cliente? rede)
     {
-        if (!string.IsNullOrWhiteSpace(empresa.BlingClientId))
+        if (!string.IsNullOrWhiteSpace(empresa.ErpClientId))
         {
             return Empresa;
         }
-        if (rede != null && !string.IsNullOrWhiteSpace(rede.BlingClientId))
+        if (rede != null && !string.IsNullOrWhiteSpace(rede.ErpClientId))
         {
             return Rede;
         }

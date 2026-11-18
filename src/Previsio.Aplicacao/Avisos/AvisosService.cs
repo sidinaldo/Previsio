@@ -298,7 +298,7 @@ public class AvisosService
             {
                 continue;
             }
-            if (!empresa.BlingConectado)
+            if (!empresa.ErpConectado)
             {
                 var problema = new ProblemaAtual();
                 problema.Tipo = TipoAviso.BlingDesconectado;

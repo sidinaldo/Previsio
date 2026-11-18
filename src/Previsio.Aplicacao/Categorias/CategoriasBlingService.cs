@@ -83,7 +83,7 @@ public class CategoriasBlingService
         var porId = new Dictionary<long, CategoriaFinanceira>();
         foreach (CategoriaFinanceira guardada in guardadas)
         {
-            porId[guardada.BlingId] = guardada;
+            porId[guardada.ErpId] = guardada;
         }
 
         var recebidas = new HashSet<long>();
@@ -95,10 +95,10 @@ public class CategoriasBlingService
             {
                 categoria = new CategoriaFinanceira();
                 categoria.EmpresaId = empresa.Id;
-                categoria.BlingId = remota.Id;
+                categoria.ErpId = remota.Id;
                 _categorias.Adicionar(categoria);
             }
-            categoria.BlingIdPai = remota.IdCategoriaPai;
+            categoria.ErpIdPai = remota.IdCategoriaPai;
             categoria.Descricao = Limitar(remota.Descricao.Trim());
             categoria.Tipo = remota.Tipo;
             categoria.AtualizadaEm = agoraUtc;
@@ -106,7 +106,7 @@ public class CategoriasBlingService
 
         foreach (CategoriaFinanceira guardada in guardadas)
         {
-            if (!recebidas.Contains(guardada.BlingId))
+            if (!recebidas.Contains(guardada.ErpId))
             {
                 _categorias.Remover(guardada);
             }
@@ -143,7 +143,7 @@ public class CategoriasBlingService
             ContaPagarBling? detalhe;
             try
             {
-                detalhe = await _bling.ObterContaPagarAsync(conta, token, contaLocal.BlingId, cancelamento);
+                detalhe = await _bling.ObterContaPagarAsync(conta, token, contaLocal.ErpId, cancelamento);
             }
             catch (BlingException erro)
             {
@@ -167,10 +167,10 @@ public class CategoriasBlingService
                 continue;
             }
 
-            contaLocal.CategoriaBlingId = null;
+            contaLocal.CategoriaErpId = null;
             if (detalhe.Categoria != null && detalhe.Categoria.Id > 0)
             {
-                contaLocal.CategoriaBlingId = detalhe.Categoria.Id;
+                contaLocal.CategoriaErpId = detalhe.Categoria.Id;
             }
             contaLocal.CategoriaConferidaEm = agoraUtc;
         }

@@ -430,9 +430,9 @@ public class NotasService
             }
             foreach (ParcelaNota parcela in nota.Parcelas)
             {
-                if (parcela.BlingContaPagarId.HasValue)
+                if (parcela.ErpContaPagarId.HasValue)
                 {
-                    idsContas.Add(parcela.BlingContaPagarId.Value);
+                    idsContas.Add(parcela.ErpContaPagarId.Value);
                     if (!empresas.Contains(nota.EmpresaId.Value))
                     {
                         empresas.Add(nota.EmpresaId.Value);
@@ -446,23 +446,23 @@ public class NotasService
         }
 
         var contas = await _contas.ConsultarSomenteLeitura()
-            .Where(c => empresas.Contains(c.EmpresaId) && idsContas.Contains(c.BlingId))
-            .Select(c => new { c.EmpresaId, c.BlingId, c.CategoriaBlingId, c.CategoriaConferidaEm })
+            .Where(c => empresas.Contains(c.EmpresaId) && idsContas.Contains(c.ErpId))
+            .Select(c => new { c.EmpresaId, c.ErpId, c.CategoriaErpId, c.CategoriaConferidaEm })
             .ToListAsync(cancelamento);
         var contasPorChave = new Dictionary<string, (long? Categoria, bool Conferida)>();
         foreach (var conta in contas)
         {
-            contasPorChave[conta.EmpresaId + ":" + conta.BlingId] = (conta.CategoriaBlingId, conta.CategoriaConferidaEm.HasValue);
+            contasPorChave[conta.EmpresaId + ":" + conta.ErpId] = (conta.CategoriaErpId, conta.CategoriaConferidaEm.HasValue);
         }
 
         var categorias = await _categorias.ConsultarSomenteLeitura()
             .Where(c => empresas.Contains(c.EmpresaId))
-            .Select(c => new { c.EmpresaId, c.BlingId, c.Descricao })
+            .Select(c => new { c.EmpresaId, c.ErpId, c.Descricao })
             .ToListAsync(cancelamento);
         var nomes = new Dictionary<string, string>();
         foreach (var categoria in categorias)
         {
-            nomes[categoria.EmpresaId + ":" + categoria.BlingId] = categoria.Descricao.Trim();
+            nomes[categoria.EmpresaId + ":" + categoria.ErpId] = categoria.Descricao.Trim();
         }
 
         for (int i = 0; i < notas.Count; i++)
@@ -476,14 +476,14 @@ public class NotasService
             var nomesDaNota = new List<string>();
             foreach (ParcelaNota parcela in nota.Parcelas)
             {
-                if (!parcela.BlingContaPagarId.HasValue)
+                if (!parcela.ErpContaPagarId.HasValue)
                 {
                     continue;
                 }
                 string tipo;
                 string nome;
                 (long? Categoria, bool Conferida) conta;
-                if (!contasPorChave.TryGetValue(nota.EmpresaId.Value + ":" + parcela.BlingContaPagarId.Value, out conta) || !conta.Conferida)
+                if (!contasPorChave.TryGetValue(nota.EmpresaId.Value + ":" + parcela.ErpContaPagarId.Value, out conta) || !conta.Conferida)
                 {
                     tipo = TotalCategoria.TipoAConferir;
                     nome = NomeCategoriaAConferir;

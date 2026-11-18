@@ -61,10 +61,10 @@ public class CategoriaLancamentoService
         // 2) Última conta desse fornecedor no Bling da empresa com categoria
         int empresaId = empresa.Id;
         long? aprendida = await _contas.ConsultarSomenteLeitura()
-            .Where(c => c.EmpresaId == empresaId && c.BlingContatoId == contatoId && c.CategoriaBlingId != null)
+            .Where(c => c.EmpresaId == empresaId && c.ErpContatoId == contatoId && c.CategoriaErpId != null)
             .OrderByDescending(c => c.CategoriaConferidaEm)
             .ThenByDescending(c => c.Vencimento)
-            .Select(c => c.CategoriaBlingId)
+            .Select(c => c.CategoriaErpId)
             .FirstOrDefaultAsync(cancelamento);
         if (aprendida.HasValue)
         {
@@ -97,7 +97,7 @@ public class CategoriaLancamentoService
         {
             if (RegrasCategoria.Normalizar(categoria.Descricao) == procurado)
             {
-                return categoria.BlingId;
+                return categoria.ErpId;
             }
         }
         return null;

@@ -1,7 +1,7 @@
 namespace Previsio.Core.Entidades;
 
 /// <summary>
-/// Registro de uma tentativa que falhou ao ler uma nota do e-mail ou ao lançá-la no Bling.
+/// Registro de uma tentativa que falhou ao ler uma nota do e-mail ou ao lançá-la no ERP.
 /// Guarda uma cópia dos dados da nota no momento da falha, para o histórico
 /// continuar correto mesmo que a nota mude depois.
 /// </summary>
@@ -25,7 +25,7 @@ public class FalhaProcessamento
     public string Endereco { get; set; } = "";
     public int? StatusHttp { get; set; }
 
-    // Resposta devolvida pelo Bling (cortada para não crescer demais)
+    // Resposta devolvida pelo ERP (cortada para não crescer demais)
     public string? Resposta { get; set; }
 
     // Qual nota tentou registrar (cópia no momento da falha)

@@ -12,7 +12,7 @@ public static class ContasEmAberto
     {
         return contas
             .Where(c => empresas.Contains(c.EmpresaId)
-                && (c.Situacao == SituacaoContaBling.EmAberto || c.Situacao == SituacaoContaBling.ParcialmentePago));
+                && (c.Situacao == SituacaoConta.EmAberto || c.Situacao == SituacaoConta.ParcialmentePago));
     }
 
     /// <summary>

@@ -134,14 +134,14 @@ public static class PlanilhaDossie
             {
                 categoria = "A conferir";
             }
-            else if (!conta.CategoriaBlingId.HasValue)
+            else if (!conta.CategoriaErpId.HasValue)
             {
                 categoria = "Sem categoria";
             }
             else
             {
                 string? nome;
-                if (categorias.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaBlingId.Value, out nome))
+                if (categorias.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaErpId.Value, out nome))
                 {
                     categoria = nome;
                 }
@@ -151,7 +151,7 @@ public static class PlanilhaDossie
                 }
             }
             planilha.AdicionarLinha(conta.Vencimento, empresa, conta.FornecedorNome, categoria, TextoSituacaoConta.De(conta.Situacao),
-                conta.Valor, conta.BlingId);
+                conta.Valor, conta.ErpId);
         }
         return planilha;
     }

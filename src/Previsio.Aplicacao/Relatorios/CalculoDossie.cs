@@ -95,7 +95,7 @@ public static class CalculoDossie
         indicador.Chave = "categorias";
         indicador.Nome = "Contas com categoria";
         List<ContaPagarSincronizada> conferidas = contasPeriodo.Where(c => c.CategoriaConferidaEm.HasValue).ToList();
-        List<ContaPagarSincronizada> sem = conferidas.Where(c => !c.CategoriaBlingId.HasValue).ToList();
+        List<ContaPagarSincronizada> sem = conferidas.Where(c => !c.CategoriaErpId.HasValue).ToList();
         indicador.Quantidade = sem.Count;
         indicador.Valor = sem.Sum(c => c.Valor);
         indicador.QuantidadeAConferir = contasPeriodo.Count - conferidas.Count;
@@ -185,7 +185,7 @@ public static class CalculoDossie
 
     /// <summary>
     /// Comparativo do período com as contas a pagar (pagas e em aberto, sem devolvidas e canceladas)
-    /// e as contas a receber do período. "nomes" leva EmpresaId:BlingId ao nome da categoria.
+    /// e as contas a receber do período. "nomes" leva EmpresaId:ErpId ao nome da categoria.
     /// </summary>
     public static ComparativoDto Comparativo(
         IList<Empresa> empresas, IList<ContaPagarSincronizada> contas, IList<ContaReceberSincronizada> receber,
@@ -204,7 +204,7 @@ public static class CalculoDossie
             item.Nome = empresa.Nome;
             item.Cnpj = empresa.Cnpj;
             item.Saidas = daEmpresa.Sum(c => c.Valor);
-            item.SaidasPagas = daEmpresa.Where(c => c.Situacao == SituacaoContaBling.Pago).Sum(c => c.Valor);
+            item.SaidasPagas = daEmpresa.Where(c => c.Situacao == SituacaoConta.Pago).Sum(c => c.Valor);
             item.SaidasEmAberto = item.Saidas - item.SaidasPagas;
             item.Entradas = receber.Where(c => c.EmpresaId == empresa.Id).Sum(c => c.Valor);
             item.QuantidadeContas = daEmpresa.Count;
@@ -235,14 +235,14 @@ public static class CalculoDossie
             {
                 Somar(especiais, "A conferir", TotalCategoria.TipoAConferir, conta.Valor);
             }
-            else if (!conta.CategoriaBlingId.HasValue)
+            else if (!conta.CategoriaErpId.HasValue)
             {
                 Somar(especiais, "Sem categoria", TotalCategoria.TipoSem, conta.Valor);
             }
             else
             {
                 string? nome;
-                if (nomes.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaBlingId.Value, out nome))
+                if (nomes.TryGetValue(conta.EmpresaId + ":" + conta.CategoriaErpId.Value, out nome))
                 {
                     Somar(categorias, nome.Trim(), TotalCategoria.TipoCategoria, conta.Valor);
                 }

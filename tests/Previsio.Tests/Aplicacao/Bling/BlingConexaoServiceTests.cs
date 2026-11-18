@@ -27,9 +27,9 @@ public class BlingConexaoServiceTests
         empresa.ClienteId = clienteId;
         empresa.Nome = "Matriz";
         empresa.Cnpj = "11222333000181";
-        empresa.BlingAccessTokenProtegido = _protetor.Proteger("access");
-        empresa.BlingRefreshTokenProtegido = _protetor.Proteger("refresh");
-        empresa.BlingTokenExpiraEm = DateTime.UtcNow.AddHours(2);
+        empresa.ErpAccessTokenProtegido = _protetor.Proteger("access");
+        empresa.ErpRefreshTokenProtegido = _protetor.Proteger("refresh");
+        empresa.ErpTokenExpiraEm = DateTime.UtcNow.AddHours(2);
         _db.Empresas.Add(empresa);
         await _db.SaveChangesAsync();
         return empresa;
@@ -52,7 +52,7 @@ public class BlingConexaoServiceTests
     public async Task UrlDeConexao_AplicativoProprioIncompleto_EhInvalido()
     {
         Empresa empresa = await CadastrarEmpresaConectada(1);
-        empresa.BlingClientId = "app-da-filial";
+        empresa.ErpClientId = "app-da-filial";
         await _db.SaveChangesAsync();
 
         Resultado<string> resultado = await CriarServico().MontarUrlConexaoAsync(
@@ -81,8 +81,8 @@ public class BlingConexaoServiceTests
             empresa.Id, UsuarioDeTeste.DoCliente(1).HttpContext.User, CancellationToken.None);
 
         Assert.True(resultado.Sucesso);
-        Assert.False(empresa.BlingConectado);
-        Assert.Null(empresa.BlingRefreshTokenProtegido);
+        Assert.False(empresa.ErpConectado);
+        Assert.Null(empresa.ErpRefreshTokenProtegido);
     }
 
     [Fact]

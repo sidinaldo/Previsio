@@ -18,13 +18,13 @@ public class FornecedoresBlingService
     public const int MaximoBuscasPorExecucao = 100;
 
     private readonly IRepositorio<ParcelaNota> _parcelas;
-    private readonly IRepositorio<FornecedorBling> _fornecedores;
+    private readonly IRepositorio<FornecedorErp> _fornecedores;
     private readonly BlingClient _bling;
     private readonly ILogger<FornecedoresBlingService> _logger;
 
     public FornecedoresBlingService(
         IRepositorio<ParcelaNota> parcelas,
-        IRepositorio<FornecedorBling> fornecedores,
+        IRepositorio<FornecedorErp> fornecedores,
         BlingClient bling,
         ILogger<FornecedoresBlingService> logger)
     {
@@ -53,12 +53,12 @@ public class FornecedoresBlingService
         }
 
         // 1) Contas que vieram de nota lida pelo Previsio: nome do emitente do XML
-        List<long> idsContas = contas.Select(c => c.BlingId).ToList();
+        List<long> idsContas = contas.Select(c => c.ErpId).ToList();
         var nomesDasNotas = await _parcelas.ConsultarSomenteLeitura()
-            .Where(p => p.BlingContaPagarId.HasValue
-                && idsContas.Contains(p.BlingContaPagarId.Value)
+            .Where(p => p.ErpContaPagarId.HasValue
+                && idsContas.Contains(p.ErpContaPagarId.Value)
                 && p.NotaFiscal!.EmpresaId == empresa.Id)
-            .Select(p => new { ContaId = p.BlingContaPagarId!.Value, Nome = p.NotaFiscal!.NomeFornecedor })
+            .Select(p => new { ContaId = p.ErpContaPagarId!.Value, Nome = p.NotaFiscal!.NomeFornecedor })
             .ToListAsync(cancelamento);
 
         var nomePorConta = new Dictionary<long, string>();
@@ -74,11 +74,11 @@ public class FornecedoresBlingService
         foreach (ContaPagarSincronizada contaPagar in contas)
         {
             string? nome;
-            if (nomePorConta.TryGetValue(contaPagar.BlingId, out nome))
+            if (nomePorConta.TryGetValue(contaPagar.ErpId, out nome))
             {
                 contaPagar.FornecedorNome = Limitar(nome);
             }
-            else if (contaPagar.BlingContatoId.HasValue)
+            else if (contaPagar.ErpContatoId.HasValue)
             {
                 semNota.Add(contaPagar);
             }
@@ -90,14 +90,14 @@ public class FornecedoresBlingService
         }
 
         // 2) Lançadas direto no Bling: contato guardado ou buscado agora
-        List<long> idsContatos = semNota.Select(c => c.BlingContatoId!.Value).Distinct().ToList();
+        List<long> idsContatos = semNota.Select(c => c.ErpContatoId!.Value).Distinct().ToList();
         NomesDeContatos contatos = await NomesDosContatosAsync(
             empresa, conta, token, idsContatos, diasRenovar, agoraUtc, cancelamento);
 
         foreach (ContaPagarSincronizada contaPagar in semNota)
         {
             string? nome;
-            if (contatos.Nomes.TryGetValue(contaPagar.BlingContatoId!.Value, out nome))
+            if (contatos.Nomes.TryGetValue(contaPagar.ErpContatoId!.Value, out nome))
             {
                 contaPagar.FornecedorNome = nome;
             }
@@ -126,20 +126,20 @@ public class FornecedoresBlingService
             return resultado;
         }
 
-        List<FornecedorBling> guardados = await _fornecedores.Consultar()
-            .Where(f => f.EmpresaId == empresa.Id && idsContatos.Contains(f.BlingContatoId))
+        List<FornecedorErp> guardados = await _fornecedores.Consultar()
+            .Where(f => f.EmpresaId == empresa.Id && idsContatos.Contains(f.ErpContatoId))
             .ToListAsync(cancelamento);
 
-        var porContato = new Dictionary<long, FornecedorBling>();
-        foreach (FornecedorBling guardado in guardados)
+        var porContato = new Dictionary<long, FornecedorErp>();
+        foreach (FornecedorErp guardado in guardados)
         {
-            porContato[guardado.BlingContatoId] = guardado;
+            porContato[guardado.ErpContatoId] = guardado;
         }
 
         DateTime limiteRenovacao = agoraUtc.AddDays(-diasRenovar);
         foreach (long idContato in idsContatos)
         {
-            FornecedorBling? fornecedor;
+            FornecedorErp? fornecedor;
             porContato.TryGetValue(idContato, out fornecedor);
 
             bool precisaBuscar = fornecedor == null || fornecedor.AtualizadoEm < limiteRenovacao;
@@ -157,9 +157,9 @@ public class FornecedoresBlingService
 
             if (fornecedor == null)
             {
-                fornecedor = new FornecedorBling();
+                fornecedor = new FornecedorErp();
                 fornecedor.EmpresaId = empresa.Id;
-                fornecedor.BlingContatoId = idContato;
+                fornecedor.ErpContatoId = idContato;
                 _fornecedores.Adicionar(fornecedor);
                 porContato[idContato] = fornecedor;
             }
@@ -168,7 +168,7 @@ public class FornecedoresBlingService
             fornecedor.AtualizadoEm = agoraUtc;
         }
 
-        foreach (KeyValuePair<long, FornecedorBling> item in porContato)
+        foreach (KeyValuePair<long, FornecedorErp> item in porContato)
         {
             resultado.Nomes[item.Key] = item.Value.Nome;
         }

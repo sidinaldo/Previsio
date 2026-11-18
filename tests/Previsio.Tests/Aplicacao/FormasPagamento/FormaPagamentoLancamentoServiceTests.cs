@@ -38,7 +38,7 @@ public class FormaPagamentoLancamentoServiceTests
     {
         _db.FormasPagamento.Add(new FormaPagamento
         {
-            EmpresaId = _empresa.Id, BlingId = id, Descricao = nome, TipoPagamento = tipo, Situacao = situacao, Grupo = grupo
+            EmpresaId = _empresa.Id, ErpId = id, Descricao = nome, TipoPagamento = tipo, Situacao = situacao, Grupo = grupo
         });
     }
 
@@ -73,7 +73,7 @@ public class FormaPagamentoLancamentoServiceTests
     {
         await Cadastrar("Pix", 15);
         _db.RegrasFormaPagamento.Add(new RegraFormaPagamento { ClienteId = _rede.Id, CnpjFornecedor = "12345678000199", Forma = " DEBITO AUTOMATICO " });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 70, BlingContatoId = Contato, FormaPagamentoBlingId = 4 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 70, ErpContatoId = Contato, FormaPagamentoErpId = 4 });
         await _db.SaveChangesAsync();
 
         Assert.Equal(3, await Escolher());
@@ -85,7 +85,7 @@ public class FormaPagamentoLancamentoServiceTests
         await Cadastrar(null, null);
         // "Cheque antigo" existe, mas está inativo no Bling
         _db.RegrasFormaPagamento.Add(new RegraFormaPagamento { ClienteId = _rede.Id, CnpjFornecedor = "12345678000199", Forma = "Cheque antigo" });
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 70, BlingContatoId = Contato, FormaPagamentoBlingId = 4 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 70, ErpContatoId = Contato, FormaPagamentoErpId = 4 });
         await _db.SaveChangesAsync();
 
         Assert.Equal(4, await Escolher());
@@ -95,11 +95,11 @@ public class FormaPagamentoLancamentoServiceTests
     public async Task Historico_usa_a_ultima_conta_do_fornecedor_com_forma_que_ainda_existe()
     {
         await Cadastrar(null, 15);
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 70, BlingContatoId = Contato, Vencimento = new DateTime(2026, 10, 1), FormaPagamentoBlingId = 2 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 70, ErpContatoId = Contato, Vencimento = new DateTime(2026, 10, 1), FormaPagamentoErpId = 2 });
         // A mais recente tem uma forma que não está mais no Bling: vale a anterior
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 71, BlingContatoId = Contato, Vencimento = new DateTime(2026, 11, 1), FormaPagamentoBlingId = 999 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 71, ErpContatoId = Contato, Vencimento = new DateTime(2026, 11, 1), FormaPagamentoErpId = 999 });
         // Outro fornecedor não conta
-        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, BlingId = 72, BlingContatoId = 888, Vencimento = new DateTime(2026, 12, 1), FormaPagamentoBlingId = 4 });
+        _db.ContasPagar.Add(new ContaPagarSincronizada { EmpresaId = _empresa.Id, ErpId = 72, ErpContatoId = 888, Vencimento = new DateTime(2026, 12, 1), FormaPagamentoErpId = 4 });
         await _db.SaveChangesAsync();
 
         Assert.Equal(2, await Escolher());

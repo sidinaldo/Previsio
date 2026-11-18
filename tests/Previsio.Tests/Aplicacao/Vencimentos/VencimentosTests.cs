@@ -52,23 +52,23 @@ public class VencimentosTests
         empresa.Nome = nome;
         empresa.Cnpj = "1122233300" + _db.ChangeTracker.Entries<Empresa>().Count().ToString("0000");
         // Conectada ao Bling: não gera o aviso de desconectada
-        empresa.BlingRefreshTokenProtegido = "x";
+        empresa.ErpRefreshTokenProtegido = "x";
         _db.Empresas.Add(empresa);
         return empresa;
     }
 
     private void Conta(
-        Empresa empresa, int dias, decimal valor, int situacao = SituacaoContaBling.EmAberto, string? fornecedor = null,
+        Empresa empresa, int dias, decimal valor, int situacao = SituacaoConta.EmAberto, string? fornecedor = null,
         long? forma = null)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
-        conta.BlingId = _blingId++;
+        conta.ErpId = _blingId++;
         conta.Vencimento = new DateTime(2026, 11, 11).AddDays(dias);
         conta.Valor = valor;
         conta.Situacao = situacao;
         conta.FornecedorNome = fornecedor;
-        conta.FormaPagamentoBlingId = forma;
+        conta.FormaPagamentoErpId = forma;
         _db.ContasPagar.Add(conta);
     }
 
@@ -87,8 +87,8 @@ public class VencimentosTests
     {
         await CadastrarRede();
         Conta(_norte, -1, 1000m);
-        Conta(_norte, -5, 320m, SituacaoContaBling.ParcialmentePago);
-        Conta(_norte, -3, 999m, SituacaoContaBling.Pago);
+        Conta(_norte, -5, 320m, SituacaoConta.ParcialmentePago);
+        Conta(_norte, -3, 999m, SituacaoConta.Pago);
         Conta(_centro, 0, 50m);
         await _db.SaveChangesAsync();
 
@@ -112,7 +112,7 @@ public class VencimentosTests
         // Pagas no Bling: o aviso fecha sozinho
         foreach (ContaPagarSincronizada conta in _db.ContasPagar.Where(c => c.EmpresaId == _norte.Id))
         {
-            conta.Situacao = SituacaoContaBling.Pago;
+            conta.Situacao = SituacaoConta.Pago;
         }
         await _db.SaveChangesAsync();
         await Avisos().AtualizarAsync(_rede.Id, CancellationToken.None);
@@ -125,12 +125,12 @@ public class VencimentosTests
         await CadastrarRede();
         _db.FormasPagamento.Add(new FormaPagamento
         {
-            EmpresaId = _norte.Id, BlingId = 71, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1,
+            EmpresaId = _norte.Id, ErpId = 71, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1,
             Grupo = GruposFormaPagamento.DebitoAutomatico
         });
         _db.FormasPagamento.Add(new FormaPagamento
         {
-            EmpresaId = _centro.Id, BlingId = 72, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto
+            EmpresaId = _centro.Id, ErpId = 72, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto
         });
         Conta(_norte, 0, 1000m, fornecedor: "ALFA DISTRIBUIDORA", forma: 71);
         Conta(_centro, 0, 840.50m, fornecedor: "BETA LUBRIFICANTES", forma: 72);

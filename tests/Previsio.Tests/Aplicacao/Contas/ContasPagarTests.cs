@@ -45,16 +45,16 @@ public class ContasPagarTests
     }
 
     private ContaPagarSincronizada Conta(Empresa empresa, long blingId, int dia, decimal valor,
-        int situacao = SituacaoContaBling.EmAberto, string? fornecedor = null, long? contato = null)
+        int situacao = SituacaoConta.EmAberto, string? fornecedor = null, long? contato = null)
     {
         var conta = new ContaPagarSincronizada();
         conta.EmpresaId = empresa.Id;
-        conta.BlingId = blingId;
+        conta.ErpId = blingId;
         conta.Vencimento = new DateTime(2026, 11, dia);
         conta.Valor = valor;
         conta.Situacao = situacao;
         conta.FornecedorNome = fornecedor;
-        conta.BlingContatoId = contato;
+        conta.ErpContatoId = contato;
         _db.ContasPagar.Add(conta);
         return conta;
     }
@@ -67,7 +67,7 @@ public class ContasPagarTests
         nota.Numero = numero;
         nota.NomeFornecedor = fornecedor;
         nota.Status = StatusNota.Lancada;
-        nota.Parcelas.Add(new ParcelaNota { NumeroParcela = "001", Valor = 100m, Vencimento = new DateTime(2026, 11, 20), BlingContaPagarId = blingId });
+        nota.Parcelas.Add(new ParcelaNota { NumeroParcela = "001", Valor = 100m, Vencimento = new DateTime(2026, 11, 20), ErpContaPagarId = blingId });
         _db.NotasFiscais.Add(nota);
     }
 
@@ -90,9 +90,9 @@ public class ContasPagarTests
     {
         await CadastrarRede();
         Conta(_centro, 1, 5, 300m);                                           // vencida, sem nome
-        Conta(_centro, 2, 20, 100m, SituacaoContaBling.EmAberto, "ALFA DISTRIBUIDORA");
-        Conta(_norte, 3, 15, 50m, SituacaoContaBling.EmAberto, "Energia Elétrica");
-        Conta(_norte, 4, 12, 70m, SituacaoContaBling.Pago, "Aluguel");
+        Conta(_centro, 2, 20, 100m, SituacaoConta.EmAberto, "ALFA DISTRIBUIDORA");
+        Conta(_norte, 3, 15, 50m, SituacaoConta.EmAberto, "Energia Elétrica");
+        Conta(_norte, 4, 12, 70m, SituacaoConta.Pago, "Aluguel");
         NotaDaConta(_centro, "48213", "ALFA DISTRIBUIDORA", 2);
         NotaDaConta(_norte, "999", "OUTRA", 2);                                 // mesma id em outra conta Bling: não liga
         await _db.SaveChangesAsync();
@@ -121,10 +121,10 @@ public class ContasPagarTests
     public async Task Filtros_de_situacao_origem_periodo_busca_e_empresa()
     {
         await CadastrarRede();
-        Conta(_centro, 1, 5, 300m, SituacaoContaBling.EmAberto, "Contabilidade Silva");
-        Conta(_centro, 2, 20, 100m, SituacaoContaBling.ParcialmentePago, "ALFA DISTRIBUIDORA");
-        Conta(_norte, 3, 15, 50m, SituacaoContaBling.Cancelado, "Energia");
-        Conta(_norte, 4, 12, 70m, SituacaoContaBling.Pago, "Aluguel");
+        Conta(_centro, 1, 5, 300m, SituacaoConta.EmAberto, "Contabilidade Silva");
+        Conta(_centro, 2, 20, 100m, SituacaoConta.ParcialmentePago, "ALFA DISTRIBUIDORA");
+        Conta(_norte, 3, 15, 50m, SituacaoConta.Cancelado, "Energia");
+        Conta(_norte, 4, 12, 70m, SituacaoConta.Pago, "Aluguel");
         NotaDaConta(_centro, "48213", "ALFA DISTRIBUIDORA", 2);
         await _db.SaveChangesAsync();
 
@@ -205,16 +205,16 @@ public class ContasPagarTests
     public async Task Nome_vem_da_nota_ou_do_contato_do_Bling_guardado_e_renovado()
     {
         await CadastrarRede();
-        ContaPagarSincronizada daNota = Conta(_centro, 1, 20, 100m, SituacaoContaBling.EmAberto, null, 900);
-        ContaPagarSincronizada manual = Conta(_centro, 2, 20, 100m, SituacaoContaBling.EmAberto, null, 901);
-        ContaPagarSincronizada outraManual = Conta(_centro, 3, 21, 100m, SituacaoContaBling.EmAberto, null, 901);
-        ContaPagarSincronizada guardada = Conta(_centro, 4, 22, 100m, SituacaoContaBling.EmAberto, null, 902);
-        ContaPagarSincronizada velha = Conta(_centro, 5, 22, 100m, SituacaoContaBling.EmAberto, null, 903);
-        ContaPagarSincronizada sumiu = Conta(_centro, 6, 22, 100m, SituacaoContaBling.EmAberto, null, 904);
+        ContaPagarSincronizada daNota = Conta(_centro, 1, 20, 100m, SituacaoConta.EmAberto, null, 900);
+        ContaPagarSincronizada manual = Conta(_centro, 2, 20, 100m, SituacaoConta.EmAberto, null, 901);
+        ContaPagarSincronizada outraManual = Conta(_centro, 3, 21, 100m, SituacaoConta.EmAberto, null, 901);
+        ContaPagarSincronizada guardada = Conta(_centro, 4, 22, 100m, SituacaoConta.EmAberto, null, 902);
+        ContaPagarSincronizada velha = Conta(_centro, 5, 22, 100m, SituacaoConta.EmAberto, null, 903);
+        ContaPagarSincronizada sumiu = Conta(_centro, 6, 22, 100m, SituacaoConta.EmAberto, null, 904);
         NotaDaConta(_centro, "48213", "ALFA DISTRIBUIDORA", 1);
         DateTime agora = new DateTime(2026, 11, 11, 12, 0, 0, DateTimeKind.Utc);
-        _db.FornecedoresBling.Add(new FornecedorBling { EmpresaId = _centro.Id, BlingContatoId = 902, Nome = "Contabilidade Silva", AtualizadoEm = agora.AddDays(-5) });
-        _db.FornecedoresBling.Add(new FornecedorBling { EmpresaId = _centro.Id, BlingContatoId = 903, Nome = "Nome Antigo", AtualizadoEm = agora.AddDays(-40) });
+        _db.FornecedoresErp.Add(new FornecedorErp { EmpresaId = _centro.Id, ErpContatoId = 902, Nome = "Contabilidade Silva", AtualizadoEm = agora.AddDays(-5) });
+        _db.FornecedoresErp.Add(new FornecedorErp { EmpresaId = _centro.Id, ErpContatoId = 903, Nome = "Nome Antigo", AtualizadoEm = agora.AddDays(-40) });
         await _db.SaveChangesAsync();
 
         var respostas = new RespostasFixas(requisicao =>
@@ -244,7 +244,7 @@ public class ContasPagarTests
         Assert.Equal("Contabilidade Silva", guardada.FornecedorNome);
         Assert.Equal("Nome Novo", velha.FornecedorNome);
         Assert.Null(sumiu.FornecedorNome);
-        FornecedorBling energia = _db.FornecedoresBling.Single(f => f.BlingContatoId == 901);
+        FornecedorErp energia = _db.FornecedoresErp.Single(f => f.ErpContatoId == 901);
         Assert.Equal("12345678000190", energia.Documento);
         Assert.Equal(agora, energia.AtualizadoEm);
 
@@ -260,25 +260,25 @@ public class ContasPagarTests
     public async Task Filtra_pela_categoria_pelo_nome_e_mostra_a_categoria_na_lista()
     {
         await CadastrarRede();
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 11, Descricao = "Fretes", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, BlingId = 91, Descricao = "Fretes", Tipo = 1 });
-        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, BlingId = 12, Descricao = "Compras", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, ErpId = 11, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _norte.Id, ErpId = 91, Descricao = "Fretes", Tipo = 1 });
+        _db.Categorias.Add(new CategoriaFinanceira { EmpresaId = _centro.Id, ErpId = 12, Descricao = "Compras", Tipo = 1 });
         DateTime conferida = new DateTime(2026, 11, 10, 12, 0, 0, DateTimeKind.Utc);
         ContaPagarSincronizada a = Conta(_centro, 1, 20, 100m);
-        a.CategoriaBlingId = 11;
+        a.CategoriaErpId = 11;
         a.CategoriaConferidaEm = conferida;
         ContaPagarSincronizada b = Conta(_norte, 2, 21, 200m);
-        b.CategoriaBlingId = 91;
+        b.CategoriaErpId = 91;
         b.CategoriaConferidaEm = conferida;
         ContaPagarSincronizada c = Conta(_centro, 3, 22, 300m);
-        c.CategoriaBlingId = 12;
+        c.CategoriaErpId = 12;
         c.CategoriaConferidaEm = conferida;
         // Conferida e sem categoria
         ContaPagarSincronizada d = Conta(_centro, 4, 23, 400m);
         d.CategoriaConferidaEm = conferida;
         // Categoria que não está na lista da empresa: "não identificada", não "sem categoria"
         ContaPagarSincronizada e = Conta(_centro, 5, 24, 500m);
-        e.CategoriaBlingId = 77;
+        e.CategoriaErpId = 77;
         e.CategoriaConferidaEm = conferida;
         // Ainda não conferida: não entra em "Sem categoria"
         Conta(_centro, 6, 25, 600m);
@@ -302,18 +302,18 @@ public class ContasPagarTests
     public async Task Filtra_pela_forma_de_pagamento_e_separa_o_que_sai_sozinho()
     {
         await CadastrarRede();
-        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 31, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
-        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _norte.Id, BlingId = 41, Descricao = "Boleto Itaú", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
-        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 32, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.DebitoAutomatico });
-        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, BlingId = 33, Descricao = "Outros", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.Outras });
-        Conta(_centro, 1, 20, 100m).FormaPagamentoBlingId = 31;
-        Conta(_norte, 2, 21, 200m).FormaPagamentoBlingId = 41;
-        Conta(_centro, 3, 22, 300m).FormaPagamentoBlingId = 32;
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, ErpId = 31, Descricao = "Boleto", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _norte.Id, ErpId = 41, Descricao = "Boleto Itaú", TipoPagamento = 15, Situacao = 1, Grupo = GruposFormaPagamento.Boleto });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, ErpId = 32, Descricao = "Débito automático", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.DebitoAutomatico });
+        _db.FormasPagamento.Add(new FormaPagamento { EmpresaId = _centro.Id, ErpId = 33, Descricao = "Outros", TipoPagamento = 99, Situacao = 1, Grupo = GruposFormaPagamento.Outras });
+        Conta(_centro, 1, 20, 100m).FormaPagamentoErpId = 31;
+        Conta(_norte, 2, 21, 200m).FormaPagamentoErpId = 41;
+        Conta(_centro, 3, 22, 300m).FormaPagamentoErpId = 32;
         // Sem forma no Bling
         Conta(_centro, 4, 23, 400m);
         // Forma que não está na lista da empresa: conta como "outras"
-        Conta(_centro, 5, 24, 500m).FormaPagamentoBlingId = 77;
-        Conta(_centro, 6, 25, 600m).FormaPagamentoBlingId = 33;
+        Conta(_centro, 5, 24, 500m).FormaPagamentoErpId = 77;
+        Conta(_centro, 6, 25, 600m).FormaPagamentoErpId = 33;
         await _db.SaveChangesAsync();
 
         PaginaContasPagarDto boletos = await Listar(new FiltroContas { Forma = "BOLETO", Ordem = "vencimento" });
